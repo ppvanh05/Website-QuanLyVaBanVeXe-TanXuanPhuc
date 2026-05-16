@@ -56,8 +56,7 @@ export class AdminLayoutComponent {
       isOpen: false,
       children: [
         { label: 'Đặt vé mới', icon: 'add_circle', route: '/admin/quan-ly-ve/dat-ve-moi' },
-        { label: 'Danh sách vé', icon: 'list_alt', route: '/admin/quan-ly-ve/danh-sach-ve' },
-        { label: 'Hoàn tiền', icon: 'undo', route: '/admin/quan-ly-ve/hoan-tien' }
+        { label: 'Danh sách vé', icon: 'list_alt', route: '/admin/quan-ly-ve/danh-sach-ve' }
       ]
     },
     { label: 'Quản lý tin tức', icon: 'article', route: '/admin/quan-ly-tin-tuc' },
@@ -75,7 +74,9 @@ export class AdminLayoutComponent {
     },
     { label: 'Quản lý khách hàng', icon: 'groups', route: '/admin/quan-ly-khach-hang' },
     { label: 'Quản lý nhân viên', icon: 'engineering', route: '/admin/quan-ly-nhan-vien' },
-    { label: 'Quản lý chính sách', icon: 'policy', route: '/admin/quan-ly-chinh-sach' }
+    { label: 'Quản lý chính sách', icon: 'policy', route: '/admin/quan-ly-chinh-sach' },
+    { label: 'Báo cáo', icon: 'bar_chart', route: '/admin/bao-cao' },
+    { label: 'Quản lý nhật ký', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky' }
   ];
 
   toggleSidebar() {

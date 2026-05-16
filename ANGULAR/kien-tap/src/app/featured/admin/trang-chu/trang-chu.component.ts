@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 interface StatCard {
   title: string;
@@ -30,7 +31,7 @@ interface PopularRoute {
 @Component({
   selector: 'app-trang-chu',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './trang-chu.component.html',
   styleUrls: ['./trang-chu.component.css']
 })

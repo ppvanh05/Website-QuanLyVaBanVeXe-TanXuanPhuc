@@ -53,7 +53,7 @@
 .stat-value {
   font-size: 28px;
   font-weight: 800;
-  color: #333;
+  color: #009ba1;
 }
 
 .stat-trend {
@@ -142,20 +142,13 @@ td {
 
 .id-col {
   font-weight: 600;
-  color: #333;
+  color: #009ba1;
 }
 
 .customer-info {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.customer-avatar {
-  width: 32px;
-  height: 32px;
-  background: #f0f2f5;
-  border-radius: 8px;
 }
 
 .route-col {

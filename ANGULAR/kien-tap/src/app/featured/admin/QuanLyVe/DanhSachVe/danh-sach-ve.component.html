@@ -1,0 +1,346 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="breadcrumb">
+      <span class="parent">Quản lý vé</span>
+      <span class="separator">/</span>
+      <span class="current">Danh sách vé</span>
+    </div>
+    <h1>Tra cứu vé</h1>
+  </div>
+
+  <!-- Search Section -->
+  <div class="card search-card">
+    <div class="search-grid">
+      <div class="form-group">
+        <label>Tìm kiếm</label>
+        <div class="input-with-icon">
+          <span class="material-icons">search</span>
+          <input type="text" placeholder="Mã vé, tên khách hàng, SĐT..." (input)="updateFilter('searchTerm', $event)" [value]="filters.searchTerm">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tuyến xe</label>
+        <select [(ngModel)]="filters.route">
+            <option value="Tất cả tuyến">Tất cả tuyến</option>
+            <option value="Bình Dương → BX Miền Đông">Bình Dương → BX Miền Đông</option>
+            <option value="BX Miền Đông → Bình Dương">BX Miền Đông → Bình Dương</option>
+            <option value="Bình Dương → BX Miền Tây">Bình Dương → BX Miền Tây</option>
+            <option value="BX Miền Tây → Bình Dương">BX Miền Tây → Bình Dương</option>
+            <option value="Bình Dương → Bến Cát">Bình Dương → Bến Cát</option>
+            <option value="Bến Cát → Bình Dương">Bến Cát → Bình Dương</option>
+          </select>
+      </div>
+
+      <div class="form-group">
+        <label>Ngày đi</label>
+        <div class="input-with-icon">
+          <input type="date" (change)="updateFilter('departureDate', $event)" [value]="filters.departureDate">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Ngày đến</label>
+        <div class="input-with-icon">
+          <input type="date" (change)="updateFilter('arrivalDate', $event)" [value]="filters.arrivalDate">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Thanh toán</label>
+        <select (change)="updateFilter('paymentStatus', $event)" [value]="filters.paymentStatus">
+          <option>Tất cả</option>
+          <option>Chờ thanh toán</option>
+          <option>Đã thanh toán</option>
+          <option>Đã hủy</option>
+          <option>Chờ hoàn tiền</option>
+          <option>Đã hoàn tiền</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Trạng thái vé</label>
+        <select (change)="updateFilter('ticketStatus', $event)" [value]="filters.ticketStatus">
+          <option>Tất cả</option>
+          <option>Chờ thanh toán</option>
+          <option>Chờ khởi hành</option>
+          <option>Đã hoàn thành</option>
+          <option>Đã hủy</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="search-actions" style="display: flex; gap: 10px;">
+      <button class="btn-search" (click)="onSearch()">
+        <span class="material-icons">search</span>
+        Tìm kiếm
+      </button>
+      <button class="btn-reset" (click)="onReset()" style="background-color: #f8f9fa; border: 1px solid #ddd; color: #333; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <span class="material-icons">refresh</span>
+        Làm mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="card table-card">
+    <div class="table-header">
+      <h2>Danh sách vé đã đặt <span class="count">({{displayTickets.length}})</span></h2>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã vé</th>
+            <th>Khách hàng</th>
+            <th>SĐT</th>
+            <th>Tuyến xe</th>
+            <th>Ngày đi</th>
+            <th>Ngày đến</th>
+            <th>Tổng tiền</th>
+            <th>Thanh toán</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ticket of paginatedTickets">
+            <td class="id-col">{{ ticket.id }}</td>
+            <td class="name-col">{{ ticket.customer }}</td>
+            <td>{{ ticket.phone }}</td>
+            <td class="route-col">{{ ticket.route }}</td>
+            <td class="date-col">{{ ticket.date | date:'dd/MM/yyyy' }}</td>
+            <td class="date-col">{{ ticket.arrivalDate | date:'dd/MM/yyyy' }}</td>
+            <td class="price-col">{{ ticket.total }}</td>
+            <td>
+              <span class="status-pill" [ngClass]="getPaymentClass(ticket.paymentStatus)">
+                {{ ticket.paymentStatus }}
+              </span>
+            </td>
+            <td>
+              <span class="status-pill" [ngClass]="getTicketStatusClass(ticket.ticketStatus)">
+                {{ ticket.ticketStatus }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="btn-view-only" title="Xem chi tiết" (click)="openDetailsModal(ticket)">
+                <span class="material-icons">visibility</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <div class="page-info">
+        Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - {{ (currentPage * pageSize > displayTickets.length) ? displayTickets.length : (currentPage * pageSize) }} của {{ displayTickets.length }} kết quả
+      </div>
+      <div class="page-controls">
+        <button class="btn-prev" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        <button 
+          *ngFor="let p of getPageNumbers()" 
+          class="btn-page" 
+          [class.active]="p === currentPage"
+          (click)="setPage(p)">
+          {{ p }}
+        </button>
+        <button class="btn-next" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">
+          <span class="material-icons">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+    <div class="details-modal" (click)="$event.stopPropagation()">
+      <div class="details-header">
+        <h3>Chi tiết vé - {{ selectedTicket?.id }}</h3>
+        <button class="close-icon" (click)="closeDetailsModal()"><span class="material-icons">close</span></button>
+      </div>
+
+      <div class="details-content">
+        <div class="info-side">
+          <div class="info-section">
+            <h4>Thông tin khách hàng</h4>
+            <div class="info-grid">
+              <div class="info-label">Họ tên:</div><div class="info-value">{{ selectedTicket?.customer }}</div>
+              <div class="info-label">SĐT:</div><div class="info-value">{{ selectedTicket?.phone }}</div>
+              <div class="info-label">Điểm đón:</div><div class="info-value">Bến xe Miền Đông</div>
+              <div class="info-label">Điểm trả:</div><div class="info-value">Bến xe Cần Thơ</div>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <h4>Thông tin vé</h4>
+            <div class="info-grid">
+              <div class="info-label">Mã vé:</div><div class="info-value id-col">{{ selectedTicket?.id }}</div>
+              <div class="info-label">Ngày đi:</div><div class="info-value">{{ selectedTicket?.date | date:'dd/MM/yyyy' }}</div>
+              <div class="info-label">Tuyến:</div><div class="info-value">{{ selectedTicket?.route }}</div>
+              <div class="info-label">Tổng tiền:</div><div class="info-value">{{ selectedTicket?.total }}</div>
+              <div class="info-label">Số hiệu xe:</div><div class="info-value id-col">B-01</div>
+              <div class="info-label">Thanh toán:</div>
+              <div class="info-value">
+                <span class="status-pill" [ngClass]="getPaymentClass(selectedTicket?.paymentStatus || '')">
+                  {{ selectedTicket?.paymentStatus }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions-side">
+          <h4>Thao tác</h4>
+          <div class="action-buttons-list">
+            <button class="action-btn">
+              <span class="material-icons icon-edit">edit</span>
+              Chỉnh sửa thông tin
+            </button>
+            
+            <!-- Hiện Thu tiền nếu chưa thanh toán -->
+            <button class="action-btn" *ngIf="selectedTicket?.paymentStatus === 'Chờ thanh toán'" (click)="onCollectMoney()">
+              <span class="material-icons icon-money">payments</span>
+              Thu tiền
+            </button>
+
+            <!-- Hiện In vé nếu đã thanh toán -->
+            <button class="action-btn" *ngIf="selectedTicket?.paymentStatus === 'Đã thanh toán'" (click)="openPrintModalFromDetails()">
+              <span class="material-icons icon-print">print</span>
+              In vé
+            </button>
+
+            <button class="action-btn" (click)="onResendNotification()">
+              <span class="material-icons icon-mail">mail</span>
+              Gửi lại SMS/Email
+            </button>
+
+            <!-- Nút Hoàn tiền (Chỉ hiện cho vé đang chờ hoàn tiền) -->
+            <button class="action-btn refund-btn" 
+              *ngIf="selectedTicket?.paymentStatus === 'Chờ hoàn tiền'" 
+              (click)="onRefund()">
+              <span class="material-icons icon-refund">history</span>
+              Hoàn tiền
+            </button>
+
+            <!-- Nút Hủy vé/Hoàn tiền (Hiện cho vé đã thanh toán nhưng chưa đi) -->
+            <button class="action-btn cancel-btn" 
+              *ngIf="selectedTicket?.paymentStatus === 'Đã thanh toán' && selectedTicket?.ticketStatus === 'Chờ khởi hành'"
+              (click)="onCancelTicket()">
+              <span class="material-icons icon-cancel">cancel</span>
+              Hủy vé/Hoàn tiền
+            </button>
+
+            <!-- Nút Hủy vé (Hiện cho vé chưa thanh toán và chưa đi) -->
+            <button class="action-btn cancel-btn" 
+              *ngIf="selectedTicket?.paymentStatus === 'Chờ thanh toán' && selectedTicket?.ticketStatus === 'Chờ thanh toán'"
+              (click)="onCancelTicket()">
+              <span class="material-icons icon-cancel">cancel</span>
+              Hủy vé
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-footer">
+        <button class="btn-close-modal" (click)="closeDetailsModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OTP Modal -->
+  <div class="modal-overlay otp-overlay" *ngIf="showOtpModal" (click)="closeOtpModal()">
+    <div class="otp-modal" (click)="$event.stopPropagation()">
+      <div class="otp-header">
+        <span class="material-icons">security</span>
+        <h3>Xác thực hủy vé</h3>
+      </div>
+      <div class="otp-body">
+        <p>Hệ thống đã gửi mã OTP đến số điện thoại <strong>{{ selectedTicket?.phone }}</strong>. Vui lòng nhập mã để xác nhận hủy vé.</p>
+        <div class="otp-input-group">
+          <input type="text" maxlength="6" placeholder="Nhập mã 6 số" [(ngModel)]="otpValue">
+        </div>
+      </div>
+      <div class="otp-footer">
+        <button class="btn-cancel-otp" (click)="closeOtpModal()">Hủy</button>
+        <button class="btn-confirm-otp" [disabled]="otpValue.length !== 6" (click)="confirmCancelWithOtp()">Xác nhận hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print Ticket Modal (Opened from Details) -->
+  <div class="modal-overlay print-overlay" *ngIf="showPrintModal" (click)="closePrintModal()">
+    <div class="ticket-modal" (click)="$event.stopPropagation()">
+      <div class="ticket-preview">
+        <div class="ticket-header">
+          <div class="ticket-logo">
+            <img src="asset/images/TXP_logo.png" alt="Logo">
+            <div class="ticket-serial">
+              <span>Ký hiệu: 5C26MLL</span>
+              <strong>Số: {{ selectedTicket?.id?.substring(7) }}</strong>
+            </div>
+          </div>
+          <div class="company-info">
+            <h3>CÔNG TY TNHH VẬN TẢI TÂN XUÂN PHÚC</h3>
+            <p class="slogan">- NHANH HƠN XA HƠN -</p>
+            <p>Địa chỉ: 123 Đường ABC, Phường 4, Quận Bình Tân, TP Hồ Chí Minh, Việt Nam</p>
+            <p>Điện thoại: 028 1234 5678 - Mã số thuế: 0300123456</p>
+          </div>
+        </div>
+
+        <div class="ticket-body">
+          <h2 class="ticket-title">VÉ XE KHÁCH</h2>
+          <p class="sub-title">(Bản thể hiện của hóa đơn điện tử)</p>
+          <p class="mccqt">MCCQT: M5-26-3CPZQ-00049555716</p>
+
+          <div class="ticket-details-grid">
+            <div class="detail-item"><strong>Lộ trình:</strong> {{ selectedTicket?.route }}</div>
+            <div class="detail-item"><strong>Biển số xe:</strong> 51B-299.64</div>
+            <div class="detail-item"><strong>Giá vé:</strong> {{ selectedTicket?.total }}</div>
+            <div class="detail-item-full">(Giá trên đã bao gồm thuế GTGT: 8% và bảo hiểm hành khách)</div>
+          </div>
+
+          <div class="ticket-footer">
+            <div class="qr-code">
+              <div class="qr-placeholder">
+                <span class="material-icons">qr_code_2</span>
+              </div>
+            </div>
+            <div class="footer-right">
+              <p class="date">Ngày {{ selectedTicket?.date | date:'dd' }} tháng {{ selectedTicket?.date | date:'MM' }} năm {{ selectedTicket?.date | date:'yyyy' }}</p>
+              <p class="seller">Người bán hàng</p>
+              <div class="e-sign-box">
+                <span class="material-icons">check_circle</span>
+                <div class="sign-text">
+                  <strong>Được ký bởi: CÔNG TY TNHH VẬN TẢI TÂN XUÂN PHÚC</strong>
+                  <p>TXP e-Sign</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="ticket-info-footer">
+            <p>Cung cấp bởi CYBERLOTUS, MST: 0105232099</p>
+            <p>Tra cứu hóa đơn điện tử tại trang web: https://hoadon.txpbus.vn</p>
+            <p>Tra cứu thông tin chi tiết khác tại trang web: https://txpbus.vn/tra-cuu-ve</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-pdf" (click)="exportPDF()">
+          <span class="material-icons">picture_as_pdf</span>
+          Xuất PDF
+        </button>
+        <button class="btn-print" (click)="printTicket()">
+          <span class="material-icons">print</span>
+          In vé
+        </button>
+        <button class="btn-close" (click)="closePrintModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>

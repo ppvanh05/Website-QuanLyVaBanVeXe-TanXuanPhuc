@@ -25,7 +25,7 @@
     <div class="card table-card">
       <div class="card-header">
         <h2>Đặt vé gần đây</h2>
-        <button class="view-all">Xem tất cả</button>
+        <button class="view-all" routerLink="/admin/quan-ly-ve/danh-sach-ve">Xem tất cả</button>
       </div>
       <div class="table-responsive">
         <table>
@@ -44,7 +44,6 @@
               <td class="id-col">{{ booking.id }}</td>
               <td>
                 <div class="customer-info">
-                  <div class="customer-avatar"></div>
                   <span>{{ booking.customer }}</span>
                 </div>
               </td>
