@@ -43,7 +43,7 @@ export class TrangChuComponent {
       trend: '+12.5% so với tháng trước', 
       trendType: 'up',
       icon: 'confirmation_number',
-      color: '#00bfa5'
+      color: '#009ba1'
     },
     { 
       title: 'Doanh thu tháng này', 
@@ -59,7 +59,7 @@ export class TrangChuComponent {
       trend: '-3.1% so với tháng trước', 
       trendType: 'down',
       icon: 'person_add',
-      color: '#0097a7'
+      color: '#009ba1'
     },
     { 
       title: 'Phương tiện hoạt động', 
@@ -72,17 +72,17 @@ export class TrangChuComponent {
   ];
 
   bookings: Booking[] = [
-    { id: 'TXP1245678', customer: 'Nguyễn Văn A', route: 'TP HCM - Bình Dương', seat: 'A1, A2', time: '06:00', price: '170,000đ', status: 'Hoàn thành' },
-    { id: 'TXP1245679', customer: 'Trần Thị B', route: 'TP HCM - Bình Dương', seat: 'B3', time: '08:30', price: '95,000đ', status: 'Đang chờ' },
-    { id: 'TXP1245680', customer: 'Lê Văn C', route: 'TP HCM - Bình Dương', seat: 'A5, A6, A7', time: '10:00', price: '255,000đ', status: 'Hoàn thành' },
-    { id: 'TXP1245681', customer: 'Phạm Thị D', route: 'TP HCM - Bình Dương', seat: 'B10', time: '13:00', price: '100,000đ', status: 'Hoàn thành' }
+    { id: 'TXP1245678', customer: 'Nguyễn Văn A', route: 'Bình Dương - BX Miền Đông', seat: 'A1, A2', time: '06:00', price: '170,000đ', status: 'Hoàn thành' },
+    { id: 'TXP1245679', customer: 'Trần Thị B', route: 'BX Miền Đông - Bình Dương', seat: 'B3', time: '08:30', price: '95,000đ', status: 'Đang chờ' },
+    { id: 'TXP1245680', customer: 'Lê Văn C', route: 'Bình Dương - BX Miền Tây', seat: 'A5, A6, A7', time: '10:00', price: '255,000đ', status: 'Hoàn thành' },
+    { id: 'TXP1245681', customer: 'Phạm Thị D', route: 'BX Miền Tây - Bình Dương', seat: 'B10', time: '13:00', price: '100,000đ', status: 'Hoàn thành' }
   ];
 
   popularRoutes: PopularRoute[] = [
-    { name: 'TP HCM - Bình Dương', bookings: 342, trend: '+12%', trendType: 'up' },
-    { name: 'TP HCM - Đồng Nai', bookings: 289, trend: '+8%', trendType: 'up' },
-    { name: 'TP HCM - Long An', bookings: 231, trend: '-5%', trendType: 'down' },
-    { name: 'TP HCM - Tây Ninh', bookings: 187, trend: '+15%', trendType: 'up' },
-    { name: 'TP HCM - Bà Rịa', bookings: 156, trend: '+3%', trendType: 'up' }
+    { name: 'Bình Dương - BX Miền Đông', bookings: 342, trend: '+12%', trendType: 'up' },
+    { name: 'BX Miền Đông - Bình Dương', bookings: 289, trend: '+8%', trendType: 'up' },
+    { name: 'Bình Dương - BX Miền Tây', bookings: 231, trend: '-5%', trendType: 'down' },
+    { name: 'BX Miền Tây - Bình Dương', bookings: 187, trend: '+15%', trendType: 'up' },
+    { name: 'Bình Dương - Bến Cát', bookings: 156, trend: '+3%', trendType: 'up' }
   ];
 }
