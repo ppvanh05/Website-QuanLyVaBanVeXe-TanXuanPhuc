@@ -75,7 +75,18 @@ export class AdminLayoutComponent {
     { label: 'Quản lý khách hàng', icon: 'groups', route: '/admin/quan-ly-khach-hang' },
     { label: 'Quản lý nhân viên', icon: 'engineering', route: '/admin/quan-ly-nhan-vien' },
     { label: 'Quản lý chính sách', icon: 'policy', route: '/admin/quan-ly-chinh-sach' },
-    { label: 'Báo cáo', icon: 'bar_chart', route: '/admin/bao-cao' },
+    {
+      label: 'Báo cáo',
+      icon: 'bar_chart',
+      isOpen: false,
+      children: [
+        { label: 'Báo cáo chi tiết', icon: 'list_alt', route: '/admin/bao-cao/bao-cao-chi-tiet' },
+        { label: 'Báo cáo theo tuyến', icon: 'route', route: '/admin/bao-cao/bao-cao-tong-hop-theo-tuyen' },
+        { label: 'Báo cáo tài xế & phụ xe', icon: 'badge', route: '/admin/bao-cao/bao-cao-tai-xe-phu-xe' },
+        { label: 'Báo cáo khách hàng', icon: 'groups', route: '/admin/bao-cao/bao-cao-khach-hang' },
+        { label: 'Báo cáo hoàn hủy', icon: 'cancel', route: '/admin/bao-cao/bao-cao-hoan-huy' }
+      ]
+    },
     { label: 'Quản lý nhật ký', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky' }
   ];
 
