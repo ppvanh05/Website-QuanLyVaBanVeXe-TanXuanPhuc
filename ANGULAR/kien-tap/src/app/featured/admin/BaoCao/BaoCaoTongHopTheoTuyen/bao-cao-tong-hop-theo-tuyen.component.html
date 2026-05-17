@@ -1,0 +1,139 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="breadcrumb">
+      <span class="parent">Báo cáo</span>
+      <span class="separator">/</span>
+      <span class="current">Báo cáo tổng hợp theo tuyến</span>
+    </div>
+    <h1>Báo cáo tổng hợp theo tuyến</h1>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-icon-container">
+        <span class="material-icons">directions_bus</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Tổng vé đã đặt (Tất cả kênh)</span>
+        <span class="kpi-value">{{ totals.slVeNhaXe + totals.slVeDaiLy }} vé</span>
+      </div>
+    </div>
+
+    <div class="kpi-card orange">
+      <div class="kpi-icon-container">
+        <span class="material-icons">handshake</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Chiết khấu đại lý</span>
+        <span class="kpi-value">{{ totals.chietKhauDaiLy | number:'1.0-0' }}đ</span>
+      </div>
+    </div>
+
+    <div class="kpi-card teal">
+      <div class="kpi-icon-container">
+        <span class="material-icons">account_balance_wallet</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Tổng thực thu nhà xe</span>
+        <span class="kpi-value">{{ totals.tongTienThucThu | number:'1.0-0' }}đ</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="card search-card">
+    <h3 class="filters-title">
+      <span class="material-icons">filter_alt</span>
+      Bộ lọc báo cáo tổng hợp
+    </h3>
+
+    <div class="search-grid">
+      <!-- Khoảng thời gian -->
+      <div class="form-group" style="grid-column: span 2;">
+        <label>Khoảng thời gian khởi hành (Từ ngày - Đến ngày)</label>
+        <div class="date-range-inputs">
+          <input type="date" [(ngModel)]="filters.fromDate">
+          <span class="date-range-separator">→</span>
+          <input type="date" [(ngModel)]="filters.toDate">
+        </div>
+      </div>
+
+      <!-- Tuyến xe -->
+      <div class="form-group">
+        <label>Tuyến xe</label>
+        <select [(ngModel)]="filters.route">
+          <option value="Tất cả">Tất cả các tuyến</option>
+          <option *ngFor="let route of routesList" [value]="route">{{ route }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="search-actions">
+      <button class="btn-search" (click)="onViewReport()">
+        <span class="material-icons">assessment</span>
+        Xem báo cáo
+      </button>
+      <button class="btn-reset" (click)="onResetFilters()">
+        <span class="material-icons">refresh</span>
+        Làm mới bộ lọc
+      </button>
+      <button class="btn-excel" (click)="onExportExcel()">
+        <span class="material-icons">download</span>
+        Xuất Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Data Card -->
+  <div class="card table-card">
+    <div class="table-card-header">
+      <h2>
+        Doanh số tổng hợp theo tuyến
+        <span class="count">Tổng cộng {{ filteredSummaries.length }} tuyến đang khai thác</span>
+      </h2>
+    </div>
+
+    <div class="table-responsive" *ngIf="filteredSummaries.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Tuyến xe</th>
+            <th style="text-align: center;">SL vé nhà xe bán</th>
+            <th style="text-align: center;">SL vé đại lý bán</th>
+            <th style="text-align: right;">Chiết khấu đại lý</th>
+            <th style="text-align: right;">Tổng tiền giá vé</th>
+            <th style="text-align: right;">Tổng tiền thực thu</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredSummaries">
+            <td class="route-col">{{ item.tuyen }}</td>
+            <td class="qty-col" style="color: #0284c7;">{{ item.slVeNhaXe }}</td>
+            <td class="qty-col" style="color: #9333ea;">{{ item.slVeDaiLy }}</td>
+            <td class="discount-col">{{ item.chietKhauDaiLy | number:'1.0-0' }}đ</td>
+            <td class="price-col">{{ item.tongTienGiaVe | number:'1.0-0' }}đ</td>
+            <td class="revenue-col">{{ item.tongTienThucThu | number:'1.0-0' }}đ</td>
+          </tr>
+          <!-- Totals Row -->
+          <tr class="totals-row">
+            <td>Tổng cộng (VNĐ)</td>
+            <td class="qty-col">{{ totals.slVeNhaXe }}</td>
+            <td class="qty-col">{{ totals.slVeDaiLy }}</td>
+            <td class="discount-col">{{ totals.chietKhauDaiLy | number:'1.0-0' }}đ</td>
+            <td class="price-col">{{ totals.tongTienGiaVe | number:'1.0-0' }}đ</td>
+            <td class="revenue-col">{{ totals.tongTienThucThu | number:'1.0-0' }}đ</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- No Data State -->
+    <div class="no-data-container" *ngIf="filteredSummaries.length === 0">
+      <span class="material-icons">inbox</span>
+      <p>Không tìm thấy dữ liệu doanh thu tuyến nào khớp với bộ lọc.</p>
+    </div>
+  </div>
+</div>

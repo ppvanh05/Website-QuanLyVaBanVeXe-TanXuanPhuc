@@ -808,6 +808,7 @@ td {
     cursor: not-allowed;
   }
 
+@media (max-width: 768px) {
   .pagination {
     flex-direction: column;
     gap: 15px;
