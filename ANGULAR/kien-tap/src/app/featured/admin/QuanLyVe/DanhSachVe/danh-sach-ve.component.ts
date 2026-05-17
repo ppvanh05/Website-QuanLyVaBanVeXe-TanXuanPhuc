@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { timer } from 'rxjs';
 
 interface Ticket {
   id: string;
@@ -9,6 +10,7 @@ interface Ticket {
   route: string;
   arrivalDate: string;
   date: string;
+  time: string;
   total: string;
   paymentStatus: 'Chờ thanh toán' | 'Đã thanh toán' | 'Đã hủy' | 'Chờ hoàn tiền' | 'Đã hoàn tiền';
   ticketStatus: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy';
@@ -34,14 +36,14 @@ export class DanhSachVeComponent {
 
   // Danh sách hiển thị thực tế trên bảng (sau khi lọc)
   displayTickets: Ticket[] = [];
-  
+
   // Phân trang
   currentPage: number = 1;
   pageSize: number = 15;
 
   tickets: Ticket[] = this.generateMockTickets();
 
-  constructor() {
+  constructor(private cdr: ChangeDetectorRef, private zone: NgZone) {
     this.displayTickets = [...this.tickets];
   }
 
@@ -53,7 +55,7 @@ export class DanhSachVeComponent {
       'Bình Dương → BX Miền Tây', 'BX Miền Tây → Bình Dương',
       'Bình Dương → Bến Cát', 'Bến Cát → Bình Dương'
     ];
-    
+
     // Tạo 673 vé
     for (let i = 1; i <= 673; i++) {
       let pStatus: any = 'Đã thanh toán';
@@ -89,6 +91,7 @@ export class DanhSachVeComponent {
         }
       }
 
+      const times = ['05:30', '07:00', '08:30', '10:00', '13:00', '15:45', '17:30', '20:00', '22:15'];
       const ticket: Ticket = {
         id: `TXP2605${String(1000 + i).padStart(4, '0')}`,
         customer: names[i % names.length],
@@ -96,6 +99,7 @@ export class DanhSachVeComponent {
         route: routes[i % routes.length],
         date: i <= 205 ? '2026-05-20' : '2026-05-15',
         arrivalDate: i <= 205 ? '2026-05-20' : '2026-05-15',
+        time: times[i % times.length],
         total: `${150 + (i % 10) * 20}.000đ`,
         paymentStatus: pStatus,
         ticketStatus: tStatus
@@ -107,11 +111,11 @@ export class DanhSachVeComponent {
 
   onSearch() {
     this.displayTickets = this.tickets.filter(t => {
-      const matchSearch = !this.filters.searchTerm || 
+      const matchSearch = !this.filters.searchTerm ||
         t.id.toLowerCase().includes(this.filters.searchTerm.toLowerCase()) ||
         t.customer.toLowerCase().includes(this.filters.searchTerm.toLowerCase()) ||
         t.phone.includes(this.filters.searchTerm);
-      
+
       const matchRoute = this.filters.route === 'Tất cả tuyến' || t.route === this.filters.route;
       const matchDepDate = !this.filters.departureDate || t.date === this.filters.departureDate;
       const matchArrDate = !this.filters.arrivalDate || t.arrivalDate === this.filters.arrivalDate;
@@ -154,15 +158,15 @@ export class DanhSachVeComponent {
   getPageNumbers() {
     const pages = [];
     const total = this.totalPages;
-    
+
     // Hiển thị tối đa 5 trang xung quanh trang hiện tại
     let start = Math.max(1, this.currentPage - 2);
     let end = Math.min(total, start + 4);
-    
+
     if (end === total) {
       start = Math.max(1, end - 4);
     }
-    
+
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
@@ -243,8 +247,49 @@ export class DanhSachVeComponent {
     }
   }
 
+  // Trạng thái nút gửi lại: 'idle', 'sending', 'success'
+  resendStatus: 'idle' | 'sending' | 'success' = 'idle';
+  private resendTimeout: any;
+
   onResendNotification() {
-    alert('Đã gửi lại SMS/Email cho khách hàng ' + this.selectedTicket?.customer);
+    if (this.resendStatus !== 'idle') return;
+
+    this.resendStatus = 'sending';
+
+    // Sử dụng RxJS timer: 1 giây xoay
+    timer(1000).subscribe(() => {
+      this.zone.run(() => {
+        this.resendStatus = 'success';
+        this.cdr.detectChanges();
+
+        if (this.resendTimeout) clearTimeout(this.resendTimeout);
+
+        // 4 giây hiện thông báo thành công
+        this.resendTimeout = setTimeout(() => {
+          this.zone.run(() => {
+            this.resendStatus = 'idle';
+            this.cdr.detectChanges();
+          });
+        }, 4000);
+      });
+    });
+  }
+
+  getResendButtonText(): string {
+    if (this.resendStatus === 'sending') return 'Đang gửi...';
+    if (this.resendStatus === 'success') return 'Đã gửi thành công!';
+    return 'Gửi lại SMS/Email';
+  }
+
+  getReportTime(time: string | undefined): string {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':').map(Number);
+    let totalMinutes = hours * 60 + minutes - 30;
+    if (totalMinutes < 0) totalMinutes += 24 * 60; // Xử lý nếu là nửa đêm
+
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
   // Modal In vé (kế thừa từ logic cũ nhưng mở từ Details)
@@ -258,6 +303,8 @@ export class DanhSachVeComponent {
 
   closePrintModal() {
     this.showPrintModal = false;
+    this.showDetailsModal = false;
+    this.selectedTicket = null;
   }
 
   exportPDF() {

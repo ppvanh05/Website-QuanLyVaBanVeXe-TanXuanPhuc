@@ -213,9 +213,14 @@
               In vé
             </button>
 
-            <button class="action-btn" (click)="onResendNotification()">
-              <span class="material-icons icon-mail">mail</span>
-              Gửi lại SMS/Email
+            <button class="action-btn" 
+              (click)="onResendNotification()" 
+              [disabled]="resendStatus !== 'idle'"
+              [ngClass]="{'resend-success': resendStatus === 'success', 'resend-sending': resendStatus === 'sending'}">
+              <span class="material-icons icon-mail" *ngIf="resendStatus === 'idle'">mail</span>
+              <span class="material-icons spin-icon" *ngIf="resendStatus === 'sending'">sync</span>
+              <span class="material-icons" *ngIf="resendStatus === 'success'">check_circle</span>
+              {{ getResendButtonText() }}
             </button>
 
             <!-- Nút Hoàn tiền (Chỉ hiện cho vé đang chờ hoàn tiền) -->
@@ -275,71 +280,69 @@
   <div class="modal-overlay print-overlay" *ngIf="showPrintModal" (click)="closePrintModal()">
     <div class="ticket-modal" (click)="$event.stopPropagation()">
       <div class="ticket-preview">
-        <div class="ticket-header">
-          <div class="ticket-logo">
-            <img src="asset/images/TXP_logo.png" alt="Logo">
-            <div class="ticket-serial">
-              <span>Ký hiệu: 5C26MLL</span>
-              <strong>Số: {{ selectedTicket?.id?.substring(7) }}</strong>
-            </div>
+      <div class="mini-ticket">
+        <!-- Header -->
+        <div class="mini-header">
+          <img src="/asset/images/TXP_logo2.png" alt="TXP Logo" class="mini-logo">
+          <div class="mini-company">TÂN XUÂN PHÚC</div>
+        </div>
+
+        <div class="mini-divider"></div>
+
+        <!-- Main QR -->
+        <div class="mini-qr-section">
+          <div class="mini-qr">
+            <span class="material-icons">qr_code_2</span>
           </div>
-          <div class="company-info">
-            <h3>CÔNG TY TNHH VẬN TẢI TÂN XUÂN PHÚC</h3>
-            <p class="slogan">- NHANH HƠN XA HƠN -</p>
-            <p>Địa chỉ: 123 Đường ABC, Phường 4, Quận Bình Tân, TP Hồ Chí Minh, Việt Nam</p>
-            <p>Điện thoại: 028 1234 5678 - Mã số thuế: 0300123456</p>
+          <div class="mini-id">Mã vé: {{ selectedTicket?.id?.substring(7) }}</div>
+        </div>
+
+        <!-- Content Body -->
+        <div class="mini-body">
+          <div class="mini-info-row">
+            <span class="m-label">Tuyến xe:</span>
+            <span class="m-val">{{ selectedTicket?.route }}</span>
+          </div>
+          <div class="mini-info-row">
+            <span class="m-label">Giờ đi:</span>
+            <span class="m-val">{{ selectedTicket?.time }} - {{ selectedTicket?.date | date:'dd/MM' }}</span>
+          </div>
+          <div class="mini-info-row">
+            <span class="m-label">Số ghế:</span>
+            <span class="m-val highlight">A0{{ selectedTicket?.id?.substring(13, 14) || '1' }}</span>
+          </div>
+
+          <div class="mini-address-box">
+            <div class="m-label">Điểm lên xe:</div>
+            <div class="m-addr">Bến xe Miền Đông Mới, TP. Thủ Đức</div>
+          </div>
+
+          <div class="mini-note">
+            * Có mặt trước {{ getReportTime(selectedTicket?.time) }} để trung chuyển hoặc kiểm tra thông tin trước khi lên xe.
+          </div>
+
+          <div class="mini-price-row">
+            <span class="m-label">Tổng tiền:</span>
+            <span class="m-price">{{ selectedTicket?.total }}</span>
           </div>
         </div>
 
-        <div class="ticket-body">
-          <h2 class="ticket-title">VÉ XE KHÁCH</h2>
-          <p class="sub-title">(Bản thể hiện của hóa đơn điện tử)</p>
-          <p class="mccqt">MCCQT: M5-26-3CPZQ-00049555716</p>
-
-          <div class="ticket-details-grid">
-            <div class="detail-item"><strong>Lộ trình:</strong> {{ selectedTicket?.route }}</div>
-            <div class="detail-item"><strong>Biển số xe:</strong> 51B-299.64</div>
-            <div class="detail-item"><strong>Giá vé:</strong> {{ selectedTicket?.total }}</div>
-            <div class="detail-item-full">(Giá trên đã bao gồm thuế GTGT: 8% và bảo hiểm hành khách)</div>
-          </div>
-
-          <div class="ticket-footer">
-            <div class="qr-code">
-              <div class="qr-placeholder">
-                <span class="material-icons">qr_code_2</span>
-              </div>
-            </div>
-            <div class="footer-right">
-              <p class="date">Ngày {{ selectedTicket?.date | date:'dd' }} tháng {{ selectedTicket?.date | date:'MM' }} năm {{ selectedTicket?.date | date:'yyyy' }}</p>
-              <p class="seller">Người bán hàng</p>
-              <div class="e-sign-box">
-                <span class="material-icons">check_circle</span>
-                <div class="sign-text">
-                  <strong>Được ký bởi: CÔNG TY TNHH VẬN TẢI TÂN XUÂN PHÚC</strong>
-                  <p>TXP e-Sign</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="ticket-info-footer">
-            <p>Cung cấp bởi CYBERLOTUS, MST: 0105232099</p>
-            <p>Tra cứu hóa đơn điện tử tại trang web: https://hoadon.txpbus.vn</p>
-            <p>Tra cứu thông tin chi tiết khác tại trang web: https://txpbus.vn/tra-cuu-ve</p>
-          </div>
+        <div class="mini-footer">
+          <p>Hotline: 1900 98 98 67</p>
+          <p class="mini-web">www.txpbus.vn</p>
         </div>
       </div>
 
       <div class="modal-actions">
         <button class="btn-pdf" (click)="exportPDF()">
           <span class="material-icons">picture_as_pdf</span>
-          Xuất PDF
+          PDF
         </button>
         <button class="btn-print" (click)="printTicket()">
           <span class="material-icons">print</span>
-          In vé
+          In
         </button>
-        <button class="btn-close" (click)="closePrintModal()">Đóng</button>
+        <button class="btn-close" (click)="closePrintModal()">Thoát</button>
       </div>
     </div>
   </div>
