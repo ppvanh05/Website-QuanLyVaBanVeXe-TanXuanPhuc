@@ -373,7 +373,8 @@ td {
   margin-bottom: 30px;
 }
 
-.info-section h4, .actions-side h4 {
+.info-section h4,
+.actions-side h4 {
   font-size: 16px;
   color: #333;
   margin-bottom: 15px;
@@ -430,15 +431,79 @@ td {
   font-size: 20px;
 }
 
-.icon-edit { color: #007bff; }
-.icon-money { color: #28a745; }
-.icon-print { color: #666; }
-.icon-mail { color: #17a2b8; }
-.icon-refund { color: #f37021; }
-.icon-cancel { color: #dc3545; }
+.resend-success {
+  background-color: #e6f4ea !important;
+  color: #1e8e3e !important;
+  border-color: #1e8e3e !important;
+}
 
-.refund-btn:hover { border-color: #f37021; color: #f37021; }
-.cancel-btn:hover { border-color: #dc3545; color: #dc3545; }
+.resend-sending {
+  background-color: #f8f9fa !important;
+  color: #666 !important;
+}
+
+.spin-icon {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+    margin-top: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 50px;
+    margin-top: 10px;
+    transform: translateY(0);
+  }
+}
+
+.resend-success-msg {
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.icon-edit {
+  color: #007bff;
+}
+
+.icon-money {
+  color: #28a745;
+}
+
+.icon-print {
+  color: #666;
+}
+
+.icon-mail {
+  color: #17a2b8;
+}
+
+.icon-refund {
+  color: #f37021;
+}
+
+.icon-cancel {
+  color: #dc3545;
+}
+
+.refund-btn:hover {
+  border-color: #f37021;
+  color: #f37021;
+}
+
+.cancel-btn:hover {
+  border-color: #dc3545;
+  color: #dc3545;
+}
 
 .details-footer {
   padding: 20px;
@@ -481,301 +546,270 @@ td {
 /* Ticket Print Preview Modal */
 .ticket-modal {
   background: white;
-  padding: 20px;
-  border-radius: 12px;
-  max-width: 550px;
-  width: 90%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-}
-
-.ticket-preview {
-  border: 1px solid #ccc;
-  padding: 15px;
-  background-color: #fff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-}
-
-.ticket-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
-
-.ticket-logo img {
-  height: 45px;
-  margin-bottom: 5px;
-}
-
-.ticket-serial {
-  display: flex;
-  flex-direction: column;
-  font-size: 11px;
-}
-
-.ticket-serial strong {
-  font-size: 16px;
-  color: #009ba1;
-}
-
-.company-info {
-  text-align: right;
-}
-
-.company-info h3 {
-  margin: 0;
-  color: #006666;
-  font-size: 14px;
-}
-
-.company-info .slogan {
-  font-weight: 700;
-  margin: 2px 0;
-  font-size: 10px;
-}
-
-.company-info p {
-  margin: 1px 0;
-  font-size: 9px;
-  color: #555;
-}
-
-.ticket-body {
-  text-align: center;
-}
-
-.ticket-title {
-  color: #f37021;
-  font-size: 20px;
-  margin: 0;
-  font-weight: 800;
-}
-
-.sub-title {
-  font-style: italic;
-  font-size: 12px;
-  margin: 5px 0;
-}
-
-.mccqt {
-  font-size: 11px;
-  color: #777;
-  margin-bottom: 15px;
-}
-
-.ticket-details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  text-align: left;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding: 12px;
-  background-color: #fcfcfc;
-  border: 1px dashed #ccc;
-}
-
-.detail-item-full {
-  grid-column: span 2;
-  font-style: italic;
-  font-size: 10px;
-  color: #666;
-}
-
-.ticket-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-top: 15px;
-}
-
-.qr-placeholder {
-  width: 60px;
-  height: 60px;
-  border: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.qr-placeholder .material-icons {
-  font-size: 45px;
-  color: #333;
-}
-
-.footer-right {
-  text-align: center;
-}
-
-.footer-right .date {
-  font-style: italic;
-  font-size: 12px;
-}
-
-.footer-right .seller {
-  font-weight: 700;
-  margin: 8px 0;
-}
-
-.e-sign-box {
-  border: 1px solid #dc3545;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #003366;
-  text-align: left;
-}
-
-.e-sign-box .material-icons {
-  color: #003366;
-  font-size: 24px;
-}
-
-.sign-text strong {
-  font-size: 10px;
-  display: block;
-}
-
-.sign-text p {
-  margin: 0;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 12px;
-}
-
-.ticket-info-footer {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 9px;
-  color: #999;
-  border-top: 1px solid #eee;
-  padding-top: 10px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 25px;
-}
-
-.btn-pdf, .btn-print, .btn-close {
-  padding: 10px 24px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-}
-
-.btn-pdf {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-print {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-close {
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  color: #333;
-}
-
-.btn-pdf:hover { background-color: #0056b3; }
-.btn-print:hover { background-color: #218838; }
-
-/* OTP Modal */
-.otp-modal {
-  background: white;
   padding: 30px;
   border-radius: 12px;
-  width: 400px;
-  text-align: center;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-}
+  max-height: 700px;
+  max-width: 450px;
+  /* Tăng nhẹ để thở */
+  width: 95%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
 
-.otp-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.otp-header .material-icons {
-  font-size: 48px;
-  color: #009ba1;
-}
-
-.otp-header h3 {
-  margin: 0;
-  font-size: 20px;
-  color: #333;
-}
-
-.otp-body p {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 20px;
-}
-
-.otp-input-group input {
-  width: 200px;
-  text-align: center;
-  font-size: 24px;
-  letter-spacing: 5px;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.otp-input-group input:focus {
-  border-color: #009ba1;
-}
-
-.otp-footer {
-  display: flex;
-  gap: 15px;
-  margin-top: 30px;
-}
-
-.btn-cancel-otp, .btn-confirm-otp {
-  flex: 1;
-  padding: 12px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-}
-
-.btn-cancel-otp {
-  background-color: #f8f9fa;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-.btn-confirm-otp {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-confirm-otp:disabled {
-  background-color: #ffc9cd;
-  cursor: not-allowed;
-}
-
-    .pagination {
-      flex-direction: column;
-      gap: 15px;
-    }
+  .mini-ticket {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    color: #333;
+    font-family: 'Inter', Arial, sans-serif;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f0f0;
   }
+
+  .mini-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .mini-logo {
+    height: 32px;
+    object-fit: contain;
+  }
+
+  .mini-company {
+    font-size: 14px;
+    font-weight: 800;
+    color: #f37021;
+    letter-spacing: 1px;
+  }
+
+  .mini-divider {
+    border-top: 1px dashed #ddd;
+    margin: 15px 0;
+  }
+
+  .mini-qr-section {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .mini-qr .material-icons {
+    font-size: 80px;
+    color: #222;
+  }
+
+  .mini-id {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+  }
+
+  .mini-body {
+    font-size: 13px;
+  }
+
+  .mini-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .m-label {
+    color: #777;
+  }
+
+  .m-val {
+    font-weight: 600;
+    color: #333;
+    text-align: right;
+  }
+
+  .highlight {
+    color: #f37021;
+    font-size: 15px;
+  }
+
+  .mini-address-box {
+    background: #fdf2e9;
+    padding: 8px;
+    border-radius: 4px;
+    margin: 12px 0;
+  }
+
+  .m-addr {
+    font-weight: 600;
+    margin-top: 3px;
+    color: #444;
+  }
+
+  .mini-note {
+    font-size: 11px;
+    color: #d9534f;
+    font-style: italic;
+    margin: 10px 0;
+  }
+
+  .mini-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+
+  .m-price {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2c3e50;
+  }
+
+  .mini-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 11px;
+    color: #aaa;
+  }
+
+  .mini-web {
+    color: #f37021;
+    margin-top: 3px;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+  }
+
+  .btn-pdf,
+  .btn-print,
+  .btn-close {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+  }
+
+  .btn-pdf {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .btn-print {
+    background-color: #28a745;
+    color: white;
+  }
+
+  .btn-close {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    color: #333;
+  }
+
+  .btn-pdf:hover {
+    background-color: #0056b3;
+  }
+
+  .btn-print:hover {
+    background-color: #218838;
+  }
+
+  /* OTP Modal */
+  .otp-modal {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .otp-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .otp-header .material-icons {
+    font-size: 48px;
+    color: #009ba1;
+  }
+
+  .otp-header h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+  }
+
+  .otp-body p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .otp-input-group input {
+    width: 200px;
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 5px;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .otp-input-group input:focus {
+    border-color: #009ba1;
+  }
+
+  .otp-footer {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+  }
+
+  .btn-cancel-otp,
+  .btn-confirm-otp {
+    flex: 1;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-cancel-otp {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #ddd;
+  }
+
+  .btn-confirm-otp {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-confirm-otp:disabled {
+    background-color: #ffc9cd;
+    cursor: not-allowed;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
