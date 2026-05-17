@@ -6,8 +6,12 @@ export const routes: Routes = [
     loadChildren: () => import('./featured/admin/routes/admin.routes').then(m => m.ADMIN_ROUTES)
   },
   {
+    path: 'home',
+    loadComponent: () => import('./features/customer/home/home.component').then(m => m.HomeComponent)
+  },
+  {
     path: '',
-    redirectTo: 'admin',
+    redirectTo: 'home',
     pathMatch: 'full'
   }
 ];

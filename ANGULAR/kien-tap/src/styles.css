@@ -1,1 +1,21 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Base Styles */
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    @apply bg-background text-on-surface;
+}
+
+@layer utilities {
+    .font-display-lg { font-size: 57px; line-height: 64px; font-weight: 700; }
+    .font-headline-lg { font-size: 32px; line-height: 40px; font-weight: 600; }
+    .font-headline-md { font-size: 28px; line-height: 36px; font-weight: 500; }
+    .font-title-lg { font-size: 22px; line-height: 28px; font-weight: 500; }
+    .font-label-md { font-size: 12px; line-height: 16px; font-weight: 500; }
+    .font-label-sm { font-size: 11px; line-height: 16px; font-weight: 500; }
+    .font-body-lg { font-size: 16px; line-height: 24px; font-weight: 400; }
+    .font-body-md { font-size: 14px; line-height: 20px; font-weight: 400; }
+}
