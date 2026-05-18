@@ -10,6 +10,10 @@ export const routes: Routes = [
     loadComponent: () => import('./featured/customer/home/home.component').then(m => m.HomeComponent)
   },
   {
+    path: 'tin-tuc',
+    loadComponent: () => import('./featured/customer/tintuc/tintuc.component').then(m => m.TintucComponent)
+  },
+  {
     path: '',
     redirectTo: 'home',
     pathMatch: 'full'
