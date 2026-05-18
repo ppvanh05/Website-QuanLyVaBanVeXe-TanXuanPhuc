@@ -3,99 +3,101 @@
 
     <main class="pt-20">
         <!-- Hero Section -->
-        <section class="relative h-[600px] overflow-hidden">
+        <section class="relative h-[400px] overflow-hidden">
             <div class="absolute inset-0 bg-cover bg-center"
                 style="background-image: url('asset/images/customer/banner.jpg');">
                 <div class="absolute inset-0 hero-gradient"></div>
             </div>
-            <!-- Hero text removed as per user request -->
             <div class="relative h-full max-w-container-max mx-auto px-margin-desktop flex flex-col justify-center">
             </div>
         </section>
 
         <!-- Search Filter Component -->
-        <section class="max-w-container-max mx-auto px-margin-desktop -mt-24 relative z-10">
-            <div class="bg-surface-container-lowest rounded-xl shadow-[0px_8px_30px_rgba(11,42,74,0.12)] p-8">
+        <section class="max-w-container-max mx-auto px-margin-desktop -mt-16 relative z-10">
+            <div class="bg-surface-container-lowest rounded-xl shadow-[0px_8px_30px_rgba(11,42,74,0.12)] p-6">
                 <!-- Toggle -->
-                <div class="flex items-center gap-6 mb-8 border-b border-outline-variant pb-4">
+                <div class="flex items-center gap-6 mb-6 border-b border-outline-variant pb-2">
                     <button
-                        class="flex items-center gap-2 font-title-lg text-title-lg text-primary border-b-2 border-primary pb-4 -mb-4">
-                        <span class="material-symbols-outlined">radio_button_checked</span>
+                        class="flex items-center gap-2 font-bold text-body-md text-primary border-b-2 border-primary pb-2 -mb-2">
+                        <span class="material-symbols-outlined text-body-md">radio_button_checked</span>
                         Một chiều
                     </button>
                     <button
-                        class="flex items-center gap-2 font-title-lg text-title-lg text-on-surface-variant hover:text-primary transition-colors">
-                        <span class="material-symbols-outlined">radio_button_unchecked</span>
+                        class="flex items-center gap-2 font-bold text-body-md text-on-surface-variant hover:text-primary transition-colors pb-2 -mb-2">
+                        <span class="material-symbols-outlined text-body-md">radio_button_unchecked</span>
                         Khứ hồi
                     </button>
                 </div>
-                <!-- Fields -->
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter items-end">
-                    <div class="md:col-span-3 space-y-2 relative">
-                        <label class="font-label-md text-label-md text-secondary">Điểm đi</label>
-                        <div
-                            class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 focus-within:border-primary transition-all">
-                            <span class="material-symbols-outlined text-primary mr-3">location_on</span>
-                            <input class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-xl font-semibold"
+
+                <!-- Search Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <!-- Điểm đi -->
+                    <div class="md:col-span-3 space-y-1.5">
+                        <label class="font-bold text-body-md text-secondary">Điểm đi</label>
+                        <div class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2.5 focus-within:border-primary transition-all">
+                            <span class="material-symbols-outlined text-primary mr-2">location_on</span>
+                            <input class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-body-lg placeholder:font-normal"
                                 placeholder="Hồ Chí Minh" type="text" [(ngModel)]="departure">
                         </div>
                     </div>
+
+                    <!-- Switch Button -->
                     <div class="md:col-span-1 flex justify-center pb-2">
-                        <button
-                            class="bg-surface-container-low p-2 rounded-full border border-outline-variant hover:border-primary transition-all">
-                            <span class="material-symbols-outlined text-primary">swap_horiz</span>
+                        <button class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center text-primary hover:bg-primary-light transition-colors">
+                            <span class="material-symbols-outlined">sync_alt</span>
                         </button>
                     </div>
-                    <div class="md:col-span-3 space-y-2">
-                        <label class="font-label-md text-label-md text-secondary">Điểm đến</label>
-                        <div
-                            class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 focus-within:border-primary transition-all">
-                            <span class="material-symbols-outlined text-primary mr-3">flag</span>
-                            <input class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-xl font-semibold"
+
+                    <!-- Điểm đến -->
+                    <div class="md:col-span-3 space-y-1.5">
+                        <label class="font-bold text-body-md text-secondary">Điểm đến</label>
+                        <div class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2.5 focus-within:border-primary transition-all">
+                            <span class="material-symbols-outlined text-primary mr-2">flag</span>
+                            <input class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-body-lg placeholder:font-normal"
                                 placeholder="Đà Lạt" type="text" [(ngModel)]="destination">
                         </div>
                     </div>
-                    <div class="md:col-span-2 space-y-2">
-                        <label class="font-label-md text-label-md text-secondary">Ngày đi</label>
-                        <div
-                            class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 focus-within:border-primary transition-all">
-                            <span class="material-symbols-outlined text-primary mr-3">calendar_month</span>
-                            <input class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-xl font-semibold"
+
+                    <!-- Ngày đi -->
+                    <div class="md:col-span-2 space-y-1.5">
+                        <label class="font-bold text-body-md text-secondary">Ngày đi</label>
+                        <div class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2.5 focus-within:border-primary transition-all">
+                            <span class="material-symbols-outlined text-primary mr-2">calendar_month</span>
+                            <input class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-body-lg placeholder:font-normal"
                                 placeholder="24/12/2024" type="text" [(ngModel)]="departureDate">
                         </div>
                     </div>
-                    <div class="md:col-span-1 space-y-2">
-                        <label class="font-label-md text-label-md text-secondary">Hành khách</label>
-                        <div
-                            class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 focus-within:border-primary transition-all">
-                            <input class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-xl font-semibold" max="5"
-                                min="1" type="number" [(ngModel)]="passengerCount">
+
+                    <!-- Hành khách -->
+                    <div class="md:col-span-1 space-y-1.5">
+                        <label class="font-bold text-body-md text-secondary block whitespace-nowrap">Hành khách</label>
+                        <div class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2.5 focus-within:border-primary transition-all">
+                            <input class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-body-lg text-center"
+                                type="number" [(ngModel)]="passengerCount" min="1">
                         </div>
                     </div>
+
+                    <!-- Search Button -->
                     <div class="md:col-span-2">
-                        <button
-                            class="w-full bg-urgent-orange text-on-primary font-title-lg py-3 rounded-xl hover:opacity-90 transition-all shadow-md">
-                            TÌM CHUYẾN XE
+                        <button class="w-full bg-secondary text-on-primary font-bold py-3 rounded-xl shadow-md hover:bg-secondary-hover transition-all flex items-center justify-center gap-2">
+                            TÌM KIẾM
                         </button>
                     </div>
                 </div>
+
                 <!-- Recent Searches -->
-                <div class="mt-6 flex items-center gap-4">
-                    <span class="font-label-md text-label-md text-secondary">Tìm kiếm gần đây:</span>
+                <div class="mt-4 flex items-center gap-3">
+                    <span class="text-body-sm font-bold text-secondary">Tìm kiếm gần đây:</span>
                     <div class="flex gap-2">
-                        <span
-                            class="bg-surface-container text-secondary px-3 py-1 rounded-full text-label-sm font-label-sm border border-outline-variant/30 cursor-pointer hover:bg-surface-variant transition-colors">Sài
-                            Gòn → Nha Trang</span>
-                        <span
-                            class="bg-surface-container text-secondary px-3 py-1 rounded-full text-label-sm font-label-sm border border-outline-variant/30 cursor-pointer hover:bg-surface-variant transition-colors">Đà
-                            Lạt → Sài Gòn</span>
+                        <span class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full text-label-md border border-outline-variant/30 cursor-pointer hover:bg-primary-light hover:text-primary transition-colors">Sài Gòn → Nha Trang</span>
+                        <span class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full text-label-md border border-outline-variant/30 cursor-pointer hover:bg-primary-light hover:text-primary transition-colors">Đà Lạt → Sài Gòn</span>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Values Section -->
-        <section class="py-20 max-w-container-max mx-auto px-margin-desktop">
+        <section class="py-6 max-w-container-max mx-auto px-margin-desktop">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
                 <div
                     class="text-center space-y-4 p-8 bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/10">
@@ -128,7 +130,7 @@
         </section>
 
         <!-- Popular Routes Section -->
-        <section class="py-20 bg-surface-container-low">
+        <section class="py-12 bg-surface-container-low">
             <div class="max-w-container-max mx-auto px-margin-desktop">
                 <h2 class="font-headline-lg text-headline-lg text-secondary text-center mb-12">Tuyến xe phổ biến</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
@@ -140,12 +142,11 @@
                                 src="asset/images/customer/benxemientay.jpg">
                         </div>
                         <div class="p-6">
-                            <h4 class="font-headline-md text-headline-md text-secondary mb-2">Bình Định → Bến xe Miền
-                                Tây</h4>
-                            <p class="font-body-md text-on-surface-variant mb-6">Từ <span
-                                    class="text-urgent-orange font-bold text-headline-sm">250.000đ</span></p>
+                            <h4 class="font-bold text-title-lg text-secondary mb-2">Bình Định → Bến xe Miền Tây</h4>
+                            <p class="font-body-md text-on-surface-variant mb-6 text-body-sm">Từ <span
+                                    class="text-secondary font-bold text-title-md">250.000đ</span></p>
                             <button
-                                class="w-full bg-urgent-orange text-on-primary font-title-lg py-3 rounded-xl hover:opacity-90 transition-all shadow-sm">Đặt
+                                class="w-full bg-secondary text-on-primary font-bold py-3 rounded-xl hover:bg-secondary-hover transition-all shadow-sm">Đặt
                                 vé ngay</button>
                         </div>
                     </div>
@@ -157,11 +158,11 @@
                                 src="asset/images/customer/benxebencat.jpg">
                         </div>
                         <div class="p-6">
-                            <h4 class="font-headline-md text-headline-md text-secondary mb-2">Bình Định → Bến Cát</h4>
-                            <p class="font-body-md text-on-surface-variant mb-6">Từ <span
-                                    class="text-urgent-orange font-bold text-headline-sm">250.000đ</span></p>
+                            <h4 class="font-bold text-title-lg text-secondary mb-2">Bình Định → Bến Cát</h4>
+                            <p class="font-body-md text-on-surface-variant mb-6 text-body-sm">Từ <span
+                                    class="text-secondary font-bold text-title-md">250.000đ</span></p>
                             <button
-                                class="w-full bg-urgent-orange text-on-primary font-title-lg py-3 rounded-xl hover:opacity-90 transition-all shadow-sm">Đặt
+                                class="w-full bg-secondary text-on-primary font-bold py-3 rounded-xl hover:bg-secondary-hover transition-all shadow-sm">Đặt
                                 vé ngay</button>
                         </div>
                     </div>
@@ -173,12 +174,11 @@
                                 src="asset/images/customer/benxemiendong.jpg">
                         </div>
                         <div class="p-6">
-                            <h4 class="font-headline-md text-headline-md text-secondary mb-2">Bình Định → Bến xe Miền
-                                Đông</h4>
-                            <p class="font-body-md text-on-surface-variant mb-6">Từ <span
-                                    class="text-urgent-orange font-bold text-headline-sm">250.000đ</span></p>
+                            <h4 class="font-bold text-title-lg text-secondary mb-2">Bình Định → Bến xe Miền Đông</h4>
+                            <p class="font-body-md text-on-surface-variant mb-6 text-body-sm">Từ <span
+                                    class="text-secondary font-bold text-title-md">250.000đ</span></p>
                             <button
-                                class="w-full bg-urgent-orange text-on-primary font-title-lg py-3 rounded-xl hover:opacity-90 transition-all shadow-sm">Đặt
+                                class="w-full bg-secondary text-on-primary font-bold py-3 rounded-xl hover:bg-secondary-hover transition-all shadow-sm">Đặt
                                 vé ngay</button>
                         </div>
                     </div>
@@ -187,18 +187,18 @@
         </section>
 
         <!-- Social Proof & Testimonials -->
-        <section class="bg-surface-container-low py-20">
+        <section class="bg-surface-container-low py-12">
             <div class="max-w-container-max mx-auto px-margin-desktop">
                 <div class="flex flex-col md:flex-row gap-gutter">
                     <!-- Bus Gallery -->
                     <div class="md:w-1/2 rounded-xl overflow-hidden shadow-lg h-[450px]">
                         <img class="w-full h-full object-cover" data-alt="Limousine interior"
-                            src="asset/images/customer/danhgia.jpg">
+                            src="asset/images/customer/nhaxe1.png">
                     </div>
                     <!-- Testimonials -->
                     <div class="md:w-1/2 flex flex-col justify-center space-y-6">
-                        <h2 class="font-headline-lg text-headline-lg text-secondary">Khách hàng nói gì về TXP?</h2>
-                        <div class="space-y-4">
+                        <h2 class="font-headline-lg text-headline-lg text-secondary">Khách hàng nói gì về Tân Xuân Phúc?</h2>
+                        <div class="space-y-3">
                             <!-- Testimonial Card -->
                             <div
                                 class="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/20">
@@ -263,7 +263,7 @@
         </section>
 
         <!-- News Summary -->
-        <section class="py-20 max-w-container-max mx-auto px-margin-desktop">
+        <section class="py-12 max-w-container-max mx-auto px-margin-desktop">
             <div class="flex justify-between items-end mb-10">
                 <h2 class="font-headline-lg text-headline-lg text-secondary">TIN TỨC MỚI</h2>
                 <a class="font-title-lg text-title-lg text-primary hover:underline" href="#">Xem tất cả &gt;</a>
@@ -275,7 +275,7 @@
                     <div class="h-48 overflow-hidden">
                         <img alt="News 1"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="asset/images/customer/km1.jpg">
+                            src="asset/images/customer/tintuc4.png">
                     </div>
                     <div class="p-6 space-y-3">
                         <span class="font-label-sm text-label-sm text-on-surface-variant">15/12/2024</span>
@@ -295,7 +295,7 @@
                     <div class="h-48 overflow-hidden">
                         <img alt="News 2"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="asset/images/customer/km2.jpg">
+                            src="asset/images/customer/tintuc3.png">
                     </div>
                     <div class="p-6 space-y-3">
                         <span class="font-label-sm text-label-sm text-on-surface-variant">10/12/2024</span>
@@ -315,7 +315,7 @@
                     <div class="h-48 overflow-hidden">
                         <img alt="News 3"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="asset/images/customer/km3.jpg">
+                            src="asset/images/customer/tintuc7.png">
                     </div>
                     <div class="p-6 space-y-3">
                         <span class="font-label-sm text-label-sm text-on-surface-variant">05/12/2024</span>
@@ -335,3 +335,4 @@
 
     <app-footer></app-footer>
 </div>
+g
