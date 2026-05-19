@@ -4,11 +4,12 @@ import { RouterModule } from '@angular/router';
 
 interface StatCard {
   title: string;
-  value: string;
+  value: number | string;
+  isCurrency?: boolean;
   trend: string;
   trendType: 'up' | 'down';
   icon: string;
-  color: string;
+  theme: string;
 }
 
 interface Booking {
@@ -17,7 +18,7 @@ interface Booking {
   route: string;
   seat: string;
   time: string;
-  price: string;
+  price: number;
   status: string;
 }
 
@@ -42,16 +43,17 @@ export class TrangChuComponent {
       value: '1,234', 
       trend: '+12.5% so với tháng trước', 
       trendType: 'up',
-      icon: 'confirmation_number',
-      color: '#009ba1'
+      icon: 'local_activity',
+      theme: 'blue'
     },
     { 
       title: 'Doanh thu tháng này', 
-      value: '145M', 
+      value: 145000000, 
+      isCurrency: true,
       trend: '+8.2% so với tháng trước', 
       trendType: 'up',
       icon: 'payments',
-      color: '#f37021'
+      theme: 'orange'
     },
     { 
       title: 'Khách hàng mới', 
@@ -59,7 +61,7 @@ export class TrangChuComponent {
       trend: '-3.1% so với tháng trước', 
       trendType: 'down',
       icon: 'person_add',
-      color: '#009ba1'
+      theme: 'purple'
     },
     { 
       title: 'Phương tiện hoạt động', 
@@ -67,15 +69,15 @@ export class TrangChuComponent {
       trend: 'Tỉ lệ vận hành 87%', 
       trendType: 'up',
       icon: 'directions_bus',
-      color: '#f37021'
+      theme: 'teal'
     }
   ];
 
   bookings: Booking[] = [
-    { id: 'TXP1245678', customer: 'Nguyễn Văn A', route: 'Bình Dương - BX Miền Đông', seat: 'A1, A2', time: '06:00', price: '170,000đ', status: 'Hoàn thành' },
-    { id: 'TXP1245679', customer: 'Trần Thị B', route: 'BX Miền Đông - Bình Dương', seat: 'B3', time: '08:30', price: '95,000đ', status: 'Đang chờ' },
-    { id: 'TXP1245680', customer: 'Lê Văn C', route: 'Bình Dương - BX Miền Tây', seat: 'A5, A6, A7', time: '10:00', price: '255,000đ', status: 'Hoàn thành' },
-    { id: 'TXP1245681', customer: 'Phạm Thị D', route: 'BX Miền Tây - Bình Dương', seat: 'B10', time: '13:00', price: '100,000đ', status: 'Hoàn thành' }
+    { id: 'TXP1245678', customer: 'Nguyễn Văn An', route: 'Bình Dương - BX Miền Đông', seat: 'A1, A2', time: '06:00', price: 170000, status: 'Hoàn thành' },
+    { id: 'TXP1245679', customer: 'Trần Thị Bích', route: 'BX Miền Đông - Bình Dương', seat: 'B3', time: '08:30', price: 95000, status: 'Đang chờ' },
+    { id: 'TXP1245680', customer: 'Lê Văn Cường', route: 'Bình Dương - BX Miền Tây', seat: 'A5, A6, A7', time: '10:00', price: 255000, status: 'Hoàn thành' },
+    { id: 'TXP1245681', customer: 'Phạm Minh Đạo', route: 'BX Miền Tây - Bình Dương', seat: 'B10', time: '13:00', price: 100000, status: 'Hoàn thành' }
   ];
 
   popularRoutes: PopularRoute[] = [
@@ -85,4 +87,14 @@ export class TrangChuComponent {
     { name: 'BX Miền Tây - Bình Dương', bookings: 187, trend: '+15%', trendType: 'up' },
     { name: 'Bình Dương - Bến Cát', bookings: 156, trend: '+3%', trendType: 'up' }
   ];
+
+  getSeatsList(seat: string): string[] {
+    if (!seat) return [];
+    return seat.split(',').map(s => s.trim());
+  }
+
+  getSeatColorClass(seat: string): string {
+    if (!seat) return '';
+    return seat.startsWith('A') ? 'seat-a' : 'seat-b';
+  }
 }
