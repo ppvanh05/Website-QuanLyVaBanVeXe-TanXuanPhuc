@@ -34,8 +34,40 @@
 
       <div class="form-group">
         <label>Ngày đi</label>
-        <div class="input-with-icon">
-          <input type="date" (change)="updateFilter('departureDate', $event)" [value]="filters.departureDate">
+        <div class="input-with-icon date-picker-relative">
+          <span class="material-icons">calendar_month</span>
+          <input type="text" [value]="getDisplayDate()" readonly (click)="toggleDatePicker()" class="date-custom-input" placeholder="Chọn ngày đi">
+          
+          <!-- Custom Date Picker Dropdown -->
+          <div class="custom-datepicker-dropdown" *ngIf="isDatePickerOpen" (click)="$event.stopPropagation()">
+            <div class="datepicker-header">
+              <button type="button" class="btn-prev-month" (click)="prevMonth()">
+                <span class="material-icons">chevron_left</span>
+              </button>
+              <div class="current-month-year">{{ getViewMonthYear() }}</div>
+              <button type="button" class="btn-next-month" (click)="nextMonth()">
+                <span class="material-icons">chevron_right</span>
+              </button>
+            </div>
+            
+            <div class="datepicker-weekdays">
+              <div *ngFor="let wd of weekDays" class="weekday-cell">{{ wd }}</div>
+            </div>
+            
+            <div class="datepicker-grid">
+              <div *ngFor="let d of calendarDays" 
+                   class="day-cell" 
+                   [class.day-empty]="!d.day"
+                   [class.day-selected]="d.isSelected"
+                   [class.day-today]="d.isToday"
+                   (click)="selectDate(d)">
+                <div class="lunar-day" *ngIf="d.day">
+                  {{ d.lunarDay }}{{ d.lunarDay === 1 ? '/' + d.lunarMonth : '' }}
+                </div>
+                <div class="solar-day" *ngIf="d.day">{{ d.day }}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
