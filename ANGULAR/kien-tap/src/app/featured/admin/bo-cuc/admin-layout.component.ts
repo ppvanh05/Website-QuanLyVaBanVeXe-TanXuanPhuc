@@ -97,13 +97,26 @@ export class AdminLayoutComponent {
 
   toggleSubmenu(item: MenuItem) {
     if (item.children) {
-      const currentState = item.isOpen;
-      // Đóng tất cả các menu khác
-      this.menuItems.forEach(m => {
-        if (m !== item) m.isOpen = false;
-      });
-      // Toggle menu hiện tại
-      item.isOpen = !currentState;
+      // Nếu sidebar đang thu gọn và có menu con, thì mở rộng sidebar ra trước
+      if (this.isSidebarCollapsed) {
+        this.isSidebarCollapsed = false;
+        // Đợi một chút để animation sidebar hoàn tất trước khi mở submenu
+        setTimeout(() => {
+          const currentState = item.isOpen;
+          this.menuItems.forEach(m => {
+            if (m !== item) m.isOpen = false;
+          });
+          item.isOpen = !currentState;
+        }, 300); // Thời gian chờ có thể điều chỉnh tùy theo animation CSS
+      } else {
+        const currentState = item.isOpen;
+        // Đóng tất cả các menu khác
+        this.menuItems.forEach(m => {
+          if (m !== item) m.isOpen = false;
+        });
+        // Toggle menu hiện tại
+        item.isOpen = !currentState;
+      }
     } else {
       // Nếu bấm vào menu không có con (như Trang chủ), đóng tất cả các menu con đang mở
       this.menuItems.forEach(m => m.isOpen = false);
