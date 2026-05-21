@@ -87,13 +87,13 @@
       <table>
         <thead>
           <tr>
-            <th class="text-center" style="width: 80px;">STT</th>
-            <th>Tuyến</th>
-            <th>Điểm đầu</th>
-            <th>Điểm cuối</th>
-            <th class="text-center">Khoảng cách</th>
-            <th class="text-center">Thời gian</th>
-            <th class="text-center">Chức năng</th>
+            <th class="text-center" style="width: 60px;">STT</th>
+            <th style="width: 25%;">Tuyến</th>
+            <th style="width: 20%;">Điểm đầu</th>
+            <th style="width: 20%;">Điểm cuối</th>
+            <th class="text-center" style="width: 15%;">Khoảng cách</th>
+            <th class="text-center" style="width: 15%;">Thời gian</th>
+            <th class="text-center" style="width: 100px;">Chức năng</th>
           </tr>
         </thead>
         <tbody>
@@ -136,11 +136,8 @@
           </div>
           <div class="form-group">
             <label>Thuộc tỉnh / thành phố <span class="required">*</span></label>
-            <app-custom-select
-              [(value)]="currentRoute.startProvince"
-              [options]="provinceOptions"
-              placeholder="Chọn tỉnh/ TP"
-            ></app-custom-select>
+            <app-custom-select [(value)]="currentRoute.startProvince" [options]="provinceOptions"
+              placeholder="Chọn tỉnh/ TP"></app-custom-select>
           </div>
         </div>
 
@@ -151,22 +148,19 @@
           </div>
           <div class="form-group">
             <label>Thuộc tỉnh / thành phố <span class="required">*</span></label>
-            <app-custom-select
-              [(value)]="currentRoute.endProvince"
-              [options]="provinceOptions"
-              placeholder="Chọn tỉnh/ TP"
-            ></app-custom-select>
+            <app-custom-select [(value)]="currentRoute.endProvince" [options]="provinceOptions"
+              placeholder="Chọn tỉnh/ TP"></app-custom-select>
           </div>
         </div>
 
         <!-- Additional Fields Requested -->
         <div class="form-row">
           <div class="form-group">
-            <label>Khoảng cách (km)</label>
+            <label>Khoảng cách (km) <span class="required">*</span></label>
             <input type="number" [(ngModel)]="currentRoute.distance" placeholder="Nhập khoảng cách...">
           </div>
           <div class="form-group">
-            <label>Thời gian di chuyển dự kiến</label>
+            <label>Thời gian di chuyển dự kiến <span class="required">*</span></label>
             <div class="time-input-group">
               <div class="time-field">
                 <input type="number" [(ngModel)]="currentRoute.estimatedHours" min="0">
@@ -196,6 +190,21 @@
           <button class="btn-cancel" (click)="closeModal()">Hủy</button>
           <button class="btn-save" (click)="saveRoute()">Lưu</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="modal-overlay" *ngIf="isAlertOpen" (click)="closeAlert()" style="z-index: 3000;">
+      <div class="modal-content"
+        style="max-width: 400px; text-align: center; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden;"
+        (click)="$event.stopPropagation()">
+        <div style="margin-bottom: 20px;">
+          <span class="material-icons" style="font-size: 56px; color: var(--secondary-color);">error_outline</span>
+          <h3 style="margin-top: 15px; color: var(--text-dark); font-size: 18px; font-weight: 600;">Thông báo</h3>
+          <p style="color: var(--text-grey); font-size: 14px; margin-top: 8px;">{{ alertMessage }}</p>
+        </div>
+        <button class="btn-save" (click)="closeAlert()" style="width: 100%; padding: 12px; font-size: 15px;">Đã
+          hiểu</button>
       </div>
     </div>
   </div>

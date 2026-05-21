@@ -12,14 +12,13 @@ import { CustomSelectComponent } from '../custom-select.component';
   styleUrls: ['./quan-ly-phuong-tien.component.css']
 })
 export class QuanLyPhuongTienComponent implements OnInit {
-  constructor(private phuongTienService: PhuongTienService) {}
+  constructor(private phuongTienService: PhuongTienService) { }
 
   activeTab: 'all' | 'active' | 'locked' = 'all';
   searchQuery: string = '';
   selectedType: string = '';
   searchVehicleName: string = '';
   searchLicensePlate: string = '';
-  searchSeats: string = '';
 
   get typeFilterOptions() {
     const options = this.vehicleTypes.map(t => ({ value: t, label: t }));
@@ -54,40 +53,34 @@ export class QuanLyPhuongTienComponent implements OnInit {
     }
   }
 
-  validateSeats() {
-    if (this.searchSeats !== '' && +this.searchSeats < 1) {
-      this.searchSeats = '';
-      this.filterVehicles();
-    }
-  }
-  
   vehicles: Vehicle[] = [];
 
   filteredVehicles: Vehicle[] = [];
   isModalOpen = false;
   isEditMode = false;
   currentVehicle: Partial<Vehicle> = {};
-  
+
   // Custom Alert State
   isAlertOpen = false;
   alertMessage = '';
-  
+
   // Uploading states
   isUploadingReg = false;
   isUploadingIns = false;
   isUploadingVeh = false;
-  
+
   vehicleTypes = ['Limousine 22 phòng'];
-  
+
+  vehicleConfigs: { [key: string]: { floors: number | undefined, rows: number | undefined, seats: number | undefined } } = {
+    'Limousine 22 phòng': { floors: 2, rows: 2, seats: 22 }
+  };
+
   amenitiesList = [
     { id: 'tivi', label: 'Tivi', icon: 'tv' },
     { id: 'usb', label: 'Ổ sạc, USB', icon: 'usb' },
     { id: 'wifi', label: 'Wifi', icon: 'wifi' },
-    { id: 'food', label: 'Đồ ăn', icon: 'restaurant' },
     { id: 'water', label: 'Nước, khăn ướt', icon: 'opacity' },
     { id: 'gps', label: 'GPS', icon: 'gps_fixed' },
-    { id: 'toilet', label: 'Nhà vệ sinh', icon: 'wc' },
-    { id: 'massage', label: 'Ghế massage', icon: 'airline_seat_recline_extra' },
     { id: 'ac', label: 'Điều hòa', icon: 'ac_unit' }
   ];
 
@@ -125,21 +118,19 @@ export class QuanLyPhuongTienComponent implements OnInit {
 
   filterVehicles() {
     let result = this.vehicles.filter(v => {
-      const matchesTab = this.activeTab === 'all' || 
-                        (this.activeTab === 'active' && v.status === 'active') ||
-                        (this.activeTab === 'locked' && v.status === 'locked');
-      
-      const matchesName = !this.searchVehicleName || 
-                          v.name.toLowerCase().includes(this.searchVehicleName.toLowerCase());
-      
-      const matchesPlate = !this.searchLicensePlate || 
-                           v.licensePlate.toLowerCase().includes(this.searchLicensePlate.toLowerCase());
+      const matchesTab = this.activeTab === 'all' ||
+        (this.activeTab === 'active' && v.status === 'active') ||
+        (this.activeTab === 'locked' && v.status === 'locked');
+
+      const matchesName = !this.searchVehicleName ||
+        v.name.toLowerCase().includes(this.searchVehicleName.toLowerCase());
+
+      const matchesPlate = !this.searchLicensePlate ||
+        v.licensePlate.toLowerCase().includes(this.searchLicensePlate.toLowerCase());
 
       const matchesType = !this.selectedType || v.type === this.selectedType;
 
-      const matchesSeats = !this.searchSeats || v.seats === +this.searchSeats;
-      
-      return matchesTab && matchesName && matchesPlate && matchesType && matchesSeats;
+      return matchesTab && matchesName && matchesPlate && matchesType;
     });
 
     // Default sort by newest
@@ -151,11 +142,24 @@ export class QuanLyPhuongTienComponent implements OnInit {
     this.searchVehicleName = '';
     this.searchLicensePlate = '';
     this.selectedType = '';
-    this.searchSeats = '';
     this.filterVehicles();
   }
 
   floorLayouts: any[] = [];
+
+  onVehicleTypeChange() {
+    const config = this.vehicleConfigs[this.currentVehicle.type || ''];
+    if (config) {
+      this.currentVehicle.floors = config.floors;
+      this.currentVehicle.rows = config.rows;
+      this.currentVehicle.seats = config.seats;
+    } else {
+      this.currentVehicle.floors = undefined;
+      this.currentVehicle.rows = undefined;
+      this.currentVehicle.seats = undefined;
+    }
+    this.onLayoutChange();
+  }
 
   onLayoutChange() {
     this.generateSeatLayout();
@@ -166,32 +170,42 @@ export class QuanLyPhuongTienComponent implements OnInit {
   }
 
   generateSeatLayout() {
-    const floors = this.currentVehicle.floors || 2;
-    const rows = this.currentVehicle.rows || 2;
-    const seats = this.currentVehicle.seats || 22;
+    if (!this.currentVehicle.floors || !this.currentVehicle.rows || !this.currentVehicle.seats || !this.currentVehicle.type) {
+      this.floorLayouts = [];
+      return;
+    }
+
+    if (this.currentVehicle.type === 'Limousine 22 phòng') {
+      this.generateLimousine22Layout();
+      return;
+    }
+
+    const floors = this.currentVehicle.floors;
+    const rows = this.currentVehicle.rows;
+    const seats = this.currentVehicle.seats;
 
     this.floorLayouts = [];
-    
+
     const seatsPerFloor = Math.floor(seats / floors);
     const extraSeats = seats % floors;
-    
+
     const floorPrefixes = ['A', 'B', 'C', 'D', 'E'];
-    
+
     for (let f = 0; f < floors; f++) {
       const floorSeatsCount = seatsPerFloor + (f < extraSeats ? 1 : 0);
       const prefix = floorPrefixes[f] || String.fromCharCode(65 + f);
-      
+
       const floorSeatsList: string[] = [];
       for (let s = 1; s <= floorSeatsCount; s++) {
         floorSeatsList.push(`${prefix}${s}`);
       }
-      
+
       const layoutRows: any[] = [];
       let i = 0;
-      
+
       while (i < floorSeatsList.length) {
         const remaining = floorSeatsList.length - i;
-        
+
         if (remaining <= rows + 1 && remaining > 1 && rows > 1) {
           const backRowSeats = floorSeatsList.slice(i);
           layoutRows.push({
@@ -200,7 +214,7 @@ export class QuanLyPhuongTienComponent implements OnInit {
           });
           break;
         }
-        
+
         const rowSeats = floorSeatsList.slice(i, i + rows);
         layoutRows.push({
           isBackRow: false,
@@ -208,13 +222,45 @@ export class QuanLyPhuongTienComponent implements OnInit {
         });
         i += rows;
       }
-      
+
       this.floorLayouts.push({
         floorNumber: f + 1,
         floorName: `Tầng ${f + 1}`,
         rows: layoutRows
       });
     }
+  }
+
+  generateLimousine22Layout() {
+    this.floorLayouts = [];
+
+    // Tầng 1 (Tầng Dưới) - 12 ghế: 1A, 2A, ..., 12A
+    const floor1Rows: any[] = [];
+    for (let r = 0; r < 6; r++) {
+      floor1Rows.push({
+        isBackRow: false,
+        seats: [`${r * 2 + 1}A`, `${r * 2 + 2}A`]
+      });
+    }
+    this.floorLayouts.push({
+      floorNumber: 1,
+      floorName: 'TẦNG DƯỚI',
+      rows: floor1Rows
+    });
+
+    // Tầng 2 (Tầng Trên) - 10 ghế: 1B, 2B, ..., 10B
+    const floor2Rows: any[] = [];
+    for (let r = 0; r < 5; r++) {
+      floor2Rows.push({
+        isBackRow: false,
+        seats: [`${r * 2 + 1}B`, `${r * 2 + 2}B`]
+      });
+    }
+    this.floorLayouts.push({
+      floorNumber: 2,
+      floorName: 'TẦNG TRÊN',
+      rows: floor2Rows
+    });
   }
 
   openAddModal() {
@@ -224,9 +270,9 @@ export class QuanLyPhuongTienComponent implements OnInit {
       type: '',
       amenities: [],
       selectedSeats: [],
-      seats: 22,
-      floors: 2,
-      rows: 2,
+      seats: undefined,
+      floors: undefined,
+      rows: undefined,
       createdAt: new Date()
     };
     this.generateSeatLayout();
@@ -235,11 +281,7 @@ export class QuanLyPhuongTienComponent implements OnInit {
 
   openEditModal(vehicle: Vehicle) {
     this.isEditMode = true;
-    this.currentVehicle = { 
-      floors: 2,
-      rows: 2,
-      ...vehicle 
-    };
+    this.currentVehicle = { ...vehicle };
     this.generateSeatLayout();
     this.isModalOpen = true;
   }
@@ -392,10 +434,10 @@ export class QuanLyPhuongTienComponent implements OnInit {
     const month = this.viewDate.getMonth();
     const firstDay = new Date(year, month, 1).getDay(); // 0 is Sunday
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
+
     // Adjust firstDay to start from Monday (0 is Mon, 6 is Sun)
     let startDay = firstDay === 0 ? 6 : firstDay - 1;
-    
+
     this.calendarDays = [];
     for (let i = 0; i < startDay; i++) {
       this.calendarDays.push(null);
@@ -431,7 +473,7 @@ export class QuanLyPhuongTienComponent implements OnInit {
     if (!day) return;
     const date = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth(), day);
     const formattedDate = this.formatDate(date);
-    
+
     if (field === 'reg') {
       this.currentVehicle.registrationExpiry = formattedDate;
       this.isRegPickerOpen = false;
