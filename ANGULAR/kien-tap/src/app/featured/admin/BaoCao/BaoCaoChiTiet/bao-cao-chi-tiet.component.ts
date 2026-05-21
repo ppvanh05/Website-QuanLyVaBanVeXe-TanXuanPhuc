@@ -1,16 +1,38 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TuyenXeService } from '../../QuanLyDieuHanh/tuyen-xe.service';
+import { PhuongTienService } from '../../QuanLyDieuHanh/phuong-tien.service';
+import { TaiXeService } from '../../QuanLyDieuHanh/tai-xe.service'; // Import TaiXeService
 
-interface DetailedReportItem {
-  maVe: string;
+interface TripReportItem {
+  maChuyen: string;
   tuyen: string;
+  bienSoXe: string;
+  loaiXe: string;
   ngayDi: string;
   gioDi: string;
-  ngayDat: string;
-  pttt: string;
-  vpDatVe: string; // Booking channel: Website / Online or Văn phòng Gia Lai (An Nhơn Bắc)
-  giaVe: number;
+  slDaBan: number;
+  tongGhe: number;
+  tyLeLapDay: number;
+  doanhThuVe: number;
+  chiPhiVanHanh: number;
+  loiNhuan: number;
+  trangThai: 'Còn chỗ' | 'Hết chỗ' | 'Đã khởi hành' | 'Hủy';
+  
+  // New fields for enhanced analysis
+  taiXeChinh: string;
+  phuXe: string;
+  diemDanhGiaTrungBinh: number; // Average rating from customers for this trip
+  soLuongDanhGiaTieuCuc: number; // Number of negative reviews
+  tyLeDongGopDoanhThuTuyen: number; // Percentage contribution to route revenue
+
+  // Detailed Expenses
+  phiCauDuong: number;
+  phiDau: number;
+  phiRuaXe: number;
+  phiAnUong: number;
+  phiBenBai: number;
 }
 
 @Component({
@@ -23,33 +45,27 @@ interface DetailedReportItem {
 export class BaoCaoChiTietComponent implements OnInit {
   // Date and filter options
   filters = {
-    dateType: 'NgayDi', // 'NgayDi' or 'NgayDat'
     fromDate: '2026-05-01',
     toDate: '2026-05-31',
     route: 'Tất cả',
-    time: 'Tất cả',
-    paymentMethod: 'Tất cả',
-    office: 'Tất cả'
+    licensePlate: 'Tất cả',
+    status: 'Tất cả'
   };
 
+  isReportViewed = true;
+
   // Data lists
-  allData: DetailedReportItem[] = [];
-  filteredData: DetailedReportItem[] = [];
+  allTrips: TripReportItem[] = [];
+  filteredTrips: TripReportItem[] = [];
   
   // Lists for dropdown options
-  routesList = [
-    'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-    'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-    'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-    'Phú Yên ↔ Sài Gòn (BX Miền Đông)'
-  ];
+  routesList: string[] = [];
+  vehiclesList: string[] = [];
+  statusList = ['Còn chỗ', 'Hết chỗ', 'Đã khởi hành', 'Hủy'];
 
-  timesList = ['08:00', '13:00', '19:00', '21:00'];
-  paymentMethods = ['Momo', 'ZaloPay', 'Chuyển khoản (Vietcombank)', 'Tiền mặt'];
-  officesList = [
-    'Website / Online',
-    'Văn phòng Gia Lai (An Nhơn Bắc)'
-  ];
+  // Modal controls
+  showExpenseModal = false;
+  selectedTrip: TripReportItem | null = null;
 
   // Pagination variables
   currentPage = 1;
@@ -58,65 +74,121 @@ export class BaoCaoChiTietComponent implements OnInit {
 
   // Stats summaries
   stats = {
-    totalTickets: 0,
+    totalTrips: 0,
     totalRevenue: 0,
-    onlineCount: 0,
-    officeCount: 0
+    totalExpenses: 0,
+    totalProfit: 0
   };
 
+  constructor(
+    private tuyenXeService: TuyenXeService,
+    private phuongTienService: PhuongTienService,
+    private taiXeService: TaiXeService // Inject TaiXeService
+  ) {}
+
   ngOnInit() {
-    this.allData = this.generateMockData();
+    this.routesList = this.tuyenXeService.getRoutesList();
+    this.vehiclesList = this.phuongTienService.getVehicles().map(v => v.licensePlate);
+    this.allTrips = this.generateMockData();
     this.onViewReport();
   }
 
-  private generateMockData(): DetailedReportItem[] {
-    const data: DetailedReportItem[] = [];
-    const routes = [
-      'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-      'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-      'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-      'Phú Yên ↔ Sài Gòn (BX Miền Đông)'
-    ];
-    const times = ['08:00', '13:00', '19:00', '21:00'];
-    const pttts = ['Momo', 'ZaloPay', 'Chuyển khoản (Vietcombank)', 'Tiền mặt'];
-    const channels = [
-      'Website / Online',
-      'Văn phòng Gia Lai (An Nhơn Bắc)'
-    ];
+  private generateMockData(): TripReportItem[] {
+    const data: TripReportItem[] = [];
+    const sysRoutes = this.tuyenXeService.getRoutes();
+    const sysVehicles = this.phuongTienService.getVehicles();
+    const sysDrivers = this.taiXeService.getDrivers(); // Get drivers
+    const sysAssistants = this.taiXeService.getAssistantsList(); // Get assistants
+    
+    if (sysRoutes.length === 0 || sysVehicles.length === 0 || sysDrivers.length === 0 || sysAssistants.length === 0) return [];
 
-    // Generate 120 detailed e-ticket items in May 2026
-    for (let i = 1; i <= 120; i++) {
-      const routeIdx = i % routes.length;
-      const timeIdx = (i * 3) % times.length;
-      const ptttIdx = (i * 7) % pttts.length;
-      
-      // 40% Online, 60% Office booking (corresponds roughly to SRS where online is starting up)
-      const isOnline = (i % 5) < 2;
-      const channelStr = isOnline ? channels[0] : channels[1];
+    const tripStatuses: ('Còn chỗ' | 'Hết chỗ' | 'Đã khởi hành' | 'Hủy')[] = ['Còn chỗ', 'Hết chỗ', 'Đã khởi hành', 'Hủy'];
+
+    // Generate 60 trip records in May 2026
+    for (let i = 1; i <= 60; i++) {
+      const route = sysRoutes[i % sysRoutes.length];
+      const vehicle = sysVehicles[(i * 3) % sysVehicles.length];
+      const driver = sysDrivers[i % sysDrivers.length];
+      const assistant = sysAssistants[(i + 1) % sysAssistants.length];
       
       const day = (i % 28) + 1;
       const dayStr = day < 10 ? `0${day}` : `${day}`;
       const ngayDi = `2026-05-${dayStr}`;
       
-      // Booking date is 1-4 days before departure
-      const bookingDay = Math.max(1, day - (i % 4) - 1);
-      const bookingDayStr = bookingDay < 10 ? `0${bookingDay}` : `${bookingDay}`;
-      const ngayDat = `2026-05-${bookingDayStr}`;
+      const times = ['08:00', '13:00', '19:00', '21:00'];
+      const gioDi = times[i % times.length];
 
-      // Price based on route
-      let giaVe = 350000; // Limousine Gia Lai - SG
-      if (routeIdx === 2) giaVe = 300000; // Binh Dinh - SG
-      if (routeIdx === 3) giaVe = 280000; // Phu Yen - SG
+      const tongGhe = vehicle.seats;
+      let trangThai = tripStatuses[i % tripStatuses.length];
+      
+      let slDaBan = 0;
+      if (trangThai === 'Hết chỗ') {
+        slDaBan = tongGhe;
+      } else if (trangThai === 'Hủy') {
+        slDaBan = 0;
+      } else if (trangThai === 'Còn chỗ') {
+        slDaBan = Math.floor(tongGhe * 0.4) + (i % 6);
+      } else { // Đã khởi hành
+        slDaBan = Math.floor(tongGhe * 0.7) + (i % 5);
+      }
+
+      const tyLeLapDay = Math.min(100, Math.round((slDaBan / tongGhe) * 100));
+
+      // Calculate total revenue from tickets (ticket price = distance * 1000)
+      const singleFare = route.distance * 1000;
+      const doanhThuVe = slDaBan * singleFare;
+
+      // Expenses breakdown based on route distance
+      const baseDistance = route.distance;
+      let phiDau = 0;
+      let phiCauDuong = 0;
+      let phiRuaXe = 0;
+      let phiAnUong = 0;
+      let phiBenBai = 0;
+      let chiPhiVanHanh = 0;
+
+      if (trangThai !== 'Hủy') {
+        phiDau = Math.round(baseDistance * 12 * 20000 / 100); // ~12L per 100km, 20k per L
+        phiCauDuong = Math.round(baseDistance * 800);
+        phiRuaXe = 150000;
+        phiAnUong = 300000;
+        phiBenBai = 200000;
+        chiPhiVanHanh = phiDau + phiCauDuong + phiRuaXe + phiAnUong + phiBenBai;
+      }
+
+      const loiNhuan = doanhThuVe - chiPhiVanHanh;
+
+      // New fields
+      const taiXeChinh = driver.name;
+      const phuXe = assistant.name;
+      const diemDanhGiaTrungBinh = Math.round(Math.random() * (5 - 3) + 3); // Random rating between 3 and 5
+      const soLuongDanhGiaTieuCuc = i % 7 === 0 ? 1 : 0; // Mock some negative reviews
+      const tyLeDongGopDoanhThuTuyen = Math.round((doanhThuVe / (route.distance * 1000 * 100)) * 10000) / 100; // Mock percentage
 
       data.push({
-        maVe: `TXP2605${String(1000 + i).padStart(4, '0')}`,
-        tuyen: routes[routeIdx],
+        maChuyen: `LT-2605-${String(i).padStart(3, '0')}`,
+        tuyen: route.name,
+        bienSoXe: vehicle.licensePlate,
+        loaiXe: vehicle.type,
         ngayDi: ngayDi,
-        gioDi: times[timeIdx],
-        ngayDat: ngayDat,
-        pttt: pttts[ptttIdx],
-        vpDatVe: channelStr,
-        giaVe: giaVe
+        gioDi: gioDi,
+        slDaBan: slDaBan,
+        tongGhe: tongGhe,
+        tyLeLapDay: tyLeLapDay,
+        doanhThuVe: doanhThuVe,
+        chiPhiVanHanh: chiPhiVanHanh,
+        loiNhuan: loiNhuan,
+        trangThai: trangThai,
+        phiCauDuong: phiCauDuong,
+        phiDau: phiDau,
+        phiRuaXe: phiRuaXe,
+        phiAnUong: phiAnUong,
+        phiBenBai: phiBenBai,
+        taiXeChinh: taiXeChinh,
+        phuXe: phuXe,
+        diemDanhGiaTrungBinh: diemDanhGiaTrungBinh,
+        soLuongDanhGiaTieuCuc: soLuongDanhGiaTieuCuc,
+        tyLeDongGopDoanhThuTuyen: tyLeDongGopDoanhThuTuyen
       });
     }
 
@@ -130,17 +202,16 @@ export class BaoCaoChiTietComponent implements OnInit {
   }
 
   onViewReport() {
-    this.filteredData = this.allData.filter(item => {
+    this.isReportViewed = true;
+    this.filteredTrips = this.allTrips.filter(item => {
       // Date filter
-      const targetDate = this.filters.dateType === 'NgayDi' ? item.ngayDi : item.ngayDat;
-      if (this.filters.fromDate && targetDate < this.filters.fromDate) return false;
-      if (this.filters.toDate && targetDate > this.filters.toDate) return false;
+      if (this.filters.fromDate && item.ngayDi < this.filters.fromDate) return false;
+      if (this.filters.toDate && item.ngayDi > this.filters.toDate) return false;
 
       // Advanced filters
       if (this.filters.route !== 'Tất cả' && item.tuyen !== this.filters.route) return false;
-      if (this.filters.time !== 'Tất cả' && item.gioDi !== this.filters.time) return false;
-      if (this.filters.paymentMethod !== 'Tất cả' && item.pttt !== this.filters.paymentMethod) return false;
-      if (this.filters.office !== 'Tất cả' && item.vpDatVe !== this.filters.office) return false;
+      if (this.filters.licensePlate !== 'Tất cả' && item.bienSoXe !== this.filters.licensePlate) return false;
+      if (this.filters.status !== 'Tất cả' && item.trangThai !== this.filters.status) return false;
 
       return true;
     });
@@ -155,33 +226,34 @@ export class BaoCaoChiTietComponent implements OnInit {
 
   private calculateStats() {
     let totalRevenue = 0;
-    let onlineCount = 0;
-    let officeCount = 0;
+    let totalExpenses = 0;
+    let totalProfit = 0;
+    let totalTrips = 0;
 
-    this.filteredData.forEach(item => {
-      totalRevenue += item.giaVe;
-      if (item.vpDatVe === 'Website / Online') {
-        onlineCount++;
-      } else {
-        officeCount++;
-      }
+    this.filteredTrips.forEach(item => {
+      totalRevenue += item.doanhThuVe;
+      totalExpenses += item.chiPhiVanHanh;
+      totalProfit += item.loiNhuan;
+      totalTrips++;
     });
 
     this.stats = {
-      totalTickets: this.filteredData.length,
+      totalTrips: totalTrips,
       totalRevenue: totalRevenue,
-      onlineCount: onlineCount,
-      officeCount: officeCount
+      totalExpenses: totalExpenses,
+      totalProfit: totalProfit
     };
   }
 
+
+
   private calculateTotalPages() {
-    this.totalPages = Math.max(1, Math.ceil(this.filteredData.length / this.pageSize));
+    this.totalPages = Math.max(1, Math.ceil(this.filteredTrips.length / this.pageSize));
   }
 
   get paginatedData() {
     const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredData.slice(start, start + this.pageSize);
+    return this.filteredTrips.slice(start, start + this.pageSize);
   }
 
   setPage(page: number) {
@@ -203,46 +275,52 @@ export class BaoCaoChiTietComponent implements OnInit {
 
   onResetFilters() {
     this.filters = {
-      dateType: 'NgayDi',
       fromDate: '2026-05-01',
       toDate: '2026-05-31',
       route: 'Tất cả',
-      time: 'Tất cả',
-      paymentMethod: 'Tất cả',
-      office: 'Tất cả'
+      licensePlate: 'Tất cả',
+      status: 'Tất cả'
     };
+    this.isReportViewed = true;
     this.onViewReport();
   }
 
+  // Modal actions
+  openExpenseDetail(trip: TripReportItem) {
+    this.selectedTrip = trip;
+    this.showExpenseModal = true;
+  }
+
+  closeExpenseDetail() {
+    this.showExpenseModal = false;
+    this.selectedTrip = null;
+  }
+
   onExportExcel() {
-    if (this.filteredData.length === 0) {
+    if (this.filteredTrips.length === 0) {
       alert('Không có dữ liệu để xuất Excel!');
       return;
     }
 
-    // Dynamic CSV export for Vietnamese accent support with UTF-8 BOM
     let csvContent = '\uFEFF';
-    csvContent += 'BÁO CÁO CHI TIẾT VÉ BÁN (TÂN XUÂN PHÚC)\n';
+    csvContent += 'BÁO CÁO THỐNG KÊ CHI TIẾT THEO CHUYẾN XE (TÂN XUÂN PHÚC)\n';
     csvContent += `Thời gian: Từ ${this.filters.fromDate} đến ${this.filters.toDate}\n`;
-    csvContent += `Tuyến: ${this.filters.route}, Giờ đi: ${this.filters.time}, PTTT: ${this.filters.paymentMethod}, Văn phòng/Kênh: ${this.filters.office}\n\n`;
+    csvContent += `Tuyến: ${this.filters.route}, Biển số xe: ${this.filters.licensePlate}, Trạng thái: ${this.filters.status}\n\n`;
     
-    // Headers
-    csvContent += 'Mã vé,Tuyến xe,Ngày đi,Giờ đi,Ngày đặt,Phương thức thanh toán,Kênh đặt vé,Giá vé (VNĐ)\n';
+    csvContent += 'Mã chuyến,Tuyến xe,Biển số xe,Loại xe,Ngày đi,Giờ đi,SL đã bán,Tổng ghế,Tỷ lệ lấp đầy (%),Doanh thu vé (VNĐ),Chi phí vận hành (VNĐ),Lợi nhuận (VNĐ),Trạng thái,Tài xế chính,Phụ xe,Điểm đánh giá TB,SL đánh giá tiêu cực,Tỷ lệ đóng góp DT tuyến (%)\n';
 
-    // Records
-    this.filteredData.forEach(item => {
-      csvContent += `"${item.maVe}","${item.tuyen}","${item.ngayDi}","${item.gioDi}","${item.ngayDat}","${item.pttt}","${item.vpDatVe}",${item.giaVe}\n`;
+    this.filteredTrips.forEach(item => {
+      csvContent += `"${item.maChuyen}","${item.tuyen}","${item.bienSoXe}","${item.loaiXe}","${item.ngayDi}","${item.gioDi}",${item.slDaBan},${item.tongGhe},${item.tyLeLapDay}%,${item.doanhThuVe},${item.chiPhiVanHanh},${item.loiNhuan},"${item.trangThai}","${item.taiXeChinh}","${item.phuXe}",${item.diemDanhGiaTrungBinh},${item.soLuongDanhGiaTieuCuc},${item.tyLeDongGopDoanhThuTuyen}\n`;
     });
 
     // Summary Row
-    csvContent += `\n"Tổng cộng",,,,,,,"",${this.stats.totalRevenue}\n`;
+    csvContent += `\n"TỔNG CỘNG",,,,,,,${this.stats.totalTrips},,"Tổng doanh thu",${this.stats.totalRevenue},"Tổng chi phí",${this.stats.totalExpenses},"Tổng lợi nhuận",${this.stats.totalProfit}\n`;
 
-    // Download action
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `BaoCaoChiTietVe_TXP_${this.filters.fromDate}_to_${this.filters.toDate}.csv`);
+    link.setAttribute('download', `BaoCaoChiTietChuyenXe_TXP_${this.filters.fromDate}_to_${this.filters.toDate}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

@@ -4,16 +4,13 @@ import { FormsModule } from '@angular/forms';
 
 interface RefundReportItem {
   maVe: string;
-  tuyen: string;
-  ngayDi: string;
-  gioDi: string;
-  ngayDat: string;
-  vpDat: string;
-  vpHuy: string;
-  lyDoHuy: string;
-  giaVe: number;
-  phiHuy: number;
-  tienHoan: number;
+  nguoiHuy: string; // Source of cancellation (e.g., "Khách hàng tự hủy trên web", "Nhân viên bán vé hủy hộ")
+  tienGoc: number; // Original ticket price
+  tyLePhi: number; // Cancellation fee percentage
+  lePhiHuy: number; // Cancellation fee amount
+  tienHoan: number; // Refund amount
+  maGiaoDich: string; // Transaction ID for refund
+  ngayHuy: string; // Cancellation date for filtering
 }
 
 @Component({
@@ -27,13 +24,12 @@ export class BaoCaoHoanHuyComponent implements OnInit {
   filters = {
     fromDate: '2026-05-01',
     toDate: '2026-05-31',
-    route: 'Tất cả',
-    time: 'Tất cả',
-    cancelReason: 'Tất cả'
+    nguoiHuy: 'Tất cả'
   };
 
   allRefunds: RefundReportItem[] = [];
   filteredRefunds: RefundReportItem[] = [];
+  isReportViewed = true;
 
   // KPI stats
   stats = {
@@ -43,22 +39,9 @@ export class BaoCaoHoanHuyComponent implements OnInit {
     totalRefunded: 0
   };
 
-  routesList = [
-    'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-    'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-    'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-    'Phú Yên ↔ Sài Gòn (BX Miền Đông)'
-  ];
+  nguoiHuyList: string[] = ['Khách hàng tự hủy trên web', 'Nhân viên bán vé hủy hộ'];
 
-  timesList = ['08:00', '13:00', '19:00', '21:00'];
-  
-  reasonsList = [
-    'Khách hàng chủ động hủy (Trước 24h)',
-    'Khách hàng chủ động hủy (Dưới 24h)',
-    'Đổi lịch trình chuyến đi',
-    'Trễ giờ lên xe / Không liên lạc được',
-    'Nhà xe hủy chuyến / Sự cố kỹ thuật'
-  ];
+  constructor() {}
 
   ngOnInit() {
     this.allRefunds = this.generateMockRefunds();
@@ -66,95 +49,60 @@ export class BaoCaoHoanHuyComponent implements OnInit {
   }
 
   private generateMockRefunds(): RefundReportItem[] {
-    // Generate realistic cancelled tickets for Tân Xuân Phúc in May 2026
     const data: RefundReportItem[] = [];
-    const routes = [
-      'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-      'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-      'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-      'Phú Yên ↔ Sài Gòn (BX Miền Đông)'
-    ];
-    const times = ['08:00', '13:00', '19:00', '21:00'];
-    const channels = [
-      'Website / Online',
-      'Văn phòng Gia Lai (An Nhơn Bắc)'
-    ];
-    const reasons = [
-      'Khách hàng chủ động hủy (Trước 24h)',
-      'Khách hàng chủ động hủy (Dưới 24h)',
-      'Đổi lịch trình chuyến đi',
-      'Trễ giờ lên xe / Không liên lạc được',
-      'Nhà xe hủy chuyến / Sự cố kỹ thuật'
-    ];
+    const nguoiHuyOptions = ['Khách hàng tự hủy trên web', 'Nhân viên bán vé hủy hộ'];
 
-    // Generate 25 mock cancellation records
-    for (let i = 1; i <= 25; i++) {
-      const routeIdx = i % routes.length;
-      const timeIdx = (i * 3) % times.length;
-      
-      const isOnlineDat = (i % 3) === 0;
-      const isOnlineHuy = (i % 2) === 0;
-      
-      const vpDatStr = isOnlineDat ? channels[0] : channels[1];
-      const vpHuyStr = isOnlineHuy ? channels[0] : channels[1];
-      const reasonIdx = i % reasons.length;
+    for (let i = 1; i <= 30; i++) { // Generate 30 mock cancellation records
+      const maVe = `TXP${String(10000 + i)}`;
+      const nguoiHuy = nguoiHuyOptions[i % nguoiHuyOptions.length];
+      const tienGoc = Math.floor(Math.random() * (500000 - 100000 + 1) + 100000); // Random original price between 100k and 500k
 
-      const day = (i % 25) + 1;
-      const dayStr = day < 10 ? `0${day}` : `${day}`;
-      const ngayDi = `2026-05-${dayStr}`;
-
-      const bookingDay = Math.max(1, day - (i % 3) - 1);
-      const bookingDayStr = bookingDay < 10 ? `0${bookingDay}` : `${bookingDay}`;
-      const ngayDat = `2026-05-${bookingDayStr}`;
-
-      let giaVe = 350000;
-      if (routeIdx === 2) giaVe = 300000;
-      if (routeIdx === 3) giaVe = 280000;
-
-      // Fees based on cancellation reason
-      let phiHuy = 0;
-      if (reasonIdx === 0) {
-        phiHuy = 0; // free cancellation before 24h
-      } else if (reasonIdx === 1) {
-        phiHuy = giaVe * 0.1; // 10% fee
-      } else if (reasonIdx === 3) {
-        phiHuy = giaVe; // 100% loss for no-show
-      } else if (reasonIdx === 4) {
-        phiHuy = 0; // free if company cancelled, might include compensation but here just refund 100%
-      } else {
-        phiHuy = giaVe * 0.05; // 5% admin fee
+      let tyLePhi: number;
+      // Mock cancellation fee based on some logic (e.g., time before departure, or source)
+      if (nguoiHuy === 'Khách hàng tự hủy trên web') {
+        if (i % 5 === 0) tyLePhi = 0; // 0% fee
+        else if (i % 5 === 1) tyLePhi = 0.1; // 10% fee
+        else if (i % 5 === 2) tyLePhi = 0.25; // 25% fee
+        else if (i % 5 === 3) tyLePhi = 0.5; // 50% fee
+        else tyLePhi = 1; // 100% fee
+      } else { // Nhân viên bán vé hủy hộ
+        if (i % 3 === 0) tyLePhi = 0; // 0% fee (e.g., company cancellation)
+        else if (i % 3 === 1) tyLePhi = 0.05; // 5% fee (e.g., administrative)
+        else tyLePhi = 0.1; // 10% fee
       }
 
-      const tienHoan = giaVe - phiHuy;
+      const lePhiHuy = tienGoc * tyLePhi;
+      const tienHoan = tienGoc - lePhiHuy;
+      const maGiaoDich = `GD${Date.now()}${String(i).padStart(3, '0')}`;
+
+      const day = (i % 28) + 1; // Day in May
+      const dayStr = day < 10 ? `0${day}` : `${day}`;
+      const ngayHuy = `2026-05-${dayStr}`;
 
       data.push({
-        maVe: `TXP2605C${String(100 + i).padStart(3, '0')}`,
-        tuyen: routes[routeIdx],
-        ngayDi: ngayDi,
-        gioDi: times[timeIdx],
-        ngayDat: ngayDat,
-        vpDat: vpDatStr,
-        vpHuy: vpHuyStr,
-        lyDoHuy: reasons[reasonIdx],
-        giaVe: giaVe,
-        phiHuy: phiHuy,
-        tienHoan: tienHoan
+        maVe,
+        nguoiHuy,
+        tienGoc,
+        tyLePhi,
+        lePhiHuy,
+        tienHoan,
+        maGiaoDich,
+        ngayHuy
       });
     }
 
-    return data.sort((a, b) => b.ngayDi.localeCompare(a.ngayDi));
+    return data.sort((a, b) => b.ngayHuy.localeCompare(a.ngayHuy));
   }
 
   onViewReport() {
+    this.isReportViewed = true;
     this.filteredRefunds = this.allRefunds.filter(item => {
       // Date filter
-      if (this.filters.fromDate && item.ngayDi < this.filters.fromDate) return false;
-      if (this.filters.toDate && item.ngayDi > this.filters.toDate) return false;
+      if (this.filters.fromDate && item.ngayHuy < this.filters.fromDate) return false;
+      if (this.filters.toDate && item.ngayHuy > this.filters.toDate) return false;
 
-      // Advanced filters
-      if (this.filters.route !== 'Tất cả' && item.tuyen !== this.filters.route) return false;
-      if (this.filters.time !== 'Tất cả' && item.gioDi !== this.filters.time) return false;
-      if (this.filters.cancelReason !== 'Tất cả' && item.lyDoHuy !== this.filters.cancelReason) return false;
+      // Nguoi Huy filter
+      if (this.filters.nguoiHuy !== 'Tất cả' && item.nguoiHuy !== this.filters.nguoiHuy) return false;
 
       return true;
     });
@@ -163,21 +111,21 @@ export class BaoCaoHoanHuyComponent implements OnInit {
   }
 
   private calculateStats() {
-    let price = 0;
-    let fees = 0;
-    let refund = 0;
+    let totalOriginalPrice = 0;
+    let totalFees = 0;
+    let totalRefunded = 0;
 
     this.filteredRefunds.forEach(item => {
-      price += item.giaVe;
-      fees += item.phiHuy;
-      refund += item.tienHoan;
+      totalOriginalPrice += item.tienGoc;
+      totalFees += item.lePhiHuy;
+      totalRefunded += item.tienHoan;
     });
 
     this.stats = {
       totalCancelled: this.filteredRefunds.length,
-      totalOriginalPrice: price,
-      totalFees: fees,
-      totalRefunded: refund
+      totalOriginalPrice: totalOriginalPrice,
+      totalFees: totalFees,
+      totalRefunded: totalRefunded
     };
   }
 
@@ -185,10 +133,9 @@ export class BaoCaoHoanHuyComponent implements OnInit {
     this.filters = {
       fromDate: '2026-05-01',
       toDate: '2026-05-31',
-      route: 'Tất cả',
-      time: 'Tất cả',
-      cancelReason: 'Tất cả'
+      nguoiHuy: 'Tất cả'
     };
+    this.isReportViewed = true;
     this.onViewReport();
   }
 
@@ -200,23 +147,23 @@ export class BaoCaoHoanHuyComponent implements OnInit {
 
     let csvContent = '\uFEFF';
     csvContent += 'BÁO CÁO HOÀN HỦY VÉ XE KHÁCH (TÂN XUÂN PHÚC)\n';
-    csvContent += `Thời gian khởi hành: Từ ${this.filters.fromDate} đến ${this.filters.toDate}\n`;
-    csvContent += `Bộ lọc: Tuyến: ${this.filters.route}, Lý do: ${this.filters.cancelReason}\n\n`;
+    csvContent += `Thời gian hủy: Từ ${this.filters.fromDate} đến ${this.filters.toDate}\n`;
+    csvContent += `Bộ lọc: Người hủy: ${this.filters.nguoiHuy}\n\n`;
     
-    csvContent += 'Mã vé,Tuyến xe,Ngày đi,Giờ đi,Ngày đặt,Kênh đặt,Kênh hủy,Lý do hủy,Giá vé (VNĐ),Phí hủy (VNĐ),Số tiền hoàn (VNĐ)\n';
+    csvContent += 'Mã vé / Mã đơn hàng,Người thực hiện hủy,Tiền vé gốc,Tỷ lệ phí hủy áp dụng (%),Lệ phí hủy (VNĐ),Số tiền hoàn lại,Mã giao dịch hoàn\n';
 
     this.filteredRefunds.forEach(item => {
-      csvContent += `"${item.maVe}","${item.tuyen}","${item.ngayDi}","${item.gioDi}","${item.ngayDat}","${item.vpDat}","${item.vpHuy}","${item.lyDoHuy}",${item.giaVe},${item.phiHuy},${item.tienHoan}\n`;
+      csvContent += `"${item.maVe}","${item.nguoiHuy}",${item.tienGoc},${item.tyLePhi * 100},${item.lePhiHuy},${item.tienHoan},"${item.maGiaoDich}"\n`;
     });
 
     // Summary Row
-    csvContent += `\n"Tổng cộng",,,,,,,,"${this.stats.totalOriginalPrice}",${this.stats.totalFees},${this.stats.totalRefunded}\n`;
+    csvContent += `\n"Tổng cộng",${this.stats.totalCancelled},"Tổng tiền gốc",${this.stats.totalOriginalPrice},"Tổng phí hủy",${this.stats.totalFees},"Tổng tiền hoàn",${this.stats.totalRefunded}\n`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `BaoCaoHoanHuy_TXP_${this.filters.fromDate}_to_${this.filters.toDate}.csv`);
+    link.setAttribute('download', `BaoCaoHoanHuy_TXP.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

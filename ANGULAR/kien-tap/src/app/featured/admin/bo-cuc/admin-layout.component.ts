@@ -75,6 +75,7 @@ export class AdminLayoutComponent {
     { label: 'Quản lý khách hàng', icon: 'groups', route: '/admin/quan-ly-khach-hang' },
     { label: 'Quản lý nhân viên', icon: 'engineering', route: '/admin/quan-ly-nhan-vien' },
     { label: 'Quản lý chính sách', icon: 'policy', route: '/admin/quan-ly-chinh-sach' },
+    { label: 'Quản lý từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam' },
     {
       label: 'Báo cáo',
       icon: 'bar_chart',
