@@ -1,7 +1,16 @@
-import { Component, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, ChangeDetectorRef, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { timer } from 'rxjs';
+import { LunarCalendarService } from '../../../../core/services/lunar-calendar.service';
+
+export interface CalendarDay {
+  day: number | null;
+  lunarDay?: number;
+  lunarMonth?: number;
+  isToday?: boolean;
+  isSelected?: boolean;
+}
 
 interface Ticket {
   id: string;
@@ -25,7 +34,7 @@ interface Ticket {
   templateUrl: './danh-sach-ve.component.html',
   styleUrls: ['./danh-sach-ve.component.css']
 })
-export class DanhSachVeComponent {
+export class DanhSachVeComponent implements OnInit {
   // Biến lưu trữ giá trị đang nhập ở bộ lọc
   filters = {
     searchTerm: '',
@@ -45,8 +54,109 @@ export class DanhSachVeComponent {
 
   tickets: Ticket[] = this.generateMockTickets();
 
-  constructor(private cdr: ChangeDetectorRef, private zone: NgZone) {
+  // Custom Date Picker
+  isDatePickerOpen: boolean = false;
+  viewDate: Date = new Date();
+  calendarDays: CalendarDay[] = [];
+  weekDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+  constructor(
+    private cdr: ChangeDetectorRef, 
+    private zone: NgZone,
+    private lunarService: LunarCalendarService
+  ) {
     this.displayTickets = [...this.tickets];
+  }
+
+  ngOnInit() {
+    this.generateCalendar();
+  }
+
+  toggleDatePicker() {
+    this.isDatePickerOpen = !this.isDatePickerOpen;
+    if (this.isDatePickerOpen) {
+      this.generateCalendar();
+    }
+  }
+
+  generateCalendar() {
+    const year = this.viewDate.getFullYear();
+    const month = this.viewDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    let startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+    
+    this.calendarDays = [];
+    for (let i = 0; i < startOffset; i++) {
+      this.calendarDays.push({ day: null });
+    }
+    
+    const today = new Date();
+    const selectedDate = this.parseDate(this.filters.departureDate);
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      const lunar = this.lunarService.getLunarDate(d, month + 1, year);
+      const isToday = today.getDate() === d && today.getMonth() === month && today.getFullYear() === year;
+      const isSelected = selectedDate?.getDate() === d && selectedDate?.getMonth() === month && selectedDate?.getFullYear() === year;
+      
+      this.calendarDays.push({
+        day: d,
+        lunarDay: lunar.day,
+        lunarMonth: lunar.month,
+        isToday,
+        isSelected
+      });
+    }
+  }
+
+  prevMonth() {
+    this.viewDate = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth() - 1, 1);
+    this.generateCalendar();
+  }
+
+  nextMonth() {
+    this.viewDate = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth() + 1, 1);
+    this.generateCalendar();
+  }
+
+  selectDate(d: CalendarDay) {
+    if (!d.day) return;
+    const date = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth(), d.day);
+    this.filters.departureDate = this.formatDateToISO(date);
+    this.isDatePickerOpen = false;
+    this.onSearch();
+  }
+
+  private parseDate(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return null;
+  }
+
+  private formatDateToISO(date: Date): string {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  getDisplayDate(): string {
+    const d = this.parseDate(this.filters.departureDate);
+    if (!d) return '';
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  getViewMonthYear(): string {
+    const month = this.viewDate.getMonth() + 1;
+    const year = this.viewDate.getFullYear();
+    return `THÁNG ${month}/${year}`;
   }
 
   private generateMockTickets(): Ticket[] {
