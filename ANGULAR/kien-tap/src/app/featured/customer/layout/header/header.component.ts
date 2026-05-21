@@ -1,6 +1,7 @@
 import { Component, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -12,17 +13,21 @@ import { RouterModule, Router } from '@angular/router';
 export class HeaderComponent {
   isIntroDropdownOpen = false;
   isUserDropdownOpen = false;
-  isLoggedIn = false; // Mặc định chưa đăng nhập
-  userName = 'Nguyễn Văn An';
+  isLoggedIn = false;
+  userName = '';
 
   constructor(
     private eRef: ElementRef,
-    private router: Router
-  ) {}
+    private router: Router,
+    private authService: AuthService
+  ) {
+    this.authService.isLoggedIn$.subscribe(status => this.isLoggedIn = status);
+    this.authService.userName$.subscribe(name => this.userName = name);
+  }
 
   login() {
-    this.isLoggedIn = true;
-    this.router.navigate(['/home']);
+    this.authService.login();
+    // Không chuyển trang để user thấy ngay sự thay đổi tại chỗ
   }
 
   isIntroActive(): boolean {
@@ -54,7 +59,7 @@ export class HeaderComponent {
   }
 
   logout() {
-    this.isLoggedIn = false;
+    this.authService.logout();
     this.isUserDropdownOpen = false;
     this.router.navigate(['/home']);
   }
