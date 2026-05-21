@@ -75,12 +75,9 @@ export class BaoCaoHoanHuyComponent implements OnInit {
       'Phú Yên ↔ Sài Gòn (BX Miền Đông)'
     ];
     const times = ['08:00', '13:00', '19:00', '21:00'];
-    const vps = [
+    const channels = [
       'Website / Online',
-      'Văn phòng Gia Lai (An Nhơn Bắc)',
-      'Văn phòng Phù Cát (Ngô Mây)',
-      'Văn phòng Sài Gòn (BX Miền Đông)',
-      'Văn phòng Bình Dương (Bến Cát)'
+      'Văn phòng Gia Lai (An Nhơn Bắc)'
     ];
     const reasons = [
       'Khách hàng chủ động hủy (Trước 24h)',
@@ -94,8 +91,12 @@ export class BaoCaoHoanHuyComponent implements OnInit {
     for (let i = 1; i <= 25; i++) {
       const routeIdx = i % routes.length;
       const timeIdx = (i * 3) % times.length;
-      const vpDatIdx = (i * 7) % vps.length;
-      const vpHuyIdx = (i * 11) % vps.length;
+      
+      const isOnlineDat = (i % 3) === 0;
+      const isOnlineHuy = (i % 2) === 0;
+      
+      const vpDatStr = isOnlineDat ? channels[0] : channels[1];
+      const vpHuyStr = isOnlineHuy ? channels[0] : channels[1];
       const reasonIdx = i % reasons.length;
 
       const day = (i % 25) + 1;
@@ -132,8 +133,8 @@ export class BaoCaoHoanHuyComponent implements OnInit {
         ngayDi: ngayDi,
         gioDi: times[timeIdx],
         ngayDat: ngayDat,
-        vpDat: vps[vpDatIdx],
-        vpHuy: vps[vpHuyIdx],
+        vpDat: vpDatStr,
+        vpHuy: vpHuyStr,
         lyDoHuy: reasons[reasonIdx],
         giaVe: giaVe,
         phiHuy: phiHuy,
@@ -202,7 +203,7 @@ export class BaoCaoHoanHuyComponent implements OnInit {
     csvContent += `Thời gian khởi hành: Từ ${this.filters.fromDate} đến ${this.filters.toDate}\n`;
     csvContent += `Bộ lọc: Tuyến: ${this.filters.route}, Lý do: ${this.filters.cancelReason}\n\n`;
     
-    csvContent += 'Mã vé,Tuyến xe,Ngày đi,Giờ đi,Ngày đặt,VP đặt,VP hủy,Lý do hủy,Giá vé (VNĐ),Phí hủy (VNĐ),Số tiền hoàn (VNĐ)\n';
+    csvContent += 'Mã vé,Tuyến xe,Ngày đi,Giờ đi,Ngày đặt,Kênh đặt,Kênh hủy,Lý do hủy,Giá vé (VNĐ),Phí hủy (VNĐ),Số tiền hoàn (VNĐ)\n';
 
     this.filteredRefunds.forEach(item => {
       csvContent += `"${item.maVe}","${item.tuyen}","${item.ngayDi}","${item.gioDi}","${item.ngayDat}","${item.vpDat}","${item.vpHuy}","${item.lyDoHuy}",${item.giaVe},${item.phiHuy},${item.tienHoan}\n`;

@@ -4,392 +4,438 @@
     <div class="breadcrumb">
       <span class="parent">Hệ thống</span>
       <span class="separator">/</span>
-      <span class="current">Nhật ký hệ thống</span>
+      <span class="current">Nhật ký hoạt động</span>
     </div>
     <h1>Quản lý nhật ký hoạt động</h1>
   </div>
 
-  <!-- Tabs Navigation -->
-  <div class="tabs-container">
-    <button class="tab-btn" [class.active]="activeTab === 'he-thong'" (click)="switchTab('he-thong')">
-      <span class="material-icons">history</span>
-      Nhật ký hệ thống (Audit Logs)
-    </button>
-    <button class="tab-btn" [class.active]="activeTab === 've-xe'" (click)="switchTab('ve-xe')">
-      <span class="material-icons">local_activity</span>
-      Lịch sử thao tác vé xe
-    </button>
-  </div>
-
-  <!-- ================= TAB 1: NHẬT KÝ HỆ THỐNG ================= -->
-  <div *ngIf="activeTab === 'he-thong'" style="display: flex; flex-direction: column; gap: 24px;">
-    <!-- Filters Card -->
-    <div class="card search-card">
-      <h3 class="filters-title">
-        <span class="material-icons">filter_alt</span>
-        Bộ lọc nhật ký thao tác
-      </h3>
-
-      <div class="search-grid">
-        <!-- Tìm kiếm -->
-        <div class="form-group">
-          <label>Tìm kiếm nhanh</label>
-          <input type="text" placeholder="Mã nhật ký, người dùng, IP..." [(ngModel)]="sysFilters.searchTerm" (input)="applySysFilters()">
-        </div>
-
-        <!-- Vai trò -->
-        <div class="form-group">
-          <label>Vai trò người thực hiện</label>
-          <select [(ngModel)]="sysFilters.role" (change)="applySysFilters()">
-            <option value="Tất cả">Tất cả vai trò</option>
-            <option value="Khách hàng">Khách hàng</option>
-            <option value="Bán vé">Nhân viên Bán vé</option>
-            <option value="Điều phối">Nhân viên Điều phối</option>
-            <option value="Quản trị viên">Quản trị viên</option>
-          </select>
-        </div>
-
-        <!-- Thao tác -->
-        <div class="form-group">
-          <label>Loại thao tác</label>
-          <select [(ngModel)]="sysFilters.action" (change)="applySysFilters()">
-            <option value="Tất cả">Tất cả thao tác</option>
-            <option value="Đăng nhập">Đăng nhập</option>
-            <option value="Đăng xuất">Đăng xuất</option>
-            <option value="Đặt vé">Đặt vé</option>
-            <option value="Hủy vé">Hủy vé</option>
-            <option value="Cập nhật xe">Cập nhật xe</option>
-            <option value="Thêm tuyến xe">Thêm tuyến xe</option>
-            <option value="Đổi mật khẩu">Đổi mật khẩu</option>
-            <option value="Sửa chính sách">Sửa chính sách</option>
-          </select>
-        </div>
-
-        <!-- Khoảng thời gian -->
-        <div class="form-group">
-          <label>Thời gian ghi log</label>
-          <div class="date-range-inputs">
-            <input type="date" [(ngModel)]="sysFilters.fromDate" (change)="applySysFilters()">
-            <span class="date-range-separator">→</span>
-            <input type="date" [(ngModel)]="sysFilters.toDate" (change)="applySysFilters()">
-          </div>
-        </div>
+  <!-- Summary Stats Bar -->
+  <div class="stats-grid">
+    <!-- Card 1: Tổng log hôm nay -->
+    <div class="stat-card">
+      <div class="stat-icon-wrapper total-logs">
+        <span class="material-icons">bar_chart</span>
       </div>
-
-      <div class="search-actions">
-        <button class="btn-search" (click)="applySysFilters()">
-          <span class="material-icons">search</span>
-          Lọc dữ liệu
-        </button>
-        <button class="btn-reset" (click)="resetSysFilters()">
-          <span class="material-icons">refresh</span>
-          Làm mới bộ lọc
-        </button>
+      <div class="stat-info">
+        <span class="stat-label">Tổng log hôm nay</span>
+        <span class="stat-number">{{ stats.totalLogsToday }}</span>
+      </div>
+      <div class="stat-indicator positive">
+        <span class="material-icons">trending_up</span>
+        <span>Hệ thống ổn định</span>
       </div>
     </div>
 
-    <!-- Data Card -->
-    <div class="card table-card">
-      <div class="table-card-header">
-        <h2>
-          Nhật ký thao tác người dùng & nhân viên
-          <span class="count">Tổng cộng {{ filteredSysLogs.length }} log ghi nhận</span>
-        </h2>
+    <!-- Card 2: Đăng nhập thành công -->
+    <div class="stat-card">
+      <div class="stat-icon-wrapper login-success">
+        <span class="material-icons">vpn_key</span>
       </div>
-
-      <div class="table-responsive" *ngIf="filteredSysLogs.length > 0">
-        <table>
-          <thead>
-            <tr>
-              <th>Mã nhật ký</th>
-              <th>Người thực hiện</th>
-              <th>Vai trò</th>
-              <th>Thao tác</th>
-              <th>Thời gian</th>
-              <th>Địa chỉ IP</th>
-              <th>Chi tiết thao tác</th>
-              <th style="text-align: center;">Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let log of paginatedSysLogs">
-              <td class="id-col">{{ log.maNhatKy }}</td>
-              <td>
-                <div class="user-col">
-                  <span class="user-name">{{ log.tenKhachHang || log.tenNhanVien || 'Hệ thống' }}</span>
-                  <span class="user-meta">
-                    <span class="material-icons" style="font-size: 12px; color: #94a3b8;">perm_identity</span>
-                    {{ log.maKhachHang || log.maNhanVien || 'System' }}
-                  </span>
-                </div>
-              </td>
-              <td>
-                <span class="role-badge" [ngClass]="{
-                  'role-kh': log.loaiTaiKhoan === 'Khách hàng',
-                  'role-nv': log.loaiTaiKhoan === 'Bán vé',
-                  'role-dp': log.loaiTaiKhoan === 'Điều phối',
-                  'role-admin': log.loaiTaiKhoan === 'Quản trị viên'
-                }">
-                  {{ log.loaiTaiKhoan }}
-                </span>
-              </td>
-              <td>
-                <span class="action-pill" [ngClass]="{
-                  'action-login': log.loaiThaoTac === 'Đăng nhập' || log.loaiThaoTac === 'Đăng xuất',
-                  'action-create': log.loaiThaoTac === 'Đặt vé' || log.loaiThaoTac === 'Thêm tuyến xe',
-                  'action-update': log.loaiThaoTac === 'Cập nhật xe' || log.loaiThaoTac === 'Sửa chính sách' || log.loaiThaoTac === 'Đổi mật khẩu',
-                  'action-delete': log.loaiThaoTac === 'Hủy vé'
-                }">
-                  {{ log.loaiThaoTac }}
-                </span>
-              </td>
-              <td style="font-weight: 500; color: #475569;">{{ log.thoiGian }}</td>
-              <td style="font-family: monospace; font-weight: 600;">{{ log.diaChiIP }}</td>
-              <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                {{ log.noiDungChiTiet }}
-              </td>
-              <td style="text-align: center;">
-                <button class="btn-detail" (click)="openSysLogDetail(log)">
-                  Xem chi tiết
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="stat-info">
+        <span class="stat-label">Đăng nhập thành công</span>
+        <span class="stat-number">{{ stats.loginSuccessCount }}</span>
       </div>
-
-      <!-- No Data State -->
-      <div class="no-data-container" *ngIf="filteredSysLogs.length === 0">
-        <span class="material-icons">inbox</span>
-        <p>Không tìm thấy nhật ký thao tác hệ thống nào khớp với bộ lọc.</p>
+      <div class="stat-indicator positive">
+        <span class="material-icons">check_circle_outline</span>
+        <span>Khách & Nhân viên</span>
       </div>
+    </div>
 
-      <!-- Pagination -->
-      <div class="pagination" *ngIf="filteredSysLogs.length > 0">
-        <div class="page-info">
-          Hiển thị {{ (sysPage - 1) * sysPageSize + 1 }} - {{ (sysPage * sysPageSize > filteredSysLogs.length) ? filteredSysLogs.length : (sysPage * sysPageSize) }} của {{ filteredSysLogs.length }} log
-        </div>
-        <div class="page-controls">
-          <button class="btn-prev" [disabled]="sysPage === 1" (click)="setSysPage(sysPage - 1)">
-            <span class="material-icons">chevron_left</span>
-          </button>
-          <button 
-            *ngFor="let p of getSysPageNumbers()" 
-            class="btn-page" 
-            [class.active]="p === sysPage"
-            (click)="setSysPage(p)">
-            {{ p }}
-          </button>
-          <button class="btn-next" [disabled]="sysPage === sysTotalPages" (click)="setSysPage(sysPage + 1)">
-            <span class="material-icons">chevron_right</span>
-          </button>
-        </div>
+    <!-- Card 3: Thao tác thất bại -->
+    <div class="stat-card" [class.danger-highlight]="stats.failedOperationsCount > 0">
+      <div class="stat-icon-wrapper failed-ops" [class.danger-bg]="stats.failedOperationsCount > 0">
+        <span class="material-icons">report_gmailerrorred</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Thao tác thất bại</span>
+        <span class="stat-number" [class.danger-text]="stats.failedOperationsCount > 0">{{ stats.failedOperationsCount }}</span>
+      </div>
+      <div class="stat-indicator" [class.negative]="stats.failedOperationsCount > 0" [class.neutral]="stats.failedOperationsCount === 0">
+        <span class="material-icons">{{ stats.failedOperationsCount > 0 ? 'warning' : 'verified_user' }}</span>
+        <span>{{ stats.failedOperationsCount > 0 ? 'Cần kiểm tra' : 'Không có lỗi' }}</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Lượt đặt vé -->
+    <div class="stat-card">
+      <div class="stat-icon-wrapper ticket-bookings">
+        <span class="material-icons">confirmation_number</span>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Lượt đặt vé hôm nay</span>
+        <span class="stat-number">{{ stats.ticketBookingCount }}</span>
+      </div>
+      <div class="stat-indicator positive">
+        <span class="material-icons">shopping_cart</span>
+        <span>Qua Web/App/Quầy</span>
       </div>
     </div>
   </div>
 
-  <!-- ================= TAB 2: LỊCH SỬ THAO TÁC VÉ ================= -->
-  <div *ngIf="activeTab === 've-xe'" style="display: flex; flex-direction: column; gap: 24px;">
-    <!-- Filters Card -->
-    <div class="card search-card">
+  <!-- Filter Panel -->
+  <div class="card filter-card">
+    <div class="filter-header">
       <h3 class="filters-title">
-        <span class="material-icons">filter_alt</span>
-        Bộ lọc nhật ký thao tác vé xe
+        <span class="material-icons">tune</span>
+        Bộ lọc nhật ký hoạt động hệ thống
       </h3>
+    </div>
 
-      <div class="search-grid">
-        <!-- Tìm kiếm -->
-        <div class="form-group">
-          <label>Tìm kiếm nhanh</label>
-          <input type="text" placeholder="Nhập mã vé, mã lịch sử, tên khách..." [(ngModel)]="ticketFilters.searchTerm" (input)="applyTicketFilters()">
-        </div>
-
-        <!-- Hành động -->
-        <div class="form-group">
-          <label>Hành động tác động</label>
-          <select [(ngModel)]="ticketFilters.action" (change)="applyTicketFilters()">
-            <option value="Tất cả">Tất cả hành động</option>
-            <option value="Đặt vé mới">Đặt vé mới</option>
-            <option value="Đổi ngày/giờ đi">Đổi ngày/giờ đi</option>
-            <option value="Hủy vé hoàn tiền">Hủy vé hoàn tiền</option>
-            <option value="Ghi nhận check-in">Ghi nhận check-in</option>
-          </select>
-        </div>
-
-        <!-- Khoảng thời gian -->
-        <div class="form-group" style="grid-column: span 2;">
-          <label>Thời gian thay đổi trạng thái</label>
-          <div class="date-range-inputs">
-            <input type="date" [(ngModel)]="ticketFilters.fromDate" (change)="applyTicketFilters()">
-            <span class="date-range-separator">→</span>
-            <input type="date" [(ngModel)]="ticketFilters.toDate" (change)="applyTicketFilters()">
-          </div>
+    <div class="filter-grid">
+      <!-- Tìm kiếm nhanh -->
+      <div class="form-group">
+        <label>Tìm kiếm nhanh</label>
+        <div class="input-with-icon">
+          <span class="material-icons input-icon">search</span>
+          <input type="text" placeholder="Tìm ID log, tài khoản, IP, mã vé..." [(ngModel)]="filters.searchTerm" (input)="applyFilters()">
         </div>
       </div>
 
-      <div class="search-actions">
-        <button class="btn-search" (click)="applyTicketFilters()">
-          <span class="material-icons">search</span>
-          Lọc dữ liệu
-        </button>
-        <button class="btn-reset" (click)="resetTicketFilters()">
-          <span class="material-icons">refresh</span>
-          Làm mới bộ lọc
-        </button>
+      <!-- Vai trò người thực hiện -->
+      <div class="form-group">
+        <label>Vai trò người thực hiện</label>
+        <select [(ngModel)]="filters.role" (change)="applyFilters()">
+          <option *ngFor="let r of roles" [value]="r">{{ r === 'Tất cả' ? 'Tất cả vai trò' : r }}</option>
+        </select>
+      </div>
+
+      <!-- Loại thao tác -->
+      <div class="form-group">
+        <label>Loại thao tác</label>
+        <select [(ngModel)]="filters.action" (change)="applyFilters()">
+          <option *ngFor="let act of actions" [value]="act">{{ act === 'Tất cả' ? 'Tất cả thao tác' : act }}</option>
+        </select>
+      </div>
+
+      <!-- Trạng thái -->
+      <div class="form-group">
+        <label>Trạng thái</label>
+        <select [(ngModel)]="filters.status" (change)="applyFilters()">
+          <option value="Tất cả">Tất cả trạng thái</option>
+          <option value="Thành công">Thành công</option>
+          <option value="Thất bại">Thất bại</option>
+        </select>
+      </div>
+
+      <!-- Khoảng thời gian -->
+      <div class="form-group date-range-group">
+        <label>Khoảng thời gian</label>
+        <div class="date-range-inputs">
+          <input type="date" [(ngModel)]="filters.fromDate" (change)="applyFilters()">
+          <span class="date-range-separator">đến</span>
+          <input type="date" [(ngModel)]="filters.toDate" (change)="applyFilters()">
+        </div>
       </div>
     </div>
 
-    <!-- Data Card -->
-    <div class="card table-card">
-      <div class="table-card-header">
-        <h2>
-          Lịch sử biến động trạng thái vé xe điện tử
-          <span class="count">Tổng cộng {{ filteredTicketLogs.length }} lịch sử ghi nhận</span>
-        </h2>
+    <div class="filter-actions">
+      <div class="left-actions">
+        <button class="btn-search" (click)="applyFilters()">
+          <span class="material-icons">filter_list</span>
+          Lọc dữ liệu
+        </button>
+        <button class="btn-reset" (click)="resetFilters()">
+          <span class="material-icons">restart_alt</span>
+          Làm mới bộ lọc
+        </button>
       </div>
+      <div class="right-actions">
+        <button class="btn-export" (click)="exportToExcel()">
+          <span class="material-icons">download</span>
+          Xuất Excel
+        </button>
+      </div>
+    </div>
+  </div>
 
-      <div class="table-responsive" *ngIf="filteredTicketLogs.length > 0">
-        <table>
-          <thead>
-            <tr>
-              <th>Mã lịch sử</th>
-              <th>Mã vé</th>
-              <th>Người thực hiện</th>
-              <th>Hành động</th>
-              <th>Biến động trạng thái</th>
-              <th>Thời gian thay đổi</th>
-              <th>Ghi chú / Chi tiết</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let log of paginatedTicketLogs">
-              <td class="id-col">{{ log.maLichSu }}</td>
-              <td style="font-weight: 700; color: #009ba1;">{{ log.maVe }}</td>
-              <td>
-                <div class="user-col">
-                  <span class="user-name">{{ log.tenKhachHang || log.tenNVBanVe || 'Hệ thống' }}</span>
-                  <span class="user-meta">
-                    <span class="material-icons" style="font-size: 12px; color: #94a3b8;">perm_identity</span>
-                    {{ log.maKhachHang || log.maNVBanVe || 'System' }}
-                  </span>
-                </div>
-              </td>
-              <td>
-                <span class="action-pill" [ngClass]="{
-                  'action-create': log.hanhDong === 'Đặt vé mới',
-                  'action-update': log.hanhDong === 'Đổi ngày/giờ đi' || log.hanhDong === 'Ghi nhận check-in',
-                  'action-delete': log.hanhDong === 'Hủy vé hoàn tiền'
-                }">
-                  {{ log.hanhDong }}
+  <!-- Data Table Card -->
+  <div class="card table-card">
+    <div class="table-card-header">
+      <h2>
+        Nhật ký hệ thống & Biến động vé xe
+        <span class="count">Đã tìm thấy {{ filteredLogs.length }} kết quả</span>
+      </h2>
+    </div>
+
+    <div class="table-responsive" *ngIf="filteredLogs.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 130px;">Mã nhật ký</th>
+            <th style="width: 250px;">Người thực hiện</th>
+            <th style="width: 160px;">Vai trò</th>
+            <th style="width: 220px;">Thao tác</th>
+            <th style="width: 140px; text-align: center;">Trạng thái</th>
+            <th style="width: 180px;">Thời gian</th>
+            <th style="width: 140px;">Địa chỉ IP</th>
+            <th style="width: 140px; text-align: center;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of paginatedLogs">
+            <td class="id-col">{{ log.maNhatKy }}</td>
+            <td>
+              <div class="user-cell">
+                <span class="user-fullname">{{ log.tenKhachHang || log.tenNhanVien || 'Hệ thống' }}</span>
+                <span class="user-code">
+                  <span class="material-icons">account_circle</span>
+                  {{ log.maKhachHang || log.maNhanVien || 'SYSTEM' }}
                 </span>
-              </td>
-              <td>
-                <div class="status-cell">
-                  <span class="status-badge">{{ log.trangThaiCu }}</span>
-                  <span class="material-icons arrow-right">east</span>
-                  <span class="status-badge highlight" [class.danger]="log.trangThaiMoi === 'DaHuy'">{{ log.trangThaiMoi }}</span>
-                </div>
-              </td>
-              <td style="font-weight: 500; color: #475569;">{{ log.thoiGianThayDoi }}</td>
-              <td style="font-size: 13px; color: #475569; max-width: 250px;">{{ log.ghiChu }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
+            </td>
+            <td>
+              <span class="role-pill" [ngClass]="{
+                'role-kh': log.loaiTaiKhoan === 'Khách hàng',
+                'role-dp': log.loaiTaiKhoan === 'Điều phối',
+                'role-admin': log.loaiTaiKhoan === 'Quản trị viên',
+                'role-nv': log.loaiTaiKhoan === 'Bán vé',
+                'role-bql': log.loaiTaiKhoan === 'Ban quản lý'
+              }">
+                {{ log.loaiTaiKhoan }}
+              </span>
+            </td>
+            <td>
+              <span class="action-tag" [ngClass]="{
+                'action-gray': log.loaiThaoTac === 'Đăng nhập' || log.loaiThaoTac === 'Đăng ký',
+                'action-green': log.loaiThaoTac === 'Đặt vé' || log.loaiThaoTac === 'Quản lý vé (thay khách)',
+                'action-red': log.loaiThaoTac === 'Hủy vé',
+                'action-orange': log.loaiThaoTac === 'Đổi mật khẩu' || log.loaiThaoTac === 'Đánh giá chuyến xe',
+                'action-blue': log.loaiThaoTac.includes('lịch trình') || log.loaiThaoTac.includes('tuyến xe') || log.loaiThaoTac.includes('phương tiện') || log.loaiThaoTac.includes('tài xế') || log.loaiThaoTac.includes('thông tin cá nhân'),
+                'action-purple': log.loaiThaoTac.includes('chính sách') || log.loaiThaoTac.includes('tài khoản') || log.loaiThaoTac.includes('tin tức') || log.loaiThaoTac.includes('đánh giá'),
+                'action-teal': log.loaiThaoTac.includes('báo cáo') || log.loaiThaoTac === 'Tra cứu vé' || log.loaiThaoTac.includes('Xuất file') || log.loaiThaoTac.includes('Chỉnh sửa thông tin vé')
+              }">
+                {{ log.loaiThaoTac }}
+              </span>
+            </td>
+            <td style="text-align: center;">
+              <span class="status-badge-inline" [class.status-success]="log.trangThai === 'Thành công'" [class.status-failed]="log.trangThai === 'Thất bại'">
+                <span class="material-icons">{{ log.trangThai === 'Thành công' ? 'done' : 'close' }}</span>
+                {{ log.trangThai }}
+              </span>
+            </td>
+            <td class="time-col">{{ log.thoiGian }}</td>
+            <td class="ip-col">{{ log.diaChiIP }}</td>
+            <td style="text-align: center;">
+              <button class="btn-row-action" (click)="openLogDetail(log)">
+                Xem chi tiết
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-      <!-- No Data State -->
-      <div class="no-data-container" *ngIf="filteredTicketLogs.length === 0">
-        <span class="material-icons">inbox</span>
-        <p>Không tìm thấy lịch sử thay đổi trạng thái vé nào khớp với bộ lọc.</p>
-      </div>
+    <!-- No Data State -->
+    <div class="no-data-container" *ngIf="filteredLogs.length === 0">
+      <span class="material-icons">info_outline</span>
+      <p>Không tìm thấy nhật ký hoạt động nào khớp với bộ lọc hiện tại.</p>
+      <button class="btn-reset-small" (click)="resetFilters()">Đặt lại bộ lọc</button>
+    </div>
 
-      <!-- Pagination -->
-      <div class="pagination" *ngIf="filteredTicketLogs.length > 0">
-        <div class="page-info">
-          Hiển thị {{ (ticketPage - 1) * ticketPageSize + 1 }} - {{ (ticketPage * ticketPageSize > filteredTicketLogs.length) ? filteredTicketLogs.length : (ticketPage * ticketPageSize) }} của {{ filteredTicketLogs.length }} lịch sử
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="filteredLogs.length > 0">
+      <div class="pagination-left">
+        <span class="pagination-info">
+          Hiển thị {{ (page - 1) * pageSize + 1 }} - {{ (page * pageSize > filteredLogs.length) ? filteredLogs.length : (page * pageSize) }} của <strong>{{ filteredLogs.length }}</strong> log
+        </span>
+        <div class="page-size-selector">
+          <span>Số hàng hiển thị:</span>
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option [value]="10">10 / trang</option>
+            <option [value]="20">20 / trang</option>
+            <option [value]="50">50 / trang</option>
+          </select>
         </div>
-        <div class="page-controls">
-          <button class="btn-prev" [disabled]="ticketPage === 1" (click)="setTicketPage(ticketPage - 1)">
-            <span class="material-icons">chevron_left</span>
-          </button>
-          <button 
-            *ngFor="let p of getTicketPageNumbers()" 
-            class="btn-page" 
-            [class.active]="p === ticketPage"
-            (click)="setTicketPage(p)">
-            {{ p }}
-          </button>
-          <button class="btn-next" [disabled]="ticketPage === ticketTotalPages" (click)="setTicketPage(ticketPage + 1)">
-            <span class="material-icons">chevron_right</span>
-          </button>
-        </div>
+      </div>
+      <div class="pagination-controls">
+        <button class="btn-page-nav" [disabled]="page === 1" (click)="setPage(1)" title="Trang đầu">
+          <span class="material-icons">first_page</span>
+        </button>
+        <button class="btn-page-nav" [disabled]="page === 1" (click)="setPage(page - 1)" title="Trang trước">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        
+        <button *ngFor="let p of getPageNumbers()" 
+                class="btn-page-num" 
+                [class.active]="p === page"
+                (click)="setPage(p)">
+          {{ p }}
+        </button>
+
+        <button class="btn-page-nav" [disabled]="page === totalPages" (click)="setPage(page + 1)" title="Trang sau">
+          <span class="material-icons">chevron_right</span>
+        </button>
+        <button class="btn-page-nav" [disabled]="page === totalPages" (click)="setPage(totalPages)" title="Trang cuối">
+          <span class="material-icons">last_page</span>
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ================= SYSTEM LOG DETAIL MODAL ================= -->
-<div class="modal-backdrop" *ngIf="selectedSysLog" (click)="closeSysLogDetail()">
+<!-- ================= LOG DETAIL MODAL ================= -->
+<div class="modal-backdrop" *ngIf="selectedLog" (click)="closeLogDetail()">
   <div class="modal-window" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
     <div class="modal-header">
-      <h3>
-        <span class="material-icons" style="color: #009ba1;">info</span>
-        Chi tiết nhật ký hoạt động
-      </h3>
-      <button class="btn-close" (click)="closeSysLogDetail()">&times;</button>
+      <div class="modal-header-title">
+        <span class="material-icons header-icon">info</span>
+        <h3>Chi tiết nhật ký hoạt động</h3>
+      </div>
+      <button class="btn-close" (click)="closeLogDetail()">&times;</button>
     </div>
+    
+    <!-- Modal Content -->
     <div class="modal-body">
-      <div class="detail-row">
-        <label>Mã nhật ký</label>
-        <span>{{ selectedSysLog.maNhatKy }}</span>
-      </div>
-      <div class="detail-row">
-        <label>Thời gian ghi nhận</label>
-        <span>{{ selectedSysLog.thoiGian }}</span>
-      </div>
-      <div class="detail-row">
-        <label>Người thực hiện</label>
-        <span>{{ selectedSysLog.tenKhachHang || selectedSysLog.tenNhanVien || 'Hệ thống' }} ({{ selectedSysLog.maKhachHang || selectedSysLog.maNhanVien || 'System' }})</span>
-      </div>
-      <div class="detail-row">
-        <label>Vai trò truy cập</label>
-        <span>{{ selectedSysLog.loaiTaiKhoan }}</span>
-      </div>
-      <div class="detail-row">
-        <label>Địa chỉ IP máy trạm</label>
-        <span style="font-family: monospace;">{{ selectedSysLog.diaChiIP }}</span>
-      </div>
-      <div class="detail-row">
-        <label>Nội dung chi tiết thao tác</label>
-        <span style="line-height: 1.5; color: #334155; font-size: 14px;">{{ selectedSysLog.noiDungChiTiet }}</span>
+      <!-- Top info grid -->
+      <div class="modal-info-grid">
+        <div class="info-block">
+          <span class="block-label">Mã nhật ký</span>
+          <span class="block-value code-highlight">{{ selectedLog.maNhatKy }}</span>
+        </div>
+        <div class="info-block">
+          <span class="block-label">Thời gian thực hiện</span>
+          <span class="block-value">{{ selectedLog.thoiGian }}</span>
+        </div>
+        <div class="info-block">
+          <span class="block-label">Trạng thái</span>
+          <span class="status-badge-inline" [class.status-success]="selectedLog.trangThai === 'Thành công'" [class.status-failed]="selectedLog.trangThai === 'Thất bại'">
+            <span class="material-icons">{{ selectedLog.trangThai === 'Thành công' ? 'check' : 'close' }}</span>
+            {{ selectedLog.trangThai }}
+          </span>
+        </div>
+        <div class="info-block">
+          <span class="block-label">Địa chỉ IP</span>
+          <span class="block-value ip-highlight">{{ selectedLog.diaChiIP }}</span>
+        </div>
       </div>
 
-      <!-- Before/After data differences -->
-      <div class="changes-box" *ngIf="selectedSysLog.duLieuThayDoi && selectedSysLog.duLieuThayDoi.length > 0">
-        <div class="changes-title">
-          <span class="material-icons" style="font-size: 16px; color: #f37021;">compare_arrows</span>
-          Chi tiết biến động dữ liệu (Diff)
+      <hr class="modal-divider">
+
+      <!-- Conditionally render ticket details card if ticket exists -->
+      <div class="ticket-details-grid" *ngIf="selectedLog.maVe">
+        <div class="ticket-detail-item">
+          <span class="td-label">Mã vé xe liên quan:</span>
+          <span class="block-value ticket-highlight">{{ selectedLog.maVe }}</span>
         </div>
-        <table class="changes-table">
-          <thead>
-            <tr>
-              <th style="text-align: left;">Trường thay đổi</th>
-              <th style="text-align: left;">Giá trị cũ</th>
-              <th style="text-align: left;">Giá trị mới</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of selectedSysLog.duLieuThayDoi">
-              <td style="font-weight: 600;">{{ item.truong }}</td>
-              <td><span class="val-old">{{ item.giaTriCu }}</span></td>
-              <td><span class="val-new">{{ item.giaTriMoi }}</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="ticket-detail-item">
+          <span class="td-label">Tuyến xe hoạt động:</span>
+          <div class="route-val">
+            <span class="material-icons">directions_bus</span>
+            <span>{{ selectedLog.tuyenXe || 'Không rõ tuyến' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conditionally render Status Changes Flow if old status exists -->
+      <div class="status-comparison-box" *ngIf="selectedLog.trangThaiCu && selectedLog.trangThaiMoi">
+        <span class="sc-label">Biến động trạng thái vé:</span>
+        <div class="status-comparison-flow">
+          <div class="flow-badge old-status">{{ selectedLog.trangThaiCu }}</div>
+          <span class="material-icons flow-arrow">arrow_forward</span>
+          <div class="flow-badge new-status" [class.status-danger-bg]="selectedLog.trangThaiMoi === 'Đã hủy'">
+            {{ selectedLog.trangThaiMoi }}
+          </div>
+        </div>
+      </div>
+
+      <hr class="modal-divider" *ngIf="selectedLog.maVe">
+
+      <!-- Performer Block -->
+      <div class="modal-section-title">
+        <span class="material-icons section-icon">person</span>
+        <span>Thông tin người thực hiện</span>
+      </div>
+      <div class="modal-performer-box">
+        <div class="performer-detail">
+          <div class="performer-avatar" [class.perf-staff]="selectedLog.loaiTaiKhoan !== 'Khách hàng'">
+            <span class="material-icons">
+              {{ selectedLog.loaiTaiKhoan === 'Khách hàng' ? 'account_box' : 'person_outline' }}
+            </span>
+          </div>
+          <div class="performer-info">
+            <span class="perf-fullname">{{ selectedLog.tenKhachHang || selectedLog.tenNhanVien || 'Hệ thống tự động' }}</span>
+            <span class="perf-code">
+              Mã tài khoản: {{ selectedLog.maKhachHang || selectedLog.maNhanVien || 'SYSTEM' }}
+              <span *ngIf="selectedLog.soDienThoai" style="margin-left: 8px; color: #64748b;">
+                &bull; SĐT: <strong>{{ selectedLog.soDienThoai }}</strong>
+              </span>
+            </span>
+          </div>
+        </div>
+        <span class="role-pill" [ngClass]="{
+          'role-kh': selectedLog.loaiTaiKhoan === 'Khách hàng',
+          'role-dp': selectedLog.loaiTaiKhoan === 'Điều phối',
+          'role-admin': selectedLog.loaiTaiKhoan === 'Quản trị viên',
+          'role-nv': selectedLog.loaiTaiKhoan === 'Bán vé',
+          'role-bql': selectedLog.loaiTaiKhoan === 'Ban quản lý'
+        }">
+          {{ selectedLog.loaiTaiKhoan }}
+        </span>
+      </div>
+
+      <!-- Action & Device details -->
+      <div class="modal-info-rows">
+        <div class="modal-info-row">
+          <span class="row-label">Loại thao tác:</span>
+          <div class="row-value">
+            <span class="action-tag" [ngClass]="{
+              'action-gray': selectedLog.loaiThaoTac === 'Đăng nhập' || selectedLog.loaiThaoTac === 'Đăng ký',
+              'action-green': selectedLog.loaiThaoTac === 'Đặt vé' || selectedLog.loaiThaoTac === 'Quản lý vé (thay khách)',
+              'action-red': selectedLog.loaiThaoTac === 'Hủy vé',
+              'action-orange': selectedLog.loaiThaoTac === 'Đổi mật khẩu' || selectedLog.loaiThaoTac === 'Đánh giá chuyến xe',
+              'action-blue': selectedLog.loaiThaoTac.includes('lịch trình') || selectedLog.loaiThaoTac.includes('tuyến xe') || selectedLog.loaiThaoTac.includes('phương tiện') || selectedLog.loaiThaoTac.includes('tài xế') || selectedLog.loaiThaoTac.includes('thông tin cá nhân'),
+              'action-purple': selectedLog.loaiThaoTac.includes('chính sách') || selectedLog.loaiThaoTac.includes('tài khoản') || selectedLog.loaiThaoTac.includes('tin tức') || selectedLog.loaiThaoTac.includes('đánh giá'),
+              'action-teal': selectedLog.loaiThaoTac.includes('báo cáo') || selectedLog.loaiThaoTac === 'Tra cứu vé' || selectedLog.loaiThaoTac.includes('Xuất file') || selectedLog.loaiThaoTac.includes('Chỉnh sửa thông tin vé')
+            }">
+              {{ selectedLog.loaiThaoTac }}
+            </span>
+          </div>
+        </div>
+        <div class="modal-info-row" *ngIf="selectedLog.thietBiTrinhDuyet">
+          <span class="row-label">Thiết bị / Trình duyệt:</span>
+          <span class="row-value device-val">
+            <span class="material-icons">devices</span>
+            {{ selectedLog.thietBiTrinhDuyet }}
+          </span>
+        </div>
+      </div>
+
+      <div class="detail-description-box">
+        <span class="desc-label">Nội dung chi tiết thao tác:</span>
+        <p class="desc-content">{{ selectedLog.noiDungChiTiet }}</p>
+      </div>
+
+      <!-- Before/After data differences (Diff Table) -->
+      <div class="changes-box" *ngIf="selectedLog.duLieuThayDoi && selectedLog.duLieuThayDoi.length > 0">
+        <div class="changes-title">
+          <span class="material-icons">compare_arrows</span>
+          <span>Chi tiết biến động dữ liệu (Before / After)</span>
+        </div>
+        <div class="changes-table-wrapper">
+          <table class="changes-table">
+            <thead>
+              <tr>
+                <th>Trường thay đổi</th>
+                <th>Giá trị trước</th>
+                <th>Giá trị sau</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selectedLog.duLieuThayDoi">
+                <td class="diff-field">{{ item.truong }}</td>
+                <td><span class="val-old">{{ item.giaTriCu }}</span></td>
+                <td><span class="val-new">{{ item.giaTriMoi }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+    
+    <!-- Modal Footer -->
     <div class="modal-footer">
-      <button class="btn-primary" (click)="closeSysLogDetail()">Đóng cửa sổ</button>
+      <button class="btn-modal-close" (click)="closeLogDetail()">Đóng cửa sổ</button>
     </div>
   </div>
 </div>
