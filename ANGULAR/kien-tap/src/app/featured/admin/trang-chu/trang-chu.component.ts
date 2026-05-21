@@ -74,18 +74,17 @@ export class TrangChuComponent {
   ];
 
   bookings: Booking[] = [
-    { id: 'TXP1245678', customer: 'Nguyễn Văn An', route: 'Bình Dương - BX Miền Đông', seat: 'A1, A2', time: '06:00', price: 170000, status: 'Hoàn thành' },
-    { id: 'TXP1245679', customer: 'Trần Thị Bích', route: 'BX Miền Đông - Bình Dương', seat: 'B3', time: '08:30', price: 95000, status: 'Đang chờ' },
-    { id: 'TXP1245680', customer: 'Lê Văn Cường', route: 'Bình Dương - BX Miền Tây', seat: 'A5, A6, A7', time: '10:00', price: 255000, status: 'Hoàn thành' },
-    { id: 'TXP1245681', customer: 'Phạm Minh Đạo', route: 'BX Miền Tây - Bình Dương', seat: 'B10', time: '13:00', price: 100000, status: 'Hoàn thành' }
+    { id: 'TXP1245678', customer: 'Nguyễn Văn A', route: 'Bến xe Miền Đông – Bến xe Hà Nội', seat: 'A1, A2', time: '06:00', price: '1,720,000đ', status: 'Hoàn thành' },
+    { id: 'TXP1245679', customer: 'Trần Thị B', route: 'Bến xe Miền Đông – Bến xe Đà Nẵng', seat: 'B3', time: '08:30', price: '960,000đ', status: 'Đang chờ' },
+    { id: 'TXP1245680', customer: 'Lê Văn C', route: 'Bến xe Miền Đông – Bến xe Vinh', seat: 'A5, A6, A7', time: '10:00', price: '1,350,000đ', status: 'Hoàn thành' },
+    { id: 'TXP1245681', customer: 'Phạm Thị D', route: 'Bến xe Miền Đông – Bến xe Huế', seat: 'B10', time: '13:00', price: '1,050,000đ', status: 'Hoàn thành' }
   ];
 
   popularRoutes: PopularRoute[] = [
-    { name: 'Bình Dương - BX Miền Đông', bookings: 342, trend: '+12%', trendType: 'up' },
-    { name: 'BX Miền Đông - Bình Dương', bookings: 289, trend: '+8%', trendType: 'up' },
-    { name: 'Bình Dương - BX Miền Tây', bookings: 231, trend: '-5%', trendType: 'down' },
-    { name: 'BX Miền Tây - Bình Dương', bookings: 187, trend: '+15%', trendType: 'up' },
-    { name: 'Bình Dương - Bến Cát', bookings: 156, trend: '+3%', trendType: 'up' }
+    { name: 'Bến xe Miền Đông – Bến xe Hà Nội', bookings: 342, trend: '+12%', trendType: 'up' },
+    { name: 'Bến xe Miền Đông – Bến xe Đà Nẵng', bookings: 289, trend: '+8%', trendType: 'up' },
+    { name: 'Bến xe Miền Đông – Bến xe Vinh', bookings: 231, trend: '-5%', trendType: 'down' },
+    { name: 'Bến xe Miền Đông – Bến xe Huế', bookings: 187, trend: '+15%', trendType: 'up' }
   ];
 
   getSeatsList(seat: string): string[] {
