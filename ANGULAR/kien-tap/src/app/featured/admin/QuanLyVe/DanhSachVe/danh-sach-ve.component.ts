@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { timer } from 'rxjs';
 
 interface Ticket {
   id: string;
@@ -9,9 +10,12 @@ interface Ticket {
   route: string;
   arrivalDate: string;
   date: string;
+  time: string;
   total: string;
   paymentStatus: 'Chờ thanh toán' | 'Đã thanh toán' | 'Đã hủy' | 'Chờ hoàn tiền' | 'Đã hoàn tiền';
   ticketStatus: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy';
+  paymentMethod: string;
+  seat: string;
 }
 
 @Component({
@@ -27,35 +31,35 @@ export class DanhSachVeComponent {
     searchTerm: '',
     route: 'Tất cả tuyến',
     departureDate: '',
-    arrivalDate: '',
+    seat: '',
     paymentStatus: 'Tất cả',
     ticketStatus: 'Tất cả'
   };
 
   // Danh sách hiển thị thực tế trên bảng (sau khi lọc)
   displayTickets: Ticket[] = [];
-  
+
   // Phân trang
   currentPage: number = 1;
   pageSize: number = 15;
 
   tickets: Ticket[] = this.generateMockTickets();
 
-  constructor() {
+  constructor(private cdr: ChangeDetectorRef, private zone: NgZone) {
     this.displayTickets = [...this.tickets];
   }
 
   private generateMockTickets(): Ticket[] {
     const list: Ticket[] = [];
-    const names = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C', 'Phạm Thị D', 'Hoàng Văn E', 'Nguyễn Thị F', 'Lý Văn G', 'Vũ Thị H', 'Đặng Văn I', 'Bùi Thị K'];
+    const names = ['Nguyễn Văn An', 'Trần Thị Bích', 'Lê Văn Cường', 'Phạm Minh Đạo', 'Hoàng Thị Dung', 'Nguyễn Thị Phương', 'Lý Quốc Bảo', 'Vũ Thị Hằng', 'Đặng Văn Khoa', 'Bùi Thị Lan'];
     const routes = [
       'Bình Dương → BX Miền Đông', 'BX Miền Đông → Bình Dương',
       'Bình Dương → BX Miền Tây', 'BX Miền Tây → Bình Dương',
       'Bình Dương → Bến Cát', 'Bến Cát → Bình Dương'
     ];
-    
-    // Tạo 673 vé
-    for (let i = 1; i <= 673; i++) {
+
+    // Tạo 1234 vé
+    for (let i = 1; i <= 1234; i++) {
       let pStatus: any = 'Đã thanh toán';
       let tStatus: any = 'Đã hoàn thành';
 
@@ -89,6 +93,9 @@ export class DanhSachVeComponent {
         }
       }
 
+      const times = ['05:30', '07:00', '08:30', '10:00', '13:00', '15:45', '17:30', '20:00', '22:15'];
+      const pttts = ['Momo', 'ZaloPay', 'Chuyển khoản (Vietcombank)', 'Tiền mặt'];
+      const seats = ['A1', 'A2', 'B3', 'A5, A6', 'B7', 'A8, A9', 'B12', 'A15', 'B16, B17', 'A20'];
       const ticket: Ticket = {
         id: `TXP2605${String(1000 + i).padStart(4, '0')}`,
         customer: names[i % names.length],
@@ -96,9 +103,12 @@ export class DanhSachVeComponent {
         route: routes[i % routes.length],
         date: i <= 205 ? '2026-05-20' : '2026-05-15',
         arrivalDate: i <= 205 ? '2026-05-20' : '2026-05-15',
+        time: times[i % times.length],
         total: `${150 + (i % 10) * 20}.000đ`,
         paymentStatus: pStatus,
-        ticketStatus: tStatus
+        ticketStatus: tStatus,
+        paymentMethod: pStatus === 'Chờ thanh toán' ? 'Chưa thanh toán' : pttts[i % pttts.length],
+        seat: seats[i % seats.length]
       };
       list.push(ticket);
     }
@@ -107,18 +117,18 @@ export class DanhSachVeComponent {
 
   onSearch() {
     this.displayTickets = this.tickets.filter(t => {
-      const matchSearch = !this.filters.searchTerm || 
+      const matchSearch = !this.filters.searchTerm ||
         t.id.toLowerCase().includes(this.filters.searchTerm.toLowerCase()) ||
         t.customer.toLowerCase().includes(this.filters.searchTerm.toLowerCase()) ||
         t.phone.includes(this.filters.searchTerm);
-      
+
       const matchRoute = this.filters.route === 'Tất cả tuyến' || t.route === this.filters.route;
       const matchDepDate = !this.filters.departureDate || t.date === this.filters.departureDate;
-      const matchArrDate = !this.filters.arrivalDate || t.arrivalDate === this.filters.arrivalDate;
+      const matchSeat = !this.filters.seat || t.seat.toLowerCase().includes(this.filters.seat.toLowerCase());
       const matchPayment = this.filters.paymentStatus === 'Tất cả' || t.paymentStatus === this.filters.paymentStatus;
       const matchTicket = this.filters.ticketStatus === 'Tất cả' || t.ticketStatus === this.filters.ticketStatus;
 
-      return matchSearch && matchRoute && matchDepDate && matchArrDate && matchPayment && matchTicket;
+      return matchSearch && matchRoute && matchDepDate && matchSeat && matchPayment && matchTicket;
     });
     this.currentPage = 1; // Reset về trang 1 khi tìm kiếm
   }
@@ -128,7 +138,7 @@ export class DanhSachVeComponent {
       searchTerm: '',
       route: 'Tất cả tuyến',
       departureDate: '',
-      arrivalDate: '',
+      seat: '',
       paymentStatus: 'Tất cả',
       ticketStatus: 'Tất cả'
     };
@@ -154,15 +164,15 @@ export class DanhSachVeComponent {
   getPageNumbers() {
     const pages = [];
     const total = this.totalPages;
-    
+
     // Hiển thị tối đa 5 trang xung quanh trang hiện tại
     let start = Math.max(1, this.currentPage - 2);
     let end = Math.min(total, start + 4);
-    
+
     if (end === total) {
       start = Math.max(1, end - 4);
     }
-    
+
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
@@ -243,8 +253,49 @@ export class DanhSachVeComponent {
     }
   }
 
+  // Trạng thái nút gửi lại: 'idle', 'sending', 'success'
+  resendStatus: 'idle' | 'sending' | 'success' = 'idle';
+  private resendTimeout: any;
+
   onResendNotification() {
-    alert('Đã gửi lại SMS/Email cho khách hàng ' + this.selectedTicket?.customer);
+    if (this.resendStatus !== 'idle') return;
+
+    this.resendStatus = 'sending';
+
+    // Sử dụng RxJS timer: 1 giây xoay
+    timer(1000).subscribe(() => {
+      this.zone.run(() => {
+        this.resendStatus = 'success';
+        this.cdr.detectChanges();
+
+        if (this.resendTimeout) clearTimeout(this.resendTimeout);
+
+        // 4 giây hiện thông báo thành công
+        this.resendTimeout = setTimeout(() => {
+          this.zone.run(() => {
+            this.resendStatus = 'idle';
+            this.cdr.detectChanges();
+          });
+        }, 4000);
+      });
+    });
+  }
+
+  getResendButtonText(): string {
+    if (this.resendStatus === 'sending') return 'Đang gửi...';
+    if (this.resendStatus === 'success') return 'Đã gửi thành công!';
+    return 'Gửi lại SMS/Email';
+  }
+
+  getReportTime(time: string | undefined): string {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':').map(Number);
+    let totalMinutes = hours * 60 + minutes - 30;
+    if (totalMinutes < 0) totalMinutes += 24 * 60; // Xử lý nếu là nửa đêm
+
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
   // Modal In vé (kế thừa từ logic cũ nhưng mở từ Details)
@@ -258,6 +309,8 @@ export class DanhSachVeComponent {
 
   closePrintModal() {
     this.showPrintModal = false;
+    this.showDetailsModal = false;
+    this.selectedTicket = null;
   }
 
   exportPDF() {
@@ -291,5 +344,67 @@ export class DanhSachVeComponent {
       case 'Đã hủy': return 'status-cancelled';
       default: return '';
     }
+  }
+
+  getPtttClass(pttt: string) {
+    if (pttt === 'Momo') return 'pttt-momo';
+    if (pttt === 'ZaloPay') return 'pttt-zalopay';
+    if (pttt.includes('Chuyển khoản')) return 'pttt-ck';
+    if (pttt === 'Tiền mặt') return 'pttt-cash';
+    return '';
+  }
+
+  getRefundCalculation(ticket: Ticket | null) {
+    if (!ticket) return { rate: 0, amount: 0, fee: 0, text: 'Không xác định' };
+    
+    // Parse ticket price (e.g. "170.000đ" -> 170000)
+    const priceNum = parseInt(ticket.total.replace(/\./g, '').replace('đ', '')) || 0;
+    
+    // Today is simulated as 2026-05-18
+    const today = new Date('2026-05-18T12:00:00');
+    
+    // Ticket date and time
+    const ticketDateTime = new Date(`${ticket.date}T${ticket.time || '12:00'}:00`);
+    
+    const diffMs = ticketDateTime.getTime() - today.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = diffHours / 24;
+    
+    let rate = 0;
+    let text = '';
+    
+    if (diffDays >= 7) {
+      rate = 100;
+      text = 'Trước khởi hành > 7 ngày (Hoàn 100%)';
+    } else if (diffHours >= 24) {
+      rate = 50;
+      text = 'Trước khởi hành > 24 giờ (Hoàn 50%)';
+    } else if (diffHours >= 12) {
+      rate = 30;
+      text = 'Trước khởi hành > 12 giờ (Hoàn 30%)';
+    } else {
+      rate = 0;
+      text = 'Sát giờ khởi hành < 12 giờ hoặc đã qua (Hoàn 0%)';
+    }
+    
+    const amount = (priceNum * rate) / 100;
+    const fee = priceNum - amount;
+    
+    return {
+      rate,
+      amount,
+      fee,
+      text
+    };
+  }
+
+  getSeatsList(seat: string): string[] {
+    if (!seat) return [];
+    return seat.split(',').map(s => s.trim());
+  }
+
+  getSeatColorClass(seat: string): string {
+    if (!seat) return '';
+    return seat.startsWith('A') ? 'seat-a' : 'seat-b';
   }
 }

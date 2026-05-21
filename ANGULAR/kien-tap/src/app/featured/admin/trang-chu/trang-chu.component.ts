@@ -4,11 +4,12 @@ import { RouterModule } from '@angular/router';
 
 interface StatCard {
   title: string;
-  value: string;
+  value: number | string;
+  isCurrency?: boolean;
   trend: string;
   trendType: 'up' | 'down';
   icon: string;
-  color: string;
+  theme: string;
 }
 
 interface Booking {
@@ -17,7 +18,7 @@ interface Booking {
   route: string;
   seat: string;
   time: string;
-  price: string;
+  price: number;
   status: string;
 }
 
@@ -42,16 +43,17 @@ export class TrangChuComponent {
       value: '1,234', 
       trend: '+12.5% so với tháng trước', 
       trendType: 'up',
-      icon: 'confirmation_number',
-      color: '#00bfa5'
+      icon: 'local_activity',
+      theme: 'blue'
     },
     { 
       title: 'Doanh thu tháng này', 
-      value: '145M', 
+      value: 145000000, 
+      isCurrency: true,
       trend: '+8.2% so với tháng trước', 
       trendType: 'up',
       icon: 'payments',
-      color: '#f37021'
+      theme: 'orange'
     },
     { 
       title: 'Khách hàng mới', 
@@ -59,7 +61,7 @@ export class TrangChuComponent {
       trend: '-3.1% so với tháng trước', 
       trendType: 'down',
       icon: 'person_add',
-      color: '#0097a7'
+      theme: 'purple'
     },
     { 
       title: 'Phương tiện hoạt động', 
@@ -67,7 +69,7 @@ export class TrangChuComponent {
       trend: 'Tỉ lệ vận hành 87%', 
       trendType: 'up',
       icon: 'directions_bus',
-      color: '#f37021'
+      theme: 'teal'
     }
   ];
 
@@ -84,4 +86,14 @@ export class TrangChuComponent {
     { name: 'Bến xe Miền Đông – Bến xe Vinh', bookings: 231, trend: '-5%', trendType: 'down' },
     { name: 'Bến xe Miền Đông – Bến xe Huế', bookings: 187, trend: '+15%', trendType: 'up' }
   ];
+
+  getSeatsList(seat: string): string[] {
+    if (!seat) return [];
+    return seat.split(',').map(s => s.trim());
+  }
+
+  getSeatColorClass(seat: string): string {
+    if (!seat) return '';
+    return seat.startsWith('A') ? 'seat-a' : 'seat-b';
+  }
 }
