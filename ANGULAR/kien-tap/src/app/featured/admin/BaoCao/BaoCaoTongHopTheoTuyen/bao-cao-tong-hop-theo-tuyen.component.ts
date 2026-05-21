@@ -4,11 +4,8 @@ import { FormsModule } from '@angular/forms';
 
 interface RouteSummaryItem {
   tuyen: string;
-  slVeNhaXe: number;
-  slVeDaiLy: number;
-  chietKhauDaiLy: number; // money
-  tongTienGiaVe: number;
-  tongTienThucThu: number;
+  slVeDaBan: number;
+  tongDoanhThu: number;
 }
 
 @Component({
@@ -37,11 +34,8 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
 
   // Totals for summary row
   totals = {
-    slVeNhaXe: 0,
-    slVeDaiLy: 0,
-    chietKhauDaiLy: 0,
-    tongTienGiaVe: 0,
-    tongTienThucThu: 0
+    slVeDaBan: 0,
+    tongDoanhThu: 0
   };
 
   ngOnInit() {
@@ -54,35 +48,23 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
     this.allSummaries = [
       {
         tuyen: 'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-        slVeNhaXe: 245,
-        slVeDaiLy: 68,
-        chietKhauDaiLy: 2380000, // 35k commission per ticket
-        tongTienGiaVe: 109550000, // (245+68) * 350,000
-        tongTienThucThu: 107170000 // tongTienGiaVe - chietKhauDaiLy
+        slVeDaBan: 313,
+        tongDoanhThu: 109550000 // 313 * 350,000
       },
       {
         tuyen: 'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-        slVeNhaXe: 182,
-        slVeDaiLy: 42,
-        chietKhauDaiLy: 1470000, // 35k commission per ticket
-        tongTienGiaVe: 78400000, // (182+42) * 350,000
-        tongTienThucThu: 76930000
+        slVeDaBan: 224,
+        tongDoanhThu: 78400000 // 224 * 350,000
       },
       {
         tuyen: 'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-        slVeNhaXe: 310,
-        slVeDaiLy: 95,
-        chietKhauDaiLy: 2850000, // 30k commission per ticket
-        tongTienGiaVe: 121500000, // (310+95) * 300,000
-        tongTienThucThu: 118650000
+        slVeDaBan: 405,
+        tongDoanhThu: 121500000 // 405 * 300,000
       },
       {
         tuyen: 'Phú Yên ↔ Sài Gòn (BX Miền Đông)',
-        slVeNhaXe: 148,
-        slVeDaiLy: 27,
-        chietKhauDaiLy: 6750000, // 250k discount for agents or promo
-        tongTienGiaVe: 49000000, // (148+27) * 280,000
-        tongTienThucThu: 42250000
+        slVeDaBan: 175,
+        tongDoanhThu: 49000000 // 175 * 280,000
       }
     ];
   }
@@ -98,26 +80,17 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
   }
 
   private calculateTotals() {
-    let slVeNhaXe = 0;
-    let slVeDaiLy = 0;
-    let chietKhauDaiLy = 0;
-    let tongTienGiaVe = 0;
-    let tongTienThucThu = 0;
+    let slVeDaBan = 0;
+    let tongDoanhThu = 0;
 
     this.filteredSummaries.forEach(item => {
-      slVeNhaXe += item.slVeNhaXe;
-      slVeDaiLy += item.slVeDaiLy;
-      chietKhauDaiLy += item.chietKhauDaiLy;
-      tongTienGiaVe += item.tongTienGiaVe;
-      tongTienThucThu += item.tongTienThucThu;
+      slVeDaBan += item.slVeDaBan;
+      tongDoanhThu += item.tongDoanhThu;
     });
 
     this.totals = {
-      slVeNhaXe,
-      slVeDaiLy,
-      chietKhauDaiLy,
-      tongTienGiaVe,
-      tongTienThucThu
+      slVeDaBan,
+      tongDoanhThu
     };
   }
 
@@ -141,14 +114,14 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
     csvContent += `Thời gian: Từ ${this.filters.fromDate} đến ${this.filters.toDate}\n`;
     csvContent += `Tuyến: ${this.filters.route}\n\n`;
     
-    csvContent += 'Tuyến xe,SL vé nhà xe đã bán,SL vé đại lý đã bán,Chiết khấu đại lý (VNĐ),Tổng tiền giá vé (VNĐ),Tổng tiền thực thu (VNĐ)\n';
+    csvContent += 'Tuyến xe,Số lượng vé đã bán,Tổng doanh thu (VNĐ)\n';
 
     this.filteredSummaries.forEach(item => {
-      csvContent += `"${item.tuyen}",${item.slVeNhaXe},${item.slVeDaiLy},${item.chietKhauDaiLy},${item.tongTienGiaVe},${item.tongTienThucThu}\n`;
+      csvContent += `"${item.tuyen}",${item.slVeDaBan},${item.tongDoanhThu}\n`;
     });
 
     // Summary Row
-    csvContent += `\n"TỔNG (VNĐ)",${this.totals.slVeNhaXe},${this.totals.slVeDaiLy},${this.totals.chietKhauDaiLy},${this.totals.tongTienGiaVe},${this.totals.tongTienThucThu}\n`;
+    csvContent += `\n"TỔNG (VNĐ)",${this.totals.slVeDaBan},${this.totals.tongDoanhThu}\n`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

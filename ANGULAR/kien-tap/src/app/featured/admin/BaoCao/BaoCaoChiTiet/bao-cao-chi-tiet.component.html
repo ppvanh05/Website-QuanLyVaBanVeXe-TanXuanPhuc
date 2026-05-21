@@ -11,6 +11,7 @@
 
   <!-- KPI Summary Cards -->
   <div class="kpi-grid">
+    <!-- Card 1: Tổng vé đã bán -->
     <div class="kpi-card blue">
       <div class="kpi-icon-container">
         <span class="material-icons">local_activity</span>
@@ -21,33 +22,36 @@
       </div>
     </div>
 
-    <div class="kpi-card orange">
-      <div class="kpi-icon-container">
-        <span class="material-icons">payments</span>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Doanh số vé gốc</span>
-        <span class="kpi-value">{{ stats.totalOriginalPrice | number:'1.0-0' }}đ</span>
-      </div>
-    </div>
-
-    <div class="kpi-card purple">
-      <div class="kpi-icon-container">
-        <span class="material-icons">discount</span>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Tổng chiết khấu</span>
-        <span class="kpi-value">{{ stats.totalDiscount | number:'1.0-0' }}đ</span>
-      </div>
-    </div>
-
+    <!-- Card 2: Tổng doanh thu -->
     <div class="kpi-card teal">
       <div class="kpi-icon-container">
         <span class="material-icons">account_balance_wallet</span>
       </div>
       <div class="kpi-info">
-        <span class="kpi-label">Tổng doanh thu thực tế</span>
+        <span class="kpi-label">Tổng doanh thu vé</span>
         <span class="kpi-value">{{ stats.totalRevenue | number:'1.0-0' }}đ</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Đặt vé Online -->
+    <div class="kpi-card orange">
+      <div class="kpi-icon-container">
+        <span class="material-icons">devices</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Đặt vé Online (Website)</span>
+        <span class="kpi-value">{{ stats.onlineCount }} vé</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Đặt tại Văn phòng -->
+    <div class="kpi-card purple">
+      <div class="kpi-icon-container">
+        <span class="material-icons">storefront</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Đặt qua Văn phòng/Hotline</span>
+        <span class="kpi-value">{{ stats.officeCount }} vé</span>
       </div>
     </div>
   </div>
@@ -105,9 +109,9 @@
         </select>
       </div>
 
-      <!-- Văn phòng -->
+      <!-- Văn phòng/Kênh đặt -->
       <div class="form-group">
-        <label>Văn phòng bán/Đặt vé</label>
+        <label>Văn phòng / Kênh đặt vé</label>
         <select [(ngModel)]="filters.office">
           <option value="Tất cả">Tất cả văn phòng/Kênh</option>
           <option *ngFor="let o of officesList" [value]="o">{{ o }}</option>
@@ -151,11 +155,8 @@
             <th>Giờ đi</th>
             <th>Ngày đặt</th>
             <th>P.Thức T.Toán</th>
-            <th>VP đặt vé</th>
-            <th>VP xuất vé</th>
-            <th style="text-align: center;">Chiết khấu</th>
-            <th style="text-align: right;">Giá vé gốc</th>
-            <th style="text-align: right;">Thực thu</th>
+            <th>Kênh đặt vé</th>
+            <th style="text-align: right;">Giá vé (VNĐ)</th>
           </tr>
         </thead>
         <tbody>
@@ -176,13 +177,7 @@
               </span>
             </td>
             <td>{{ item.vpDatVe }}</td>
-            <td>{{ item.vpXuatVe }}</td>
-            <td class="discount-col">
-              <span *ngIf="item.chietKhau > 0">{{ item.chietKhau }}%</span>
-              <span *ngIf="item.chietKhau === 0" style="color: #94a3b8;">-</span>
-            </td>
-            <td class="price-col">{{ item.giaVe | number:'1.0-0' }}đ</td>
-            <td class="revenue-col">{{ item.thucThu | number:'1.0-0' }}đ</td>
+            <td class="price-col" style="text-align: right; font-weight: 700;">{{ item.giaVe | number:'1.0-0' }}đ</td>
           </tr>
         </tbody>
       </table>

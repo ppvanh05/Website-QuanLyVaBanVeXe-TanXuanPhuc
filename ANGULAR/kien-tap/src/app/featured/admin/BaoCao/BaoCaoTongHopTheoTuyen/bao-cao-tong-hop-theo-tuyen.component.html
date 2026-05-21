@@ -11,33 +11,36 @@
 
   <!-- KPI Summary Cards -->
   <div class="kpi-grid">
+    <!-- Card 1: Tổng số tuyến đang lọc -->
     <div class="kpi-card blue">
       <div class="kpi-icon-container">
         <span class="material-icons">directions_bus</span>
       </div>
       <div class="kpi-info">
-        <span class="kpi-label">Tổng vé đã đặt (Tất cả kênh)</span>
-        <span class="kpi-value">{{ totals.slVeNhaXe + totals.slVeDaiLy }} vé</span>
+        <span class="kpi-label">Số tuyến xe báo cáo</span>
+        <span class="kpi-value">{{ filteredSummaries.length }} tuyến</span>
       </div>
     </div>
 
+    <!-- Card 2: Tổng vé đã đặt -->
     <div class="kpi-card orange">
       <div class="kpi-icon-container">
-        <span class="material-icons">handshake</span>
+        <span class="material-icons">local_activity</span>
       </div>
       <div class="kpi-info">
-        <span class="kpi-label">Chiết khấu đại lý</span>
-        <span class="kpi-value">{{ totals.chietKhauDaiLy | number:'1.0-0' }}đ</span>
+        <span class="kpi-label">Tổng vé đã bán</span>
+        <span class="kpi-value">{{ totals.slVeDaBan }} vé</span>
       </div>
     </div>
 
+    <!-- Card 3: Tổng doanh thu -->
     <div class="kpi-card teal">
       <div class="kpi-icon-container">
         <span class="material-icons">account_balance_wallet</span>
       </div>
       <div class="kpi-info">
-        <span class="kpi-label">Tổng thực thu nhà xe</span>
-        <span class="kpi-value">{{ totals.tongTienThucThu | number:'1.0-0' }}đ</span>
+        <span class="kpi-label">Tổng doanh thu vé</span>
+        <span class="kpi-value">{{ totals.tongDoanhThu | number:'1.0-0' }}đ</span>
       </div>
     </div>
   </div>
@@ -101,30 +104,21 @@
         <thead>
           <tr>
             <th>Tuyến xe</th>
-            <th style="text-align: center;">SL vé nhà xe bán</th>
-            <th style="text-align: center;">SL vé đại lý bán</th>
-            <th style="text-align: right;">Chiết khấu đại lý</th>
-            <th style="text-align: right;">Tổng tiền giá vé</th>
-            <th style="text-align: right;">Tổng tiền thực thu</th>
+            <th style="text-align: center;">Số lượng vé đã bán</th>
+            <th style="text-align: right;">Tổng doanh thu (VNĐ)</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of filteredSummaries">
             <td class="route-col">{{ item.tuyen }}</td>
-            <td class="qty-col" style="color: #0284c7;">{{ item.slVeNhaXe }}</td>
-            <td class="qty-col" style="color: #9333ea;">{{ item.slVeDaiLy }}</td>
-            <td class="discount-col">{{ item.chietKhauDaiLy | number:'1.0-0' }}đ</td>
-            <td class="price-col">{{ item.tongTienGiaVe | number:'1.0-0' }}đ</td>
-            <td class="revenue-col">{{ item.tongTienThucThu | number:'1.0-0' }}đ</td>
+            <td class="qty-col" style="color: #0284c7; text-align: center; font-weight: 600;">{{ item.slVeDaBan }}</td>
+            <td class="price-col" style="text-align: right; font-weight: 700;">{{ item.tongDoanhThu | number:'1.0-0' }}đ</td>
           </tr>
           <!-- Totals Row -->
           <tr class="totals-row">
-            <td>Tổng cộng (VNĐ)</td>
-            <td class="qty-col">{{ totals.slVeNhaXe }}</td>
-            <td class="qty-col">{{ totals.slVeDaiLy }}</td>
-            <td class="discount-col">{{ totals.chietKhauDaiLy | number:'1.0-0' }}đ</td>
-            <td class="price-col">{{ totals.tongTienGiaVe | number:'1.0-0' }}đ</td>
-            <td class="revenue-col">{{ totals.tongTienThucThu | number:'1.0-0' }}đ</td>
+            <td style="font-weight: 700;">Tổng cộng (VNĐ)</td>
+            <td class="qty-col" style="text-align: center; font-weight: 700; color: #0284c7;">{{ totals.slVeDaBan }}</td>
+            <td class="price-col" style="text-align: right; font-weight: 700; color: #0f766e;">{{ totals.tongDoanhThu | number:'1.0-0' }}đ</td>
           </tr>
         </tbody>
       </table>

@@ -9,11 +9,8 @@ interface DetailedReportItem {
   gioDi: string;
   ngayDat: string;
   pttt: string;
-  vpDatVe: string;
-  vpXuatVe: string;
-  chietKhau: number; // percentage
+  vpDatVe: string; // Booking channel: Website / Online or Văn phòng Gia Lai (An Nhơn Bắc)
   giaVe: number;
-  thucThu: number;
 }
 
 @Component({
@@ -51,10 +48,7 @@ export class BaoCaoChiTietComponent implements OnInit {
   paymentMethods = ['Momo', 'ZaloPay', 'Chuyển khoản (Vietcombank)', 'Tiền mặt'];
   officesList = [
     'Website / Online',
-    'Văn phòng Gia Lai (An Nhơn Bắc)',
-    'Văn phòng Phù Cát (Ngô Mây)',
-    'Văn phòng Sài Gòn (BX Miền Đông)',
-    'Văn phòng Bình Dương (Bến Cát)'
+    'Văn phòng Gia Lai (An Nhơn Bắc)'
   ];
 
   // Pagination variables
@@ -65,9 +59,9 @@ export class BaoCaoChiTietComponent implements OnInit {
   // Stats summaries
   stats = {
     totalTickets: 0,
-    totalOriginalPrice: 0,
-    totalDiscount: 0,
-    totalRevenue: 0
+    totalRevenue: 0,
+    onlineCount: 0,
+    officeCount: 0
   };
 
   ngOnInit() {
@@ -85,12 +79,9 @@ export class BaoCaoChiTietComponent implements OnInit {
     ];
     const times = ['08:00', '13:00', '19:00', '21:00'];
     const pttts = ['Momo', 'ZaloPay', 'Chuyển khoản (Vietcombank)', 'Tiền mặt'];
-    const vps = [
+    const channels = [
       'Website / Online',
-      'Văn phòng Gia Lai (An Nhơn Bắc)',
-      'Văn phòng Phù Cát (Ngô Mây)',
-      'Văn phòng Sài Gòn (BX Miền Đông)',
-      'Văn phòng Bình Dương (Bến Cát)'
+      'Văn phòng Gia Lai (An Nhơn Bắc)'
     ];
 
     // Generate 120 detailed e-ticket items in May 2026
@@ -98,10 +89,10 @@ export class BaoCaoChiTietComponent implements OnInit {
       const routeIdx = i % routes.length;
       const timeIdx = (i * 3) % times.length;
       const ptttIdx = (i * 7) % pttts.length;
-      const vpDatIdx = (i * 11) % vps.length;
       
-      // If booked via Website, VP xuất is typically Website or the boarding office
-      const vpXuatIdx = vpDatIdx === 0 ? (i % 4) + 1 : vpDatIdx;
+      // 40% Online, 60% Office booking (corresponds roughly to SRS where online is starting up)
+      const isOnline = (i % 5) < 2;
+      const channelStr = isOnline ? channels[0] : channels[1];
       
       const day = (i % 28) + 1;
       const dayStr = day < 10 ? `0${day}` : `${day}`;
@@ -117,16 +108,6 @@ export class BaoCaoChiTietComponent implements OnInit {
       if (routeIdx === 2) giaVe = 300000; // Binh Dinh - SG
       if (routeIdx === 3) giaVe = 280000; // Phu Yen - SG
 
-      // Discounts based on booking source or payment method
-      let chietKhau = 0;
-      if (vpDatIdx === 0 && ptttIdx === 0) {
-        chietKhau = 5; // 5% discount for online booking with Momo
-      } else if (i % 15 === 0) {
-        chietKhau = 10; // 10% loyalty discount
-      }
-
-      const thucThu = giaVe * (1 - chietKhau / 100);
-
       data.push({
         maVe: `TXP2605${String(1000 + i).padStart(4, '0')}`,
         tuyen: routes[routeIdx],
@@ -134,11 +115,8 @@ export class BaoCaoChiTietComponent implements OnInit {
         gioDi: times[timeIdx],
         ngayDat: ngayDat,
         pttt: pttts[ptttIdx],
-        vpDatVe: vps[vpDatIdx],
-        vpXuatVe: vps[vpXuatIdx],
-        chietKhau: chietKhau,
-        giaVe: giaVe,
-        thucThu: thucThu
+        vpDatVe: channelStr,
+        giaVe: giaVe
       });
     }
 
@@ -176,19 +154,24 @@ export class BaoCaoChiTietComponent implements OnInit {
   }
 
   private calculateStats() {
-    let totalOriginalPrice = 0;
     let totalRevenue = 0;
+    let onlineCount = 0;
+    let officeCount = 0;
 
     this.filteredData.forEach(item => {
-      totalOriginalPrice += item.giaVe;
-      totalRevenue += item.thucThu;
+      totalRevenue += item.giaVe;
+      if (item.vpDatVe === 'Website / Online') {
+        onlineCount++;
+      } else {
+        officeCount++;
+      }
     });
 
     this.stats = {
       totalTickets: this.filteredData.length,
-      totalOriginalPrice: totalOriginalPrice,
-      totalDiscount: totalOriginalPrice - totalRevenue,
-      totalRevenue: totalRevenue
+      totalRevenue: totalRevenue,
+      onlineCount: onlineCount,
+      officeCount: officeCount
     };
   }
 
@@ -241,18 +224,18 @@ export class BaoCaoChiTietComponent implements OnInit {
     let csvContent = '\uFEFF';
     csvContent += 'BÁO CÁO CHI TIẾT VÉ BÁN (TÂN XUÂN PHÚC)\n';
     csvContent += `Thời gian: Từ ${this.filters.fromDate} đến ${this.filters.toDate}\n`;
-    csvContent += `Tuyến: ${this.filters.route}, Giờ đi: ${this.filters.time}, PTTT: ${this.filters.paymentMethod}, Văn phòng: ${this.filters.office}\n\n`;
+    csvContent += `Tuyến: ${this.filters.route}, Giờ đi: ${this.filters.time}, PTTT: ${this.filters.paymentMethod}, Văn phòng/Kênh: ${this.filters.office}\n\n`;
     
     // Headers
-    csvContent += 'Mã vé,Tuyến xe,Ngày đi,Giờ đi,Ngày đặt,Phương thức thanh toán,Văn phòng đặt,Văn phòng xuất,% Chiết khấu,Giá vé (VNĐ),Thực thu (VNĐ)\n';
+    csvContent += 'Mã vé,Tuyến xe,Ngày đi,Giờ đi,Ngày đặt,Phương thức thanh toán,Kênh đặt vé,Giá vé (VNĐ)\n';
 
     // Records
     this.filteredData.forEach(item => {
-      csvContent += `"${item.maVe}","${item.tuyen}","${item.ngayDi}","${item.gioDi}","${item.ngayDat}","${item.pttt}","${item.vpDatVe}","${item.vpXuatVe}",${item.chietKhau},${item.giaVe},${item.thucThu}\n`;
+      csvContent += `"${item.maVe}","${item.tuyen}","${item.ngayDi}","${item.gioDi}","${item.ngayDat}","${item.pttt}","${item.vpDatVe}",${item.giaVe}\n`;
     });
 
     // Summary Row
-    csvContent += `\n"Tổng cộng",,,,,,,"",,${this.stats.totalOriginalPrice},${this.stats.totalRevenue}\n`;
+    csvContent += `\n"Tổng cộng",,,,,,,"",${this.stats.totalRevenue}\n`;
 
     // Download action
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

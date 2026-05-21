@@ -319,6 +319,18 @@ tr:hover td {
   text-align: right;
 }
 
+.price-col.price-paid {
+  color: #16a34a; /* Green */
+}
+
+.price-col.price-unpaid {
+  color: #ef4444; /* Red */
+}
+
+.price-col.price-cancelled {
+  color: #94a3b8; /* Slate/Gray */
+}
+
 /* Status Pills */
 .status-pill {
   display: inline-block;
@@ -925,232 +937,10 @@ tr:hover td {
     color: #777;
   }
 
-  .m-val {
-    font-weight: 600;
-    color: #333;
-    text-align: right;
-  }
-
-  .highlight {
-    color: #f37021;
-    font-size: 15px;
-  }
-
-  .mini-address-box {
-    background: #fdf2e9;
-    padding: 8px;
-    border-radius: 4px;
-    margin: 12px 0;
-  }
-
-  .m-addr {
-    font-weight: 600;
-    margin-top: 3px;
-    color: #444;
-  }
-
-  .mini-note {
-    font-size: 11px;
-    color: #d9534f;
-    font-style: italic;
-    margin: 10px 0;
-  }
-
-  .mini-price-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    border-top: 1px solid #eee;
-    padding-top: 10px;
-    margin-top: 10px;
-  }
-
-  .m-price {
-    font-size: 18px;
-    font-weight: 800;
-    color: #2c3e50;
-  }
-
-  .mini-footer {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 11px;
-    color: #aaa;
-  }
-
-  .mini-web {
-    color: #f37021;
-    margin-top: 3px;
-  }
-
-  .modal-actions {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 25px;
-  }
-
-  .btn-pdf,
-  .btn-print,
-  .btn-close {
-    padding: 10px 24px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border: none;
-  }
-
-  .btn-pdf {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .btn-print {
-    background-color: #28a745;
-    color: white;
-  }
-
-  .btn-close {
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    color: #333;
-  }
-
-  .btn-pdf:hover {
-    background-color: #0056b3;
-  }
-
-  .btn-print:hover {
-    background-color: #218838;
-  }
-}
-
-  /* OTP Modal */
-  .otp-modal {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    width: 400px;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  }
-
-  .otp-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
-  .otp-header .material-icons {
-    font-size: 48px;
-    color: #009ba1;
-  }
-
-  .otp-header h3 {
-    margin: 0;
-    font-size: 20px;
-    color: #333;
-  }
-
-  .otp-body p {
-    font-size: 14px;
-    color: #666;
-    line-height: 1.5;
-    margin-bottom: 20px;
-  }
-
-  .otp-input-group input {
-    width: 200px;
-    text-align: center;
-    font-size: 24px;
-    letter-spacing: 5px;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .otp-input-group input:focus {
-    border-color: #009ba1;
-  }
-
-  .otp-footer {
-    display: flex;
-    gap: 15px;
-    margin-top: 30px;
-  }
-
-  .btn-cancel-otp,
-  .btn-confirm-otp {
-    flex: 1;
-    padding: 12px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-  }
-
-  .btn-cancel-otp {
-    background-color: #f8f9fa;
-    color: #333;
-    border: 1px solid #ddd;
-  }
-
-  .btn-confirm-otp {
-    background-color: #dc3545;
-    color: white;
-  }
-
-  .btn-confirm-otp:disabled {
-    background-color: #ffc9cd;
-    cursor: not-allowed;
-  }
-
 @media (max-width: 768px) {
   .pagination {
     flex-direction: column;
     gap: 15px;
   }
 }
-
-/* Seat Badges */
-.seats-container {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.seat-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 700;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  transition: all 0.2s ease-in-out;
-  border: 1px solid transparent;
-}
-
-.seat-badge:hover {
-  transform: scale(1.08);
-}
-
-.seat-a {
-  background-color: #e0f2fe;
-  color: #0369a1;
-  border-color: #bae6fd;
-}
-
-.seat-b {
-  background-color: #fffbeb;
-  color: #d97706;
-  border-color: #fde68a;
 }
