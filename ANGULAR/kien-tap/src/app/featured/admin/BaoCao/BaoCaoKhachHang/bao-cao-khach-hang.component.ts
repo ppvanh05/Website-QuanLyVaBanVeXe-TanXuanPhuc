@@ -3,17 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 interface CustomerReportItem {
+  maKhachHang: string;
   tenKhachHang: string;
   sdt: string;
-  tuyen: string;
-  slDat: number;
-  slHuy: number;
-  slThanhToan: number;
-  tienBaoHiem: number;
-  giaVe: number;
-  thucThu: number;
+  email: string;
+  ngayDangKy: string;
+  tongVeDat: number;
+  trangThai: 'Đang hoạt động' | 'Đã khóa';
 }
-
 @Component({
   selector: 'app-bao-cao-khach-hang',
   standalone: true,
@@ -23,29 +20,25 @@ interface CustomerReportItem {
 })
 export class BaoCaoKhachHangComponent implements OnInit {
   filters = {
-    fromDate: '2026-05-01',
-    toDate: '2026-05-31',
     searchTerm: '',
-    route: 'Tất cả'
+    status: 'Tất cả',
+    fromDate: '',
+    toDate: ''
   };
 
   allCustomers: CustomerReportItem[] = [];
   filteredCustomers: CustomerReportItem[] = [];
+  isReportViewed = true;
 
   // KPI stats
   stats = {
     totalCustomers: 0,
-    totalBookings: 0,
-    totalCancellations: 0,
-    totalRevenue: 0
+    activeCustomers: 0,
+    lockedCustomers: 0,
+    totalVeDat: 0
   };
 
-  routesList = [
-    'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-    'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-    'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-    'Phú Yên ↔ Sài Gòn (BX Miền Đông)'
-  ];
+  constructor() {}
 
   ngOnInit() {
     this.allCustomers = this.generateMockCustomers();
@@ -53,144 +46,77 @@ export class BaoCaoKhachHangComponent implements OnInit {
   }
 
   private generateMockCustomers(): CustomerReportItem[] {
-    // Generate realistic passenger profiles for Tân Xuân Phúc
     return [
-      {
-        tenKhachHang: 'Nguyễn Văn An',
-        sdt: '0912445566',
-        tuyen: 'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-        slDat: 5,
-        slHuy: 0,
-        slThanhToan: 5,
-        tienBaoHiem: 50000,
-        giaVe: 1750000,
-        thucThu: 1800000 // including insurance or extra fees
-      },
-      {
-        tenKhachHang: 'Trần Thị Bích',
-        sdt: '0988776655',
-        tuyen: 'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-        slDat: 4,
-        slHuy: 1,
-        slThanhToan: 3,
-        tienBaoHiem: 30000,
-        giaVe: 1050000,
-        thucThu: 1080000
-      },
-      {
-        tenKhachHang: 'Lê Văn Cường',
-        sdt: '0903112233',
-        tuyen: 'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-        slDat: 8,
-        slHuy: 2,
-        slThanhToan: 6,
-        tienBaoHiem: 60000,
-        giaVe: 1800000,
-        thucThu: 1860000
-      },
-      {
-        tenKhachHang: 'Phạm Minh Đạo',
-        sdt: '0976334455',
-        tuyen: 'Phú Yên ↔ Sài Gòn (BX Miền Đông)',
-        slDat: 3,
-        slHuy: 0,
-        slThanhToan: 3,
-        tienBaoHiem: 30000,
-        giaVe: 840000,
-        thucThu: 870000
-      },
-      {
-        tenKhachHang: 'Hoàng Thị Dung',
-        sdt: '0934889900',
-        tuyen: 'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-        slDat: 6,
-        slHuy: 1,
-        slThanhToan: 5,
-        tienBaoHiem: 50000,
-        giaVe: 1750000,
-        thucThu: 1800000
-      },
-      {
-        tenKhachHang: 'Nguyễn Thị Phương',
-        sdt: '0919223344',
-        tuyen: 'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-        slDat: 2,
-        slHuy: 0,
-        slThanhToan: 2,
-        tienBaoHiem: 20000,
-        giaVe: 700000,
-        thucThu: 720000
-      },
-      {
-        tenKhachHang: 'Lý Quốc Bảo',
-        sdt: '0983112244',
-        tuyen: 'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-        slDat: 10,
-        slHuy: 0,
-        slThanhToan: 10,
-        tienBaoHiem: 100000,
-        giaVe: 3000000,
-        thucThu: 3100000
-      },
-      {
-        tenKhachHang: 'Vũ Thanh Hằng',
-        sdt: '0967445522',
-        tuyen: 'Phú Yên ↔ Sài Gòn (BX Miền Đông)',
-        slDat: 1,
-        slHuy: 1,
-        slThanhToan: 0,
-        tienBaoHiem: 0,
-        giaVe: 0,
-        thucThu: 0
-      }
+      { maKhachHang: 'KH001', tenKhachHang: 'Nguyễn Văn An', sdt: '0912445566', email: 'an.nv@gmail.com', ngayDangKy: '2026-01-15', tongVeDat: 12, trangThai: 'Đang hoạt động' },
+      { maKhachHang: 'KH002', tenKhachHang: 'Trần Thị Bích', sdt: '0988776655', email: 'bich.tt@yahoo.com', ngayDangKy: '2026-02-10', tongVeDat: 8, trangThai: 'Đang hoạt động' },
+      { maKhachHang: 'KH003', tenKhachHang: 'Lê Văn Cường', sdt: '0903112233', email: 'cuong.lv@hotmail.com', ngayDangKy: '2026-03-01', tongVeDat: 15, trangThai: 'Đang hoạt động' },
+      { maKhachHang: 'KH004', tenKhachHang: 'Phạm Minh Đạo', sdt: '0976334455', email: 'dao.pm@outlook.com', ngayDangKy: '2026-03-20', tongVeDat: 3, trangThai: 'Đang hoạt động' },
+      { maKhachHang: 'KH005', tenKhachHang: 'Hoàng Thị Dung', sdt: '0934889900', email: 'dunghoang99@gmail.com', ngayDangKy: '2026-04-05', tongVeDat: 9, trangThai: 'Đang hoạt động' },
+      { maKhachHang: 'KH006', tenKhachHang: 'Nguyễn Thị Phương', sdt: '0919223344', email: 'phuongnt@gmail.com', ngayDangKy: '2026-04-18', tongVeDat: 21, trangThai: 'Đang hoạt động' },
+      { maKhachHang: 'KH007', tenKhachHang: 'Lý Quốc Bảo', sdt: '0983112244', email: 'baolq.txp@gmail.com', ngayDangKy: '2026-04-22', tongVeDat: 5, trangThai: 'Đã khóa' },
+      { maKhachHang: 'KH008', tenKhachHang: 'Vũ Thanh Hằng', sdt: '0967445522', email: 'hangvt.hanoi@gmail.com', ngayDangKy: '2026-05-02', tongVeDat: 2, trangThai: 'Đang hoạt động' }
     ];
   }
 
   onViewReport() {
+    this.isReportViewed = true;
     this.filteredCustomers = this.allCustomers.filter(item => {
       // Search term
       if (this.filters.searchTerm) {
         const query = this.filters.searchTerm.toLowerCase();
         const matchName = item.tenKhachHang.toLowerCase().includes(query);
         const matchPhone = item.sdt.includes(query);
-        if (!matchName && !matchPhone) return false;
+        const matchEmail = item.email.toLowerCase().includes(query);
+        const matchCode = item.maKhachHang.toLowerCase().includes(query);
+        if (!matchName && !matchPhone && !matchEmail && !matchCode) return false;
       }
 
-      // Route filter
-      if (this.filters.route !== 'Tất cả' && item.tuyen !== this.filters.route) return false;
+      // Status
+      if (this.filters.status !== 'Tất cả' && item.trangThai !== this.filters.status) return false;
+
+      // Date Range (Registration Date)
+      if (this.filters.fromDate && item.ngayDangKy < this.filters.fromDate) return false;
+      if (this.filters.toDate && item.ngayDangKy > this.filters.toDate) return false;
 
       return true;
     });
+
+    // Sort by ticket bookings count descending so top buyers are at the top
+    this.filteredCustomers.sort((a, b) => b.tongVeDat - a.tongVeDat);
 
     this.calculateStats();
   }
 
   private calculateStats() {
-    let bookings = 0;
-    let cancellations = 0;
-    let revenue = 0;
+    let activeCustomers = 0;
+    let lockedCustomers = 0;
+    let totalVeDat = 0;
 
     this.filteredCustomers.forEach(item => {
-      bookings += item.slThanhToan;
-      cancellations += item.slHuy;
-      revenue += item.thucThu;
+      totalVeDat += item.tongVeDat;
+      if (item.trangThai === 'Đang hoạt động') {
+        activeCustomers++;
+      } else {
+        lockedCustomers++;
+      }
     });
 
     this.stats = {
       totalCustomers: this.filteredCustomers.length,
-      totalBookings: bookings,
-      totalCancellations: cancellations,
-      totalRevenue: revenue
+      activeCustomers,
+      lockedCustomers,
+      totalVeDat
     };
   }
 
   onResetFilters() {
     this.filters = {
-      fromDate: '2026-05-01',
-      toDate: '2026-05-31',
       searchTerm: '',
-      route: 'Tất cả'
+      status: 'Tất cả',
+      fromDate: '',
+      toDate: ''
     };
+    this.isReportViewed = true;
     this.onViewReport();
   }
 
@@ -201,24 +127,27 @@ export class BaoCaoKhachHangComponent implements OnInit {
     }
 
     let csvContent = '\uFEFF';
-    csvContent += 'BÁO CÁO GIAO DỊCH KHÁCH HÀNG (TÂN XUÂN PHÚC)\n';
-    csvContent += `Thời gian: Từ ${this.filters.fromDate} đến ${this.filters.toDate}\n`;
-    csvContent += `Tuyến: ${this.filters.route}\n\n`;
+    csvContent += 'BÁO CÁO THỐNG KÊ TÀI KHOẢN KHÁCH HÀNG (TÂN XUÂN PHÚC)\n';
+    csvContent += `Bộ lọc: Trạng thái: ${this.filters.status}`;
+    if (this.filters.fromDate || this.filters.toDate) {
+      csvContent += `, Từ ngày: ${this.filters.fromDate || '...'} Đến ngày: ${this.filters.toDate || '...'}`;
+    }
+    csvContent += '\n\n';
     
-    csvContent += 'Tên khách hàng,Số điện thoại,Tuyến xe,SL vé đã đặt,SL vé đã hủy,SL vé đã thanh toán,Tiền bảo hiểm (VNĐ),Giá vé (VNĐ),Thực thu (VNĐ)\n';
+    csvContent += 'Mã khách hàng,Họ tên khách hàng,Số điện thoại,Email,Ngày đăng ký,Tổng vé đặt,Trạng thái tài khoản\n';
 
     this.filteredCustomers.forEach(item => {
-      csvContent += `"${item.tenKhachHang}","${item.sdt}","${item.tuyen}",${item.slDat},${item.slHuy},${item.slThanhToan},${item.tienBaoHiem},${item.giaVe},${item.thucThu}\n`;
+      csvContent += `"${item.maKhachHang}","${item.tenKhachHang}","${item.sdt}","${item.email}","${item.ngayDangKy}",${item.tongVeDat},"${item.trangThai}"\n`;
     });
 
     // Summary Row
-    csvContent += `\n"Tổng cộng",,,"",${this.stats.totalBookings + this.stats.totalCancellations},${this.stats.totalCancellations},${this.stats.totalBookings},,${this.stats.totalRevenue}\n`;
+    csvContent += `\n"Tổng số khách hàng",${this.stats.totalCustomers},"Hoạt động",${this.stats.activeCustomers},"Bị khóa",${this.stats.lockedCustomers},"Tổng số vé đặt",${this.stats.totalVeDat}\n`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `BaoCaoKhachHang_TXP_${this.filters.fromDate}_to_${this.filters.toDate}.csv`);
+    link.setAttribute('download', `BaoCaoKhachHang_TXP.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

@@ -253,6 +253,10 @@ td.text-center {
   color: #f37021;
 }
 
+.text-orange {
+  color: #f37021;
+}
+
 .price-text {
   color: var(--secondary-color);
   font-size: 15px;
@@ -1094,6 +1098,42 @@ input:checked+.slider:before {
   background-color: rgba(0, 155, 161, 0.05);
 }
 
+.seat-room-limousine {
+  width: 68px;
+  height: 44px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: #cbd5e0;
+  background-color: #fff;
+  transition: all 0.2s;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.seat-room-limousine.readonly {
+  cursor: default;
+}
+
+.seat-room-limousine:not(.readonly):hover {
+  border-color: #cbd5e0;
+  background-color: #f8fafc;
+}
+
+.seat-room-limousine.selected {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: #fff;
+}
+
+.seat-room-limousine.selected:not(.readonly):hover {
+  background-color: rgba(0, 155, 161, 0.05);
+}
+
 .seat-layout-row.back-row {
   justify-content: center;
   gap: 8px;
@@ -1109,7 +1149,7 @@ input:checked+.slider:before {
   width: 38px;
   height: 44px;
   border: 1.5px solid #dcdcdc;
-  border-radius: 8px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1129,7 +1169,7 @@ input:checked+.slider:before {
   top: -4px;
   left: 50%;
   transform: translateX(-50%);
-  width: 18px;
+  width: 24px;
   height: 4px;
   background: #dcdcdc;
   border-radius: 2px 2px 0 0;
