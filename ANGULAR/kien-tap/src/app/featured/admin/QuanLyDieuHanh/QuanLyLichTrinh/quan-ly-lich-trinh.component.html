@@ -201,19 +201,19 @@
                     <div class="seat-layout-row" *ngFor="let row of floor.rows" [class.back-row]="row.isBackRow">
 
                       <ng-container *ngIf="!row.isBackRow">
-                        <div [class]="isLimousine22() ? 'seat-room-limousine readonly' : 'seat-room'"
+                        <div [class]="isLimousine22() ? (activeSeatGroupIndex !== null ? 'seat-room-limousine' : 'seat-room-limousine readonly') : (activeSeatGroupIndex !== null ? 'seat-room' : 'seat-room readonly')"
                           *ngFor="let seat of row.seats" [class.selected]="isSeatInAnyGroup(seat)"
                           [style.--group-color]="getSeatGroupColor(seat)"
-                          (click)="!isLimousine22() && toggleSeatInActiveGroup(seat)">
+                          (click)="activeSeatGroupIndex !== null && toggleSeatInActiveGroup(seat)">
                           {{ seat }}
                         </div>
                       </ng-container>
 
                       <ng-container *ngIf="row.isBackRow">
-                        <div [class]="isLimousine22() ? 'seat-room-limousine readonly' : 'seat-room'"
+                        <div [class]="isLimousine22() ? (activeSeatGroupIndex !== null ? 'seat-room-limousine' : 'seat-room-limousine readonly') : (activeSeatGroupIndex !== null ? 'seat-room' : 'seat-room readonly')"
                           *ngFor="let seat of row.seats" [class.selected]="isSeatInAnyGroup(seat)"
                           [style.--group-color]="getSeatGroupColor(seat)"
-                          (click)="!isLimousine22() && toggleSeatInActiveGroup(seat)">
+                          (click)="activeSeatGroupIndex !== null && toggleSeatInActiveGroup(seat)">
                           {{ seat }}
                         </div>
                       </ng-container>
