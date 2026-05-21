@@ -319,6 +319,18 @@ tr:hover td {
   text-align: right;
 }
 
+.price-col.price-paid {
+  color: #16a34a; /* Green */
+}
+
+.price-col.price-unpaid {
+  color: #ef4444; /* Red */
+}
+
+.price-col.price-cancelled {
+  color: #94a3b8; /* Slate/Gray */
+}
+
 /* Status Pills */
 .status-pill {
   display: inline-block;
