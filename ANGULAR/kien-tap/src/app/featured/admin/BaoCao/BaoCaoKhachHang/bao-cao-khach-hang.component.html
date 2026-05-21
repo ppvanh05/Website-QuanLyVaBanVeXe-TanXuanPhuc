@@ -61,13 +61,13 @@
 
     <div class="search-grid">
       <!-- Tìm kiếm -->
-      <div class="form-group filter-search">
+      <div class="form-group">
         <label>Tìm kiếm khách hàng</label>
         <input type="text" placeholder="Nhập mã, tên, SĐT, email..." [(ngModel)]="filters.searchTerm">
       </div>
 
       <!-- Trạng thái hoạt động -->
-      <div class="form-group filter-status">
+      <div class="form-group">
         <label>Trạng thái tài khoản</label>
         <select [(ngModel)]="filters.status">
           <option value="Tất cả">Tất cả</option>
@@ -77,7 +77,7 @@
       </div>
 
       <!-- Khoảng thời gian đăng ký -->
-      <div class="form-group filter-date">
+      <div class="form-group">
         <label>Thời gian đăng ký (Từ ngày - Đến ngày)</label>
         <div class="date-range-inputs">
           <input type="date" [(ngModel)]="filters.fromDate">
