@@ -106,11 +106,14 @@
 /* Table Container */
 .table-container {
   overflow-x: auto;
+  overflow-y: scroll;
+  max-height: calc(100vh - 380px);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 th {
@@ -124,6 +127,9 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   vertical-align: middle;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 td {

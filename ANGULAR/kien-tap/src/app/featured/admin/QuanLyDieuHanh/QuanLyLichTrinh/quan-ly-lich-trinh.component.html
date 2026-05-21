@@ -34,16 +34,24 @@
     <!-- Table -->
     <div class="table-container">
       <table>
+        <colgroup>
+          <col style="width: 60px;">
+          <col style="width: 35%;">
+          <col style="width: 120px;">
+          <col style="width: 25%;">
+          <col style="width: 180px;">
+          <col style="width: 120px;">
+          <col style="width: 100px;">
+        </colgroup>
         <thead>
           <tr>
-            <th class="text-center" style="width: 60px;">STT</th>
-            <th style="width: 25%;">Tuyến đường</th>
-            <th style="width: 20%;">Phương tiện</th>
-            <th style="width: 20%;">Tài xế & Phụ xe</th>
-            <th style="width: 15%;">Thời gian khởi hành</th>
-            <th style="width: 15%;">Giá vé (VND)</th>
-            <th class="text-center" style="width: 120px;">Trạng thái</th>
-            <th class="text-center" style="width: 100px;">Chức năng</th>
+            <th class="text-center">STT</th>
+            <th>Tuyến đường</th>
+            <th>Phương tiện</th>
+            <th>Tài xế & Phụ xe</th>
+            <th>Thời gian khởi hành</th>
+            <th class="text-center">Trạng thái</th>
+            <th class="text-center">Chức năng</th>
           </tr>
         </thead>
         <tbody>
@@ -54,10 +62,7 @@
               {{ s.routeName }}
             </td>
             <td>
-              <div class="vehicle-info">
-                <span class="plate-badge">{{ s.vehiclePlate }}</span>
-                <span class="name-desc">{{ s.vehicleName }}</span>
-              </div>
+              <span class="plate-badge">{{ s.vehiclePlate }}</span>
             </td>
             <td>
               <div class="staff-info">
@@ -72,9 +77,6 @@
                 <div class="time-val"><span class="material-icons sm-icon-grey">schedule</span> {{ s.departureTime }}
                 </div>
               </div>
-            </td>
-            <td class="font-bold text-orange">
-              {{ s.basePrice | number:'1.0-0' }} VND
             </td>
             <td class="text-center">
               <span class="status-badge" [class]="s.status" style="display: inline-block; margin: 0 auto;">
@@ -183,7 +185,7 @@
           <!-- Seat Diagram Interactive Selection -->
           <div class="seat-diagram-section"
             *ngIf="currentSchedule.vehiclePlate && floorLayouts && floorLayouts.length > 0">
-            <div class="section-title-new">SƠ ĐỒ GHẾ</div>
+            <div class="section-title-new">Sơ đồ ghế</div>
             <div class="seat-diagram-wrapper">
               <div class="floor-container" *ngFor="let floor of floorLayouts; let fIdx = index">
                 <div class="floor-header" [class.limousine-header]="isLimousine22()">{{ floor.floorName }}</div>
