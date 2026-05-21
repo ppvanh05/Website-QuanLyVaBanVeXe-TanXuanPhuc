@@ -50,6 +50,10 @@ export const routes: Routes = [
     loadComponent: () => import('./featured/customer/tra-cuu-ve/tra-cuu-ve').then(m => m.TraCuuVe)
   },
   {
+    path: 'danh-gia',
+    loadComponent: () => import('./featured/customer/review/review.component').then(m => m.ReviewComponent)
+  },
+  {
     path: '',
     redirectTo: 'home',
     pathMatch: 'full'

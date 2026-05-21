@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthModalService } from '../auth-modal.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -21,7 +22,7 @@ export class ForgotPasswordComponent implements OnDestroy {
   otpDigitsString = '';
   otpError = '';
   otpCountdown = 180;
-  otpTimer: any = null;
+  otpTimer: ReturnType<typeof setInterval> | null = null;
   generatedOtp = '';
   showDebugOtp = true;
 
@@ -35,7 +36,8 @@ export class ForgotPasswordComponent implements OnDestroy {
 
   constructor(
     private authModalService: AuthModalService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authService: AuthService
   ) {}
 
   ngOnDestroy() {
@@ -117,7 +119,6 @@ export class ForgotPasswordComponent implements OnDestroy {
     this.otpError = '';
     this.step = 'otp';
     this.startOtpTimer();
-    console.log('OTP forgot-password:', this.generatedOtp);
   }
 
   onOtpChange(val: string) {
@@ -152,7 +153,7 @@ export class ForgotPasswordComponent implements OnDestroy {
     this.otpDigits = Array(6).fill('');
     this.otpError = '';
     this.startOtpTimer();
-    console.log('Resent OTP forgot-password:', this.generatedOtp);
+
   }
 
   toggleShowNewPassword() {
@@ -195,6 +196,10 @@ export class ForgotPasswordComponent implements OnDestroy {
 
     setTimeout(() => {
       this.showToast = false;
+      // Lấy tên người dùng từ mock_users hoặc một nguồn khác
+      const user = users[userIndex];
+      this.authService.login(user.fullName); // Đăng nhập người dùng sau khi đặt lại mật khẩu
+      this.loggedIn.emit(user.fullName); // Phát ra sự kiện loggedIn
       this.authModalService.closeModal();
       this.authModalService.openLoginModal();
     }, 1500);

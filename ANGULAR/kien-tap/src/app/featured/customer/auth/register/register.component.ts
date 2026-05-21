@@ -13,7 +13,7 @@ import { AuthModalService } from '../auth-modal.service';
 })
 export class RegisterComponent implements OnDestroy {
   @Output() close = new EventEmitter<void>();
-  @Output() registered = new EventEmitter<string>();
+  @Output() loggedIn = new EventEmitter<string>();
 
   step: 'phone' | 'otp' | 'profile' = 'phone';
   phoneNumber = '';
@@ -199,6 +199,37 @@ export class RegisterComponent implements OnDestroy {
     return this.otpDigits.every(digit => /^[0-9]$/.test(digit));
   }
 
+  registerUser() {
+    // Here you would typically send data to a backend service
+    // For now, we'll use mock data and emit the event
+    const newUser = {
+      phoneNumber: this.phoneNumber,
+      fullName: this.fullName,
+      email: this.email,
+      password: this.password
+    };
+    this.saveMockUser(newUser); // Save the new user
+
+    this.registrationSuccess = true;
+    this.toastMessage = 'Đăng ký thành công!';
+    // this.showToast = true; // Đã có trong template
+    this.cdr.detectChanges();
+
+    setTimeout(() => {
+      // this.showToast = false; // Đã có trong template
+      this.loggedIn.emit(this.fullName); // Emit the loggedIn event with the user's full name
+      this.closeModal();
+    }, 1500);
+  }
+
+  toggleShowPassword() {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleShowConfirmPassword() {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
   verifyOtp() {
     if (!this.isOtpValid) {
       this.otpError = 'Vui lòng nhập đủ 6 chữ số mã xác thực.';
@@ -220,14 +251,6 @@ export class RegisterComponent implements OnDestroy {
 
   resendOtp() {
     this.sendOtp();
-  }
-
-  toggleShowPassword() {
-    this.showPassword = !this.showPassword;
-  }
-
-  toggleShowConfirmPassword() {
-    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   submitProfile() {
@@ -273,7 +296,7 @@ export class RegisterComponent implements OnDestroy {
 
     setTimeout(() => {
       this.showToast = false;
-      this.registered.emit(this.fullName.trim());
+      this.loggedIn.emit(this.fullName.trim()); // Phát ra sự kiện loggedIn
       this.closeModal();
       this.router.navigate(['/home']);
     }, 1800);

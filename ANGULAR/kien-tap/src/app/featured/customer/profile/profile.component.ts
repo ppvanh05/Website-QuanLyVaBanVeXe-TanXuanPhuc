@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-profile',
@@ -147,7 +148,14 @@ export class ProfileComponent implements OnDestroy {
 
   filteredHistoryOrders = [...this.historyOrders];
 
-  constructor(private router: Router) {}
+  
+
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {
+    this.authService.userName$.subscribe((name: string) => this.user.fullName = name);
+  }
 
   ngOnDestroy() {
     if (this.timerInterval) clearInterval(this.timerInterval);
