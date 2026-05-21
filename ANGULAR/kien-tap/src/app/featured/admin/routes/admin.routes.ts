@@ -47,6 +47,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'quan-ly-nhan-vien', loadComponent: () => import('../QuanLyTaiKhoanNhanVien/quan-ly-tai-khoan-nhan-vien.component').then(m => m.QuanLyTaiKhoanNhanVienComponent) },
       { path: 'quan-ly-chinh-sach', loadComponent: () => import('../QuanLyChinhSach/quan-ly-chinh-sach.component').then(m => m.QuanLyChinhSachComponent) },
       { path: 'quan-ly-nhat-ky', loadComponent: () => import('../QuanLyNhatKy/quan-ly-nhat-ky.component').then(m => m.QuanLyNhatKyComponent) },
+      { path: 'quan-ly-tu-khoa-cam', loadComponent: () => import('../QuanLyTuKhoaCam/quan-ly-tu-khoa-cam.component').then(m => m.QuanLyTuKhoaCamComponent) },
       {
         path: 'bao-cao',
         children: [

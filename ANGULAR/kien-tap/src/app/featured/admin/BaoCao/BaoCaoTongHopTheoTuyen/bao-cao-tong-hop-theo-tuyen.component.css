@@ -1,3 +1,7 @@
+:host {
+  font-family: 'Inter', sans-serif;
+}
+
 .page-container {
   display: flex;
   flex-direction: column;
@@ -6,6 +10,7 @@
   margin: 0 auto;
   width: 100%;
   animation: fadeIn 0.4s ease-out;
+  overflow-x: hidden; /* Added to prevent page-level horizontal scroll */
 }
 
 @keyframes fadeIn {
@@ -63,17 +68,18 @@
 /* KPI Summary Cards */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
 }
 
 .kpi-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px;
   border-radius: 12px;
   transition: transform 0.3s, box-shadow 0.3s;
+  min-width: 0;
 }
 
 .kpi-card:hover {
@@ -99,6 +105,18 @@
   border-left: 5px solid #0284c7;
 }
 
+.kpi-card.red {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #991b1b;
+  border-left: 5px solid #dc2626;
+}
+
+.kpi-card.purple {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  color: #7e22ce;
+  border-left: 5px solid #9333ea;
+}
+
 .kpi-icon-container {
   display: flex;
   align-items: center;
@@ -108,6 +126,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.6);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
 }
 
 .kpi-icon-container .material-icons {
@@ -117,6 +136,7 @@
 .kpi-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .kpi-label {
@@ -124,11 +144,17 @@
   font-weight: 500;
   opacity: 0.85;
   margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-value {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Filters Layout */
@@ -170,12 +196,17 @@
   gap: 8px;
 }
 
+.date-range-inputs input[type="date"] {
+  min-width: 130px;
+}
+
 .date-range-separator {
   color: #94a3b8;
   font-weight: bold;
 }
 
-input, select {
+input, select, input[type="date"] {
+  font-family: 'Inter', sans-serif !important;
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #cbd5e1;
@@ -300,8 +331,10 @@ input:focus, select:focus {
 
 table {
   width: 100%;
+  min-width: 1400px;
   border-collapse: collapse;
   text-align: left;
+  table-layout: fixed;
 }
 
 th {
@@ -311,7 +344,6 @@ th {
   font-weight: 600;
   padding: 14px 16px;
   border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
 }
 
 td {
@@ -320,86 +352,34 @@ td {
   color: #334155;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
+  word-break: break-word;
 }
 
-tr:hover td {
-  background-color: #f8fafc;
-}
+/* Column Width Adjustments */
+th:nth-child(1), td:nth-child(1) { width: 100px; } /* Mã tuyến */
+th:nth-child(2), td:nth-child(2) { width: 150px; } /* Tên tuyến xe */
+th:nth-child(3), td:nth-child(3) { width: 150px; } /* Cự ly & Thời gian dự kiến */
+th:nth-child(4), td:nth-child(4) { width: 100px; } /* Số chuyến đã chạy */
+th:nth-child(5), td:nth-child(5) { width: 100px; } /* Số lượng vé đã bán */
+th:nth-child(6), td:nth-child(6) { width: 100px; } /* Lấp đầy trung bình */
+th:nth-child(7), td:nth-child(7) { width: 120px; } /* Tổng doanh thu (VNĐ) */
+th:nth-child(8), td:nth-child(8) { width: 120px; } /* Tổng chi phí vận hành (VNĐ) */
+th:nth-child(9), td:nth-child(9) { width: 120px; } /* Lợi nhuận tuyến (VNĐ) */
+th:nth-child(10), td:nth-child(10) { width: 120px; } /* Doanh thu TB/chuyến (VNĐ) */
+th:nth-child(11), td:nth-child(11) { width: 120px; } /* Lợi nhuận TB/chuyến (VNĐ) */
+th:nth-child(12), td:nth-child(12) { width: 100px; } /* Trạng thái */
 
-.route-col {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.qty-col {
-  font-weight: 600;
-  text-align: center;
-}
-
-.price-col {
-  font-weight: 700;
-  color: #0f172a;
-  text-align: right;
-}
-
-.discount-col {
-  font-weight: 600;
-  color: #ea580c;
-  text-align: right;
-}
-
-.revenue-col {
-  font-weight: 700;
-  color: #16a34a;
-  text-align: right;
-}
-
-/* Styled Summary Totals Row */
-tr.totals-row td {
-  background-color: #f8fafc !important;
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px double #cbd5e1;
-  font-weight: 700;
-}
-
-tr.totals-row td:first-child {
-  color: #0f172a;
-  text-transform: uppercase;
-}
-
-tr.totals-row .revenue-col {
-  color: #15803d;
-  font-size: 15px;
-}
-
-/* No Data State */
-.no-data-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: #64748b;
-  gap: 12px;
-}
-
-.no-data-container .material-icons {
-  font-size: 56px;
-  color: #cbd5e1;
-}
-
-.no-data-container p {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-@media (max-width: 1200px) {
+@media (max-width: 1350px) {
   .search-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .search-grid .form-group[style*="grid-column: span 2"] {
+    grid-column: span 2 !important; /* Keep span 2 on medium screens */
+  }
+
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr); /* Changed from 3 to 2 columns */
   }
 }
 
@@ -407,7 +387,75 @@ tr.totals-row .revenue-col {
   .search-grid {
     grid-template-columns: 1fr;
   }
-  .kpi-grid {
-    grid-template-columns: 1fr;
+
+  .search-grid .form-group[style*="grid-column: span 2"] {
+    grid-column: span 1 !important; /* Change to span 1 on small screens */
   }
+
+  .kpi-grid {
+    grid-template-columns: 1fr; /* Changed from 2 to 1 column */
+  }
+
+  .search-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-excel {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Status Pills */
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-active {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.status-locked {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fee2e2;
+}
+
+/* Empty State Placeholder */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state .empty-icon {
+  font-size: 64px !important;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
 }

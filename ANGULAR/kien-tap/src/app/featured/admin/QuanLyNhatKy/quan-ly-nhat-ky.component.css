@@ -230,6 +230,7 @@
 }
 
 input, select {
+  font-family: 'Inter', sans-serif;
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #cbd5e1;
@@ -617,6 +618,7 @@ tr:hover td {
 }
 
 .page-size-selector select {
+  font-family: 'Inter', sans-serif;
   padding: 6px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;

@@ -76,7 +76,7 @@ export class TaiXeService {
       dob: '17/03/1979',
       phone: '0908123456',
       licenseClass: 'E',
-      licenseExpiry: '03/01/2027',
+      licenseExpiry: '15/06/2026',
       avatar: null,
       licenseFront: null,
       licenseBack: null,

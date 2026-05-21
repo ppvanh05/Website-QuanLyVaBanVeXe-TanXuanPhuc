@@ -1,3 +1,7 @@
+:host {
+  font-family: 'Inter', sans-serif;
+}
+
 .page-container {
   display: flex;
   flex-direction: column;
@@ -6,6 +10,7 @@
   margin: 0 auto;
   width: 100%;
   animation: fadeIn 0.4s ease-out;
+  overflow-x: hidden; /* Added to prevent page-level horizontal scroll */
 }
 
 @keyframes fadeIn {
@@ -70,17 +75,19 @@
 /* KPI Summary Cards */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
+  max-width: 100%; /* Ensure it doesn't overflow */
 }
 
 .kpi-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px;
   border-radius: 12px;
   transition: transform 0.3s, box-shadow 0.3s;
+  min-width: 0;
 }
 
 .kpi-card:hover {
@@ -121,6 +128,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.6);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
 }
 
 .kpi-icon-container .material-icons {
@@ -130,6 +138,7 @@
 .kpi-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .kpi-label {
@@ -137,11 +146,17 @@
   font-weight: 500;
   opacity: 0.85;
   margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-value {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Filters Layout */
@@ -163,6 +178,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 24px;
+  max-width: 100%; /* Ensure it doesn't overflow */
 }
 
 .form-group {
@@ -183,13 +199,19 @@
   gap: 8px;
 }
 
+.date-range-inputs input[type="date"] {
+  min-width: 130px;
+}
+
 .date-range-separator {
   color: #94a3b8;
   font-weight: bold;
 }
 
 input,
-select {
+select,
+input[type="date"] {
+  font-family: 'Inter', sans-serif !important;
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #cbd5e1;
@@ -316,8 +338,10 @@ select:focus {
 
 table {
   width: 100%;
+  min-width: 1770px;
   border-collapse: collapse;
   text-align: left;
+  table-layout: fixed;
 }
 
 th {
@@ -327,7 +351,6 @@ th {
   font-weight: 600;
   padding: 14px 16px;
   border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
 }
 
 td {
@@ -336,7 +359,25 @@ td {
   color: #334155;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
+  word-break: break-word;
 }
+
+/* Column Width Adjustments */
+th:nth-child(1), td:nth-child(1) { width: 80px; } /* Mã chuyến */
+th:nth-child(2), td:nth-child(2) { width: 180px; } /* Tuyến xe */
+th:nth-child(3), td:nth-child(3) { width: 150px; } /* Biển số / Loại xe */
+th:nth-child(4), td:nth-child(4) { width: 120px; } /* Khởi hành */
+th:nth-child(5), td:nth-child(5) { width: 100px; } /* SL Khách (Bán/Tổng) */
+th:nth-child(6), td:nth-child(6) { width: 80px; } /* Lấp đầy */
+th:nth-child(7), td:nth-child(7) { width: 120px; } /* Doanh thu vé */
+th:nth-child(8), td:nth-child(8) { width: 120px; } /* Chi phí vận hành */
+th:nth-child(9), td:nth-child(9) { width: 120px; } /* Lợi nhuận chuyến */
+th:nth-child(10), td:nth-child(10) { width: 140px; } /* Tài xế chính */
+th:nth-child(11), td:nth-child(11) { width: 140px; } /* Phụ xe */
+th:nth-child(12), td:nth-child(12) { width: 100px; } /* Đánh giá TB */
+th:nth-child(13), td:nth-child(13) { width: 100px; } /* SL ĐG tiêu cực */
+th:nth-child(14), td:nth-child(14) { width: 120px; } /* Đóng góp DT tuyến (%) */
+th:nth-child(15), td:nth-child(15) { width: 100px; } /* Trạng thái */
 
 tr:last-child td {
   border-bottom: none;
@@ -489,9 +530,13 @@ tr:hover td {
   cursor: not-allowed;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1350px) {
   .search-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .search-grid .form-group[style*="grid-column: span 2"] {
+    grid-column: span 2 !important; /* Keep span 2 on medium screens */
   }
 
   .kpi-grid {
@@ -504,6 +549,10 @@ tr:hover td {
     grid-template-columns: 1fr;
   }
 
+  .search-grid .form-group[style*="grid-column: span 2"] {
+    grid-column: span 1 !important; /* Change to span 1 on small screens */
+  }
+
   .kpi-grid {
     grid-template-columns: 1fr;
   }
@@ -514,3 +563,241 @@ tr:hover td {
     align-items: center;
   }
 }
+
+/* Red Card for Negative Profit */
+.kpi-card.red-card {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #991b1b;
+  border-left: 5px solid #dc2626 !important;
+}
+
+/* Occupancy & Status badges */
+.occupancy-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.occupancy-high {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.occupancy-medium {
+  background-color: #fef9c3;
+  color: #a16207;
+  border: 1px solid #fef08a;
+}
+
+.occupancy-low {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-active {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.status-full {
+  background-color: #fffaf0;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+}
+
+.status-departed {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.status-cancelled {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fee2e2;
+}
+
+/* Modal Overlay Popup */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeInModal 0.2s ease-out;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.expense-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14.5px;
+  color: #475569;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.expense-item:last-child {
+  border-bottom: none;
+  font-weight: 700;
+  font-size: 16px;
+  color: #0f172a;
+  padding-top: 10px;
+  border-top: 2px solid #e2e8f0;
+}
+
+.expense-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expense-name .material-icons {
+  font-size: 20px;
+  color: #64748b;
+}
+
+.expense-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Responsive adjustments for search-grid and search-actions */
+@media (max-width: 1200px) {
+  .search-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .search-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-excel {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Empty State Placeholder */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state .empty-icon {
+  font-size: 64px !important;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+

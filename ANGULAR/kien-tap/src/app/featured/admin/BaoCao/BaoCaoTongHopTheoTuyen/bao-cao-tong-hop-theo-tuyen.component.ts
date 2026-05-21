@@ -1,11 +1,21 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TuyenXeService } from '../../QuanLyDieuHanh/tuyen-xe.service';
 
 interface RouteSummaryItem {
+  maTuyen: string;
   tuyen: string;
+  khoangCachThoiGian: string;
+  slChuyenChay: number;
   slVeDaBan: number;
+  tyLeLapDay: number;
   tongDoanhThu: number;
+  tongChiPhiVanHanh: number; // New field
+  loiNhuanTuyen: number; // New field
+  doanhThuTrungBinhChuyen: number; // New field
+  loiNhuanTrungBinhChuyen: number; // New field
+  trangThai: 'Đang hoạt động' | 'Ngừng hoạt động';
 }
 
 @Component({
@@ -19,60 +29,85 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
   filters = {
     fromDate: '2026-05-01',
     toDate: '2026-05-31',
-    route: 'Tất cả'
+    route: 'Tất cả',
+    status: 'Tất cả'
   };
 
   allSummaries: RouteSummaryItem[] = [];
   filteredSummaries: RouteSummaryItem[] = [];
+  isReportViewed = true;
 
-  routesList = [
-    'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-    'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-    'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-    'Phú Yên ↔ Sài Gòn (BX Miền Đông)'
-  ];
+  routesList: string[] = [];
 
   // Totals for summary row
   totals = {
+    slChuyenChay: 0,
     slVeDaBan: 0,
-    tongDoanhThu: 0
+    tongDoanhThu: 0,
+    tongChiPhiVanHanh: 0,
+    loiNhuanTuyen: 0,
+    tyLeLapDayTrungBinh: 0,
+    doanhThuTrungBinhChuyen: 0,
+    loiNhuanTrungBinhChuyen: 0
   };
 
+  constructor(private tuyenXeService: TuyenXeService) {}
+
   ngOnInit() {
+    this.routesList = this.tuyenXeService.getRoutesList();
     this.generateMockSummaries();
     this.onViewReport();
   }
 
   private generateMockSummaries() {
-    // Generate realistic, consistent figures based on routes for Tân Xuân Phúc
-    this.allSummaries = [
-      {
-        tuyen: 'Gia Lai ↔ Sài Gòn (BX Miền Đông)',
-        slVeDaBan: 313,
-        tongDoanhThu: 109550000 // 313 * 350,000
-      },
-      {
-        tuyen: 'Gia Lai ↔ Bình Dương (BX Bến Cát)',
-        slVeDaBan: 224,
-        tongDoanhThu: 78400000 // 224 * 350,000
-      },
-      {
-        tuyen: 'Bình Định ↔ Sài Gòn (BX Miền Tây)',
-        slVeDaBan: 405,
-        tongDoanhThu: 121500000 // 405 * 300,000
-      },
-      {
-        tuyen: 'Phú Yên ↔ Sài Gòn (BX Miền Đông)',
-        slVeDaBan: 175,
-        tongDoanhThu: 49000000 // 175 * 280,000
-      }
-    ];
+    const sysRoutes = this.tuyenXeService.getRoutes();
+    this.allSummaries = sysRoutes.map((route, i) => {
+      const maTuyen = `TX${String(route.id).padStart(2, '0')}`;
+      const duration = `${route.estimatedHours}h${route.estimatedMinutes ? route.estimatedMinutes + 'm' : ''}`;
+      const khoangCachThoiGian = `${route.distance} km / ${duration}`;
+      
+      const slChuyenChay = 20 + (i * 7) % 35;
+      const slVeDaBan = slChuyenChay * (15 + (i * 3) % 8);
+      
+      const maxSeats = slChuyenChay * 22;
+      const tyLeLapDay = Math.min(100, Math.round((slVeDaBan / maxSeats) * 100));
+      const singleFare = route.distance * 1000;
+      const tongDoanhThu = slVeDaBan * singleFare;
+
+      // Mocking operational costs (e.g., 30-50% of revenue)
+      const tongChiPhiVanHanh = Math.round(tongDoanhThu * (0.3 + (i % 3) * 0.05));
+      const loiNhuanTuyen = tongDoanhThu - tongChiPhiVanHanh;
+
+      const doanhThuTrungBinhChuyen = slChuyenChay > 0 ? tongDoanhThu / slChuyenChay : 0;
+      const loiNhuanTrungBinhChuyen = slChuyenChay > 0 ? loiNhuanTuyen / slChuyenChay : 0;
+
+      const trangThai = route.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động';
+
+      return {
+        maTuyen,
+        tuyen: route.name,
+        khoangCachThoiGian,
+        slChuyenChay,
+        slVeDaBan,
+        tyLeLapDay,
+        tongDoanhThu,
+        tongChiPhiVanHanh,
+        loiNhuanTuyen,
+        doanhThuTrungBinhChuyen,
+        loiNhuanTrungBinhChuyen,
+        trangThai
+      };
+    });
   }
 
   onViewReport() {
-    // Dynamic filter based on selected route
+    this.isReportViewed = true;
     this.filteredSummaries = this.allSummaries.filter(item => {
       if (this.filters.route !== 'Tất cả' && item.tuyen !== this.filters.route) return false;
+      if (this.filters.status !== 'Tất cả') {
+        const filterStatus = this.filters.status === 'Hoạt động' ? 'Đang hoạt động' : 'Ngừng hoạt động';
+        if (item.trangThai !== filterStatus) return false;
+      }
       return true;
     });
 
@@ -80,17 +115,41 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
   }
 
   private calculateTotals() {
+    let slChuyenChay = 0;
     let slVeDaBan = 0;
     let tongDoanhThu = 0;
+    let tongChiPhiVanHanh = 0;
+    let loiNhuanTuyen = 0;
+    let sumTyLeLapDay = 0;
+    let sumDoanhThuTrungBinhChuyen = 0;
+    let sumLoiNhuanTrungBinhChuyen = 0;
 
     this.filteredSummaries.forEach(item => {
+      slChuyenChay += item.slChuyenChay;
       slVeDaBan += item.slVeDaBan;
       tongDoanhThu += item.tongDoanhThu;
+      tongChiPhiVanHanh += item.tongChiPhiVanHanh;
+      loiNhuanTuyen += item.loiNhuanTuyen;
+      sumTyLeLapDay += item.tyLeLapDay;
+      sumDoanhThuTrungBinhChuyen += item.doanhThuTrungBinhChuyen;
+      sumLoiNhuanTrungBinhChuyen += item.loiNhuanTrungBinhChuyen;
     });
 
     this.totals = {
+      slChuyenChay,
       slVeDaBan,
-      tongDoanhThu
+      tongDoanhThu,
+      tongChiPhiVanHanh,
+      loiNhuanTuyen,
+      tyLeLapDayTrungBinh: this.filteredSummaries.length > 0 
+        ? Math.round(sumTyLeLapDay / this.filteredSummaries.length) 
+        : 0,
+      doanhThuTrungBinhChuyen: this.filteredSummaries.length > 0
+        ? sumDoanhThuTrungBinhChuyen / this.filteredSummaries.length
+        : 0,
+      loiNhuanTrungBinhChuyen: this.filteredSummaries.length > 0
+        ? sumLoiNhuanTrungBinhChuyen / this.filteredSummaries.length
+        : 0
     };
   }
 
@@ -98,8 +157,10 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
     this.filters = {
       fromDate: '2026-05-01',
       toDate: '2026-05-31',
-      route: 'Tất cả'
+      route: 'Tất cả',
+      status: 'Tất cả'
     };
+    this.isReportViewed = true;
     this.onViewReport();
   }
 
@@ -112,16 +173,17 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
     let csvContent = '\uFEFF';
     csvContent += 'BÁO CÁO TỔNG HỢP VÉ BÁN THEO TUYẾN (TÂN XUÂN PHÚC)\n';
     csvContent += `Thời gian: Từ ${this.filters.fromDate} đến ${this.filters.toDate}\n`;
-    csvContent += `Tuyến: ${this.filters.route}\n\n`;
+    csvContent += `Tuyến: ${this.filters.route}\n`;
+    csvContent += `Trạng thái: ${this.filters.status}\n\n`;
     
-    csvContent += 'Tuyến xe,Số lượng vé đã bán,Tổng doanh thu (VNĐ)\n';
+    csvContent += 'Mã tuyến,Tên tuyến,Cự ly & Thời gian,Số chuyến đã chạy,Số vé đã bán,Lấp đầy TB (%),Doanh thu (VNĐ),Chi phí vận hành (VNĐ),Lợi nhuận tuyến (VNĐ),Doanh thu TB/chuyến (VNĐ),Lợi nhuận TB/chuyến (VNĐ),Trạng thái\n';
 
     this.filteredSummaries.forEach(item => {
-      csvContent += `"${item.tuyen}",${item.slVeDaBan},${item.tongDoanhThu}\n`;
+      csvContent += `"${item.maTuyen}","${item.tuyen}","${item.khoangCachThoiGian}",${item.slChuyenChay},${item.slVeDaBan},${item.tyLeLapDay}%,${item.tongDoanhThu},${item.tongChiPhiVanHanh},${item.loiNhuanTuyen},${item.doanhThuTrungBinhChuyen},${item.loiNhuanTrungBinhChuyen},"${item.trangThai}"\n`;
     });
 
     // Summary Row
-    csvContent += `\n"TỔNG (VNĐ)",${this.totals.slVeDaBan},${this.totals.tongDoanhThu}\n`;
+    csvContent += `\n"TỔNG CỘNG",,${this.totals.slChuyenChay},${this.totals.slVeDaBan},${this.totals.tyLeLapDayTrungBinh}%,${this.totals.tongDoanhThu},${this.totals.tongChiPhiVanHanh},${this.totals.loiNhuanTuyen},${this.totals.doanhThuTrungBinhChuyen},${this.totals.loiNhuanTrungBinhChuyen},\n`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
