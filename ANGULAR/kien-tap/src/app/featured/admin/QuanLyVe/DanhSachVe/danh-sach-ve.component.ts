@@ -346,6 +346,18 @@ export class DanhSachVeComponent {
     }
   }
 
+  getPriceColorClass(status: string) {
+    switch (status) {
+      case 'Chờ thanh toán': return 'price-unpaid';
+      case 'Đã thanh toán': return 'price-paid';
+      case 'Chờ hoàn tiền':
+      case 'Đã hoàn tiền': 
+      case 'Đã hủy': 
+        return 'price-cancelled';
+      default: return '';
+    }
+  }
+
   getPtttClass(pttt: string) {
     if (pttt === 'Momo') return 'pttt-momo';
     if (pttt === 'ZaloPay') return 'pttt-zalopay';
