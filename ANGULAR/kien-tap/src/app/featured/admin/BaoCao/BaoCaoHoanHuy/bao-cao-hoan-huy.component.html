@@ -133,8 +133,8 @@
             <th>Ngày đi</th>
             <th>Giờ đi</th>
             <th>Ngày đặt</th>
-            <th>VP đặt vé</th>
-            <th>VP hủy vé</th>
+            <th>Kênh đặt</th>
+            <th>Kênh hủy</th>
             <th>Lý do hủy</th>
             <th style="text-align: right;">Giá vé gốc</th>
             <th style="text-align: right;">Phí hủy</th>
@@ -151,9 +151,9 @@
             <td>{{ item.vpDat }}</td>
             <td>{{ item.vpHuy }}</td>
             <td class="reason-col" [title]="item.lyDoHuy">{{ item.lyDoHuy }}</td>
-            <td class="price-col">{{ item.giaVe | number:'1.0-0' }}đ</td>
-            <td class="fee-col">{{ item.phiHuy | number:'1.0-0' }}đ</td>
-            <td class="refund-col">{{ item.tienHoan | number:'1.0-0' }}đ</td>
+            <td class="price-col" style="text-align: right;">{{ item.giaVe | number:'1.0-0' }}đ</td>
+            <td class="fee-col" style="text-align: right;">{{ item.phiHuy | number:'1.0-0' }}đ</td>
+            <td class="refund-col" style="text-align: right; font-weight: 700; color: #0f766e;">{{ item.tienHoan | number:'1.0-0' }}đ</td>
           </tr>
         </tbody>
       </table>

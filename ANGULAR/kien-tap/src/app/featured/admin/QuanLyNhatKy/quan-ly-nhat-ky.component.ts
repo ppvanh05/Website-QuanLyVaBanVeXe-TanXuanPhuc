@@ -2,36 +2,29 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-interface SystemLog {
+export interface AuditLog {
   maNhatKy: string;
+  maVe?: string;
+  tuyenXe?: string;
   maKhachHang?: string;
   tenKhachHang?: string;
+  soDienThoai?: string; // Phone number field
   maNhanVien?: string;
   tenNhanVien?: string;
-  loaiTaiKhoan: 'Khách hàng' | 'Bán vé' | 'Điều phối' | 'Quản trị viên';
-  loaiThaoTac: 'Đăng nhập' | 'Đăng xuất' | 'Đặt vé' | 'Hủy vé' | 'Cập nhật xe' | 'Thêm tuyến xe' | 'Đổi mật khẩu' | 'Sửa chính sách';
+  loaiTaiKhoan: 'Khách hàng' | 'Bán vé' | 'Điều phối' | 'Quản trị viên' | 'Ban quản lý';
+  loaiThaoTac: string;
   thoiGian: string;
   diaChiIP: string;
+  trangThai: 'Thành công' | 'Thất bại';
   noiDungChiTiet: string;
+  thietBiTrinhDuyet?: string;
+  trangThaiCu?: string;
+  trangThaiMoi?: string;
   duLieuThayDoi?: {
     truong: string;
     giaTriCu: string;
     giaTriMoi: string;
   }[];
-}
-
-interface TicketLog {
-  maLichSu: string;
-  maVe: string;
-  maKhachHang?: string;
-  tenKhachHang?: string;
-  maNVBanVe?: string;
-  tenNVBanVe?: string;
-  hanhDong: 'Đặt vé mới' | 'Đổi ngày/giờ đi' | 'Hủy vé hoàn tiền' | 'Ghi nhận check-in';
-  trangThaiCu: string;
-  trangThaiMoi: string;
-  thoiGianThayDoi: string;
-  ghiChu: string;
 }
 
 @Component({
@@ -42,233 +35,318 @@ interface TicketLog {
   styleUrls: ['./quan-ly-nhat-ky.component.css']
 })
 export class QuanLyNhatKyComponent implements OnInit {
-  activeTab: 'he-thong' | 've-xe' = 'he-thong';
-
-  // Filters for System Logs
-  sysFilters = {
+  // Filters data
+  filters = {
     role: 'Tất cả',
     action: 'Tất cả',
+    status: 'Tất cả',
     searchTerm: '',
-    fromDate: '2026-05-01',
-    toDate: '2026-05-17'
+    fromDate: '',
+    toDate: ''
   };
 
-  // Filters for Ticket Logs
-  ticketFilters = {
-    action: 'Tất cả',
-    searchTerm: '',
-    fromDate: '2026-05-01',
-    toDate: '2026-05-17'
+  // Master options lists
+  roles = ['Tất cả', 'Khách hàng', 'Bán vé', 'Điều phối', 'Quản trị viên', 'Ban quản lý'];
+  
+  actions = [
+    'Tất cả',
+    'Đăng ký',
+    'Đăng nhập',
+    'Đặt vé',
+    'Tra cứu vé',
+    'Hủy vé',
+    'Chỉnh sửa thông tin vé',
+    'Đánh giá chuyến xe',
+    'Đổi mật khẩu',
+    'Cập nhật thông tin cá nhân',
+    'Quản lý lịch trình',
+    'Quản lý tuyến xe',
+    'Quản lý phương tiện',
+    'Quản lý tài xế',
+    'Quản lý vé (thay khách)',
+    'Quản lý tài khoản',
+    'Quản lý đánh giá',
+    'Quản lý tin tức',
+    'Quản lý chính sách',
+    'Báo cáo & Xuất file'
+  ];
+
+  // Raw and filtered datasets
+  allLogs: AuditLog[] = [];
+  filteredLogs: AuditLog[] = [];
+
+  // Pagination parameters
+  page = 1;
+  pageSize = 10;
+  totalPages = 1;
+
+  // Selected Log for detail modal popup
+  selectedLog: AuditLog | null = null;
+
+  // Dashboard Stats today
+  stats = {
+    totalLogsToday: 0,
+    loginSuccessCount: 0,
+    failedOperationsCount: 0,
+    ticketBookingCount: 0
   };
 
-  // Full datasets
-  allSysLogs: SystemLog[] = [];
-  allTicketLogs: TicketLog[] = [];
-
-  // Filtered datasets
-  filteredSysLogs: SystemLog[] = [];
-  filteredTicketLogs: TicketLog[] = [];
-
-  // Paginated datasets
-  sysPage = 1;
-  sysPageSize = 10;
-  sysTotalPages = 1;
-
-  ticketPage = 1;
-  ticketPageSize = 10;
-  ticketTotalPages = 1;
-
-  // Selected Log for detail modal
-  selectedSysLog: SystemLog | null = null;
-  selectedTicketLog: TicketLog | null = null;
+  todayDateStr = '';
 
   ngOnInit() {
-    this.allSysLogs = this.generateMockSystemLogs();
-    this.allTicketLogs = this.generateMockTicketLogs();
-    this.applySysFilters();
-    this.applyTicketFilters();
+    this.initializeDates();
+    this.allLogs = this.generateMockLogs();
+    this.calculateStats();
+    this.applyFilters();
   }
 
-  // Toggle tab
-  switchTab(tab: 'he-thong' | 've-xe') {
-    this.activeTab = tab;
+  // Set default dates dynamically to match current month
+  initializeDates() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    
+    this.todayDateStr = `${y}-${m}-${d}`;
+    
+    // Set filters from start of current month to today
+    const firstDayStr = `${y}-${m}-01`;
+    this.filters.fromDate = firstDayStr;
+    this.filters.toDate = this.todayDateStr;
   }
 
-  // Filter and Paginate System Logs
-  applySysFilters() {
-    this.filteredSysLogs = this.allSysLogs.filter(log => {
-      // Role Filter
-      if (this.sysFilters.role !== 'Tất cả') {
-        if (log.loaiTaiKhoan !== this.sysFilters.role) return false;
+  // Get dynamic dates relative to today
+  getRelativeDateString(daysOffset: number, timeStr: string): string {
+    const d = new Date();
+    d.setDate(d.getDate() - daysOffset);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day} ${timeStr}`;
+  }
+
+  // Calculate statistics for today's logs
+  calculateStats() {
+    const todayLogs = this.allLogs.filter(log => log.thoiGian.startsWith(this.todayDateStr));
+    
+    this.stats.totalLogsToday = todayLogs.length;
+    
+    this.stats.loginSuccessCount = todayLogs.filter(
+      log => log.loaiThaoTac === 'Đăng nhập' && log.trangThai === 'Thành công'
+    ).length;
+    
+    this.stats.failedOperationsCount = todayLogs.filter(
+      log => log.trangThai === 'Thất bại'
+    ).length;
+    
+    this.stats.ticketBookingCount = todayLogs.filter(
+      log => log.loaiThaoTac === 'Đặt vé'
+    ).length;
+  }
+
+  // Apply filters globally
+  applyFilters() {
+    this.filteredLogs = this.allLogs.filter(log => {
+      // Role filter
+      if (this.filters.role !== 'Tất cả' && log.loaiTaiKhoan !== this.filters.role) {
+        return false;
       }
 
-      // Action Filter
-      if (this.sysFilters.action !== 'Tất cả' && log.loaiThaoTac !== this.sysFilters.action) return false;
+      // Action type filter
+      if (this.filters.action !== 'Tất cả' && log.loaiThaoTac !== this.filters.action) {
+        return false;
+      }
 
-      // Date Filters
+      // Status filter
+      if (this.filters.status !== 'Tất cả' && log.trangThai !== this.filters.status) {
+        return false;
+      }
+
+      // Date range filter
       const logDate = log.thoiGian.split(' ')[0]; // yyyy-MM-dd
-      if (this.sysFilters.fromDate && logDate < this.sysFilters.fromDate) return false;
-      if (this.sysFilters.toDate && logDate > this.sysFilters.toDate) return false;
+      if (this.filters.fromDate && logDate < this.filters.fromDate) {
+        return false;
+      }
+      if (this.filters.toDate && logDate > this.filters.toDate) {
+        return false;
+      }
 
-      // Search query (Mã nhật ký, Tên người dùng, IP, Chi tiết)
-      if (this.sysFilters.searchTerm) {
-        const query = this.sysFilters.searchTerm.toLowerCase();
-        const matchesCode = log.maNhatKy.toLowerCase().includes(query);
+      // Quick Search (Log ID, User code/name, Phone, IP, Ticket Code)
+      if (this.filters.searchTerm) {
+        const query = this.filters.searchTerm.toLowerCase().trim();
+        const matchesId = log.maNhatKy.toLowerCase().includes(query);
         const matchesIP = log.diaChiIP.includes(query);
-        const matchesDetail = log.noiDungChiTiet.toLowerCase().includes(query);
-        const matchesUser = (log.tenKhachHang?.toLowerCase().includes(query) || 
-                            log.tenNhanVien?.toLowerCase().includes(query) || 
-                            log.maKhachHang?.toLowerCase().includes(query) ||
-                            log.maNhanVien?.toLowerCase().includes(query));
+        const matchesTicket = log.maVe && log.maVe.toLowerCase().includes(query);
+        const matchesPhone = log.soDienThoai && log.soDienThoai.includes(query);
+        const matchesUser = (
+          (log.tenKhachHang && log.tenKhachHang.toLowerCase().includes(query)) ||
+          (log.maKhachHang && log.maKhachHang.toLowerCase().includes(query)) ||
+          (log.tenNhanVien && log.tenNhanVien.toLowerCase().includes(query)) ||
+          (log.maNhanVien && log.maNhanVien.toLowerCase().includes(query))
+        );
 
-        if (!matchesCode && !matchesIP && !matchesDetail && !matchesUser) return false;
+        if (!matchesId && !matchesIP && !matchesTicket && !matchesPhone && !matchesUser) {
+          return false;
+        }
       }
 
       return true;
     });
 
-    this.sysPage = 1;
-    this.calculateSysPages();
+    this.page = 1;
+    this.calculatePages();
   }
 
-  calculateSysPages() {
-    this.sysTotalPages = Math.ceil(this.filteredSysLogs.length / this.sysPageSize) || 1;
+  calculatePages() {
+    this.totalPages = Math.ceil(this.filteredLogs.length / this.pageSize) || 1;
   }
 
-  get paginatedSysLogs(): SystemLog[] {
-    const startIndex = (this.sysPage - 1) * this.sysPageSize;
-    return this.filteredSysLogs.slice(startIndex, startIndex + this.sysPageSize);
+  get paginatedLogs(): AuditLog[] {
+    const startIndex = (this.page - 1) * this.pageSize;
+    return this.filteredLogs.slice(startIndex, startIndex + this.pageSize);
   }
 
-  setSysPage(page: number) {
-    if (page >= 1 && page <= this.sysTotalPages) {
-      this.sysPage = page;
+  setPage(pageNum: number) {
+    if (pageNum >= 1 && pageNum <= this.totalPages) {
+      this.page = pageNum;
     }
   }
 
-  getSysPageNumbers(): number[] {
+  getPageNumbers(): number[] {
     const pages: number[] = [];
-    for (let i = 1; i <= this.sysTotalPages; i++) {
-      pages.push(i);
+    const total = this.totalPages;
+    const current = this.page;
+    
+    if (total <= 5) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      if (current <= 3) {
+        pages.push(1, 2, 3, 4, 5);
+      } else if (current >= total - 2) {
+        for (let i = total - 4; i <= total; i++) pages.push(i);
+      } else {
+        pages.push(current - 2, current - 1, current, current + 1, current + 2);
+      }
     }
     return pages;
   }
 
-  resetSysFilters() {
-    this.sysFilters = {
+  onPageSizeChange() {
+    this.page = 1;
+    this.calculatePages();
+  }
+
+  resetFilters() {
+    this.filters = {
       role: 'Tất cả',
       action: 'Tất cả',
+      status: 'Tất cả',
       searchTerm: '',
-      fromDate: '2026-05-01',
-      toDate: '2026-05-17'
+      fromDate: this.todayDateStr.slice(0, 8) + '01',
+      toDate: this.todayDateStr
     };
-    this.applySysFilters();
+    this.applyFilters();
   }
 
-  // Filter and Paginate Ticket Logs
-  applyTicketFilters() {
-    this.filteredTicketLogs = this.allTicketLogs.filter(log => {
-      // Action Filter
-      if (this.ticketFilters.action !== 'Tất cả' && log.hanhDong !== this.ticketFilters.action) return false;
+  // Modals Actions
+  openLogDetail(log: AuditLog) {
+    this.selectedLog = log;
+  }
 
-      // Date Filters
-      const logDate = log.thoiGianThayDoi.split(' ')[0];
-      if (this.ticketFilters.fromDate && logDate < this.ticketFilters.fromDate) return false;
-      if (this.ticketFilters.toDate && logDate > this.ticketFilters.toDate) return false;
+  closeLogDetail() {
+    this.selectedLog = null;
+  }
 
-      // Search query (Mã lịch sử, Mã vé, Tên người dùng, Ghi chú)
-      if (this.ticketFilters.searchTerm) {
-        const query = this.ticketFilters.searchTerm.toLowerCase();
-        const matchesCode = log.maLichSu.toLowerCase().includes(query);
-        const matchesTicket = log.maVe.toLowerCase().includes(query);
-        const matchesNotes = log.ghiChu.toLowerCase().includes(query);
-        const matchesUser = (log.tenKhachHang?.toLowerCase().includes(query) || 
-                            log.tenNVBanVe?.toLowerCase().includes(query) ||
-                            log.maKhachHang?.toLowerCase().includes(query) ||
-                            log.maNVBanVe?.toLowerCase().includes(query));
+  // Excel CSV exporter (UTF-8 BOM support)
+  exportToExcel() {
+    let csvContent = '';
+    const BOM = '\uFEFF';
+    const fileName = `TXP_Combined_Logs_${this.todayDateStr}.csv`;
 
-        if (!matchesCode && !matchesTicket && !matchesNotes && !matchesUser) return false;
-      }
+    const escapeCSV = (val: any): string => {
+      if (val === undefined || val === null) return '';
+      let str = String(val);
+      str = str.replace(/"/g, '""');
+      return `"${str}"`;
+    };
 
-      return true;
+    // Header
+    const headers = [
+      'Mã nhật ký', 'Người thực hiện', 'Mã tài khoản', 'Số điện thoại', 'Vai trò', 
+      'Thao tác', 'Trạng thái', 'Thời gian', 'Địa chỉ IP', 
+      'Mã vé', 'Tuyến xe', 'Thiết bị/Trình duyệt', 'Chi tiết thao tác'
+    ];
+    csvContent += headers.map(escapeCSV).join(',') + '\r\n';
+
+    // Rows
+    this.filteredLogs.forEach(log => {
+      const user = log.tenKhachHang || log.tenNhanVien || 'Hệ thống';
+      const code = log.maKhachHang || log.maNhanVien || 'System';
+      
+      const row = [
+        log.maNhatKy,
+        user,
+        code,
+        log.soDienThoai || '',
+        log.loaiTaiKhoan,
+        log.loaiThaoTac,
+        log.trangThai,
+        log.thoiGian,
+        log.diaChiIP,
+        log.maVe || '',
+        log.tuyenXe || '',
+        log.thietBiTrinhDuyet || '',
+        log.noiDungChiTiet
+      ];
+      csvContent += row.map(escapeCSV).join(',') + '\r\n';
     });
 
-    this.ticketPage = 1;
-    this.calculateTicketPages();
-  }
-
-  calculateTicketPages() {
-    this.ticketTotalPages = Math.ceil(this.filteredTicketLogs.length / this.ticketPageSize) || 1;
-  }
-
-  get paginatedTicketLogs(): TicketLog[] {
-    const startIndex = (this.ticketPage - 1) * this.ticketPageSize;
-    return this.filteredTicketLogs.slice(startIndex, startIndex + this.ticketPageSize);
-  }
-
-  setTicketPage(page: number) {
-    if (page >= 1 && page <= this.ticketTotalPages) {
-      this.ticketPage = page;
+    // Trigger download
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   }
 
-  getTicketPageNumbers(): number[] {
-    const pages: number[] = [];
-    for (let i = 1; i <= this.ticketTotalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
-
-  resetTicketFilters() {
-    this.ticketFilters = {
-      action: 'Tất cả',
-      searchTerm: '',
-      fromDate: '2026-05-01',
-      toDate: '2026-05-17'
-    };
-    this.applyTicketFilters();
-  }
-
-  // Detail Modal Actions
-  openSysLogDetail(log: SystemLog) {
-    this.selectedSysLog = log;
-  }
-
-  closeSysLogDetail() {
-    this.selectedSysLog = null;
-  }
-
-  openTicketLogDetail(log: TicketLog) {
-    this.selectedTicketLog = log;
-  }
-
-  closeTicketLogDetail() {
-    this.selectedTicketLog = null;
-  }
-
-  // System Logs Mock Generator
-  private generateMockSystemLogs(): SystemLog[] {
+  // Consolidated Mock Logs Generator
+  private generateMockLogs(): AuditLog[] {
     return [
       {
         maNhatKy: 'TXP_LOG0001',
-        maKhachHang: 'TXP_KH003',
+        maKhachHang: 'TXP_KH023',
         tenKhachHang: 'Lê Văn Cường',
+        soDienThoai: '0905111222',
         loaiTaiKhoan: 'Khách hàng',
         loaiThaoTac: 'Đăng nhập',
-        thoiGian: '2026-05-17 19:42:01',
+        thoiGian: this.getRelativeDateString(0, '19:42:01'),
         diaChiIP: '192.168.1.10',
-        noiDungChiTiet: 'Khách hàng đăng nhập thành công vào website Tân Xuân Phúc qua xác thực mật khẩu.'
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Khách hàng đăng nhập thành công vào website Tân Xuân Phúc qua xác thực mật khẩu.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)'
       },
       {
         maNhatKy: 'TXP_LOG0002',
-        maKhachHang: 'TXP_KH003',
+        maKhachHang: 'TXP_KH023',
         tenKhachHang: 'Lê Văn Cường',
+        soDienThoai: '0905111222',
         loaiTaiKhoan: 'Khách hàng',
         loaiThaoTac: 'Đặt vé',
-        thoiGian: '2026-05-17 19:48:15',
+        thoiGian: this.getRelativeDateString(0, '19:48:15'),
         diaChiIP: '192.168.1.10',
-        noiDungChiTiet: 'Đặt thành công vé mã TXP2605C103 tuyến Bình Định ↔ Sài Gòn (BX Miền Tây) khởi hành ngày 2026-05-20 lúc 19:00.',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Khách hàng đặt thành công vé mã TXP2605C103 tuyến Bình Định ↔ Sài Gòn khởi hành ngày 2026-05-20 lúc 19:00.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
+        maVe: 'TXP2605C103',
+        tuyenXe: 'Bình Định ↔ Sài Gòn',
+        trangThaiCu: 'Trống',
+        trangThaiMoi: 'Đã thanh toán',
         duLieuThayDoi: [
           { truong: 'Trạng thái ghế', giaTriCu: 'Trống', giaTriMoi: 'Đã Bán' },
           { truong: 'Số lượng vé đặt', giaTriCu: '0', giaTriMoi: '1' }
@@ -278,11 +356,14 @@ export class QuanLyNhatKyComponent implements OnInit {
         maNhatKy: 'TXP_LOG0003',
         maNhanVien: 'TXP_NV02',
         tenNhanVien: 'Vũ Quốc Hùng',
+        soDienThoai: '0935999888',
         loaiTaiKhoan: 'Điều phối',
-        loaiThaoTac: 'Cập nhật xe',
-        thoiGian: '2026-05-17 16:30:10',
+        loaiThaoTac: 'Quản lý phương tiện',
+        thoiGian: this.getRelativeDateString(0, '16:30:10'),
         diaChiIP: '10.20.30.45',
+        trangThai: 'Thành công',
         noiDungChiTiet: 'Cập nhật thông tin hạn kiểm định và trạng thái hoạt động của phương tiện biển số 81B-015.68.',
+        thietBiTrinhDuyet: 'Firefox 125.0 (macOS)',
         duLieuThayDoi: [
           { truong: 'HanDangKiem', giaTriCu: '2026-05-01', giaTriMoi: '2026-11-01' },
           { truong: 'TrangThai', giaTriCu: 'Bảo trì', giaTriMoi: 'Hoạt động' }
@@ -292,11 +373,14 @@ export class QuanLyNhatKyComponent implements OnInit {
         maNhatKy: 'TXP_LOG0004',
         maNhanVien: 'TXP_NV01',
         tenNhanVien: 'Phan Văn Anh',
+        soDienThoai: '0988777666',
         loaiTaiKhoan: 'Quản trị viên',
-        loaiThaoTac: 'Sửa chính sách',
-        thoiGian: '2026-05-17 15:20:12',
+        loaiThaoTac: 'Quản lý chính sách',
+        thoiGian: this.getRelativeDateString(0, '15:20:12'),
         diaChiIP: '10.20.30.12',
+        trangThai: 'Thành công',
         noiDungChiTiet: 'Điều chỉnh chính sách hủy vé hoàn tiền cho các tuyến limousine dịp hè 2026.',
+        thietBiTrinhDuyet: 'Edge 124.0 (Windows 11)',
         duLieuThayDoi: [
           { truong: 'TyLePhiHuy (%)', giaTriCu: '5%', giaTriMoi: '10%' },
           { truong: 'NgayApDung', giaTriCu: '2026-01-01', giaTriMoi: '2026-05-20' }
@@ -306,11 +390,18 @@ export class QuanLyNhatKyComponent implements OnInit {
         maNhatKy: 'TXP_LOG0005',
         maKhachHang: 'TXP_KH008',
         tenKhachHang: 'Vũ Thanh Hằng',
+        soDienThoai: '0912345678',
         loaiTaiKhoan: 'Khách hàng',
         loaiThaoTac: 'Hủy vé',
-        thoiGian: '2026-05-16 10:15:30',
+        thoiGian: this.getRelativeDateString(1, '10:15:30'),
         diaChiIP: '172.16.8.99',
-        noiDungChiTiet: 'Yêu cầu hủy vé trực tuyến cho vé mã TXP2605C108 tuyến Phú Yên ↔ Sài Gòn. Lý do: Khách hàng chủ động hủy.',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Khách hàng yêu cầu hủy vé trực tuyến cho vé mã TXP2605C108 tuyến Phú Yên ↔ Sài Gòn. Lý do: Khách hàng chủ động hủy.',
+        thietBiTrinhDuyet: 'Safari (iOS 17)',
+        maVe: 'TXP2605C108',
+        tuyenXe: 'Phú Yên ↔ Sài Gòn',
+        trangThaiCu: 'Đã thanh toán',
+        trangThaiMoi: 'Đã hủy',
         duLieuThayDoi: [
           { truong: 'TrangThaiVe', giaTriCu: 'ConHieuLuc', giaTriMoi: 'DaHuy' },
           { truong: 'TrangThaiGhe', giaTriCu: 'DaBan', giaTriMoi: 'Trong' }
@@ -318,98 +409,285 @@ export class QuanLyNhatKyComponent implements OnInit {
       },
       {
         maNhatKy: 'TXP_LOG0006',
-        maNhanVien: 'TXP_NV02',
-        tenNhanVien: 'Vũ Quốc Hùng',
-        loaiTaiKhoan: 'Điều phối',
-        loaiThaoTac: 'Thêm tuyến xe',
-        thoiGian: '2026-05-15 08:30:00',
-        diaChiIP: '10.20.30.45',
-        noiDungChiTiet: 'Thêm tuyến xe mới: Phú Yên ↔ Bình Dương phục vụ nhu cầu công nhân đi lại dịp hè.',
-        duLieuThayDoi: [
-          { truong: 'TenTuyenXe', giaTriCu: 'Trống', giaTriMoi: 'Phú Yên ↔ Bình Dương' },
-          { truong: 'TrangThai', giaTriCu: 'Trống', giaTriMoi: 'Hoạt động' }
-        ]
+        maKhachHang: 'TXP_KH005',
+        tenKhachHang: 'Hoàng Thị Dung',
+        soDienThoai: '0944333222',
+        loaiTaiKhoan: 'Khách hàng',
+        loaiThaoTac: 'Đổi mật khẩu',
+        thoiGian: this.getRelativeDateString(0, '20:11:45'),
+        diaChiIP: '14.23.45.67',
+        trangThai: 'Thất bại',
+        noiDungChiTiet: 'Thay đổi mật khẩu tài khoản khách hàng thất bại do nhập sai mật khẩu cũ quá 3 lần.',
+        thietBiTrinhDuyet: 'Safari (iPhone 15 Pro)'
       },
       {
         maNhatKy: 'TXP_LOG0007',
-        maKhachHang: 'TXP_KH005',
-        tenKhachHang: 'Hoàng Thị Dung',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Đổi mật khẩu',
-        thoiGian: '2026-05-14 22:11:45',
-        diaChiIP: '14.23.45.67',
-        noiDungChiTiet: 'Thay đổi mật khẩu tài khoản khách hàng thành công. Xác thực OTP hoàn tất.'
+        maNhanVien: 'TXP_NV03',
+        tenNhanVien: 'Trần Thị Thu',
+        soDienThoai: '0977666555',
+        loaiTaiKhoan: 'Bán vé',
+        loaiThaoTac: 'Đăng nhập',
+        thoiGian: this.getRelativeDateString(0, '07:45:00'),
+        diaChiIP: '192.168.2.11',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Nhân viên Trần Thị Thu đăng nhập thành công vào hệ thống quản lý bán vé tại văn phòng Gia Lai.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 10)'
       },
       {
         maNhatKy: 'TXP_LOG0008',
+        maNhanVien: 'TXP_QL01',
+        tenNhanVien: 'Nguyễn Văn Tuyến',
+        soDienThoai: '0966555444',
+        loaiTaiKhoan: 'Ban quản lý',
+        loaiThaoTac: 'Quản lý tài khoản',
+        thoiGian: this.getRelativeDateString(0, '09:30:00'),
+        diaChiIP: '10.20.30.5',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Khóa tài khoản khách hàng TXP_KH042 do có hành vi đặt vé ảo nhiều lần không thanh toán.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
+        duLieuThayDoi: [
+          { truong: 'TrangThaiTaikhoan', giaTriCu: 'HoatDong', giaTriMoi: 'BiKhoa' },
+          { truong: 'LyDoKhoa', giaTriCu: 'Trống', giaTriMoi: 'Đặt ảo nhiều lần' }
+        ]
+      },
+      {
+        maNhatKy: 'TXP_LOG0009',
+        maNhanVien: 'TXP_QL01',
+        tenNhanVien: 'Nguyễn Văn Tuyến',
+        soDienThoai: '0966555444',
+        loaiTaiKhoan: 'Ban quản lý',
+        loaiThaoTac: 'Báo cáo & Xuất file',
+        thoiGian: this.getRelativeDateString(0, '11:00:00'),
+        diaChiIP: '10.20.30.5',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Kết xuất báo cáo tổng quan doanh thu vé tháng 04/2026 dạng định dạng Excel (XLSX).',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)'
+      },
+      {
+        maNhatKy: 'TXP_LOG0010',
         maNhanVien: 'TXP_NV03',
         tenNhanVien: 'Trần Thị Thu',
+        soDienThoai: '0909888777', // Customer Nguyễn Văn Nam SĐT
         loaiTaiKhoan: 'Bán vé',
-        loaiThaoTac: 'Đăng nhập',
-        thoiGian: '2026-05-14 07:45:00',
+        loaiThaoTac: 'Đặt vé',
+        thoiGian: this.getRelativeDateString(0, '14:15:22'),
         diaChiIP: '192.168.2.11',
-        noiDungChiTiet: 'Nhân viên Vũ Quốc Hùng đăng nhập vào cổng bán vé nội bộ tại Văn phòng Gia Lai.'
-      }
-    ];
-  }
-
-  // Ticket Logs Mock Generator
-  private generateMockTicketLogs(): TicketLog[] {
-    return [
-      {
-        maLichSu: 'TXP_TKT001',
-        maVe: 'TXP2605C103',
-        maKhachHang: 'TXP_KH003',
-        tenKhachHang: 'Lê Văn Cường',
-        hanhDong: 'Đặt vé mới',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Nhân viên Trần Thị Thu đặt vé thay khách hàng Nguyễn Văn Nam, mã vé TXP2605A401, tuyến Sài Gòn ↔ Nha Trang tại quầy.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 10)',
+        maVe: 'TXP2605A401',
+        tuyenXe: 'Sài Gòn ↔ Nha Trang',
         trangThaiCu: 'Trống',
-        trangThaiMoi: 'ConHieuLuc',
-        thoiGianThayDoi: '2026-05-17 19:48:15',
-        ghiChu: 'Vé đặt trực tuyến trên website, thanh toán thành công qua ví điện tử ZaloPay.'
+        trangThaiMoi: 'Đã thanh toán',
+        duLieuThayDoi: [
+          { truong: 'Mã vé đặt', giaTriCu: 'Trống', giaTriMoi: 'TXP2605A401' },
+          { truong: 'Phương thức', giaTriCu: 'Trống', giaTriMoi: 'Tiền mặt tại quầy' }
+        ]
       },
       {
-        maLichSu: 'TXP_TKT02',
-        maVe: 'TXP2605C102',
+        maNhatKy: 'TXP_LOG0011',
+        maKhachHang: 'TXP_KH098',
+        tenKhachHang: 'Nguyễn Hữu Tài',
+        soDienThoai: '0911222333',
+        loaiTaiKhoan: 'Khách hàng',
+        loaiThaoTac: 'Đăng nhập',
+        thoiGian: this.getRelativeDateString(0, '18:22:10'),
+        diaChiIP: '113.161.44.20',
+        trangThai: 'Thất bại',
+        noiDungChiTiet: 'Đăng nhập thất bại do nhập mật khẩu không chính xác.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Android 14)'
+      },
+      {
+        maNhatKy: 'TXP_LOG0012',
+        maKhachHang: 'TXP_KH023',
+        tenKhachHang: 'Lê Văn Cường',
+        soDienThoai: '0905111222',
+        loaiTaiKhoan: 'Khách hàng',
+        loaiThaoTac: 'Đánh giá chuyến xe',
+        thoiGian: this.getRelativeDateString(1, '21:05:00'),
+        diaChiIP: '192.168.1.10',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Đánh giá 5 sao cho chuyến Bình Định ↔ Sài Gòn đi ngày 2026-05-18.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)'
+      },
+      {
+        maNhatKy: 'TXP_LOG0013',
+        maNhanVien: 'TXP_NV02',
+        tenNhanVien: 'Vũ Quốc Hùng',
+        soDienThoai: '0935999888',
+        loaiTaiKhoan: 'Điều phối',
+        loaiThaoTac: 'Quản lý lịch trình',
+        thoiGian: this.getRelativeDateString(0, '08:10:00'),
+        diaChiIP: '10.20.30.45',
+        trangThai: 'Thất bại',
+        noiDungChiTiet: 'Không thể cập nhật lịch trình tuyến SG-NT-20260520-01 do xe gán bị xung đột lịch chạy.',
+        thietBiTrinhDuyet: 'Firefox 125.0 (macOS)'
+      },
+      {
+        maNhatKy: 'TXP_LOG0014',
+        maNhanVien: 'TXP_NV02',
+        tenNhanVien: 'Vũ Quốc Hùng',
+        soDienThoai: '0935999888',
+        loaiTaiKhoan: 'Điều phối',
+        loaiThaoTac: 'Quản lý tài xế',
+        thoiGian: this.getRelativeDateString(1, '14:30:00'),
+        diaChiIP: '10.20.30.45',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Phân công tài xế Nguyễn Thanh Sơn chịu trách nhiệm lái chính cho xe 79B-023.45 ngày 2026-05-21.',
+        thietBiTrinhDuyet: 'Firefox 125.0 (macOS)',
+        duLieuThayDoi: [
+          { truong: 'Tài xế phân công', giaTriCu: 'Trống', giaTriMoi: 'Nguyễn Thanh Sơn' }
+        ]
+      },
+      {
+        maNhatKy: 'TXP_LOG0015',
+        maKhachHang: 'TXP_KH055',
+        tenKhachHang: 'Hoàng Văn Bảo',
+        soDienThoai: '0912345678',
+        loaiTaiKhoan: 'Khách hàng',
+        loaiThaoTac: 'Đăng ký',
+        thoiGian: this.getRelativeDateString(1, '09:00:00'),
+        diaChiIP: '171.244.12.30',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Đăng ký tài khoản khách hàng thành công trực tuyến qua xác minh mã OTP gửi tới 0912345678.',
+        thietBiTrinhDuyet: 'Safari (iOS 17)'
+      },
+      {
+        maNhatKy: 'TXP_LOG0016',
+        maNhanVien: 'TXP_NV01',
+        tenNhanVien: 'Phan Văn Anh',
+        soDienThoai: '0988777666',
+        loaiTaiKhoan: 'Quản trị viên',
+        loaiThaoTac: 'Quản lý tin tức',
+        thoiGian: this.getRelativeDateString(2, '10:00:00'),
+        diaChiIP: '10.20.30.12',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Đăng tải bài viết chương trình ưu đãi chào hè giảm 15% vé giường nằm trên trang chủ.',
+        thietBiTrinhDuyet: 'Edge 124.0 (Windows 11)'
+      },
+      {
+        maNhatKy: 'TXP_LOG0017',
+        maKhachHang: 'TXP_KH023',
+        tenKhachHang: 'Lê Văn Cường',
+        soDienThoai: '0905111222',
+        loaiTaiKhoan: 'Khách hàng',
+        loaiThaoTac: 'Cập nhật thông tin cá nhân',
+        thoiGian: this.getRelativeDateString(2, '16:45:00'),
+        diaChiIP: '192.168.1.10',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Cập nhật địa chỉ email đăng ký liên lạc thành công.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
+        duLieuThayDoi: [
+          { truong: 'Email', giaTriCu: 'cuonglv@gmail.com', giaTriMoi: 'cuongle.work@gmail.com' }
+        ]
+      },
+      {
+        maNhatKy: 'TXP_LOG0018',
+        maNhanVien: 'TXP_NV01',
+        tenNhanVien: 'Phan Văn Anh',
+        soDienThoai: '0988777666',
+        loaiTaiKhoan: 'Quản trị viên',
+        loaiThaoTac: 'Quản lý đánh giá',
+        thoiGian: this.getRelativeDateString(2, '14:00:00'),
+        diaChiIP: '10.20.30.12',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Ẩn phản hồi tiêu cực vi phạm quy tắc ngôn từ của tài khoản ẩn danh khỏi trang đánh giá công khai.',
+        thietBiTrinhDuyet: 'Edge 124.0 (Windows 11)'
+      },
+      {
+        maNhatKy: 'TXP_LOG0019',
+        maKhachHang: 'TXP_KH023',
+        tenKhachHang: 'Lê Văn Cường',
+        soDienThoai: '0905111222',
+        loaiTaiKhoan: 'Khách hàng',
+        loaiThaoTac: 'Tra cứu vé',
+        thoiGian: this.getRelativeDateString(0, '15:30:00'),
+        diaChiIP: '192.168.1.10',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Khách hàng thực hiện tra cứu mã vé TXP2605C103 trên trang chủ.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
+        maVe: 'TXP2605C103'
+      },
+      {
+        maNhatKy: 'TXP_LOG0020',
+        maKhachHang: 'TXP_KH023',
+        tenKhachHang: 'Lê Văn Cường',
+        soDienThoai: '0905111222',
+        loaiTaiKhoan: 'Khách hàng',
+        loaiThaoTac: 'Chỉnh sửa thông tin vé',
+        thoiGian: this.getRelativeDateString(0, '20:00:00'),
+        diaChiIP: '192.168.1.10',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Khách hàng cập nhật số điện thoại liên lạc khẩn cấp trên trang thông tin vé.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
+        maVe: 'TXP2605C103',
+        tuyenXe: 'Bình Định ↔ Sài Gòn',
+        trangThaiCu: 'Đã thanh toán',
+        trangThaiMoi: 'Đã thanh toán',
+        duLieuThayDoi: [
+          { truong: 'Số điện thoại', giaTriCu: '0905111222', giaTriMoi: '0905333444' }
+        ]
+      },
+      {
+        maNhatKy: 'TXP_LOG0021',
+        maKhachHang: 'TXP_KH011',
+        tenKhachHang: 'Trần Quốc Anh',
+        maNhanVien: 'TXP_NV03',
+        tenNhanVien: 'Trần Thị Thu',
+        soDienThoai: '0967888999',
+        loaiTaiKhoan: 'Bán vé',
+        loaiThaoTac: 'Chỉnh sửa thông tin vé',
+        thoiGian: this.getRelativeDateString(0, '18:45:00'),
+        diaChiIP: '192.168.2.11',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Nhân viên bán vé Trần Thị Thu ghi nhận khách check-in lên xe tại Văn phòng Gia Lai.',
+        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 10)',
+        maVe: 'TXP2605C101',
+        tuyenXe: 'Gia Lai ↔ Đà Nẵng',
+        trangThaiCu: 'Đã thanh toán',
+        trangThaiMoi: 'Đã lên xe'
+      },
+      {
+        maNhatKy: 'TXP_LOG0022',
         maKhachHang: 'TXP_KH002',
         tenKhachHang: 'Trần Thị Bích',
-        hanhDong: 'Đổi ngày/giờ đi',
-        trangThaiCu: 'ConHieuLuc',
-        trangThaiMoi: 'ConHieuLuc',
-        thoiGianThayDoi: '2026-05-17 14:10:00',
-        ghiChu: 'Hỗ trợ khách hàng đổi giờ khởi hành từ 08:00 sang 19:00 ngày 2026-05-20 do vướng lịch trình cá nhân.'
+        maNhanVien: 'TXP_NV02',
+        tenNhanVien: 'Vũ Quốc Hùng',
+        soDienThoai: '0989111222',
+        loaiTaiKhoan: 'Điều phối',
+        loaiThaoTac: 'Chỉnh sửa thông tin vé',
+        thoiGian: this.getRelativeDateString(0, '14:10:00'),
+        diaChiIP: '10.20.30.45',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Điều phối viên Vũ Quốc Hùng hỗ trợ khách hàng đổi giờ khởi hành sang 19:00 cùng ngày.',
+        thietBiTrinhDuyet: 'Firefox 125.0 (macOS)',
+        maVe: 'TXP2605C102',
+        tuyenXe: 'Sài Gòn ↔ Nha Trang',
+        trangThaiCu: 'Đã thanh toán',
+        trangThaiMoi: 'Đã đổi vé',
+        duLieuThayDoi: [
+          { truong: 'Giờ chạy', giaTriCu: '08:00 ngày 2026-05-20', giaTriMoi: '19:00 ngày 2026-05-20' },
+          { truong: 'Số giường', giaTriCu: 'Phòng 04 (A)', giaTriMoi: 'Phòng 12 (B)' }
+        ]
       },
       {
-        maLichSu: 'TXP_TKT03',
-        maVe: 'TXP2605C108',
-        maKhachHang: 'TXP_KH008',
-        tenKhachHang: 'Vũ Thanh Hằng',
-        hanhDong: 'Hủy vé hoàn tiền',
-        trangThaiCu: 'ConHieuLuc',
-        trangThaiMoi: 'DaHuy',
-        thoiGianThayDoi: '2026-05-16 10:15:30',
-        ghiChu: 'Hủy vé theo yêu cầu của khách hàng trước 24h. Hoàn tiền 100% về tài khoản gốc.'
-      },
-      {
-        maLichSu: 'TXP_TKT04',
-        maVe: 'TXP2605C101',
-        maNVBanVe: 'TXP_NV03',
-        tenNVBanVe: 'Trần Thị Thu',
-        hanhDong: 'Ghi nhận check-in',
-        trangThaiCu: 'ConHieuLuc',
-        trangThaiMoi: 'DaSuDung',
-        thoiGianThayDoi: '2026-05-15 18:45:00',
-        ghiChu: 'Nhân viên soát vé ghi nhận khách hàng lên xe tại Văn phòng Gia Lai (An Nhơn Bắc).'
-      },
-      {
-        maLichSu: 'TXP_TKT05',
-        maVe: 'TXP2605C104',
-        maKhachHang: 'TXP_KH004',
-        tenKhachHang: 'Phạm Minh Đạo',
-        hanhDong: 'Đặt vé mới',
-        trangThaiCu: 'Trống',
-        trangThaiMoi: 'ConHieuLuc',
-        thoiGianThayDoi: '2026-05-14 09:12:00',
-        ghiChu: 'Vé được đặt và xuất trực tiếp tại quầy bán vé Sài Gòn, thanh toán tiền mặt.'
+        maNhatKy: 'TXP_LOG0023',
+        maKhachHang: 'TXP_KH055',
+        tenKhachHang: 'Hoàng Văn Bảo',
+        maNhanVien: 'TXP_NV01',
+        tenNhanVien: 'Phan Văn Anh',
+        soDienThoai: '0912345678',
+        loaiTaiKhoan: 'Quản trị viên',
+        loaiThaoTac: 'Hủy vé',
+        thoiGian: this.getRelativeDateString(0, '09:10:00'),
+        diaChiIP: '10.20.30.12',
+        trangThai: 'Thành công',
+        noiDungChiTiet: 'Quản trị viên Phan Văn Anh hủy vé thay khách do tuyến đi bị dời lịch khởi hành đột xuất.',
+        thietBiTrinhDuyet: 'Edge 124.0 (Windows 11)',
+        maVe: 'TXP2605A505',
+        tuyenXe: 'Sài Gòn ↔ Nha Trang',
+        trangThaiCu: 'Đã thanh toán',
+        trangThaiMoi: 'Đã hủy'
       }
     ];
   }
