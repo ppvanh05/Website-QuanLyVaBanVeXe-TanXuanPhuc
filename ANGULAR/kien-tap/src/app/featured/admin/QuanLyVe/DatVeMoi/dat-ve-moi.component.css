@@ -135,6 +135,22 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(0, 155, 161, 0.08);
 }
 
+.input-error {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: -4px;
+}
+
 textarea {
   resize: vertical;
   min-height: 60px;
@@ -894,16 +910,15 @@ textarea {
 }
 
 .legend-box {
-  width: 26px;
-  height: 22px;
-  border-radius: 5px;
+  width: 40px;
+  height: 30px;
+  border-radius: 8px;
   display: inline-block;
 }
 
-.legend-sold { background: #e2e8f0; }
-.legend-available { background: #d1fae5; border: 1.5px solid #6ee7b7; }
-.legend-selected { background: #fef9c3; border: 1.5px solid #fbbf24; }
-.legend-double { background: #ede9fe; border: 1.5px dashed #8b5cf6; }
+.legend-sold { background: #f8fafc; border: 1.5px solid #cbd5e1; }
+.legend-available { background: #ffffff; border: 1.5px solid #009ba1; }
+.legend-selected { background: #f37021; border: 1.5px solid #f37021; }
 
 /* Price Info */
 .price-info-bar {
@@ -964,7 +979,7 @@ textarea {
 
 .seats-columns {
   display: flex;
-  gap: 8px;
+  gap: 16px;
   align-items: flex-start;
 }
 
@@ -973,7 +988,7 @@ textarea {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
 }
 
 .col-header {
@@ -986,7 +1001,7 @@ textarea {
 }
 
 .aisle-divider {
-  width: 10px;
+  width: 20px;
   align-self: stretch;
   background: #f8fafc;
   border-left: 1px dashed #e2e8f0;
@@ -995,13 +1010,13 @@ textarea {
 
 /* Seat Buttons */
 .seat-btn {
-  width: 42px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1.5px solid #6ee7b7;
-  background: #d1fae5;
-  color: #065f46;
-  font-size: 11px;
+  width: 72px;
+  height: 52px;
+  border-radius: 10px;
+  border: 2px solid #009ba1;
+  background: #ffffff;
+  color: #009ba1;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
@@ -1009,29 +1024,22 @@ textarea {
 }
 
 .seat-btn:hover:not([disabled]) {
-  background: #a7f3d0;
+  background: #e6f4f5;
   transform: scale(1.05);
   box-shadow: 0 2px 6px rgba(0, 155, 161, 0.2);
 }
 
 .seat-sold {
-  background: #f1f5f9 !important;
+  background: #f8fafc !important;
   border-color: #cbd5e1 !important;
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
   cursor: not-allowed !important;
 }
 
 .seat-chosen {
-  background: #fef9c3 !important;
-  border-color: #fbbf24 !important;
-  color: #92400e !important;
-}
-
-.seat-double {
-  border-style: dashed !important;
-  border-color: #8b5cf6 !important;
-  background: #ede9fe !important;
-  color: #5b21b6 !important;
+  background: #f37021 !important;
+  border-color: #f37021 !important;
+  color: #ffffff !important;
 }
 
 /* Passenger Form */
@@ -1437,157 +1445,167 @@ textarea {
 .status-banner-success strong { color: #15803d; font-size: 14px; }
 .status-banner-success p { color: #166534; font-size: 13px; margin: 4px 0 0; }
 
-/* Printable Ticket */
-.printable-ticket {
-  padding: 0;
-  overflow: hidden;
-}
-
-.ticket-header-row {
+/* =====================================================
+   STEP 4: TICKET PREVIEW (MINI STYLE)
+   ===================================================== */
+.ticket-preview-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 24px;
-  background: linear-gradient(135deg, #009ba1, #007a7f);
-  color: white;
+  justify-content: center;
+  padding: 20px;
+  background: #f1f5f9;
+  border-radius: 14px;
+  border: 1px dashed #cbd5e1;
 }
 
-.ticket-brand-block {
-  display: flex;
-  flex-direction: column;
-}
-
-.ticket-brand-code {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 3px;
-}
-
-.ticket-brand-name {
-  font-size: 11px;
-  opacity: 0.8;
-  letter-spacing: 1px;
-}
-
-.ticket-stamp {
-  padding: 6px 18px;
-  border: 2px solid rgba(255,255,255,0.6);
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.stamp-pending { border-color: #fde68a; color: #fde68a; }
-.stamp-paid { border-color: #86efac; color: #86efac; }
-
-.ticket-dash-line {
-  font-size: 11px;
-  color: #94a3b8;
-  text-align: center;
-  padding: 6px;
-  background: #f8fafc;
-  letter-spacing: 1px;
-  overflow: hidden;
-}
-
-.ticket-body-grid {
-  display: flex;
-  gap: 0;
-}
-
-.ticket-fields {
-  flex: 1;
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.ticket-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.ticket-field {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.full-width { grid-column: span 2; }
-
-.tf-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-
-.tf-value {
-  font-size: 14px;
-  color: #1e293b;
-  font-weight: 600;
-}
-
-.tf-bold { font-weight: 800; }
-.tf-large { font-size: 20px; font-weight: 800; }
-.ticket-code { font-family: monospace; font-size: 16px; }
-
-/* QR Column */
-.ticket-qr-col {
-  width: 160px;
-  background: #f8fafc;
-  border-left: 1px dashed #e2e8f0;
-  padding: 20px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.ticket-qr-svg {
-  width: 90px;
-  height: 90px;
+.mini-ticket {
   background: white;
+  padding: 24px;
+  border-radius: 12px;
+  color: #333;
+  font-family: 'Inter', Arial, sans-serif;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 5px;
-  box-sizing: border-box;
+  position: relative;
 }
 
-.qr-instruction-label {
-  font-size: 10.5px;
-  color: #64748b;
+.mini-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.mini-logo {
+  height: 38px;
+  object-fit: contain;
+}
+
+.mini-company {
+  font-size: 15px;
+  font-weight: 800;
+  color: #f37021;
+  letter-spacing: 1px;
+}
+
+.mini-divider {
+  border-top: 1.5px dashed #e2e8f0;
+  margin: 15px 0;
+  position: relative;
+}
+
+.mini-divider::before, .mini-divider::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  background: #f1f5f9;
+  border-radius: 50%;
+}
+
+.mini-divider::before { left: -33px; }
+.mini-divider::after { right: -33px; }
+
+.mini-qr-section {
   text-align: center;
+  margin-bottom: 20px;
+}
+
+.mini-qr .material-icons {
+  font-size: 90px;
+  color: #1e293b;
+}
+
+.mini-id {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  margin-top: 5px;
+  font-family: monospace;
+}
+
+.mini-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mini-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 13.5px;
+}
+
+.m-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.m-val {
+  color: #1e293b;
+  font-weight: 700;
+  text-align: right;
+  max-width: 60%;
+}
+
+.m-val.highlight {
+  color: #009ba1;
+}
+
+.mini-address-box {
+  margin-top: 5px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #009ba1;
+}
+
+.m-addr {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  margin-top: 4px;
   line-height: 1.4;
 }
 
-.ticket-price-block {
+.mini-note {
+  font-size: 12px;
+  color: #ef4444;
+  font-style: italic;
+  margin-top: 5px;
+  padding: 0 5px;
+}
+
+.mini-price-row {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 2px;
-  width: 100%;
-  border-top: 1px dashed #e2e8f0;
-  padding-top: 10px;
-  margin-top: 4px;
-}
-
-.ticket-footer-note {
-  background: #f8fafc;
+  margin-top: 15px;
+  padding-top: 15px;
   border-top: 1px solid #f1f5f9;
-  padding: 12px 24px;
-  text-align: center;
-  font-size: 12.5px;
-  color: #475569;
 }
 
-.ticket-footer-note p { margin: 2px 0; }
+.m-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f37021;
+}
+
+.mini-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 15px;
+}
+
+.mini-footer p { margin: 3px 0; }
+.mini-web { font-weight: 600; color: #64748b; }
 
 /* Ticket Actions Card */
 .ticket-actions-card {
@@ -1692,3 +1710,309 @@ textarea {
     justify-content: center;
   }
 }
+
+/* =====================================================
+   DOUBLE SEAT MODAL
+   ===================================================== */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-container {
+  background: white;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: #0066cc;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: opacity 0.2s;
+}
+
+.modal-close-btn:hover {
+  opacity: 0.8;
+}
+
+.modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-description {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.modal-cards-row {
+  display: flex;
+  gap: 16px;
+}
+
+.modal-card {
+  flex: 1;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 110px;
+  gap: 8px;
+}
+
+.modal-card:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.modal-card-active {
+  border-color: #009ba1;
+  background: #f0fdfa;
+  box-shadow: 0 0 0 3px rgba(0, 155, 161, 0.1);
+}
+
+.modal-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.modal-card-active .modal-card-title {
+  color: #00767a;
+  font-weight: 700;
+}
+
+.modal-card-price {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f37021;
+}
+
+.modal-confirm-btn {
+  background: linear-gradient(135deg, #f37021, #e05b10);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 12px rgba(243, 112, 33, 0.2);
+  width: 100%;
+  text-align: center;
+}
+
+.modal-confirm-btn:hover {
+  background: linear-gradient(135deg, #e65a00, #cb4f0c);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(243, 112, 33, 0.3);
+}
+
+.btn-confirm-payment {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border-color: #10b981 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.btn-confirm-payment:hover {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* =====================================================
+   CUSTOM DATE PICKER
+   ===================================================== */
+.date-picker-relative {
+  position: relative;
+}
+
+.date-custom-input {
+  cursor: pointer;
+  caret-color: transparent;
+}
+
+.custom-datepicker-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid #f1f5f9;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.datepicker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.current-month-year {
+  font-weight: 800;
+  font-size: 15px;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-prev-month, .btn-next-month {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.btn-prev-month:hover, .btn-next-month:hover {
+  background: #f1f5f9;
+  color: #009ba1;
+}
+
+.datepicker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 10px;
+}
+
+.weekday-cell {
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  padding-bottom: 5px;
+}
+
+.datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.day-cell {
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.day-cell:hover:not(.day-empty) {
+  background: #f8fafc;
+}
+
+.day-empty {
+  cursor: default;
+}
+
+.solar-day {
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.lunar-day {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+.day-selected {
+  background: #fff7ed !important;
+  border: 1.5px solid #f37021;
+}
+
+.day-selected .solar-day {
+  color: #f37021;
+}
+
+.day-selected .lunar-day {
+  color: #f37021;
+  opacity: 0.8;
+}
+
+.day-today {
+  background: #f0fdfa;
+}
+
+.day-today .solar-day {
+  color: #009ba1;
+}
+

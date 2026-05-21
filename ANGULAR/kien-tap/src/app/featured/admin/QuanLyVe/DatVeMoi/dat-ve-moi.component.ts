@@ -2,6 +2,15 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { LunarCalendarService } from '../../../../core/services/lunar-calendar.service';
+
+export interface CalendarDay {
+  day: number | null;
+  lunarDay?: number;
+  lunarMonth?: number;
+  isToday?: boolean;
+  isSelected?: boolean;
+}
 
 export interface Trip {
   id: string;
@@ -191,6 +200,17 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
   selectedTrip: Trip | null = null;
   seats: MockSeat[] = [];
   selectedSeats: string[] = [];
+  selectedSeatGuests: { [seatId: string]: number } = {};
+  showDoubleSeatModal: boolean = false;
+  showExitConfirmModal: boolean = false;
+  activeDoubleSeat: MockSeat | null = null;
+  tempGuestCount: number = 1;
+
+  // Custom popup modal state
+  showPopup: boolean = false;
+  popupTitle: string = 'Thông báo';
+  popupMessage: string = '';
+  popupType: 'error' | 'success' | 'info' = 'info';
 
   // Customer information form
   customerInfo = {
@@ -202,9 +222,16 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
     note: ''
   };
 
+  // Validation flags
+  formErrors = {
+    name: false,
+    phone: false,
+    seats: false
+  };
+
   // Payment configuration
   paymentMethod: string = 'vietqr'; // 'vietqr', 'momo', 'vnpay', 'zalopay', 'atm', 'visa', 'cash'
-  vietqrCountdown: number = 900;    // 15:00 minutes
+  reservationCountdown: number = 900;    // 15:00 minutes
   countdownTimer: any;
   ticketId: string = '';
   ticketStatus: 'Chờ thanh toán' | 'Chờ xác nhận' | 'Đã thanh toán' = 'Chờ thanh toán';
@@ -216,11 +243,114 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
     { from: 'TP. Hồ Chí Minh', to: 'Phú Yên', date: '23/05/2026' }
   ];
 
-  constructor() {}
+  // Custom Date Picker
+  isDatePickerOpen: boolean = false;
+  viewDate: Date = new Date(2026, 4, 1); // May 2026 for demo
+  calendarDays: CalendarDay[] = [];
+  weekDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+  constructor(private lunarService: LunarCalendarService) {}
 
   ngOnInit() {
+    // Set initial date from searchForm
+    const dateParts = this.searchForm.date.split('-');
+    if (dateParts.length === 3) {
+      this.viewDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, 1);
+    }
+    this.generateCalendar();
     // Perform initial automatic search to populate listings for demo
     this.searchTrips();
+  }
+
+  toggleDatePicker() {
+    this.isDatePickerOpen = !this.isDatePickerOpen;
+    if (this.isDatePickerOpen) {
+      this.generateCalendar();
+    }
+  }
+
+  generateCalendar() {
+    const year = this.viewDate.getFullYear();
+    const month = this.viewDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Adjust firstDay: Sunday is 0, Monday is 1... We want Monday to be first
+    let startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+    
+    this.calendarDays = [];
+    
+    // Empty slots for previous month
+    for (let i = 0; i < startOffset; i++) {
+      this.calendarDays.push({ day: null });
+    }
+    
+    // Actual days
+    const today = new Date();
+    const selectedDate = this.parseDate(this.searchForm.date);
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      const lunar = this.lunarService.getLunarDate(d, month + 1, year);
+      const isToday = today.getDate() === d && today.getMonth() === month && today.getFullYear() === year;
+      const isSelected = selectedDate?.getDate() === d && selectedDate?.getMonth() === month && selectedDate?.getFullYear() === year;
+      
+      this.calendarDays.push({
+        day: d,
+        lunarDay: lunar.day,
+        lunarMonth: lunar.month,
+        isToday,
+        isSelected
+      });
+    }
+  }
+
+  prevMonth() {
+    this.viewDate = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth() - 1, 1);
+    this.generateCalendar();
+  }
+
+  nextMonth() {
+    this.viewDate = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth() + 1, 1);
+    this.generateCalendar();
+  }
+
+  selectDate(d: CalendarDay) {
+    if (!d.day) return;
+    const date = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth(), d.day);
+    this.searchForm.date = this.formatDateToISO(date);
+    this.isDatePickerOpen = false;
+    this.searchTrips();
+  }
+
+  private parseDate(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return null;
+  }
+
+  private formatDateToISO(date: Date): string {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  getDisplayDate(): string {
+    const d = this.parseDate(this.searchForm.date);
+    if (!d) return '';
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  getViewMonthYear(): string {
+    const month = this.viewDate.getMonth() + 1;
+    const year = this.viewDate.getFullYear();
+    return `THÁNG ${month}/${year}`;
   }
 
   ngOnDestroy() {
@@ -293,8 +423,28 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
     this.selectedTrip = trip;
     this.generateSeatMap();
     this.selectedSeats = [];
+    this.selectedSeatGuests = {};
     this.customerInfo.pickupPoint = trip.pickupPoints[0];
     this.customerInfo.dropoffPoint = trip.dropoffPoints[0];
+    this.currentStep = 2;
+    this.startReservationTimer();
+  }
+
+  goBackFromStep2() {
+    this.showExitConfirmModal = true;
+  }
+
+  confirmExit() {
+    this.stopTimer();
+    this.showExitConfirmModal = false;
+    this.currentStep = 1;
+  }
+
+  closeExitModal() {
+    this.showExitConfirmModal = false;
+  }
+
+  goBackToStep2() {
     this.currentStep = 2;
   }
 
@@ -355,24 +505,68 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
     return this.seats.filter(s => s.deck === deck && s.row === row);
   }
 
+  isDoubleSeat(seatId: string): boolean {
+    return seatId.endsWith('A') 
+      ? (seatId === '11A' || seatId === '12A') 
+      : (seatId === '9B' || seatId === '10B');
+  }
+
+  getFormattedSelectedSeats(): string {
+    return this.selectedSeats.map(seatId => {
+      if (this.isDoubleSeat(seatId)) {
+        const guests = this.selectedSeatGuests[seatId] || 1;
+        return `${seatId} (${guests} khách)`;
+      }
+      return seatId;
+    }).join(', ');
+  }
+
   toggleSeat(seat: MockSeat) {
     if (seat.status === 'sold') return;
 
     if (seat.status === 'selected') {
       seat.status = 'available';
       this.selectedSeats = this.selectedSeats.filter(id => id !== seat.id);
+      delete this.selectedSeatGuests[seat.id];
     } else {
+      // Mọi ghế đều mở popup để chọn kiểu nằm
+      this.activeDoubleSeat = seat;
+      this.tempGuestCount = 1;
+      this.showDoubleSeatModal = true;
+    }
+  }
+
+  confirmDoubleSeatSelection() {
+    if (this.activeDoubleSeat) {
+      const seat = this.activeDoubleSeat;
       seat.status = 'selected';
       this.selectedSeats.push(seat.id);
+      this.selectedSeatGuests[seat.id] = this.tempGuestCount;
+      this.showDoubleSeatModal = false;
+      this.activeDoubleSeat = null;
     }
+  }
+
+  closeDoubleSeatModal() {
+    this.showDoubleSeatModal = false;
+    this.activeDoubleSeat = null;
+  }
+
+  showCustomPopup(message: string, type: 'error' | 'success' | 'info' = 'info', title?: string) {
+    this.popupMessage = message;
+    this.popupType = type;
+    this.popupTitle = title || (type === 'error' ? 'Lỗi thiếu dữ liệu' : type === 'success' ? 'Thành công' : 'Thông báo');
+    this.showPopup = true;
+  }
+
+  closePopup() {
+    this.showPopup = false;
   }
 
   getSeatPrice(seatId: string): number {
     if (!this.selectedTrip) return 0;
-    const isDouble = seatId.endsWith('A') 
-      ? (seatId === '11A' || seatId === '12A') 
-      : (seatId === '9B' || seatId === '10B');
-    return isDouble ? this.selectedTrip.priceDouble : this.selectedTrip.priceSingle;
+    const guests = this.selectedSeatGuests[seatId] || 1;
+    return guests === 2 ? this.selectedTrip.priceDouble : this.selectedTrip.priceSingle;
   }
 
   getTotalPrice(): number {
@@ -381,46 +575,53 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
 
   // Continue to step 3
   submitCustomerInfo() {
+    // Reset errors
+    this.formErrors.name = false;
+    this.formErrors.phone = false;
+    this.formErrors.seats = false;
+
+    let hasError = false;
+
     if (this.selectedSeats.length === 0) {
-      alert('Vui lòng chọn ít nhất một ghế ngồi để tiếp tục!');
-      return;
+      this.formErrors.seats = true;
+      hasError = true;
     }
     if (!this.customerInfo.name.trim()) {
-      alert('Vui lòng nhập họ và tên khách hàng!');
-      return;
+      this.formErrors.name = true;
+      hasError = true;
     }
     if (!this.customerInfo.phone.trim()) {
-      alert('Vui lòng nhập số điện thoại khách hàng!');
+      this.formErrors.phone = true;
+      hasError = true;
+    }
+
+    if (hasError) {
+      // If there are seats errors, we still might need a small alert or just highlight the seat map
+      if (this.formErrors.seats) {
+        this.showCustomPopup('Vui lòng chọn ít nhất một ghế ngồi để tiếp tục!', 'error');
+      }
       return;
     }
 
     // Set countdown and move to step 3
     this.currentStep = 3;
-    if (this.paymentMethod === 'vietqr') {
-      this.startQrCountdown();
-    }
   }
 
   // Step 3: Payment
   selectPaymentMethod(method: string) {
     this.paymentMethod = method;
-    if (method === 'vietqr') {
-      this.startQrCountdown();
-    } else {
-      this.stopTimer();
-    }
   }
 
-  startQrCountdown() {
+  startReservationTimer() {
     this.stopTimer();
-    this.vietqrCountdown = 900; // Reset to 15:00 minutes
+    this.reservationCountdown = 900; // Reset to 15:00 minutes
     this.countdownTimer = setInterval(() => {
-      if (this.vietqrCountdown > 0) {
-        this.vietqrCountdown--;
+      if (this.reservationCountdown > 0) {
+        this.reservationCountdown--;
       } else {
         this.stopTimer();
-        alert('Hết thời gian giữ chỗ thanh toán trực tuyến! Vui lòng thực hiện lại.');
-        this.currentStep = 2;
+        this.showCustomPopup('Hết thời gian giữ chỗ! Vui lòng thực hiện lại.', 'error');
+        this.resetBooking();
       }
     }, 1000);
   }
@@ -433,8 +634,8 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
   }
 
   getFormattedCountdown(): string {
-    const mins = Math.floor(this.vietqrCountdown / 60);
-    const secs = this.vietqrCountdown % 60;
+    const mins = Math.floor(this.reservationCountdown / 60);
+    const secs = this.reservationCountdown % 60;
     return `${String(mins).padStart(2, '0')} : ${String(secs).padStart(2, '0')}`;
   }
 
@@ -451,8 +652,8 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
   completePaymentCash() {
     this.stopTimer();
     this.ticketId = 'TXP' + Math.floor(10000000 + Math.random() * 89999999).toString();
-    // Cash starts in 'Chờ xác nhận' state
-    this.ticketStatus = 'Chờ xác nhận';
+    // Cash now confirms immediately as per user request
+    this.ticketStatus = 'Đã thanh toán';
     this.paymentDate = new Date();
     this.currentStep = 4;
   }
@@ -462,13 +663,13 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
     if (confirm('Bạn có chắc chắn muốn xác nhận đã THU ĐỦ TIỀN MẶT của khách hàng này không?')) {
       this.ticketStatus = 'Đã thanh toán';
       this.paymentDate = new Date();
-      alert('Đã cập nhật trạng thái vé: ĐÃ THANH TOÁN thành công!');
+      this.showCustomPopup('Đã cập nhật trạng thái vé: ĐÃ THANH TOÁN thành công!', 'success');
     }
   }
 
   // PDF Export
   exportPDF() {
-    alert(`Đang khởi tạo tệp PDF hóa đơn thanh toán cho Vé ${this.ticketId}...\nTải xuống thành công!`);
+    this.showCustomPopup(`Đang khởi tạo tệp PDF hóa đơn thanh toán cho Vé ${this.ticketId}...\nTải xuống thành công!`, 'success', 'Xuất PDF thành công');
   }
 
   // Print ticket details
@@ -481,6 +682,10 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
     this.currentStep = 1;
     this.selectedTrip = null;
     this.selectedSeats = [];
+    this.selectedSeatGuests = {};
+    this.showDoubleSeatModal = false;
+    this.activeDoubleSeat = null;
+    this.tempGuestCount = 1;
     this.seats = [];
     this.customerInfo = {
       name: '',
@@ -493,6 +698,7 @@ export class DatVeMoiComponent implements OnInit, OnDestroy {
     this.paymentMethod = 'vietqr';
     this.ticketId = '';
     this.ticketStatus = 'Chờ thanh toán';
+    this.showPopup = false;
     this.searchTrips();
   }
 

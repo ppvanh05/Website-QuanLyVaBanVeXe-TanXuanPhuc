@@ -3,7 +3,8 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo-container">
-        <img src="/asset/images/admin/TXP_logo2.png" alt="TXP Logo" class="logo">
+        <img *ngIf="!isSidebarCollapsed" src="/asset/images/admin/TXP_logo2.png" alt="TXP Logo" class="logo">
+        <img *ngIf="isSidebarCollapsed" src="/asset/images/admin/TXP_logo.png" alt="TXP Logo" class="logo-collapsed-in-sidebar">
       </div>
     </div>
 

@@ -383,6 +383,143 @@ tr:hover td {
   border: 1px solid #fee2e2;
 }
 
+/* =====================================================
+   CUSTOM DATE PICKER
+   ===================================================== */
+.date-picker-relative {
+  position: relative;
+}
+
+.date-custom-input {
+  cursor: pointer;
+  caret-color: transparent;
+}
+
+.custom-datepicker-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid #f1f5f9;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.datepicker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.current-month-year {
+  font-weight: 800;
+  font-size: 15px;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-prev-month, .btn-next-month {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.btn-prev-month:hover, .btn-next-month:hover {
+  background: #f1f5f9;
+  color: #009ba1;
+}
+
+.datepicker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 10px;
+}
+
+.weekday-cell {
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  padding-bottom: 5px;
+}
+
+.datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.day-cell {
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.day-cell:hover:not(.day-empty) {
+  background: #f8fafc;
+}
+
+.day-empty {
+  cursor: default;
+}
+
+.solar-day {
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.lunar-day {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+.day-selected {
+  background: #fff7ed !important;
+  border: 1.5px solid #f37021;
+}
+
+.day-selected .solar-day {
+  color: #f37021;
+}
+
+.day-selected .lunar-day {
+  color: #f37021;
+  opacity: 0.8;
+}
+
+.day-today {
+  background: #f0fdfa;
+}
+
+.day-today .solar-day {
+  color: #009ba1;
+}
+
 /* Payment Method Pills */
 .pttt-pill {
   display: inline-block;
