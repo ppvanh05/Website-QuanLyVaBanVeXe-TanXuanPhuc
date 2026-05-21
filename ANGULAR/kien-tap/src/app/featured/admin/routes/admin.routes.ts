@@ -12,7 +12,7 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'quan-ly-ve',
         children: [
-          { path: 'dat-ve-moi', loadComponent: () => import('../trang-chu/trang-chu.component').then(m => m.TrangChuComponent) },
+          { path: 'dat-ve-moi', loadComponent: () => import('../QuanLyVe/DatVeMoi/dat-ve-moi.component').then(m => m.DatVeMoiComponent) },
           { path: 'danh-sach-ve', loadComponent: () => import('../QuanLyVe/DanhSachVe/danh-sach-ve.component').then(m => m.DanhSachVeComponent) },
           { path: 'hoan-tien', loadComponent: () => import('../trang-chu/trang-chu.component').then(m => m.TrangChuComponent) }
         ]

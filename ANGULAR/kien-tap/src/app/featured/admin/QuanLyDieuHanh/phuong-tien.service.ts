@@ -34,7 +34,7 @@ export class PhuongTienService {
       rows: 2,
       registrationExpiry: '15/06/2027',
       insuranceExpiry: '10/06/2027',
-      amenities: ['tivi', 'usb', 'wifi', 'food', 'water', 'ac'],
+      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
       status: 'active',
       selectedSeats: [],
       createdAt: new Date('2026-05-01')
@@ -49,7 +49,7 @@ export class PhuongTienService {
       rows: 2,
       registrationExpiry: '20/09/2027',
       insuranceExpiry: '18/09/2027',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'massage', 'ac', 'toilet'],
+      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
       status: 'active',
       selectedSeats: [],
       createdAt: new Date('2026-05-02')
@@ -79,7 +79,7 @@ export class PhuongTienService {
       rows: 2,
       registrationExpiry: '12/03/2028',
       insuranceExpiry: '10/03/2028',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'massage', 'ac'],
+      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
       status: 'active',
       selectedSeats: [],
       createdAt: new Date('2026-05-04')
@@ -109,7 +109,7 @@ export class PhuongTienService {
       rows: 2,
       registrationExpiry: '25/12/2027',
       insuranceExpiry: '20/12/2027',
-      amenities: ['tivi', 'usb', 'wifi', 'food', 'water', 'massage', 'ac', 'toilet'],
+      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
       status: 'active',
       selectedSeats: [],
       createdAt: new Date('2026-05-06')
@@ -124,7 +124,7 @@ export class PhuongTienService {
       rows: 2,
       registrationExpiry: '14/05/2028',
       insuranceExpiry: '10/05/2028',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'massage', 'ac', 'toilet'],
+      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
       status: 'active',
       selectedSeats: [],
       createdAt: new Date('2026-05-07')
@@ -139,7 +139,7 @@ export class PhuongTienService {
       rows: 2,
       registrationExpiry: '30/06/2028',
       insuranceExpiry: '25/06/2028',
-      amenities: ['tivi', 'usb', 'wifi', 'food', 'water', 'massage', 'ac'],
+      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
       status: 'active',
       selectedSeats: [],
       createdAt: new Date('2026-05-08')

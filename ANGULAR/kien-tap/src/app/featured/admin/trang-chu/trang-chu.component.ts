@@ -96,4 +96,10 @@ export class TrangChuComponent {
     if (!seat) return '';
     return seat.startsWith('A') ? 'seat-a' : 'seat-b';
   }
+
+  getPriceColorClass(status: string): string {
+    if (status === 'Đang chờ') return 'price-unpaid';
+    if (status === 'Hoàn thành') return 'price-paid';
+    return '';
+  }
 }

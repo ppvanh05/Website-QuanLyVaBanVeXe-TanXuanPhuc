@@ -1,0 +1,931 @@
+<div class="page-container">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="breadcrumb">
+      <span class="parent">Quản lý vé</span>
+      <span class="separator">/</span>
+      <span class="current">Đặt vé mới</span>
+    </div>
+    <h1>Đặt Vé Mới Cho Khách Hàng</h1>
+  </div>
+
+  <!-- Wizard Steps -->
+  <div class="card wizard-steps-card">
+    <div class="steps-row">
+      <div class="step-item" [class.step-active]="currentStep >= 1" [class.step-done]="currentStep > 1">
+        <div class="step-circle">
+          <span class="material-icons" *ngIf="currentStep > 1">check</span>
+          <span *ngIf="currentStep <= 1">1</span>
+        </div>
+        <span class="step-label">Chọn Chuyến</span>
+      </div>
+      <div class="step-connector" [class.connector-active]="currentStep >= 2"></div>
+
+      <div class="step-item" [class.step-active]="currentStep >= 2" [class.step-done]="currentStep > 2">
+        <div class="step-circle">
+          <span class="material-icons" *ngIf="currentStep > 2">check</span>
+          <span *ngIf="currentStep <= 2">2</span>
+        </div>
+        <span class="step-label">Chọn Ghế & Thông Tin</span>
+      </div>
+      <div class="step-connector" [class.connector-active]="currentStep >= 3"></div>
+
+      <div class="step-item" [class.step-active]="currentStep >= 3" [class.step-done]="currentStep > 3">
+        <div class="step-circle">
+          <span class="material-icons" *ngIf="currentStep > 3">check</span>
+          <span *ngIf="currentStep <= 3">3</span>
+        </div>
+        <span class="step-label">Thanh Toán</span>
+      </div>
+      <div class="step-connector" [class.connector-active]="currentStep >= 4"></div>
+
+      <div class="step-item" [class.step-active]="currentStep >= 4">
+        <div class="step-circle">4</div>
+        <span class="step-label">Xác Nhận & In Vé</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STEP 1: TÌM KIẾM CHUYẾN ===== -->
+  <ng-container *ngIf="currentStep === 1">
+
+    <!-- Search Card -->
+    <div class="card search-card">
+      <!-- Trip Mode -->
+      <div class="trip-mode-row">
+        <label class="radio-option" [class.radio-checked]="true">
+          <input type="radio" name="tripMode" checked>
+          <span class="material-icons radio-icon">radio_button_checked</span>
+          Một chiều
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="tripMode">
+          <span class="material-icons radio-icon-off">radio_button_unchecked</span>
+          Khứ hồi
+        </label>
+      </div>
+
+      <!-- Search Fields -->
+      <div class="search-grid">
+        <div class="form-group">
+          <label>Điểm đi</label>
+          <div class="input-with-icon">
+            <span class="material-icons">place</span>
+            <select [(ngModel)]="searchForm.from" (change)="searchTrips()">
+              <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group form-group-swap">
+          <label>&nbsp;</label>
+          <button class="btn-swap" (click)="swapDestinations()" title="Đổi điểm đi/đến">
+            <span class="material-icons">swap_horiz</span>
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label>Điểm đến</label>
+          <div class="input-with-icon">
+            <span class="material-icons">place</span>
+            <select [(ngModel)]="searchForm.to" (change)="searchTrips()">
+              <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Ngày đi</label>
+          <div class="input-with-icon">
+            <span class="material-icons">calendar_month</span>
+            <input type="date" [(ngModel)]="searchForm.date" (change)="searchTrips()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Số vé</label>
+          <div class="input-with-icon">
+            <span class="material-icons">confirmation_number</span>
+            <select [(ngModel)]="searchForm.ticketCount">
+              <option [value]="1">1 vé</option>
+              <option [value]="2">2 vé</option>
+              <option [value]="3">3 vé</option>
+              <option [value]="4">4 vé</option>
+              <option [value]="5">5 vé</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Search History -->
+      <div class="quick-history-row">
+        <span class="history-label">
+          <span class="material-icons">history</span>
+          Tìm kiếm gần đây:
+        </span>
+        <button *ngFor="let hist of searchHistory" class="btn-history-tag" (click)="quickSearch(hist)">
+          {{ hist.from }} → {{ hist.to }}
+          <span class="tag-date">{{ hist.date }}</span>
+        </button>
+      </div>
+
+      <!-- Search Actions -->
+      <div class="search-actions">
+        <button class="btn-search" (click)="searchTrips()">
+          <span class="material-icons">search</span>
+          Tìm kiếm chuyến xe
+        </button>
+        <button class="btn-reset" (click)="resetFilters()">
+          <span class="material-icons">refresh</span>
+          Làm mới
+        </button>
+      </div>
+    </div>
+
+    <!-- Results: Filter + Trips -->
+    <div class="results-layout" *ngIf="filteredTrips.length > 0 || searchPerformed">
+
+      <!-- Filter Sidebar -->
+      <div class="card filter-card">
+        <div class="filter-card-header">
+          <span class="filter-title">
+            <span class="material-icons">filter_alt</span>
+            BỘ LỌC
+          </span>
+          <button class="btn-clear-filter" (click)="resetFilters()">
+            <span class="material-icons">close</span>
+            Bỏ lọc
+          </button>
+        </div>
+
+        <!-- Giờ đi -->
+        <div class="filter-group">
+          <div class="filter-group-title">Giờ đi</div>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.timeRange === 'early_morning'"
+              (change)="updateFilters('timeRange', filters.timeRange === 'early_morning' ? 'all' : 'early_morning')">
+            Sáng sớm (00:00 - 06:00)
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.timeRange === 'morning'"
+              (change)="updateFilters('timeRange', filters.timeRange === 'morning' ? 'all' : 'morning')">
+            Buổi sáng (06:00 - 12:00)
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.timeRange === 'afternoon'"
+              (change)="updateFilters('timeRange', filters.timeRange === 'afternoon' ? 'all' : 'afternoon')">
+            Buổi chiều (12:00 - 18:00)
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.timeRange === 'night'"
+              (change)="updateFilters('timeRange', filters.timeRange === 'night' ? 'all' : 'night')">
+            Buổi tối (18:00 - 24:00)
+          </label>
+        </div>
+
+        <!-- Tầng xe -->
+        <div class="filter-group">
+          <div class="filter-group-title">Tầng</div>
+          <div class="deck-btn-group">
+            <button class="deck-btn" [class.deck-active]="filters.deck === 'upper'" (click)="updateFilters('deck', 'upper')">Tầng trên</button>
+            <button class="deck-btn" [class.deck-active]="filters.deck === 'lower'" (click)="updateFilters('deck', 'lower')">Tầng dưới</button>
+          </div>
+        </div>
+
+        <!-- Hàng ghế -->
+        <div class="filter-group">
+          <div class="filter-group-title">Hàng ghế</div>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.seatRow === 'front'"
+              (change)="updateFilters('seatRow', filters.seatRow === 'front' ? 'all' : 'front')">
+            Hàng đầu (Ghế 1-4)
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.seatRow === 'mid'"
+              (change)="updateFilters('seatRow', filters.seatRow === 'mid' ? 'all' : 'mid')">
+            Hàng giữa (Ghế 5-8)
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.seatRow === 'back'"
+              (change)="updateFilters('seatRow', filters.seatRow === 'back' ? 'all' : 'back')">
+            Hàng cuối (Ghế 9-12)
+          </label>
+        </div>
+
+        <!-- Giá vé -->
+        <div class="filter-group">
+          <div class="filter-group-title">Giá vé</div>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.priceRange === 'under500'"
+              (change)="updateFilters('priceRange', filters.priceRange === 'under500' ? 'all' : 'under500')">
+            Dưới 500.000đ
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="filters.priceRange === 'over500'"
+              (change)="updateFilters('priceRange', filters.priceRange === 'over500' ? 'all' : 'over500')">
+            Từ 500.000đ trở lên
+          </label>
+        </div>
+      </div>
+
+      <!-- Trips List -->
+      <div class="trips-col">
+        <!-- Trips Header -->
+        <div class="card trips-header-card">
+          <div class="trips-header-row">
+            <h2>
+              {{ searchForm.from }} - {{ searchForm.to }}
+              <span class="count">{{ filteredTrips.length }} chuyến</span>
+            </h2>
+            <div class="sort-row">
+              <span class="sort-label">Sắp xếp:</span>
+              <button class="btn-sort">Giá rẻ bất ngờ</button>
+              <button class="btn-sort btn-sort-active">
+                <span class="material-icons">schedule</span>
+                Giờ khởi hành
+              </button>
+              <button class="btn-sort">
+                <span class="material-icons">event_seat</span>
+                Ghế trống
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Cards -->
+        <div *ngIf="filteredTrips.length > 0; else noTrips">
+          <div *ngFor="let trip of filteredTrips" class="card trip-card">
+            <div class="trip-card-body">
+              <!-- Departure -->
+              <div class="trip-time-col">
+                <span class="trip-time-big">{{ trip.departureTime }}</span>
+                <span class="trip-station">{{ trip.pickupPoints[0] }}</span>
+              </div>
+
+              <!-- Timeline -->
+              <div class="trip-timeline-col">
+                <div class="timeline-wrap">
+                  <span class="tl-dot"></span>
+                  <div class="tl-line">
+                    <span class="tl-duration">{{ trip.duration }} – {{ trip.distance }}</span>
+                  </div>
+                  <span class="material-icons tl-pin">place</span>
+                </div>
+              </div>
+
+              <!-- Arrival -->
+              <div class="trip-time-col">
+                <span class="trip-time-big">{{ trip.arrivalTime }}</span>
+                <span class="trip-station">{{ trip.dropoffPoints[0] }}</span>
+              </div>
+
+              <!-- Vehicle Info -->
+              <div class="trip-vehicle-col">
+                <span class="vehicle-badge">
+                  <span class="material-icons">directions_bus</span>
+                  {{ trip.vehicleType }}
+                </span>
+                <span class="seats-badge">• {{ trip.availableSeats }} chỗ trống</span>
+              </div>
+
+              <!-- Price & Action -->
+              <div class="trip-action-col">
+                <span class="trip-price">{{ formatCurrency(trip.priceSingle) }}</span>
+                <button class="btn-select-trip" (click)="selectTrip(trip)">Chọn chuyến</button>
+              </div>
+            </div>
+
+            <!-- Tab Bar -->
+            <div class="trip-tabs-bar">
+              <button class="tab-item">Chọn ghế</button>
+              <button class="tab-item">Lịch trình</button>
+              <button class="tab-item">Đón/Trả</button>
+              <button class="tab-item">Tiện ích</button>
+              <button class="tab-item">Chính sách</button>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noTrips>
+          <div class="card no-trips-card">
+            <span class="material-icons no-trips-icon">directions_bus</span>
+            <p>Không tìm thấy chuyến xe nào phù hợp.</p>
+            <button class="btn-reset" (click)="resetFilters()">
+              <span class="material-icons">refresh</span>
+              Xóa bộ lọc
+            </button>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ===== STEP 2: SƠ ĐỒ GHẾ & THÔNG TIN HÀNH KHÁCH ===== -->
+  <ng-container *ngIf="currentStep === 2 && selectedTrip">
+
+    <div class="card step-nav-card">
+      <button class="btn-back" (click)="currentStep = 1">
+        <span class="material-icons">arrow_back</span>
+        Quay lại chọn chuyến
+      </button>
+      <span class="step-trip-info">
+        <span class="material-icons">directions_bus</span>
+        {{ selectedTrip.route }} | Khởi hành {{ selectedTrip.departureTime }} – Ngày {{ searchForm.date | date:'dd/MM/yyyy' }}
+      </span>
+    </div>
+
+    <div class="seat-info-grid">
+      <!-- Seat Map -->
+      <div class="card seat-card">
+        <div class="table-card-header">
+          <h2>Chọn ghế ngồi / giường nằm</h2>
+        </div>
+
+        <!-- Legend -->
+        <div class="seat-legend-row">
+          <div class="legend-item">
+            <span class="legend-box legend-sold"></span>
+            Đã bán
+          </div>
+          <div class="legend-item">
+            <span class="legend-box legend-available"></span>
+            Còn trống
+          </div>
+          <div class="legend-item">
+            <span class="legend-box legend-selected"></span>
+            Đang chọn
+          </div>
+          <div class="legend-item">
+            <span class="legend-box legend-double"></span>
+            Phòng đôi
+          </div>
+        </div>
+
+        <!-- Price Info -->
+        <div class="price-info-bar">
+          <span>
+            <strong>Phòng đơn:</strong>
+            <span class="price-highlight">{{ formatCurrency(selectedTrip.priceSingle) }}</span>
+          </span>
+          <span>
+            <strong>Phòng đôi:</strong>
+            <span class="price-highlight">{{ formatCurrency(selectedTrip.priceDouble) }}</span>
+            <span class="price-note">(Dành cho 2 khách)</span>
+          </span>
+        </div>
+
+        <!-- Decks -->
+        <div class="decks-grid">
+          <!-- Lower Deck -->
+          <div class="deck-box">
+            <div class="deck-title-bar">TẦNG DƯỚI</div>
+            <div class="bus-body">
+              <div class="driver-row">
+                <span class="material-icons">stars</span>
+                <span>Vô lăng lái xe</span>
+              </div>
+              <div class="seats-columns">
+                <div class="seats-col">
+                  <span class="col-header">Dãy Trái</span>
+                  <ng-container *ngFor="let seat of getSeatsByDeckAndRow('lower', 'left')">
+                    <button class="seat-btn"
+                      [class.seat-sold]="seat.status === 'sold'"
+                      [class.seat-chosen]="seat.status === 'selected'"
+                      [class.seat-double]="seat.isDouble"
+                      [disabled]="seat.status === 'sold'"
+                      (click)="toggleSeat(seat)"
+                      [title]="seat.isDouble ? 'Phòng Đôi' : 'Phòng Đơn'">
+                      {{ seat.id }}
+                    </button>
+                  </ng-container>
+                </div>
+                <div class="aisle-divider"></div>
+                <div class="seats-col">
+                  <span class="col-header">Dãy Phải</span>
+                  <ng-container *ngFor="let seat of getSeatsByDeckAndRow('lower', 'right')">
+                    <button class="seat-btn"
+                      [class.seat-sold]="seat.status === 'sold'"
+                      [class.seat-chosen]="seat.status === 'selected'"
+                      [class.seat-double]="seat.isDouble"
+                      [disabled]="seat.status === 'sold'"
+                      (click)="toggleSeat(seat)"
+                      [title]="seat.isDouble ? 'Phòng Đôi' : 'Phòng Đơn'">
+                      {{ seat.id }}
+                    </button>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upper Deck -->
+          <div class="deck-box">
+            <div class="deck-title-bar">TẦNG TRÊN</div>
+            <div class="bus-body">
+              <div class="driver-row" style="opacity:0.4;">
+                <span class="material-icons">expand_less</span>
+                <span>Phần đuôi phía trên</span>
+              </div>
+              <div class="seats-columns">
+                <div class="seats-col">
+                  <span class="col-header">Dãy Trái</span>
+                  <ng-container *ngFor="let seat of getSeatsByDeckAndRow('upper', 'left')">
+                    <button class="seat-btn"
+                      [class.seat-sold]="seat.status === 'sold'"
+                      [class.seat-chosen]="seat.status === 'selected'"
+                      [class.seat-double]="seat.isDouble"
+                      [disabled]="seat.status === 'sold'"
+                      (click)="toggleSeat(seat)"
+                      [title]="seat.isDouble ? 'Phòng Đôi' : 'Phòng Đơn'">
+                      {{ seat.id }}
+                    </button>
+                  </ng-container>
+                </div>
+                <div class="aisle-divider"></div>
+                <div class="seats-col">
+                  <span class="col-header">Dãy Phải</span>
+                  <ng-container *ngFor="let seat of getSeatsByDeckAndRow('upper', 'right')">
+                    <button class="seat-btn"
+                      [class.seat-sold]="seat.status === 'sold'"
+                      [class.seat-chosen]="seat.status === 'selected'"
+                      [class.seat-double]="seat.isDouble"
+                      [disabled]="seat.status === 'sold'"
+                      (click)="toggleSeat(seat)"
+                      [title]="seat.isDouble ? 'Phòng Đôi' : 'Phòng Đơn'">
+                      {{ seat.id }}
+                    </button>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Passenger Form -->
+      <div class="card passenger-card">
+        <div class="table-card-header">
+          <h2>Thông tin hành khách</h2>
+        </div>
+
+        <form (ngSubmit)="submitCustomerInfo()" class="passenger-form">
+          <div class="form-group">
+            <label>Họ và tên <span class="required-star">*</span></label>
+            <input type="text" [(ngModel)]="customerInfo.name" name="custName"
+              placeholder="Nhập tên khách hàng..." required>
+          </div>
+
+          <div class="form-group">
+            <label>Số điện thoại <span class="required-star">*</span></label>
+            <div class="input-with-icon">
+              <span class="material-icons">phone</span>
+              <input type="tel" [(ngModel)]="customerInfo.phone" name="custPhone"
+                placeholder="Nhập số điện thoại..." required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email liên hệ</label>
+            <div class="input-with-icon">
+              <span class="material-icons">email</span>
+              <input type="email" [(ngModel)]="customerInfo.email" name="custEmail"
+                placeholder="Nhập email (nếu có)...">
+            </div>
+          </div>
+
+          <div class="form-row-2col">
+            <div class="form-group">
+              <label>Điểm đón</label>
+              <select [(ngModel)]="customerInfo.pickupPoint" name="custPickup">
+                <option *ngFor="let pt of selectedTrip.pickupPoints" [value]="pt">{{ pt }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Điểm trả</label>
+              <select [(ngModel)]="customerInfo.dropoffPoint" name="custDropoff">
+                <option *ngFor="let pt of selectedTrip.dropoffPoints" [value]="pt">{{ pt }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Ghi chú</label>
+            <textarea [(ngModel)]="customerInfo.note" name="custNote"
+              placeholder="Ví dụ: đón dọc đường, khách lớn tuổi..." rows="2"></textarea>
+          </div>
+
+          <!-- Summary Box -->
+          <div class="booking-summary-box">
+            <div class="summary-box-title">Tóm Tắt Đặt Vé</div>
+            <div class="summary-line">
+              <span class="s-label">Chuyến xe:</span>
+              <span class="s-val">{{ selectedTrip.route }}</span>
+            </div>
+            <div class="summary-line">
+              <span class="s-label">Khởi hành:</span>
+              <span class="s-val">{{ selectedTrip.departureTime }} – {{ searchForm.date | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="summary-line">
+              <span class="s-label">Ghế đã chọn:</span>
+              <span class="s-val" *ngIf="selectedSeats.length > 0">{{ selectedSeats.join(', ') }}</span>
+              <span class="s-val s-muted" *ngIf="selectedSeats.length === 0">Chưa chọn ghế</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-line summary-total">
+              <span class="s-label">TỔNG THANH TOÁN:</span>
+              <span class="s-total">{{ formatCurrency(getTotalPrice()) }}</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-search btn-full" [disabled]="selectedSeats.length === 0">
+            <span class="material-icons">arrow_forward</span>
+            Tiếp Tục Thanh Toán
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ===== STEP 3: THANH TOÁN ===== -->
+  <ng-container *ngIf="currentStep === 3 && selectedTrip">
+
+    <div class="card step-nav-card">
+      <button class="btn-back" (click)="currentStep = 2">
+        <span class="material-icons">arrow_back</span>
+        Quay lại sơ đồ ghế
+      </button>
+      <span class="step-trip-info">
+        <span class="material-icons">directions_bus</span>
+        {{ selectedTrip.route }} | Khởi hành {{ selectedTrip.departureTime }}
+      </span>
+    </div>
+
+    <div class="payment-grid">
+      <!-- Payment Methods -->
+      <div class="card payment-methods-card">
+        <div class="table-card-header">
+          <h2>
+            <span class="material-icons">payments</span>
+            Chọn phương thức thanh toán
+          </h2>
+        </div>
+
+        <div class="method-list">
+          <div class="method-item" [class.method-active]="paymentMethod === 'vietqr'" (click)="selectPaymentMethod('vietqr')">
+            <span class="material-icons method-radio-icon">{{ paymentMethod === 'vietqr' ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
+            <div class="method-detail">
+              <span class="status-pill pttt-ck">VietQR</span>
+              <h4>Thanh toán qua VietQR</h4>
+              <p>Quét mã QR bằng ứng dụng ngân hàng di động.</p>
+            </div>
+          </div>
+
+          <div class="method-item" [class.method-active]="paymentMethod === 'momo'" (click)="selectPaymentMethod('momo')">
+            <span class="material-icons method-radio-icon">{{ paymentMethod === 'momo' ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
+            <div class="method-detail">
+              <span class="status-pill pttt-momo">MoMo</span>
+              <h4>Ví Điện Tử MoMo</h4>
+              <p>Mở ứng dụng MoMo để quét mã thanh toán.</p>
+            </div>
+          </div>
+
+          <div class="method-item" [class.method-active]="paymentMethod === 'vnpay'" (click)="selectPaymentMethod('vnpay')">
+            <span class="material-icons method-radio-icon">{{ paymentMethod === 'vnpay' ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
+            <div class="method-detail">
+              <span class="status-pill pttt-zalopay">VNPay</span>
+              <h4>Cổng Thanh toán VNPay</h4>
+              <p>Quét mã VNPay-QR trên ứng dụng ngân hàng.</p>
+            </div>
+          </div>
+
+          <div class="method-item" [class.method-active]="paymentMethod === 'zalopay'" (click)="selectPaymentMethod('zalopay')">
+            <span class="material-icons method-radio-icon">{{ paymentMethod === 'zalopay' ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
+            <div class="method-detail">
+              <span class="status-pill pttt-zalopay">ZaloPay</span>
+              <h4>Ví Điện Tử ZaloPay</h4>
+              <p>Mở ứng dụng ZaloPay để quét mã thanh toán.</p>
+            </div>
+          </div>
+
+          <div class="method-item method-cash-item" [class.method-active]="paymentMethod === 'cash'" (click)="selectPaymentMethod('cash')">
+            <span class="material-icons method-radio-icon">{{ paymentMethod === 'cash' ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
+            <div class="method-detail">
+              <span class="status-pill pttt-cash">TIỀN MẶT</span>
+              <h4>Thu Tiền Mặt Trực Tiếp (Tại Quầy)</h4>
+              <p>Vé sẽ ở trạng thái "Chờ xác nhận". Xác nhận sau khi đã nhận tiền từ khách.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Workspace -->
+      <div class="card payment-workspace-card">
+        <!-- Online Payment -->
+        <div *ngIf="paymentMethod !== 'cash'">
+          <div class="payment-total-banner">
+            <div>
+              <div class="banner-label">TỔNG THANH TOÁN</div>
+              <div class="banner-price">{{ formatCurrency(getTotalPrice()) }}</div>
+            </div>
+            <span class="material-icons banner-icon">qr_code_2</span>
+          </div>
+
+          <div class="countdown-bar">
+            <span class="material-icons">timer</span>
+            Thời gian giữ chỗ:
+            <strong class="countdown-digits">{{ getFormattedCountdown() }}</strong>
+          </div>
+
+          <div class="qr-workspace">
+            <div class="qr-box">
+              <div class="qr-logo-label">★ VietQR</div>
+              <svg viewBox="0 0 100 100" class="qr-svg">
+                <path d="M10,10 h20 v20 h-20 z M15,15 h10 v10 h-10 z" fill="#1e293b"/>
+                <path d="M70,10 h20 v20 h-20 z M75,15 h10 v10 h-10 z" fill="#1e293b"/>
+                <path d="M10,70 h20 v20 h-20 z M15,75 h10 v10 h-10 z" fill="#1e293b"/>
+                <path d="M35,15 h5 v10 h-5 z M45,10 h15 v5 h-15 z M45,20 h5 v15 h-5 z" fill="#1e293b"/>
+                <path d="M10,35 h10 v5 h-10 z M25,45 h15 v10 h-15 z M15,55 h5 v10 h-5 z" fill="#1e293b"/>
+                <path d="M70,35 h15 v5 h-15 z M75,45 h10 v10 h-10 z M65,70 h15 v5 h-15 z" fill="#1e293b"/>
+                <path d="M35,70 h20 v20 h-20 z M40,75 h10 v10 h-10 z" fill="#1e293b"/>
+              </svg>
+              <div class="qr-bank-label">
+                <span class="material-icons" style="font-size:14px;">account_balance</span>
+                Napas247 | Vietcombank
+              </div>
+            </div>
+
+            <div class="qr-instructions">
+              <h4>HƯỚNG DẪN THANH TOÁN</h4>
+              <ol>
+                <li>Mở ứng dụng ngân hàng hoặc ví điện tử bất kỳ.</li>
+                <li>Chọn tính năng <strong>Quét mã QR</strong>.</li>
+                <li>Quét mã QR bên trái để hoàn tất thanh toán.</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="sim-test-bar">
+            <span class="material-icons">info</span>
+            <em>Nút thử nghiệm cho nhân viên kiểm thử luồng đặt vé:</em>
+            <button class="btn-sim-success" (click)="completePaymentOnline()">
+              <span class="material-icons">check_circle</span>
+              Giả Lập Thanh Toán Thành Công
+            </button>
+          </div>
+        </div>
+
+        <!-- Cash Payment -->
+        <div *ngIf="paymentMethod === 'cash'">
+          <div class="payment-total-banner payment-total-cash">
+            <div>
+              <div class="banner-label">THU TIỀN MẶT TRỰC TIẾP</div>
+              <div class="banner-price">{{ formatCurrency(getTotalPrice()) }}</div>
+            </div>
+            <span class="material-icons banner-icon">monetization_on</span>
+          </div>
+
+          <div class="cash-instructions-box">
+            <h3>
+              <span class="material-icons">assignment</span>
+              Hướng Dẫn Nghiệp Vụ Tiền Mặt
+            </h3>
+            <p>1. Nhân viên nhận tiền mặt trực tiếp: <strong>{{ formatCurrency(getTotalPrice()) }}</strong></p>
+            <p>2. Kiểm đếm tiền kỹ lưỡng tránh thất thoát hoặc tiền giả.</p>
+            <p>3. Nhấp <strong>"Hoàn tất bán vé (Tiền mặt)"</strong> bên dưới để tạo vé.</p>
+            <div class="cash-warning-note">
+              <span class="material-icons">warning</span>
+              <strong>LƯU Ý:</strong> Vé sẽ ở trạng thái <strong>"Chờ xác nhận"</strong> cho đến khi nhân viên xác nhận đã thu đủ tiền mặt.
+            </div>
+          </div>
+
+          <button class="btn-search btn-full btn-cash" (click)="completePaymentCash()">
+            <span class="material-icons">offline_pin</span>
+            Hoàn tất bán vé (Tiền mặt)
+          </button>
+        </div>
+      </div>
+
+      <!-- Trip Summary -->
+      <div class="card trip-summary-card">
+        <div class="table-card-header">
+          <h2>Chi tiết đơn vé</h2>
+        </div>
+
+        <div class="summary-section">
+          <h4>
+            <span class="material-icons">person</span>
+            Hành khách
+          </h4>
+          <div class="info-grid">
+            <div class="info-label">Họ tên:</div>
+            <div class="info-value">{{ customerInfo.name }}</div>
+            <div class="info-label">SĐT:</div>
+            <div class="info-value">{{ customerInfo.phone }}</div>
+            <div class="info-label" *ngIf="customerInfo.email">Email:</div>
+            <div class="info-value" *ngIf="customerInfo.email">{{ customerInfo.email }}</div>
+          </div>
+        </div>
+
+        <div class="summary-section">
+          <h4>
+            <span class="material-icons">directions_bus</span>
+            Chuyến đi
+          </h4>
+          <div class="info-grid">
+            <div class="info-label">Tuyến:</div>
+            <div class="info-value id-col">{{ selectedTrip.route }}</div>
+            <div class="info-label">Ngày đi:</div>
+            <div class="info-value">{{ searchForm.date | date:'dd/MM/yyyy' }}</div>
+            <div class="info-label">Giờ đi:</div>
+            <div class="info-value">{{ selectedTrip.departureTime }}</div>
+            <div class="info-label">Số ghế:</div>
+            <div class="info-value">{{ selectedSeats.join(', ') }}</div>
+            <div class="info-label">Điểm đón:</div>
+            <div class="info-value">{{ customerInfo.pickupPoint }}</div>
+            <div class="info-label">Điểm trả:</div>
+            <div class="info-value">{{ customerInfo.dropoffPoint }}</div>
+          </div>
+        </div>
+
+        <div class="summary-section" *ngIf="customerInfo.note">
+          <h4><span class="material-icons">notes</span> Ghi chú</h4>
+          <p class="note-italic">"{{ customerInfo.note }}"</p>
+        </div>
+
+        <div class="summary-total-row">
+          <span>TỔNG TIỀN:</span>
+          <span class="s-total">{{ formatCurrency(getTotalPrice()) }}</span>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ===== STEP 4: XÁC NHẬN & IN VÉ ===== -->
+  <ng-container *ngIf="currentStep === 4 && selectedTrip">
+
+    <!-- Status Banner -->
+    <div class="status-banner-warn" *ngIf="ticketStatus === 'Chờ xác nhận'">
+      <span class="material-icons">hourglass_empty</span>
+      <div>
+        <strong>VÉ ĐANG CHỜ XÁC NHẬN THANH TOÁN TIỀN MẶT</strong>
+        <p>Vui lòng thu đầy đủ <strong>{{ formatCurrency(getTotalPrice()) }}</strong> trước khi xác nhận!</p>
+      </div>
+    </div>
+
+    <div class="status-banner-success" *ngIf="ticketStatus === 'Đã thanh toán'">
+      <span class="material-icons">check_circle</span>
+      <div>
+        <strong>VÉ ĐÃ THANH TOÁN & XÁC NHẬN THÀNH CÔNG</strong>
+        <p>Hệ thống đã ghi nhận cho mã vé <strong class="id-col">{{ ticketId }}</strong>. Khách hàng có thể lên xe.</p>
+      </div>
+    </div>
+
+    <!-- Printable Ticket -->
+    <div class="card printable-ticket" id="printable-ticket">
+      <!-- Header -->
+      <div class="ticket-header-row">
+        <div class="ticket-brand-block">
+          <span class="ticket-brand-code">TXP</span>
+          <span class="ticket-brand-name">HÃNG XE TÂN XUÂN PHÚC</span>
+        </div>
+        <div class="ticket-stamp"
+          [class.stamp-pending]="ticketStatus === 'Chờ xác nhận'"
+          [class.stamp-paid]="ticketStatus === 'Đã thanh toán'">
+          {{ ticketStatus | uppercase }}
+        </div>
+      </div>
+
+      <div class="ticket-dash-line">· · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·</div>
+
+      <!-- Ticket Body -->
+      <div class="ticket-body-grid">
+        <div class="ticket-fields">
+          <div class="ticket-row-2">
+            <div class="ticket-field">
+              <span class="tf-label">MÃ VÉ</span>
+              <span class="tf-value id-col ticket-code">{{ ticketId }}</span>
+            </div>
+            <div class="ticket-field">
+              <span class="tf-label">NGÀY ĐẶT VÉ</span>
+              <span class="tf-value">{{ paymentDate | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+
+          <div class="ticket-row-2">
+            <div class="ticket-field">
+              <span class="tf-label">HỌ TÊN KHÁCH HÀNG</span>
+              <span class="tf-value">{{ customerInfo.name }}</span>
+            </div>
+            <div class="ticket-field">
+              <span class="tf-label">SĐT KHÁCH HÀNG</span>
+              <span class="tf-value">{{ customerInfo.phone }}</span>
+            </div>
+          </div>
+
+          <div class="ticket-field full-width">
+            <span class="tf-label">TUYẾN XE</span>
+            <span class="tf-value tf-bold id-col">{{ selectedTrip.route }}</span>
+          </div>
+
+          <div class="ticket-row-2">
+            <div class="ticket-field">
+              <span class="tf-label">GIỜ XUẤT BẾN</span>
+              <span class="tf-value tf-large">{{ selectedTrip.departureTime }}</span>
+            </div>
+            <div class="ticket-field">
+              <span class="tf-label">NGÀY KHỞI HÀNH</span>
+              <span class="tf-value tf-large">{{ searchForm.date | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+
+          <div class="ticket-row-2">
+            <div class="ticket-field">
+              <span class="tf-label">SỐ GHẾ</span>
+              <span class="tf-value">{{ selectedSeats.join(', ') }}</span>
+            </div>
+            <div class="ticket-field">
+              <span class="tf-label">LOẠI XE</span>
+              <span class="tf-value">{{ selectedTrip.vehicleType }}</span>
+            </div>
+          </div>
+
+          <div class="ticket-field full-width">
+            <span class="tf-label">ĐIỂM ĐÓN KHÁCH</span>
+            <span class="tf-value">
+              <span class="material-icons" style="font-size:14px;vertical-align:middle;">location_on</span>
+              {{ customerInfo.pickupPoint }}
+            </span>
+          </div>
+
+          <div class="ticket-field full-width">
+            <span class="tf-label">ĐIỂM TRẢ KHÁCH</span>
+            <span class="tf-value">
+              <span class="material-icons" style="font-size:14px;vertical-align:middle;">location_on</span>
+              {{ customerInfo.dropoffPoint }}
+            </span>
+          </div>
+
+          <div class="ticket-field full-width" *ngIf="customerInfo.note">
+            <span class="tf-label">GHI CHÚ</span>
+            <span class="tf-value" style="font-style:italic;">"{{ customerInfo.note }}"</span>
+          </div>
+        </div>
+
+        <!-- QR & Price -->
+        <div class="ticket-qr-col">
+          <svg viewBox="0 0 100 100" class="ticket-qr-svg">
+            <path d="M10,10 h20 v20 h-20 z M15,15 h10 v10 h-10 z" fill="#0f172a"/>
+            <path d="M70,10 h20 v20 h-20 z M75,15 h10 v10 h-10 z" fill="#0f172a"/>
+            <path d="M10,70 h20 v20 h-20 z M15,75 h10 v10 h-10 z" fill="#0f172a"/>
+            <path d="M35,15 h5 v5 h-5 z M45,10 h15 v5 h-15 z M45,20 h5 v5 h-5 z M60,25 h5 v5 h-5 z" fill="#0f172a"/>
+            <path d="M10,35 h5 v5 h-5 z M20,40 h15 v5 h-15 z M25,50 h10 v10 h-10 z M15,60 h5 v5 h-5 z" fill="#0f172a"/>
+            <path d="M70,35 h5 v5 h-5 z M80,40 h10 v10 h-10 z M60,60 h10 v5 h-10 z M85,65 h5 v15 h-5 z" fill="#0f172a"/>
+            <path d="M35,70 h5 v5 h-5 z M45,75 h15 v5 h-15 z M50,85 h10 v5 h-10 z" fill="#0f172a"/>
+          </svg>
+          <span class="qr-instruction-label">Quét mã kiểm tra vé</span>
+
+          <div class="ticket-price-block">
+            <span class="tf-label">PHƯƠNG THỨC</span>
+            <span class="tf-value" style="font-weight:700;">{{ paymentMethod | uppercase }}</span>
+            <span class="tf-label" style="margin-top:10px;">TỔNG TIỀN</span>
+            <span class="tf-value s-total">{{ formatCurrency(getTotalPrice()) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket-footer-note">
+        <p>Chúc Quý khách thượng lộ bình an! Hotline: <strong>1900 989 867</strong></p>
+        <p>Hãng xe khách TXP Tân Xuân Phúc – Chất lượng làm nên Uy tín thương hiệu.</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card ticket-actions-card">
+      <button class="btn-confirm-cash" *ngIf="ticketStatus === 'Chờ xác nhận'" (click)="confirmCashCollected()">
+        <span class="material-icons">monetization_on</span>
+        XÁC NHẬN ĐÃ THU ĐỦ TIỀN MẶT
+      </button>
+
+      <div class="ticket-action-row">
+        <button class="action-btn" (click)="printTicket()">
+          <span class="material-icons icon-print">print</span>
+          In Hóa Đơn Vé
+        </button>
+        <button class="action-btn" (click)="exportPDF()">
+          <span class="material-icons icon-refund">picture_as_pdf</span>
+          Xuất File PDF
+        </button>
+        <button class="btn-search" (click)="resetBooking()">
+          <span class="material-icons">add_box</span>
+          Đặt tiếp vé mới
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>
