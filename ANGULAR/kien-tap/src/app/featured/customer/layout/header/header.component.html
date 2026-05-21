@@ -5,10 +5,10 @@
             <img src="asset/images/customer/logo_removebg.png" alt="TXP Logo" class="h-[120px] w-auto">
         </div>
         <nav class="hidden lg:flex items-center gap-gutter">
-            <a class="font-body-lg text-body-lg text-on-primary transition-all duration-300"
+            <a class="font-body-lg text-body-lg text-on-primary/80 hover:text-on-primary transition-colors transition-all duration-300"
                 routerLink="/home" routerLinkActive="border-b-2 border-on-primary pb-1">TRANG CHỦ</a>
             <a class="font-body-lg text-body-lg text-on-primary/80 hover:text-on-primary transition-colors transition-all duration-300"
-                href="#">TRA CỨU VÉ</a>
+                routerLink="/tra-cuu-ve" routerLinkActive="border-b-2 border-on-primary pb-1 text-on-primary">TRA CỨU VÉ</a>
             <a class="font-body-lg text-body-lg text-on-primary/80 hover:text-on-primary transition-colors transition-all duration-300"
                 routerLink="/tin-tuc" routerLinkActive="text-on-primary border-b-2 border-on-primary pb-1">TIN TỨC</a>
             <a class="font-body-lg text-body-lg text-on-primary/80 hover:text-on-primary transition-colors transition-all duration-300"
@@ -59,6 +59,10 @@
                     Đăng nhập / Đăng ký
                 </button>
             </ng-container>
+
+            <app-login-modal *ngIf="modalMode === 'login'" (close)="closeModal()" (loggedIn)="handleLoggedIn($event)"></app-login-modal>
+            <app-register-modal *ngIf="modalMode === 'register'" (close)="closeModal()" (registered)="handleRegistered($event)"></app-register-modal>
+            <app-forgot-password *ngIf="modalMode === 'forgot'" (close)="closeModal()" (loggedIn)="handleLoggedIn($event)"></app-forgot-password>
 
             <!-- Case: Logged In -->
             <div *ngIf="isLoggedIn" class="relative">
