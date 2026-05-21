@@ -32,7 +32,7 @@
               <input type="text" [(ngModel)]="searchVehicleName" placeholder="Tên xe" class="filter-input">
               <input type="text" [(ngModel)]="searchLicensePlate" placeholder="Biển số" class="filter-input">
 
-              <div style="width: 180px; display: inline-block;">
+              <div style="width: 220px; display: inline-block;">
                 <app-custom-select
                   [(value)]="selectedType"
                   [options]="typeFilterOptions"
@@ -40,9 +40,6 @@
                   (valueChange)="filterVehicles()"
                 ></app-custom-select>
               </div>
-
-              <!-- Input Số chỗ -->
-              <input type="number" [(ngModel)]="searchSeats" placeholder="Số chỗ" class="filter-input filter-seats-input" min="1" (keypress)="preventNegativeKey($event)" (input)="validateSeats()">
             </div>
           </div>
         </div>
@@ -228,50 +225,47 @@
           </div>
           <div class="form-group">
             <label>Loại xe <span class="required">*</span></label>
-            <app-custom-select
-              [(value)]="currentVehicle.type"
-              [options]="typeFormOptions"
-              placeholder="Chọn loại xe"
-              (valueChange)="onLayoutChange()"
-            ></app-custom-select>
+            <app-custom-select [(value)]="currentVehicle.type" [options]="typeFormOptions" placeholder="Chọn loại xe"
+              (valueChange)="onVehicleTypeChange()"></app-custom-select>
           </div>
           <div class="form-group">
             <label>Số tầng <span class="required">*</span></label>
-            <input type="number" [(ngModel)]="currentVehicle.floors" (ngModelChange)="onLayoutChange()" placeholder="Nhập số tầng" min="1" max="3">
+            <input type="number" [(ngModel)]="currentVehicle.floors" (ngModelChange)="onLayoutChange()"
+              placeholder="Nhập số tầng" min="1" max="3" readonly>
           </div>
           <div class="form-group">
             <label>Số dãy <span class="required">*</span></label>
-            <input type="number" [(ngModel)]="currentVehicle.rows" (ngModelChange)="onLayoutChange()" placeholder="Nhập số dãy" min="1" max="5">
+            <input type="number" [(ngModel)]="currentVehicle.rows" (ngModelChange)="onLayoutChange()"
+              placeholder="Nhập số dãy" min="1" max="5" readonly>
           </div>
           <div class="form-group">
             <label>Số ghế <span class="required">*</span></label>
-            <input type="number" [(ngModel)]="currentVehicle.seats" (ngModelChange)="onLayoutChange()" placeholder="Nhập số ghế" min="1" max="100">
+            <input type="number" [(ngModel)]="currentVehicle.seats" (ngModelChange)="onLayoutChange()"
+              placeholder="Nhập số ghế" min="1" max="100" readonly>
           </div>
         </div>
 
-        <!-- Seat Diagram -->
-        <div class="seat-diagram-wrapper" *ngIf="currentVehicle.type && floorLayouts && floorLayouts.length > 0">
-          <div class="floor-container" *ngFor="let floor of floorLayouts; let fIdx = index">
-            <div class="floor-header">{{ floor.floorName }}</div>
-            <div class="bus-layout">
-              <div class="driver-area" [style.visibility]="fIdx === 0 ? 'visible' : 'hidden'">
-                <span class="material-icons driver-icon">airline_seat_recline_extra</span>
-                <div class="driver-seat"></div>
-              </div>
-              <div class="dynamic-seat-grid">
-                <div class="seat-layout-row" *ngFor="let row of floor.rows" [class.back-row]="row.isBackRow">
-                  <ng-container *ngIf="!row.isBackRow">
-                    <div class="seat-room" *ngFor="let seat of row.seats">
-                      {{ seat }}
-                    </div>
-                    <!-- Fill any empty columns in standard rows with empty space -->
-                    <div class="seat-roomempty" *ngFor="let dummy of getDummyArray((currentVehicle.rows || 2) - row.seats.length)"></div>
-                  </ng-container>
-                  <ng-container *ngIf="row.isBackRow">
-                    <div class="seat-room" *ngFor="let seat of row.seats">
-                      {{ seat }}
-                    </div>
-                  </ng-container>
+        <div class="seat-diagram-section" *ngIf="currentVehicle.type && floorLayouts && floorLayouts.length > 0">
+          <div class="section-title-new">SƠ ĐỒ GHẾ</div>
+          <div class="seat-diagram-wrapper">
+            <div class="floor-container" *ngFor="let floor of floorLayouts; let fIdx = index">
+              <div class="floor-header" [class.limousine-header]="currentVehicle.type === 'Limousine 22 phòng'">{{
+                floor.floorName }}</div>
+              <div class="bus-layout limousine-style">
+                <div class="column-labels" *ngIf="currentVehicle.type === 'Limousine 22 phòng'">
+                  <span class="label-text">Dãy Trái</span>
+                  <span class="label-text">Dãy Phải</span>
+                </div>
+
+                <div class="dynamic-seat-grid">
+                  <div class="seat-layout-row" *ngFor="let row of floor.rows" [class.back-row]="row.isBackRow">
+                    <ng-container *ngIf="!row.isBackRow">
+                      <div class="seat-room-limousine readonly" *ngFor="let seat of row.seats" 
+                        [class.selected]="isSeatSelected(seat)">
+                        {{ seat }}
+                      </div>
+                    </ng-container>
+                  </div>
                 </div>
               </div>
             </div>
@@ -395,7 +389,7 @@
     <!-- Alert Modal -->
     <div class="modal-overlay" *ngIf="isAlertOpen" (click)="closeAlert()" style="z-index: 3000;">
       <div class="modal-content"
-        style="max-width: 400px; text-align: center; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);"
+        style="max-width: 400px; text-align: center; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden;"
         (click)="$event.stopPropagation()">
         <div style="margin-bottom: 20px;">
           <span class="material-icons" style="font-size: 56px; color: var(--secondary-color);">error_outline</span>

@@ -25,7 +25,6 @@ interface Schedule {
   assistantName: string;
   departureDate: string;
   departureTime: string;
-  price: number;
   status: 'active' | 'locked' | 'scheduled';
   createdAt: Date;
 
@@ -46,6 +45,8 @@ interface Schedule {
   pickupPoint: string;
   dropoffType: string;
   dropoffPoint: string;
+
+  basePrice?: number;
 
   // Selected Seats List
   selectedSeats?: string[];
@@ -174,15 +175,15 @@ export class QuanLyLichTrinhComponent implements OnInit {
   // Seat Groups State Variables
   activeSeatGroupIndex: number | null = null;
   openedColorMenuIndex: number | null = null;
-  
+
   // Custom Unit Dropdown States
   showOpenUnitDropdown = false;
   showCloseUnitDropdown = false;
   showHoldUnitDropdown = false;
-  
+
   presetColors: string[] = [
-    '#ef4444', '#f97316', '#f59e0b', '#10b981', 
-    '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', 
+    '#ef4444', '#f97316', '#f59e0b', '#10b981',
+    '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1',
     '#8b5cf6', '#ec4899', '#f43f5e', '#84cc16'
   ];
 
@@ -197,7 +198,6 @@ export class QuanLyLichTrinhComponent implements OnInit {
       assistantName: 'Phạm Thành Đạt',
       departureDate: '20/05/2026',
       departureTime: '08:30',
-      price: 650000,
       status: 'active',
       createdAt: new Date('2026-05-10'),
       autoRun: false,
@@ -214,7 +214,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupType: 'Không trung chuyển đón',
       pickupPoint: 'Bến xe Miền Đông',
       dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Quy Nhơn'
+      dropoffPoint: 'Bến xe Quy Nhơn',
+      basePrice: 300000
     },
     {
       id: 2,
@@ -226,7 +227,6 @@ export class QuanLyLichTrinhComponent implements OnInit {
       assistantName: 'Võ Minh Khang',
       departureDate: '21/05/2026',
       departureTime: '13:00',
-      price: 1720000,
       status: 'active',
       createdAt: new Date('2026-05-11'),
       autoRun: true,
@@ -243,7 +243,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupType: 'Có trung chuyển đón',
       pickupPoint: 'Văn phòng Q.1',
       dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Hà Nội'
+      dropoffPoint: 'Bến xe Hà Nội',
+      basePrice: 850000
     },
     {
       id: 3,
@@ -255,7 +256,6 @@ export class QuanLyLichTrinhComponent implements OnInit {
       assistantName: 'Nguyễn Quốc Huy',
       departureDate: '22/05/2026',
       departureTime: '19:45',
-      price: 430000,
       status: 'active',
       createdAt: new Date('2026-05-12'),
       autoRun: false,
@@ -272,7 +272,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupType: 'Không trung chuyển đón',
       pickupPoint: 'Bến xe Quy Nhơn',
       dropoffType: 'Có trung chuyển trả',
-      dropoffPoint: 'Bến xe Đà Lạt'
+      dropoffPoint: 'Bến xe Đà Lạt',
+      basePrice: 350000
     },
     {
       id: 4,
@@ -284,7 +285,6 @@ export class QuanLyLichTrinhComponent implements OnInit {
       assistantName: 'Phạm Thành Đạt',
       departureDate: '20/05/2026',
       departureTime: '06:00',
-      price: 120000,
       status: 'active',
       createdAt: new Date('2026-05-13'),
       autoRun: false,
@@ -301,7 +301,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupType: 'Không trung chuyển đón',
       pickupPoint: 'Bến xe An Sương',
       dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Vũng Tàu'
+      dropoffPoint: 'Bến xe Vũng Tàu',
+      basePrice: 180000
     },
     {
       id: 5,
@@ -313,7 +314,6 @@ export class QuanLyLichTrinhComponent implements OnInit {
       assistantName: 'Võ Minh Khang',
       departureDate: '23/05/2026',
       departureTime: '10:15',
-      price: 220000,
       status: 'scheduled',
       createdAt: new Date('2026-05-14'),
       autoRun: true,
@@ -330,7 +330,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupType: 'Có trung chuyển đón',
       pickupPoint: 'Văn phòng Bình Thạnh',
       dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Nha Trang'
+      dropoffPoint: 'Bến xe Nha Trang',
+      basePrice: 220000
     },
     {
       id: 6,
@@ -342,7 +343,6 @@ export class QuanLyLichTrinhComponent implements OnInit {
       assistantName: 'Nguyễn Quốc Huy',
       departureDate: '24/05/2026',
       departureTime: '15:30',
-      price: 210000,
       status: 'locked',
       createdAt: new Date('2026-05-15'),
       autoRun: false,
@@ -359,7 +359,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupType: 'Không trung chuyển đón',
       pickupPoint: 'Bến xe Miền Tây',
       dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Phan Thiết'
+      dropoffPoint: 'Bến xe Phan Thiết',
+      basePrice: 250000
     }
   ];
 
@@ -367,7 +368,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
   isModalOpen = false;
   isEditMode = false;
   currentSchedule: Partial<Schedule> = {};
-  
+
   // 2-Tab Modal Selection State
   activeModalTab: 'setup' | 'time' = 'setup';
 
@@ -399,7 +400,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
     private taiXeService: TaiXeService,
     private phuongTienService: PhuongTienService,
     private diemDonTraService: DiemDonTraService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadRoutes();
@@ -443,10 +444,10 @@ export class QuanLyLichTrinhComponent implements OnInit {
 
   filterSchedules() {
     let result = this.schedules.filter(s => {
-      const matchesTab = this.activeTab === 'all' || 
-                        (this.activeTab === 'active' && (s.status === 'active' || s.status === 'scheduled')) ||
-                        (this.activeTab === 'locked' && s.status === 'locked');
-      
+      const matchesTab = this.activeTab === 'all' ||
+        (this.activeTab === 'active' && (s.status === 'active' || s.status === 'scheduled')) ||
+        (this.activeTab === 'locked' && s.status === 'locked');
+
       const matchesRoute = !this.selectedRoute || s.routeName === this.selectedRoute;
 
       return matchesTab && matchesRoute;
@@ -474,7 +475,6 @@ export class QuanLyLichTrinhComponent implements OnInit {
       assistantName: '',
       departureDate: this.formatDate(new Date()),
       departureTime: '08:00',
-      price: undefined as any,
       createdAt: new Date(),
       autoRun: false,
       allowSeatSelection: true,
@@ -491,6 +491,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupPoint: '',
       dropoffType: 'Không trung chuyển trả',
       dropoffPoint: '',
+      basePrice: undefined,
       selectedSeats: [],
       seatGroups: []
     };
@@ -506,7 +507,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
   openEditModal(schedule: Schedule) {
     this.isEditMode = true;
     this.activeModalTab = 'setup';
-    this.currentSchedule = { 
+    this.currentSchedule = {
       ...schedule,
       selectedSeats: schedule.selectedSeats ? [...schedule.selectedSeats] : [],
       seatGroups: schedule.seatGroups ? JSON.parse(JSON.stringify(schedule.seatGroups)) : []
@@ -514,12 +515,12 @@ export class QuanLyLichTrinhComponent implements OnInit {
     this.generateSeatLayout();
     this.activeSeatGroupIndex = this.currentSchedule.seatGroups && this.currentSchedule.seatGroups.length > 0 ? 0 : null;
     this.openedColorMenuIndex = null;
-    
+
     // Parse departureTime
     const timeParts = (this.currentSchedule.departureTime || '08:00').split(':');
     this.departureHour = parseInt(timeParts[0], 10) || 0;
     this.departureMinute = parseInt(timeParts[1], 10) || 0;
-    
+
     this.calculateArrivalTime();
     this.isModalOpen = true;
   }
@@ -529,7 +530,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
     return selectedVeh ? (selectedVeh.rows || 2) : 2;
   }
 
-  toggleSeat(seat: string) {
+  toggleSeatInActiveGroup(seat: string) {
     if (!this.currentSchedule.seatGroups) {
       this.currentSchedule.seatGroups = [];
     }
@@ -555,7 +556,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
     }
   }
 
-  isSeatSelected(seat: string): boolean {
+  isSeatInAnyGroup(seat: string): boolean {
     if (this.currentSchedule.seatGroups && this.currentSchedule.seatGroups.length > 0) {
       return this.currentSchedule.seatGroups.some(g => g.seats.includes(seat));
     }
@@ -633,7 +634,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
     }
   }
 
-  getSeatColor(seat: string): string {
+  getSeatGroupColor(seat: string): string {
     if (!this.currentSchedule.seatGroups || this.currentSchedule.seatGroups.length === 0) {
       return '';
     }
@@ -672,6 +673,11 @@ export class QuanLyLichTrinhComponent implements OnInit {
 
   setModalTab(tab: 'setup' | 'time') {
     this.activeModalTab = tab;
+  }
+
+  isLimousine22(): boolean {
+    return this.currentSchedule.vehicleName === 'Limousine 22 phòng' ||
+      (this.currentSchedule.vehicleName?.startsWith('Limousine 22 phòng') ?? false);
   }
 
   onVehicleSelect() {
@@ -715,15 +721,15 @@ export class QuanLyLichTrinhComponent implements OnInit {
   updateDepartureTime() {
     let hour = Math.floor(Number(this.departureHour || 0));
     let minute = Math.floor(Number(this.departureMinute || 0));
-    
+
     if (hour < 0) hour = 0;
     if (hour > 23) hour = 23;
     if (minute < 0) minute = 0;
     if (minute > 59) minute = 59;
-    
+
     this.departureHour = hour;
     this.departureMinute = minute;
-    
+
     const hh = hour.toString().padStart(2, '0');
     const mm = minute.toString().padStart(2, '0');
     this.currentSchedule.departureTime = `${hh}:${mm}`;
@@ -745,7 +751,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
     if (!this.currentSchedule.departureTime || !this.currentSchedule.totalTime) {
       return;
     }
-    
+
     const depMatch = this.currentSchedule.departureTime.match(/^(\d{1,2})[:h](\d{1,2})p?$/) || this.currentSchedule.departureTime.match(/^(\d{1,2}):(\d{2})$/);
     if (!depMatch) return;
     const depHours = parseInt(depMatch[1], 10);
@@ -796,32 +802,38 @@ export class QuanLyLichTrinhComponent implements OnInit {
       this.floorLayouts = [];
       return;
     }
+
+    if (this.isLimousine22()) {
+      this.generateLimousine22Layout();
+      return;
+    }
+
     const floors = selectedVeh.floors || 2;
     const rows = selectedVeh.rows || 2;
     const seats = selectedVeh.seats || 22;
 
     this.floorLayouts = [];
-    
+
     const seatsPerFloor = Math.floor(seats / floors);
     const extraSeats = seats % floors;
-    
+
     const floorPrefixes = ['A', 'B', 'C', 'D', 'E'];
-    
+
     for (let f = 0; f < floors; f++) {
       const floorSeatsCount = seatsPerFloor + (f < extraSeats ? 1 : 0);
       const prefix = floorPrefixes[f] || String.fromCharCode(65 + f);
-      
+
       const floorSeatsList: string[] = [];
       for (let s = 1; s <= floorSeatsCount; s++) {
         floorSeatsList.push(`${prefix}${s}`);
       }
-      
+
       const layoutRows: any[] = [];
       let i = 0;
-      
+
       while (i < floorSeatsList.length) {
         const remaining = floorSeatsList.length - i;
-        
+
         if (remaining <= rows + 1 && remaining > 1 && rows > 1) {
           const backRowSeats = floorSeatsList.slice(i);
           layoutRows.push({
@@ -830,7 +842,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
           });
           break;
         }
-        
+
         const rowSeats = floorSeatsList.slice(i, i + rows);
         layoutRows.push({
           isBackRow: false,
@@ -838,13 +850,45 @@ export class QuanLyLichTrinhComponent implements OnInit {
         });
         i += rows;
       }
-      
+
       this.floorLayouts.push({
         floorNumber: f + 1,
         floorName: `Tầng ${f + 1}`,
         rows: layoutRows
       });
     }
+  }
+
+  generateLimousine22Layout() {
+    this.floorLayouts = [];
+
+    // Tầng 1 (Tầng Dưới) - 12 ghế: 1A, 2A, ..., 12A
+    const floor1Rows: any[] = [];
+    for (let r = 0; r < 6; r++) {
+      floor1Rows.push({
+        isBackRow: false,
+        seats: [`${r * 2 + 1}A`, `${r * 2 + 2}A`]
+      });
+    }
+    this.floorLayouts.push({
+      floorNumber: 1,
+      floorName: 'TẦNG DƯỚI',
+      rows: floor1Rows
+    });
+
+    // Tầng 2 (Tầng Trên) - 10 ghế: 1B, 2B, ..., 10B
+    const floor2Rows: any[] = [];
+    for (let r = 0; r < 5; r++) {
+      floor2Rows.push({
+        isBackRow: false,
+        seats: [`${r * 2 + 1}B`, `${r * 2 + 2}B`]
+      });
+    }
+    this.floorLayouts.push({
+      floorNumber: 2,
+      floorName: 'TẦNG TRÊN',
+      rows: floor2Rows
+    });
   }
 
   getDummyArray(count: number): number[] {
@@ -872,8 +916,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
       this.showAlert('Hãy nhập Giờ khởi hành!');
       return;
     }
-    if (this.currentSchedule.price === undefined || this.currentSchedule.price === null || this.currentSchedule.price < 0) {
-      this.showAlert('Hãy nhập Giá vé hợp lệ!');
+    if (this.currentSchedule.basePrice === undefined || this.currentSchedule.basePrice === null) {
+      this.showAlert('Hãy nhập Giá vé chung!');
       return;
     }
 
@@ -947,9 +991,9 @@ export class QuanLyLichTrinhComponent implements OnInit {
     const month = this.viewDate.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
+
     let startDay = firstDay === 0 ? 6 : firstDay - 1;
-    
+
     this.calendarDays = [];
     for (let i = 0; i < startDay; i++) {
       this.calendarDays.push(null);
@@ -996,47 +1040,42 @@ export class QuanLyLichTrinhComponent implements OnInit {
     return `${d}/${m}/${y}`;
   }
 
-  formatPrice(price: number): string {
-    return price ? (price.toLocaleString('vi-VN') + 'đ') : '';
-  }
-
-
   toggleOpenUnitDropdown(event: Event) {
     event.stopPropagation();
     this.showOpenUnitDropdown = !this.showOpenUnitDropdown;
     this.showCloseUnitDropdown = false;
     this.showHoldUnitDropdown = false;
   }
-  
+
   toggleCloseUnitDropdown(event: Event) {
     event.stopPropagation();
     this.showCloseUnitDropdown = !this.showCloseUnitDropdown;
     this.showOpenUnitDropdown = false;
     this.showHoldUnitDropdown = false;
   }
-  
+
   toggleHoldUnitDropdown(event: Event) {
     event.stopPropagation();
     this.showHoldUnitDropdown = !this.showHoldUnitDropdown;
     this.showOpenUnitDropdown = false;
     this.showCloseUnitDropdown = false;
   }
-  
+
   selectOpenUnit(unit: 'day' | 'hour' | 'minute') {
     this.currentSchedule.openUnit = unit;
     this.showOpenUnitDropdown = false;
   }
-  
+
   selectCloseUnit(unit: 'day' | 'hour' | 'minute') {
     this.currentSchedule.closeUnit = unit;
     this.showCloseUnitDropdown = false;
   }
-  
+
   selectHoldUnit(unit: 'day' | 'hour' | 'minute') {
     this.currentSchedule.holdUnit = unit;
     this.showHoldUnitDropdown = false;
   }
-  
+
   getUnitLabel(unit: 'day' | 'hour' | 'minute' | undefined): string {
     if (unit === 'day') return 'Ngày';
     if (unit === 'hour') return 'Giờ';

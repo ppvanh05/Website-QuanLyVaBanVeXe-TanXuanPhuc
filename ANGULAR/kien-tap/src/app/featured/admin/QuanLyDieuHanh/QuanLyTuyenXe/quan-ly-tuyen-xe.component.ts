@@ -15,22 +15,26 @@ export class QuanLyTuyenXeComponent implements OnInit {
   activeTab: 'all' | 'active' | 'locked' = 'all';
   searchStartPoint: string = '';
   searchEndPoint: string = '';
-  
+
   routes: Route[] = [];
   filteredRoutes: Route[] = [];
   isModalOpen = false;
   isEditMode = false;
   currentRoute: Partial<Route> = {};
 
+  // Alert State
+  isAlertOpen = false;
+  alertMessage = '';
+
   provinces = [
-    'An Giang', 'Bà Rịa – Vũng Tàu', 'Bắc Giang', 'Bắc Kạn', 'Bạc Liêu', 'Bắc Ninh', 'Bến Tre', 'Bình Định', 
-    'Bình Dương', 'Bình Phước', 'Bình Thuận', 'Cà Mau', 'Cần Thơ', 'Cao Bằng', 'Đà Nẵng', 'Đắk Lắk', 
-    'Đắk Nông', 'Điện Biên', 'Đồng Nai', 'Đồng Tháp', 'Gia Lai', 'Hà Giang', 'Hà Nam', 'Hà Nội', 
-    'Hà Tĩnh', 'Hải Dương', 'Hải Phòng', 'Hậu Giang', 'TP. Hồ Chí Minh', 'Hòa Bình', 'Hưng Yên', 
-    'Khánh Hòa', 'Kiên Giang', 'Kon Tum', 'Lai Châu', 'Lâm Đồng', 'Lạng Sơn', 'Lào Cai', 'Long An', 
-    'Nam Định', 'Nghệ An', 'Ninh Bình', 'Ninh Thuận', 'Phú Thọ', 'Phú Yên', 'Quảng Bình', 'Quảng Nam', 
-    'Quảng Ngãi', 'Quảng Ninh', 'Quảng Trị', 'Sóc Trăng', 'Sơn La', 'Tây Ninh', 'Thái Bình', 
-    'Thái Nguyên', 'Thanh Hóa', 'Thừa Thiên – Huế', 'Tiền Giang', 'Trà Vinh', 'Tuyên Quang', 
+    'An Giang', 'Bà Rịa – Vũng Tàu', 'Bắc Giang', 'Bắc Kạn', 'Bạc Liêu', 'Bắc Ninh', 'Bến Tre', 'Bình Định',
+    'Bình Dương', 'Bình Phước', 'Bình Thuận', 'Cà Mau', 'Cần Thơ', 'Cao Bằng', 'Đà Nẵng', 'Đắk Lắk',
+    'Đắk Nông', 'Điện Biên', 'Đồng Nai', 'Đồng Tháp', 'Gia Lai', 'Hà Giang', 'Hà Nam', 'Hà Nội',
+    'Hà Tĩnh', 'Hải Dương', 'Hải Phòng', 'Hậu Giang', 'TP. Hồ Chí Minh', 'Hòa Bình', 'Hưng Yên',
+    'Khánh Hòa', 'Kiên Giang', 'Kon Tum', 'Lai Châu', 'Lâm Đồng', 'Lạng Sơn', 'Lào Cai', 'Long An',
+    'Nam Định', 'Nghệ An', 'Ninh Bình', 'Ninh Thuận', 'Phú Thọ', 'Phú Yên', 'Quảng Bình', 'Quảng Nam',
+    'Quảng Ngãi', 'Quảng Ninh', 'Quảng Trị', 'Sóc Trăng', 'Sơn La', 'Tây Ninh', 'Thái Bình',
+    'Thái Nguyên', 'Thanh Hóa', 'Thừa Thiên – Huế', 'Tiền Giang', 'Trà Vinh', 'Tuyên Quang',
     'Vĩnh Long', 'Vĩnh Phúc', 'Yên Bái'
   ];
 
@@ -66,7 +70,7 @@ export class QuanLyTuyenXeComponent implements OnInit {
     this.activeDropdown = null;
   }
 
-  constructor(private tuyenXeService: TuyenXeService) {}
+  constructor(private tuyenXeService: TuyenXeService) { }
 
   ngOnInit() {
     this.routes = this.tuyenXeService.getRoutes();
@@ -80,13 +84,13 @@ export class QuanLyTuyenXeComponent implements OnInit {
 
   filterRoutes() {
     let result = this.routes.filter(route => {
-      const matchesTab = this.activeTab === 'all' || 
-                        (this.activeTab === 'active' && route.status === 'active') ||
-                        (this.activeTab === 'locked' && route.status === 'locked');
-      
+      const matchesTab = this.activeTab === 'all' ||
+        (this.activeTab === 'active' && route.status === 'active') ||
+        (this.activeTab === 'locked' && route.status === 'locked');
+
       const matchesStart = !this.searchStartPoint || route.startProvince === this.searchStartPoint;
       const matchesEnd = !this.searchEndPoint || route.endProvince === this.searchEndPoint;
-      
+
       return matchesTab && matchesStart && matchesEnd;
     });
 
@@ -151,7 +155,47 @@ export class QuanLyTuyenXeComponent implements OnInit {
     }
   }
 
+  showAlert(message: string) {
+    this.alertMessage = message;
+    this.isAlertOpen = true;
+  }
+
+  closeAlert() {
+    this.isAlertOpen = false;
+  }
+
   saveRoute() {
+    // Validation
+    if (!this.currentRoute.startPoint) {
+      this.showAlert('Hãy điền thông tin Điểm đầu!');
+      return;
+    }
+    if (!this.currentRoute.startProvince) {
+      this.showAlert('Hãy chọn Tỉnh/Thành phố cho Điểm đầu!');
+      return;
+    }
+    if (!this.currentRoute.endPoint) {
+      this.showAlert('Hãy điền thông tin Điểm cuối!');
+      return;
+    }
+    if (!this.currentRoute.endProvince) {
+      this.showAlert('Hãy chọn Tỉnh/Thành phố cho Điểm cuối!');
+      return;
+    }
+    if (!this.currentRoute.distance || this.currentRoute.distance <= 0) {
+      this.showAlert('Hãy điền thông tin Khoảng cách và phải lớn hơn 0!');
+      return;
+    }
+    if ((this.currentRoute.estimatedHours === undefined || this.currentRoute.estimatedHours === null) && 
+        (this.currentRoute.estimatedMinutes === undefined || this.currentRoute.estimatedMinutes === null)) {
+      this.showAlert('Hãy điền thông tin Thời gian di chuyển dự kiến!');
+      return;
+    }
+    if (this.currentRoute.estimatedHours === 0 && this.currentRoute.estimatedMinutes === 0) {
+      this.showAlert('Thời gian di chuyển dự kiến phải lớn hơn 0!');
+      return;
+    }
+
     if (this.isEditMode) {
       this.tuyenXeService.updateRoute(this.currentRoute.id!, this.currentRoute);
     } else {

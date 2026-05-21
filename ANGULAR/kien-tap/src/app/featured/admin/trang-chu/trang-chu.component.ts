@@ -74,10 +74,10 @@ export class TrangChuComponent {
   ];
 
   bookings: Booking[] = [
-    { id: 'TXP1245678', customer: 'Nguyễn Văn A', route: 'Bến xe Miền Đông – Bến xe Hà Nội', seat: 'A1, A2', time: '06:00', price: '1,720,000đ', status: 'Hoàn thành' },
-    { id: 'TXP1245679', customer: 'Trần Thị B', route: 'Bến xe Miền Đông – Bến xe Đà Nẵng', seat: 'B3', time: '08:30', price: '960,000đ', status: 'Đang chờ' },
-    { id: 'TXP1245680', customer: 'Lê Văn C', route: 'Bến xe Miền Đông – Bến xe Vinh', seat: 'A5, A6, A7', time: '10:00', price: '1,350,000đ', status: 'Hoàn thành' },
-    { id: 'TXP1245681', customer: 'Phạm Thị D', route: 'Bến xe Miền Đông – Bến xe Huế', seat: 'B10', time: '13:00', price: '1,050,000đ', status: 'Hoàn thành' }
+    { id: 'TXP1245678', customer: 'Nguyễn Văn A', route: 'Bến xe Miền Đông – Bến xe Hà Nội', seat: 'A1, A2', time: '06:00', price: 1720000, status: 'Hoàn thành' },
+    { id: 'TXP1245679', customer: 'Trần Thị B', route: 'Bến xe Miền Đông – Bến xe Đà Nẵng', seat: 'B3', time: '08:30', price: 960000, status: 'Đang chờ' },
+    { id: 'TXP1245680', customer: 'Lê Văn C', route: 'Bến xe Miền Đông – Bến xe Vinh', seat: 'A5, A6, A7', time: '10:00', price: 1350000, status: 'Hoàn thành' },
+    { id: 'TXP1245681', customer: 'Phạm Thị D', route: 'Bến xe Miền Đông – Bến xe Huế', seat: 'B10', time: '13:00', price: 1050000, status: 'Hoàn thành' }
   ];
 
   popularRoutes: PopularRoute[] = [
