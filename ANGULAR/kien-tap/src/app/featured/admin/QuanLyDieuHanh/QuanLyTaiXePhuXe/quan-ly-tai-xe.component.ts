@@ -5,7 +5,7 @@ import { TaiXeService } from '../tai-xe.service';
 import { CustomSelectComponent } from '../custom-select.component';
 
 export interface Driver {
-  id: number;
+  id: string | number;
   name: string;
   dob: string;
   phone: string;
@@ -246,13 +246,9 @@ export class QuanLyTaiXeComponent implements OnInit {
     }
 
     if (this.isEditMode) {
-      const index = this.drivers.findIndex(d => d.id === this.currentDriver.id);
-      if (index !== -1) {
-        this.drivers[index] = { ...this.currentDriver as Driver };
-      }
+      this.taiXeService.updateDriver(this.currentDriver.id!, this.currentDriver);
     } else {
-      const newId = Math.max(...this.drivers.map(d => d.id), 0) + 1;
-      this.drivers.unshift({ ...this.currentDriver, id: newId } as Driver);
+      this.taiXeService.addDriver(this.currentDriver as any);
     }
     
     this.filterDrivers();
@@ -269,12 +265,9 @@ export class QuanLyTaiXeComponent implements OnInit {
 
   deleteDriver() {
     if (confirm('Bạn có chắc chắn muốn xóa tài xế này không?')) {
-      const index = this.drivers.findIndex(d => d.id === this.currentDriver.id);
-      if (index !== -1) {
-        this.drivers.splice(index, 1);
-        this.filterDrivers();
-        this.closeModal();
-      }
+      this.taiXeService.deleteDriver(this.currentDriver.id!);
+      this.filterDrivers();
+      this.closeModal();
     }
   }
 

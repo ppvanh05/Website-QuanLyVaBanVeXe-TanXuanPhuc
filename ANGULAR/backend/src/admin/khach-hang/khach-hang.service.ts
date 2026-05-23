@@ -161,7 +161,6 @@ export class KhachHangService {
       where: { MaKhachHang: id },
       data: {
         TrangThaiTaiKhoan: 'DaKhoa',
-        LyDoKhoa: dto.LyDoKhoa,
       },
     });
 

@@ -12,7 +12,9 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'quan-ly-ve',
         children: [
-          { path: 'dat-ve-moi', loadComponent: () => import('../QuanLyVe/DatVeMoi/dat-ve-moi.component').then(m => m.DatVeMoiComponent) },
+          { path: 'dat-ve-moi', loadComponent: () => import('../QuanLyVe/DatVeMoi/tim-kiem-chuyen-xe1/tim-kiem-chuyen-xe').then(m => m.TimKiemChuyenXe) },
+          { path: 'dat-ve-moi/thong-tin-don-hang', loadComponent: () => import('../QuanLyVe/DatVeMoi/thong-tin-don-hang1/thong-tin-don-hang').then(m => m.ThongTinDonHang) },
+          { path: 'dat-ve-moi/thanh-toan', loadComponent: () => import('../QuanLyVe/DatVeMoi/thanh-toan1/thanh-toan').then(m => m.ThanhToan) },
           { path: 'danh-sach-ve', loadComponent: () => import('../QuanLyVe/DanhSachVe/danh-sach-ve.component').then(m => m.DanhSachVeComponent) },
           { path: 'hoan-tien', loadComponent: () => import('../trang-chu/trang-chu.component').then(m => m.TrangChuComponent) }
         ]
