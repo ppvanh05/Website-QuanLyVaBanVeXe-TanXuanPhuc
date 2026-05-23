@@ -1,6 +1,8 @@
 import { Component, OnInit, ElementRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChinhSachService } from '../../../core/services/chinh-sach.service';
+import { HttpClientModule } from '@angular/common/http';
 
 interface PolicyMilestone {
   hoursBeforeDeparture: number;
@@ -22,7 +24,7 @@ interface Policy {
 @Component({
   selector: 'app-quan-ly-chinh-sach',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './quan-ly-chinh-sach.component.html',
   styleUrls: ['./quan-ly-chinh-sach.component.css'],
   encapsulation: ViewEncapsulation.None
@@ -30,6 +32,8 @@ interface Policy {
 export class QuanLyChinhSachComponent implements OnInit {
   @ViewChild('editor') editorElement!: ElementRef;
   @ViewChild('imageInput') imageInputElement!: ElementRef;
+
+  isLoading: boolean = false;
 
   // Tabs: 'all' | 'active' | 'locked'
   activeTab: 'all' | 'active' | 'locked' = 'all';
@@ -106,9 +110,93 @@ export class QuanLyChinhSachComponent implements OnInit {
     message: ''
   };
 
+  constructor(private chinhSachService: ChinhSachService) {}
+
   ngOnInit() {
-    this.policies = this.generateMockPolicies();
-    this.filterPolicies();
+    this.loadPolicies();
+  }
+
+  loadPolicies() {
+    this.isLoading = true;
+    this.policies = [];
+    let csLoaded = false;
+    let csvLoaded = false;
+
+    const checkAndFilter = () => {
+      if (csLoaded && csvLoaded) {
+        this.isLoading = false;
+        this.filterPolicies();
+      }
+    };
+
+    // Load chính sách chung (bảo hiểm, thanh toán, khác)
+    this.chinhSachService.getAllChinhSach().subscribe({
+      next: (data) => {
+        const mapped: Policy[] = data.map((cs: any) => ({
+          id: cs.MaChinhSach_ND,
+          title: cs.TieuDe,
+          type: this.mapLoaiChinhSach(cs.LoaiChinhSach),
+          typeLabel: cs.LoaiChinhSach,
+          content: cs.NoiDung,
+          effectiveDate: typeof cs.NgayApDung === 'string'
+            ? cs.NgayApDung.slice(0, 10)
+            : new Date(cs.NgayApDung).toISOString().slice(0, 10),
+          status: cs.TrangThai as 'DangApDung' | 'VoHieuHoa',
+          adminId: cs.MaQuanTriVien,
+        }));
+        this.policies = [...this.policies, ...mapped];
+        csLoaded = true;
+        checkAndFilter();
+      },
+      error: (err) => {
+        console.error('Lỗi load CHINH_SACH:', err);
+        this.showNotification('error', 'Không thể tải danh sách chính sách chung!', 'Lỗi kết nối');
+        csLoaded = true;
+        checkAndFilter();
+      }
+    });
+
+    // Load chính sách hủy vé
+    this.chinhSachService.getAllChinhSachHuyVe().subscribe({
+      next: (data) => {
+        const mapped: Policy[] = data.map((cs: any) => ({
+          id: cs.MaChinhSach,
+          title: cs.TenChinhSach,
+          type: 'cancellation' as const,
+          typeLabel: 'Chính sách hủy vé',
+          content: cs.MoTa ?? '',
+          effectiveDate: typeof cs.NgayApDung === 'string'
+            ? cs.NgayApDung.slice(0, 10)
+            : new Date(cs.NgayApDung).toISOString().slice(0, 10),
+          status: cs.TrangThai as 'DangApDung' | 'VoHieuHoa',
+          milestones: [{
+            hoursBeforeDeparture: cs.GioiHanGioTruocKhoiHanh,
+            refundPercentage: Math.round(cs.TyLePhiHuy * 100),
+          }],
+        }));
+        this.policies = [...this.policies, ...mapped];
+        csvLoaded = true;
+        checkAndFilter();
+      },
+      error: (err) => {
+        console.error('Lỗi load CHINH_SACH_HUY_VE:', err);
+        this.showNotification('error', 'Không thể tải danh sách chính sách hủy vé!', 'Lỗi kết nối');
+        csvLoaded = true;
+        checkAndFilter();
+      }
+    });
+  }
+
+  private mapLoaiChinhSach(loai: string): 'insurance' | 'payment' | 'cancellation' | 'other' {
+    const map: Record<string, 'insurance' | 'payment' | 'cancellation' | 'other'> = {
+      'Chính sách bảo hiểm': 'insurance',
+      'insurance': 'insurance',
+      'Chính sách thanh toán': 'payment',
+      'payment': 'payment',
+      'Chính sách hủy vé': 'cancellation',
+      'cancellation': 'cancellation',
+    };
+    return map[loai] ?? 'other';
   }
 
   getEmptyFormModel() {
@@ -715,9 +803,8 @@ export class QuanLyChinhSachComponent implements OnInit {
     }
   }
 
-  // Save changes
+  // Save changes - gọi API backend
   savePolicy() {
-    // Cập nhật nội dung editor
     if (this.editorElement) {
       this.formModel.content = this.editorElement.nativeElement.innerHTML;
     }
@@ -732,7 +819,6 @@ export class QuanLyChinhSachComponent implements OnInit {
       return;
     }
 
-    // Kiểm tra tỷ lệ hoàn phí hợp lệ
     if (this.formModel.type === 'cancellation') {
       for (const ms of this.formModel.milestones) {
         if (ms.hoursBeforeDeparture <= 0) {
@@ -746,36 +832,67 @@ export class QuanLyChinhSachComponent implements OnInit {
       }
     }
 
-    if (this.isEditing && this.selectedPolicy) {
-      // Cập nhật chính sách đã có
-      const index = this.policies.findIndex(p => p.id === this.selectedPolicy!.id);
-      if (index !== -1) {
-        this.policies[index] = {
-          ...this.policies[index],
-          title: this.formModel.title,
-          content: this.formModel.content,
-          effectiveDate: this.formModel.effectiveDate,
-          status: this.formModel.status,
-          milestones: this.formModel.type === 'cancellation' ? [...this.formModel.milestones] : undefined
-        };
+    this.isLoading = true;
+
+    if (this.formModel.type === 'cancellation') {
+      // Xử lý bảng CHINH_SACH_HUY_VE
+      const ms = this.formModel.milestones[0]; // Mỗi bản ghi HuyVe là 1 mốc
+      if (this.isEditing && this.selectedPolicy) {
+        this.chinhSachService.updateChinhSachHuyVe(this.formModel.id, {
+          TenChinhSach: this.formModel.title,
+          GioiHanGioTruocKhoiHanh: ms?.hoursBeforeDeparture ?? 0,
+          TyLePhiHuy: (ms?.refundPercentage ?? 0) / 100,
+          MoTa: this.formModel.content,
+          TrangThai: this.formModel.status,
+          NgayApDung: this.formModel.effectiveDate,
+        }).subscribe({
+          next: () => { this.isLoading = false; this.loadPolicies(); this.closeModal(); this.showNotification('success', 'Đã cập nhật chính sách hủy vé thành công!', 'Thành công'); },
+          error: (err) => { console.error(err); this.isLoading = false; this.showNotification('error', 'Lỗi cập nhật chính sách hủy vé!', 'Lỗi'); }
+        });
+      } else {
+        this.chinhSachService.createChinhSachHuyVe({
+          MaChinhSach: this.formModel.id,
+          TenChinhSach: this.formModel.title,
+          GioiHanGioTruocKhoiHanh: ms?.hoursBeforeDeparture ?? 0,
+          TyLePhiHuy: (ms?.refundPercentage ?? 0) / 100,
+          MoTa: this.formModel.content,
+          TrangThai: this.formModel.status,
+          NgayApDung: this.formModel.effectiveDate,
+        }).subscribe({
+          next: () => { this.isLoading = false; this.loadPolicies(); this.closeModal(); this.showNotification('success', 'Đã thêm chính sách hủy vé thành công!', 'Thành công'); },
+          error: (err) => { console.error(err); this.isLoading = false; this.showNotification('error', 'Lỗi thêm chính sách hủy vé!', 'Lỗi'); }
+        });
       }
     } else {
-      // Thêm mới chính sách
-      const newPolicy: Policy = {
-        id: this.formModel.id,
-        title: this.formModel.title,
-        type: this.formModel.type,
-        typeLabel: this.formModel.typeLabel,
-        content: this.formModel.content,
-        effectiveDate: this.formModel.effectiveDate,
-        status: this.formModel.status,
-        milestones: this.formModel.type === 'cancellation' ? [...this.formModel.milestones] : undefined
-      };
-      this.policies.unshift(newPolicy);
+      // Xử lý bảng CHINH_SACH
+      const typeLabel =
+        this.formModel.type === 'insurance' ? 'Chính sách bảo hiểm' :
+        this.formModel.type === 'payment' ? 'Chính sách thanh toán' : 'Chính sách khác';
+      if (this.isEditing && this.selectedPolicy) {
+        this.chinhSachService.updateChinhSach(this.formModel.id, {
+          TieuDe: this.formModel.title,
+          LoaiChinhSach: typeLabel,
+          NoiDung: this.formModel.content,
+          NgayApDung: this.formModel.effectiveDate,
+          TrangThai: this.formModel.status,
+        }).subscribe({
+          next: () => { this.isLoading = false; this.loadPolicies(); this.closeModal(); this.showNotification('success', 'Đã cập nhật chính sách thành công!', 'Thành công'); },
+          error: (err) => { console.error(err); this.isLoading = false; this.showNotification('error', 'Lỗi cập nhật chính sách!', 'Lỗi'); }
+        });
+      } else {
+        this.chinhSachService.createChinhSach({
+          MaChinhSach_ND: this.formModel.id,
+          TieuDe: this.formModel.title,
+          LoaiChinhSach: typeLabel,
+          NoiDung: this.formModel.content,
+          NgayApDung: this.formModel.effectiveDate,
+          TrangThai: this.formModel.status,
+          MaQuanTriVien: 'QTV001', // TODO: lấy từ auth service
+        }).subscribe({
+          next: () => { this.isLoading = false; this.loadPolicies(); this.closeModal(); this.showNotification('success', 'Đã thêm chính sách thành công!', 'Thành công'); },
+          error: (err) => { console.error(err); this.isLoading = false; this.showNotification('error', 'Lỗi thêm chính sách!', 'Lỗi'); }
+        });
+      }
     }
-
-    this.filterPolicies();
-    this.closeModal();
-    this.showNotification('success', 'Đã lưu thông tin chính sách thành công!', 'Thành công');
   }
 }
