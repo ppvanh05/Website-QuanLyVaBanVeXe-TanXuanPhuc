@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { BaoCaoService } from '../../../../core/services/bao-cao.service';
 
 interface CustomerReportItem {
   maKhachHang: string;
@@ -26,7 +27,6 @@ export class BaoCaoKhachHangComponent implements OnInit {
     toDate: ''
   };
 
-  allCustomers: CustomerReportItem[] = [];
   filteredCustomers: CustomerReportItem[] = [];
   isReportViewed = true;
 
@@ -38,53 +38,23 @@ export class BaoCaoKhachHangComponent implements OnInit {
     totalVeDat: 0
   };
 
-  constructor() {}
+  constructor(private baoCaoService: BaoCaoService) {}
 
   ngOnInit() {
-    this.allCustomers = this.generateMockCustomers();
     this.onViewReport();
-  }
-
-  private generateMockCustomers(): CustomerReportItem[] {
-    return [
-      { maKhachHang: 'KH001', tenKhachHang: 'Nguyễn Văn An', sdt: '0912445566', email: 'an.nv@gmail.com', ngayDangKy: '2026-01-15', tongVeDat: 12, trangThai: 'Đang hoạt động' },
-      { maKhachHang: 'KH002', tenKhachHang: 'Trần Thị Bích', sdt: '0988776655', email: 'bich.tt@yahoo.com', ngayDangKy: '2026-02-10', tongVeDat: 8, trangThai: 'Đang hoạt động' },
-      { maKhachHang: 'KH003', tenKhachHang: 'Lê Văn Cường', sdt: '0903112233', email: 'cuong.lv@hotmail.com', ngayDangKy: '2026-03-01', tongVeDat: 15, trangThai: 'Đang hoạt động' },
-      { maKhachHang: 'KH004', tenKhachHang: 'Phạm Minh Đạo', sdt: '0976334455', email: 'dao.pm@outlook.com', ngayDangKy: '2026-03-20', tongVeDat: 3, trangThai: 'Đang hoạt động' },
-      { maKhachHang: 'KH005', tenKhachHang: 'Hoàng Thị Dung', sdt: '0934889900', email: 'dunghoang99@gmail.com', ngayDangKy: '2026-04-05', tongVeDat: 9, trangThai: 'Đang hoạt động' },
-      { maKhachHang: 'KH006', tenKhachHang: 'Nguyễn Thị Phương', sdt: '0919223344', email: 'phuongnt@gmail.com', ngayDangKy: '2026-04-18', tongVeDat: 21, trangThai: 'Đang hoạt động' },
-      { maKhachHang: 'KH007', tenKhachHang: 'Lý Quốc Bảo', sdt: '0983112244', email: 'baolq.txp@gmail.com', ngayDangKy: '2026-04-22', tongVeDat: 5, trangThai: 'Đã khóa' },
-      { maKhachHang: 'KH008', tenKhachHang: 'Vũ Thanh Hằng', sdt: '0967445522', email: 'hangvt.hanoi@gmail.com', ngayDangKy: '2026-05-02', tongVeDat: 2, trangThai: 'Đang hoạt động' }
-    ];
   }
 
   onViewReport() {
     this.isReportViewed = true;
-    this.filteredCustomers = this.allCustomers.filter(item => {
-      // Search term
-      if (this.filters.searchTerm) {
-        const query = this.filters.searchTerm.toLowerCase();
-        const matchName = item.tenKhachHang.toLowerCase().includes(query);
-        const matchPhone = item.sdt.includes(query);
-        const matchEmail = item.email.toLowerCase().includes(query);
-        const matchCode = item.maKhachHang.toLowerCase().includes(query);
-        if (!matchName && !matchPhone && !matchEmail && !matchCode) return false;
+    this.baoCaoService.getBaoCaoKhachHang(this.filters).subscribe({
+      next: (data: any[]) => {
+        this.filteredCustomers = data as CustomerReportItem[];
+        this.calculateStats();
+      },
+      error: (err: any) => {
+        console.error('Error fetching khach hang report:', err);
       }
-
-      // Status
-      if (this.filters.status !== 'Tất cả' && item.trangThai !== this.filters.status) return false;
-
-      // Date Range (Registration Date)
-      if (this.filters.fromDate && item.ngayDangKy < this.filters.fromDate) return false;
-      if (this.filters.toDate && item.ngayDangKy > this.filters.toDate) return false;
-
-      return true;
     });
-
-    // Sort by ticket bookings count descending so top buyers are at the top
-    this.filteredCustomers.sort((a, b) => b.tongVeDat - a.tongVeDat);
-
-    this.calculateStats();
   }
 
   private calculateStats() {

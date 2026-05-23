@@ -47,27 +47,34 @@
     </div>
 
     <!-- Search and Filters bar -->
-    <div class="search-filter-bar" style="margin-top: 15px; margin-bottom: 20px;">
-      <div class="search-input-wrapper">
-        <span class="material-icons search-icon">search</span>
-        <input 
-          type="text" 
-          [(ngModel)]="searchQuery" 
-          (input)="search()"
-          placeholder="Tìm theo Mã KH, Họ tên, SĐT, Email..." 
-          class="form-control-search" />
-      </div>
+    <div class="search-filter-bar" style="margin-top: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; gap: 12px; align-items: center; flex: 1; flex-wrap: wrap;">
+        <div class="search-input-wrapper">
+          <span class="material-icons search-icon">search</span>
+          <input 
+            type="text" 
+            [(ngModel)]="searchQuery" 
+            (input)="search()"
+            placeholder="Tìm theo Mã KH, Họ tên, SĐT, Email..." 
+            class="form-control-search" />
+        </div>
 
-      <div class="select-wrapper">
-        <select class="form-select-type" (change)="filterCustomers()" [(ngModel)]="filterGender">
-          <option value="Tất cả giới tính">Tất cả giới tính</option>
-          <option value="Nam">Nam</option>
-          <option value="Nữ">Nữ</option>
-          <option value="Khác">Khác</option>
-        </select>
-      </div>
+        <div class="select-wrapper">
+          <select class="form-select-type" (change)="filterCustomers()" [(ngModel)]="filterGender">
+            <option value="Tất cả giới tính">Tất cả giới tính</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+            <option value="Khác">Khác</option>
+          </select>
+        </div>
 
-      <button class="btn-search-outline" (click)="search()">Tìm kiếm</button>
+        <button class="btn-search-outline" (click)="search()">Tìm kiếm</button>
+      </div>
+      
+      <button class="btn-add-customer" (click)="openAddModal()" style="background-color: #009ba1; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.2s;">
+        <span class="material-icons">person_add</span>
+        Thêm tài khoản mới
+      </button>
     </div>
 
     <!-- Customer Table -->
@@ -213,15 +220,15 @@
   <div class="modal-content customer-detail-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="title-left">
-        <div class="header-avatar">
+        <div class="header-avatar" *ngIf="isEditMode">
           <img *ngIf="selectedCustomer.anhDaiDien" [src]="selectedCustomer.anhDaiDien" alt="avatar" />
           <div *ngIf="!selectedCustomer.anhDaiDien" class="avatar-fallback">{{ getInitials(selectedCustomer.hoTenKhachHang) }}</div>
         </div>
         <div>
-          <h3>{{ selectedCustomer.hoTenKhachHang }}</h3>
+          <h3>{{ isEditMode ? selectedCustomer.hoTenKhachHang : 'Đăng ký tài khoản khách hàng mới' }}</h3>
           <span class="sub-text">Mã khách hàng: {{ selectedCustomer.maKhachHang }}</span>
         </div>
-        <span class="status-badge" [class.active]="selectedCustomer.trangThaiTaiKhoan === 'HoatDong'" [class.locked]="selectedCustomer.trangThaiTaiKhoan === 'DaKhoa'">
+        <span class="status-badge" *ngIf="isEditMode" [class.active]="selectedCustomer.trangThaiTaiKhoan === 'HoatDong'" [class.locked]="selectedCustomer.trangThaiTaiKhoan === 'DaKhoa'">
           <span class="status-bullet" [class.active]="selectedCustomer.trangThaiTaiKhoan === 'HoatDong'" [class.locked]="selectedCustomer.trangThaiTaiKhoan === 'DaKhoa'"></span>
           {{ selectedCustomer.trangThaiTaiKhoan === 'HoatDong' ? 'Hoạt động' : 'Đã khóa' }}
         </span>
@@ -234,7 +241,7 @@
     <!-- Layout Split -->
     <div class="modal-body-split">
       <!-- Left sidebar navigation tabs inside detail popup -->
-      <div class="detail-sidebar">
+      <div class="detail-sidebar" *ngIf="isEditMode">
         <button class="sidebar-tab-btn" [class.active]="detailTabActive === 'info'" (click)="setDetailTab('info')">
           <span class="material-icons">person</span> Thông tin tài khoản
         </button>
@@ -244,7 +251,7 @@
         <button class="sidebar-tab-btn" [class.active]="detailTabActive === 'logs'" (click)="setDetailTab('logs')">
           <span class="material-icons">history</span> Nhật ký hoạt động
         </button>
-
+ 
         <div class="sidebar-footer-stats">
           <div class="stat-item">
             <span class="stat-label">Ngày đăng ký</span>
@@ -256,12 +263,12 @@
           </div>
         </div>
       </div>
-
+ 
       <!-- Right Content Pane -->
-      <div class="detail-content-pane">
+      <div class="detail-content-pane" [style.width]="isEditMode ? 'calc(100% - 240px)' : '100%'">
         <!-- Sub-tab 1: Account Info & Editing -->
         <div *ngIf="detailTabActive === 'info' && editedCustomer" class="tab-pane-content">
-          <h4 class="section-title">Cập nhật hồ sơ khách hàng</h4>
+          <h4 class="section-title">{{ isEditMode ? 'Cập nhật hồ sơ khách hàng' : 'Đăng ký tài khoản khách hàng mới' }}</h4>
           
           <div class="form-grid">
             <div class="form-group">
@@ -290,7 +297,7 @@
             </div>
 
             <div class="form-group">
-              <label>Địa chỉ Email</label>
+              <label class="required-field">Địa chỉ Email</label>
               <input 
                 type="email" 
                 [(ngModel)]="editedCustomer.email" 
@@ -309,7 +316,7 @@
             </div>
 
             <div class="form-group">
-              <label>Ngày sinh</label>
+              <label class="required-field">Ngày sinh</label>
               <input 
                 type="date" 
                 [(ngModel)]="editedCustomer.ngaySinh" 
@@ -320,7 +327,7 @@
           </div>
 
           <!-- Lock status details display -->
-          <div class="lock-details-box" *ngIf="selectedCustomer.trangThaiTaiKhoan === 'DaKhoa'">
+          <div class="lock-details-box" *ngIf="isEditMode && selectedCustomer.trangThaiTaiKhoan === 'DaKhoa'">
             <div class="lock-details-header">
               <span class="material-icons">info</span>
               <strong>Thông tin chi tiết khóa tài khoản</strong>
@@ -330,9 +337,9 @@
               <p><strong>Lý do khóa:</strong> <span class="text-danger">{{ selectedCustomer.lyDoKhoa }}</span></p>
             </div>
           </div>
-
+ 
           <!-- Account lock options -->
-          <div class="account-actions-box">
+          <div class="account-actions-box" *ngIf="isEditMode">
             <h5 class="box-title">Trạng thái bảo mật tài khoản</h5>
             <div class="box-actions-row">
               <div *ngIf="selectedCustomer.trangThaiTaiKhoan === 'HoatDong'">
@@ -396,9 +403,9 @@
 
           <div class="logs-timeline">
             <div class="timeline-item" *ngFor="let log of customerLogs">
-              <div class="timeline-badge" [class.blue]="log.loaiThaoTac === 'Đăng nhập'" [class.green]="log.loaiThaoTac === 'Đặt vé thành công'" [class.orange]="log.loaiThaoTac === 'Thay đổi thông tin' || log.loaiThaoTac === 'Cập nhật thông tin'" [class.red]="log.loaiThaoTac === 'Khóa tài khoản'">
+              <div class="timeline-badge" [class.blue]="log.loaiThaoTac === 'Đăng nhập'" [class.green]="log.loaiThaoTac === 'Đặt vé thành công'" [class.orange]="log.loaiThaoTac === 'Thay đổi thông tin' || log.loaiThaoTac === 'Cập nhật thông tin' || log.loaiThaoTac === 'Cập nhật thông tin cá nhân'" [class.red]="log.loaiThaoTac === 'Khóa tài khoản' || log.loaiThaoTac === 'Quản lý tài khoản'">
                 <span class="material-icons">
-                  {{ log.loaiThaoTac === 'Đăng nhập' ? 'login' : (log.loaiThaoTac === 'Đặt vé thành công' ? 'confirmation_number' : (log.loaiThaoTac === 'Khóa tài khoản' ? 'lock' : 'edit')) }}
+                  {{ log.loaiThaoTac === 'Đăng nhập' ? 'login' : (log.loaiThaoTac === 'Đặt vé thành công' ? 'confirmation_number' : (log.loaiThaoTac === 'Khóa tài khoản' || log.loaiThaoTac === 'Quản lý tài khoản' ? 'lock' : 'edit')) }}
                 </span>
               </div>
               <div class="timeline-content">
@@ -425,8 +432,8 @@
     <div class="modal-footer-sticky" *ngIf="detailTabActive === 'info'">
       <div class="footer-actions-right">
         <button class="btn-secondary" (click)="closeDetailModal()">Đóng cửa sổ</button>
-        <button class="btn-success" (click)="updateCustomer()">
-          <span class="material-icons">save</span> Lưu thay đổi
+        <button class="btn-success" (click)="saveCustomer()">
+          <span class="material-icons">save</span> {{ isEditMode ? 'Lưu thay đổi' : 'Tạo tài khoản' }}
         </button>
       </div>
     </div>

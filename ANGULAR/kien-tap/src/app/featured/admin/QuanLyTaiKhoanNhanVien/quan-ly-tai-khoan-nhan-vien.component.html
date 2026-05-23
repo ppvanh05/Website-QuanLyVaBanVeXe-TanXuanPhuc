@@ -46,10 +46,13 @@
       </button>
     </div>
 
-    <!-- Green primary add button -->
-    <div class="actions-header">
+    <!-- Green primary add button and Export button -->
+    <div class="actions-header" style="display: flex; gap: 12px;">
       <button class="btn-add-account" (click)="openAddModal()">
         <span class="material-icons">add</span> Thêm tài khoản mới
+      </button>
+      <button class="btn-export-report" (click)="onExportExcel()" style="background-color: white; border: 1px solid #cbd5e0; color: #4a5568; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+        <span class="material-icons" style="font-size: 18px;">download</span> Xuất báo cáo
       </button>
     </div>
 
@@ -95,7 +98,7 @@
           <tr *ngFor="let emp of getPagedEmployees()">
             <td>
               <div class="id-wrapper">
-                <span class="status-bullet" [class.active]="emp.trangThai === 'HoatDong'" [class.locked]="emp.trangThai === 'VoHieuHoa'"></span>
+                <span class="status-bullet" [class.active]="emp.trangThai === 'HoatDong'" [class.locked]="emp.trangThai === 'DaKhoa'"></span>
                 {{ emp.id }}
               </div>
             </td>
@@ -174,9 +177,9 @@
             *ngIf="isEditMode"
             class="status-badge" 
             [class.active]="formModel.trangThai === 'HoatDong'" 
-            [class.locked]="formModel.trangThai === 'VoHieuHoa'">
+            [class.locked]="formModel.trangThai === 'DaKhoa'">
             <span class="material-icons">{{ formModel.trangThai === 'HoatDong' ? 'check_circle' : 'cancel' }}</span>
-            {{ formModel.trangThai === 'HoatDong' ? 'Đang hoạt động' : 'Vô hiệu hóa' }}
+            {{ formModel.trangThai === 'HoatDong' ? 'Đang hoạt động' : 'Đã khóa' }}
           </span>
         </div>
         <button class="btn-close" (click)="closeModal()">
@@ -211,16 +214,19 @@
                 type="text" 
                 [(ngModel)]="formModel.tenTruyCap" 
                 [disabled]="isEditMode" 
+                [class.has-error]="formErrors['tenTruyCap']"
+                (input)="validateField('tenTruyCap')"
                 placeholder="Nhập tên truy cập..." 
                 class="form-control" />
+              <span class="error-msg" *ngIf="formErrors['tenTruyCap']">{{ formErrors['tenTruyCap'] }}</span>
             </div>
 
             <!-- Lock Mode status if Edit -->
             <div class="form-group" *ngIf="isEditMode">
               <label>Trạng thái hoạt động</label>
-              <div class="status-indicator-box" [class.locked]="formModel.trangThai === 'VoHieuHoa'">
+              <div class="status-indicator-box" [class.locked]="formModel.trangThai === 'DaKhoa'">
                 <span class="material-icons">{{ formModel.trangThai === 'HoatDong' ? 'verified' : 'block' }}</span>
-                <strong>{{ formModel.trangThai === 'HoatDong' ? 'ĐANG HOẠT ĐỘNG' : 'VÔ HIỆU HÓA' }}</strong>
+                <strong>{{ formModel.trangThai === 'HoatDong' ? 'ĐANG HOẠT ĐỘNG' : 'ĐÃ KHÓA' }}</strong>
               </div>
             </div>
           </div>
@@ -244,12 +250,15 @@
                 <input 
                   [type]="showPasswordText ? 'text' : 'password'" 
                   [(ngModel)]="formModel.matKhau" 
+                  [class.has-error]="formErrors['matKhau']"
+                  (input)="validateField('matKhau')"
                   placeholder="Nhập mật khẩu..." 
                   class="form-control" />
                 <button class="btn-toggle-eye" (click)="showPasswordText = !showPasswordText">
                   <span class="material-icons">{{ showPasswordText ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
+              <span class="error-msg" *ngIf="formErrors['matKhau']">{{ formErrors['matKhau'] }}</span>
             </div>
 
             <div class="form-group password-group" *ngIf="!isEditMode">
@@ -258,12 +267,15 @@
                 <input 
                   [type]="showConfirmPasswordText ? 'text' : 'password'" 
                   [(ngModel)]="confirmPassword" 
+                  [class.has-error]="formErrors['confirmPassword']"
+                  (input)="validateField('confirmPassword')"
                   placeholder="Nhập lại mật khẩu..." 
                   class="form-control" />
                 <button class="btn-toggle-eye" (click)="showConfirmPasswordText = !showConfirmPasswordText">
                   <span class="material-icons">{{ showConfirmPasswordText ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
+              <span class="error-msg" *ngIf="formErrors['confirmPassword']">{{ formErrors['confirmPassword'] }}</span>
             </div>
           </div>
 
@@ -276,8 +288,11 @@
               <input 
                 type="text" 
                 [(ngModel)]="formModel.hoVaTenDem" 
+                [class.has-error]="formErrors['hoVaTenDem']"
+                (input)="validateField('hoVaTenDem')"
                 placeholder="Ví dụ: Nguyễn Văn" 
                 class="form-control" />
+              <span class="error-msg" *ngIf="formErrors['hoVaTenDem']">{{ formErrors['hoVaTenDem'] }}</span>
             </div>
             
             <div class="form-group">
@@ -285,8 +300,11 @@
               <input 
                 type="text" 
                 [(ngModel)]="formModel.ten" 
+                [class.has-error]="formErrors['ten']"
+                (input)="validateField('ten')"
                 placeholder="Ví dụ: A" 
                 class="form-control" />
+              <span class="error-msg" *ngIf="formErrors['ten']">{{ formErrors['ten'] }}</span>
             </div>
           </div>
 
@@ -296,8 +314,11 @@
             <input 
               type="text" 
               [(ngModel)]="formModel.tenHienThi" 
+              [class.has-error]="formErrors['tenHienThi']"
+              (input)="validateField('tenHienThi')"
               placeholder="Ví dụ: Nguyễn Văn A" 
               class="form-control" />
+            <span class="error-msg" *ngIf="formErrors['tenHienThi']">{{ formErrors['tenHienThi'] }}</span>
           </div>
 
           <!-- Default Role Dropdown Selection (Bidirectionally synced with permissions!) -->
@@ -511,8 +532,11 @@
               <input 
                 type="tel" 
                 [(ngModel)]="formModel.soDienThoai" 
+                [class.has-error]="formErrors['soDienThoai']"
+                (input)="validateField('soDienThoai')"
                 placeholder="Ví dụ: 0987xxxxxx" 
                 class="form-control" />
+              <span class="error-msg" *ngIf="formErrors['soDienThoai']">{{ formErrors['soDienThoai'] }}</span>
             </div>
 
             <div class="form-group">
@@ -531,8 +555,11 @@
             <input 
               type="email" 
               [(ngModel)]="formModel.email" 
+              [class.has-error]="formErrors['email']"
+              (input)="validateField('email')"
               placeholder="example@txpbus.vn" 
               class="form-control" />
+            <span class="error-msg" *ngIf="formErrors['email']">{{ formErrors['email'] }}</span>
           </div>
 
           <!-- Home Address -->
@@ -556,7 +583,7 @@
           <button 
             class="btn-status-toggle" 
             [class.lock-mode]="formModel.trangThai === 'HoatDong'"
-            [class.unlock-mode]="formModel.trangThai === 'VoHieuHoa'"
+            [class.unlock-mode]="formModel.trangThai === 'DaKhoa'"
             (click)="toggleStatus()">
             <span class="material-icons">{{ formModel.trangThai === 'HoatDong' ? 'lock' : 'lock_open' }}</span>
             {{ formModel.trangThai === 'HoatDong' ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}
@@ -585,8 +612,9 @@
           <button 
             *ngIf="modalTab === 'contact'"
             class="btn-modal-save" 
+            [disabled]="isSaving"
             (click)="saveAccount()">
-            <span class="material-icons">save</span> Lưu thay đổi
+            <span class="material-icons" [class.spinner-icon]="isSaving">{{ isSaving ? 'sync' : 'save' }}</span> {{ isSaving ? 'Đang lưu...' : 'Lưu thay đổi' }}
           </button>
         </div>
       </div>

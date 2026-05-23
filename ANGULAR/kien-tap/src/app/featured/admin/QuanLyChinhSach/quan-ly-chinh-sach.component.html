@@ -25,6 +25,29 @@
     </div>
   </div>
 
+  <!-- Custom Premium Confirm Modal Overlay -->
+  <div class="custom-alert-overlay" *ngIf="confirmModal.show" (click)="closeConfirm()">
+    <div class="custom-alert-card" (click)="$event.stopPropagation()">
+      <div class="custom-alert-body">
+        <div class="custom-alert-icon-wrapper warning">
+          <span class="material-icons">help_outline</span>
+        </div>
+        <div class="custom-alert-content">
+          <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1e293b;">{{ confirmModal.title }}</h4>
+          <p class="custom-alert-message" [innerHTML]="confirmModal.message"></p>
+        </div>
+      </div>
+      <div class="custom-alert-footer" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 15px;">
+        <button class="btn-sub-cancel" (click)="closeConfirm()">
+          Hủy bỏ
+        </button>
+        <button class="btn-alert-ok warning" (click)="executeConfirm()">
+          Xác nhận
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Page Header -->
   <div class="page-header">
     <div class="breadcrumb">
@@ -108,30 +131,37 @@
       <table>
         <thead>
           <tr>
+            <th>Mã chính sách</th>
             <th>Tên chính sách</th>
             <th>Loại chính sách</th>
-            <th>Ngày tạo</th>
+            <th>Ngày cập nhật</th>
+            <th>Trạng thái</th>
             <th class="text-center">Chức năng</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let policy of displayPolicies">
+            <td style="font-weight: 600; color: #475569;">{{ policy.id }}</td>
             <td class="policy-name-col">
               <div class="policy-name-wrapper">
-                <span class="status-dot" [class.active]="policy.status === 'DangApDung'"></span>
                 {{ policy.title }}
               </div>
             </td>
             <td>{{ policy.typeLabel }}</td>
             <td class="date-col">{{ policy.effectiveDate | date:'dd-MM-yyyy' }}</td>
+            <td>
+              <span class="badge" [class.badge-success]="policy.status === 'DangApDung'" [class.badge-secondary]="policy.status === 'VoHieuHoa'">
+                {{ policy.status === 'DangApDung' ? 'Đang hiển thị' : 'Ngừng hiển thị' }}
+              </span>
+            </td>
             <td class="text-center action-col">
               <button class="btn-edit" (click)="openEditModal(policy)" title="Chỉnh sửa chính sách">
                 <span class="material-icons">edit_note</span>
               </button>
             </td>
           </tr>
-          <tr *ngIf="displayPolicies.length === 0">
-            <td colspan="4" class="no-data">Không tìm thấy chính sách nào.</td>
+          <tr class="no-data-row" *ngIf="displayPolicies.length === 0">
+            <td colspan="6" class="no-data">Không tìm thấy chính sách nào.</td>
           </tr>
         </tbody>
       </table>
@@ -188,6 +218,15 @@
             type="text" 
             [(ngModel)]="formModel.title" 
             placeholder="Nhập tên chính sách"
+            class="form-control" />
+        </div>
+
+        <!-- Effective Date -->
+        <div class="form-group">
+          <label>Ngày áp dụng <span class="required">*</span></label>
+          <input 
+            type="date" 
+            [(ngModel)]="formModel.effectiveDate" 
             class="form-control" />
         </div>
 

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TuyenXeService } from '../../QuanLyDieuHanh/tuyen-xe.service';
+import { BaoCaoService } from '../../../../core/services/bao-cao.service';
 
 interface RouteSummaryItem {
   maTuyen: string;
@@ -33,7 +34,6 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
     status: 'Tất cả'
   };
 
-  allSummaries: RouteSummaryItem[] = [];
   filteredSummaries: RouteSummaryItem[] = [];
   isReportViewed = true;
 
@@ -51,67 +51,27 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
     loiNhuanTrungBinhChuyen: 0
   };
 
-  constructor(private tuyenXeService: TuyenXeService) {}
+  constructor(
+    private tuyenXeService: TuyenXeService,
+    private baoCaoService: BaoCaoService
+  ) {}
 
   ngOnInit() {
     this.routesList = this.tuyenXeService.getRoutesList();
-    this.generateMockSummaries();
     this.onViewReport();
-  }
-
-  private generateMockSummaries() {
-    const sysRoutes = this.tuyenXeService.getRoutes();
-    this.allSummaries = sysRoutes.map((route, i) => {
-      const maTuyen = `TX${String(route.id).padStart(2, '0')}`;
-      const duration = `${route.estimatedHours}h${route.estimatedMinutes ? route.estimatedMinutes + 'm' : ''}`;
-      const khoangCachThoiGian = `${route.distance} km / ${duration}`;
-      
-      const slChuyenChay = 20 + (i * 7) % 35;
-      const slVeDaBan = slChuyenChay * (15 + (i * 3) % 8);
-      
-      const maxSeats = slChuyenChay * 22;
-      const tyLeLapDay = Math.min(100, Math.round((slVeDaBan / maxSeats) * 100));
-      const singleFare = route.distance * 1000;
-      const tongDoanhThu = slVeDaBan * singleFare;
-
-      // Mocking operational costs (e.g., 30-50% of revenue)
-      const tongChiPhiVanHanh = Math.round(tongDoanhThu * (0.3 + (i % 3) * 0.05));
-      const loiNhuanTuyen = tongDoanhThu - tongChiPhiVanHanh;
-
-      const doanhThuTrungBinhChuyen = slChuyenChay > 0 ? tongDoanhThu / slChuyenChay : 0;
-      const loiNhuanTrungBinhChuyen = slChuyenChay > 0 ? loiNhuanTuyen / slChuyenChay : 0;
-
-      const trangThai = route.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động';
-
-      return {
-        maTuyen,
-        tuyen: route.name,
-        khoangCachThoiGian,
-        slChuyenChay,
-        slVeDaBan,
-        tyLeLapDay,
-        tongDoanhThu,
-        tongChiPhiVanHanh,
-        loiNhuanTuyen,
-        doanhThuTrungBinhChuyen,
-        loiNhuanTrungBinhChuyen,
-        trangThai
-      };
-    });
   }
 
   onViewReport() {
     this.isReportViewed = true;
-    this.filteredSummaries = this.allSummaries.filter(item => {
-      if (this.filters.route !== 'Tất cả' && item.tuyen !== this.filters.route) return false;
-      if (this.filters.status !== 'Tất cả') {
-        const filterStatus = this.filters.status === 'Hoạt động' ? 'Đang hoạt động' : 'Ngừng hoạt động';
-        if (item.trangThai !== filterStatus) return false;
+    this.baoCaoService.getBaoCaoTuyenXe(this.filters).subscribe({
+      next: (data: any[]) => {
+        this.filteredSummaries = data as RouteSummaryItem[];
+        this.calculateTotals();
+      },
+      error: (err: any) => {
+        console.error('Error fetching tuyen xe report:', err);
       }
-      return true;
     });
-
-    this.calculateTotals();
   }
 
   private calculateTotals() {
