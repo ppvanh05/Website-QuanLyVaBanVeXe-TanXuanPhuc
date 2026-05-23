@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 export interface Vehicle {
-  id: number;
+  id: string | number;
   name: string;
   licensePlate: string;
   type: string;
@@ -23,145 +24,89 @@ export interface Vehicle {
   providedIn: 'root'
 })
 export class PhuongTienService {
-  private vehicles: Vehicle[] = [
-    {
-      id: 1,
-      name: 'Limousine 22 phòng Premium',
-      licensePlate: '59B-01234',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '15/06/2027',
-      insuranceExpiry: '10/06/2027',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
-      status: 'active',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-01')
-    },
-    {
-      id: 2,
-      name: 'Limousine 22 phòng Luxury',
-      licensePlate: '77B-00987',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '20/09/2027',
-      insuranceExpiry: '18/09/2027',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
-      status: 'active',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-02')
-    },
-    {
-      id: 3,
-      name: 'Limousine 22 phòng Deluxe',
-      licensePlate: '59B-05566',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '10/11/2027',
-      insuranceExpiry: '05/11/2027',
-      amenities: ['wifi', 'water', 'ac', 'usb'],
-      status: 'active',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-03')
-    },
-    {
-      id: 4,
-      name: 'Limousine 22 phòng Gold',
-      licensePlate: '77B-01122',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '12/03/2028',
-      insuranceExpiry: '10/03/2028',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
-      status: 'active',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-04')
-    },
-    {
-      id: 5,
-      name: 'Limousine 22 phòng Silver',
-      licensePlate: '59B-09988',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '08/08/2027',
-      insuranceExpiry: '05/08/2027',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
-      status: 'active',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-05')
-    },
-    {
-      id: 6,
-      name: 'Limousine 22 phòng Diamond',
-      licensePlate: '77B-05577',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '25/12/2027',
-      insuranceExpiry: '20/12/2027',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
-      status: 'active',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-06')
-    },
-    {
-      id: 7,
-      name: 'Limousine 22 phòng Platinum',
-      licensePlate: '59B-08899',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '14/05/2028',
-      insuranceExpiry: '10/05/2028',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
-      status: 'active',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-07')
-    },
-    {
-      id: 8,
-      name: 'Limousine 22 phòng Royal',
-      licensePlate: '77B-02468',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '30/06/2028',
-      insuranceExpiry: '25/06/2028',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
-      status: 'active',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-08')
-    },
-    {
-      id: 9,
-      name: 'Limousine 22 phòng Elite',
-      licensePlate: '59B-01357',
-      type: 'Limousine 22 phòng',
-      seats: 22,
-      floors: 2,
-      rows: 2,
-      registrationExpiry: '18/10/2028',
-      insuranceExpiry: '15/10/2028',
-      amenities: ['tivi', 'usb', 'wifi', 'water', 'ac'],
-      status: 'locked',
-      selectedSeats: [],
-      createdAt: new Date('2026-05-09')
-    }
-  ];
+  private apiUrl = 'http://localhost:3000/dieu-hanh/phuong-tien';
+  private vehicles: Vehicle[] = [];
+
+  constructor(private http: HttpClient) {
+    this.refreshVehicles();
+  }
+
+  refreshVehicles() {
+    this.http.get<any[]>(this.apiUrl).subscribe({
+      next: (data) => {
+        this.vehicles.length = 0;
+        data.forEach(v => {
+          this.vehicles.push({
+            id: v.MaXe,
+            name: v.TenXe,
+            licensePlate: v.BienSoXe,
+            type: v.LoaiXe,
+            seats: v.SoGhe,
+            floors: v.SoTang,
+            rows: v.SoDay,
+            registrationExpiry: v.HanDangKiem ? new Date(v.HanDangKiem).toLocaleDateString('vi-VN') : '',
+            insuranceExpiry: v.HanBaoHiem ? new Date(v.HanBaoHiem).toLocaleDateString('vi-VN') : '',
+            amenities: v.TienIch ? v.TienIch.split(', ').filter((x: string) => x.length > 0) : [],
+            status: v.TrangThai || 'active',
+            vehicleImage: v.AnhXe || undefined,
+            selectedSeats: [],
+            createdAt: new Date(),
+          });
+        });
+      },
+      error: (err) => console.error('Lỗi khi tải danh sách xe:', err)
+    });
+  }
 
   getVehicles(): Vehicle[] {
     return this.vehicles;
+  }
+
+  addVehicle(vehicle: Omit<Vehicle, 'id'>): Vehicle {
+    const tempId = 'TEMP_' + Math.random().toString(36).substr(2, 9);
+    const newVehicle: Vehicle = { ...vehicle, id: tempId, createdAt: new Date() };
+    this.vehicles.unshift(newVehicle);
+
+    this.http.post<any>(this.apiUrl, vehicle).subscribe({
+      next: (res) => {
+        newVehicle.id = res.MaXe;
+      },
+      error: (err) => console.error('Lỗi khi thêm phương tiện:', err)
+    });
+
+    return newVehicle;
+  }
+
+  updateVehicle(id: string | number, updated: Partial<Vehicle>) {
+    const idx = this.vehicles.findIndex(v => v.id === id);
+    if (idx !== -1) {
+      this.vehicles[idx] = { ...this.vehicles[idx], ...updated };
+    }
+
+    // Convert date format DD/MM/YYYY to Date object if present
+    const payload = { ...updated } as any;
+    if (updated.registrationExpiry && updated.registrationExpiry.includes('/')) {
+      const parts = updated.registrationExpiry.split('/');
+      payload.registrationExpiry = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+    if (updated.insuranceExpiry && updated.insuranceExpiry.includes('/')) {
+      const parts = updated.insuranceExpiry.split('/');
+      payload.insuranceExpiry = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+
+    this.http.put(`${this.apiUrl}/${id}`, payload).subscribe({
+      error: (err) => console.error('Lỗi khi cập nhật phương tiện:', err)
+    });
+  }
+
+  deleteVehicle(id: string | number) {
+    const idx = this.vehicles.findIndex(v => v.id === id);
+    if (idx !== -1) {
+      this.vehicles.splice(idx, 1);
+    }
+
+    this.http.delete(`${this.apiUrl}/${id}`).subscribe({
+      error: (err) => console.error('Lỗi khi xóa phương tiện:', err)
+    });
   }
 }
