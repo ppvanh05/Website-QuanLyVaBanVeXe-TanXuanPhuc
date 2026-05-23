@@ -226,50 +226,19 @@
             <div class="max-w-container-max mx-auto px-margin-desktop">
                 <h2 class="font-headline-lg text-headline-lg text-secondary text-center mb-12">Tuyến xe phổ biến</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-                    <div
+                    <div *ngFor="let route of popularRoutes"
                         class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/10 group">
                         <div class="h-48 overflow-hidden">
-                            <img alt="Bình Định"
+                            <img alt="{{ route.from }} - {{ route.to }}"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="asset/images/customer/benxemientay.jpg">
+                                src="asset/images/customer/{{ route.image }}">
                         </div>
                         <div class="p-6">
-                            <h4 class="font-bold text-title-lg text-secondary mb-2">Bình Định → Bến xe Miền Tây</h4>
+                            <h4 class="font-bold text-title-lg text-secondary mb-2">{{ route.from }} → {{ route.to }}
+                            </h4>
                             <p class="font-body-md text-on-surface-variant mb-6 text-body-sm">Từ <span
-                                    class="text-secondary font-bold text-title-md">250.000đ</span></p>
-                            <button
-                                class="w-full bg-secondary text-on-primary font-bold py-3 rounded-xl hover:bg-secondary-hover transition-all shadow-sm">Đặt
-                                vé ngay</button>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/10 group">
-                        <div class="h-48 overflow-hidden">
-                            <img alt="Bình Định"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="asset/images/customer/benxebencat.jpg">
-                        </div>
-                        <div class="p-6">
-                            <h4 class="font-bold text-title-lg text-secondary mb-2">Bình Định → Bến Cát</h4>
-                            <p class="font-body-md text-on-surface-variant mb-6 text-body-sm">Từ <span
-                                    class="text-secondary font-bold text-title-md">250.000đ</span></p>
-                            <button
-                                class="w-full bg-secondary text-on-primary font-bold py-3 rounded-xl hover:bg-secondary-hover transition-all shadow-sm">Đặt
-                                vé ngay</button>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/10 group">
-                        <div class="h-48 overflow-hidden">
-                            <img alt="Bình Định"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="asset/images/customer/benxemiendong.jpg">
-                        </div>
-                        <div class="p-6">
-                            <h4 class="font-bold text-title-lg text-secondary mb-2">Bình Định → Bến xe Miền Đông</h4>
-                            <p class="font-body-md text-on-surface-variant mb-6 text-body-sm">Từ <span
-                                    class="text-secondary font-bold text-title-md">250.000đ</span></p>
-                            <button
+                                    class="text-secondary font-bold text-title-md">{{ route.price }}</span></p>
+                            <button (click)="selectPopularRoute(route)"
                                 class="w-full bg-secondary text-on-primary font-bold py-3 rounded-xl hover:bg-secondary-hover transition-all shadow-sm">Đặt
                                 vé ngay</button>
                         </div>
