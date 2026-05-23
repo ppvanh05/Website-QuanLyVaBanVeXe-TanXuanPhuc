@@ -50,7 +50,7 @@ export class TuKhoaCamService {
       select: { MaTuKhoa: true },
     });
 
-    let maxIdNumber = 0;
+    let maxIdNumber = 100000;
     listTk.forEach(tk => {
       const match = tk.MaTuKhoa.match(/\d+/);
       if (match) {
@@ -61,14 +61,14 @@ export class TuKhoaCamService {
       }
     });
 
-    const newId = `TKC${String(maxIdNumber + 1).padStart(3, '0')}`;
+    const newId = `TKC${maxIdNumber + 1}`;
 
     const res = await this.prisma.tU_KHOA_HAN_CHE.create({
       data: {
         MaTuKhoa: newId,
         NoiDungTuKhoa: exactKeyword,
         LoaiViPham: dto.LoaiViPham,
-        TrangThai: dto.TrangThai ?? 'Active',
+        TrangThai: dto.TrangThai ?? 'DangApDung',
         ThoiGianCapNhat: new Date(),
         MaQuanTriVien: dto.MaQuanTriVien ?? null,
       },

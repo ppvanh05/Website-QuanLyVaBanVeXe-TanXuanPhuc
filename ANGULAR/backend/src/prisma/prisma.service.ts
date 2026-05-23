@@ -17,14 +17,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     
     // Đảm bảo có các dữ liệu hệ thống bắt buộc (như QTV001, NVDP001) để tránh lỗi ràng buộc khóa ngoại (Foreign Key Constraint)
     try {
-      // 1. Đảm bảo NVDP001 tồn tại trong NHAN_VIEN
+      // 1. Đảm bảo NVDP100001 tồn tại trong NHAN_VIEN
       await this.nHAN_VIEN.upsert({
-        where: { MaNhanVien: 'NVDP001' },
+        where: { MaNhanVien: 'NVDP100001' },
         update: {
           Quyen: ['route.view', 'route.manage', 'vehicle.manage', 'driver.manage', 'trip.create', 'trip.assign', 'trip.update'],
         },
         create: {
-          MaNhanVien: 'NVDP001',
+          MaNhanVien: 'NVDP100001',
           LoaiTaiKhoan: 'DieuPhoi',
           TenTruyCap: 'dieuphoi1',
           HoVaTenDem: 'Nguyễn Văn',
@@ -34,14 +34,23 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         },
       });
 
-      // 2. Đảm bảo QTV001 tồn tại trong NHAN_VIEN
+      // Đảm bảo NVDP100001 tồn tại trong NHAN_VIEN_DIEU_PHOI
+      await this.nHAN_VIEN_DIEU_PHOI.upsert({
+        where: { MaNVDieuPhoi: 'NVDP100001' },
+        update: {},
+        create: {
+          MaNVDieuPhoi: 'NVDP100001',
+        },
+      });
+
+      // 2. Đảm bảo QTV100001 tồn tại trong NHAN_VIEN
       await this.nHAN_VIEN.upsert({
-        where: { MaNhanVien: 'QTV001' },
+        where: { MaNhanVien: 'QTV100001' },
         update: {
           Quyen: ['employee.view', 'employee.manage', 'role.manage', 'system.log', 'review.moderate', 'review.view', 'review.reply'],
         },
         create: {
-          MaNhanVien: 'QTV001',
+          MaNhanVien: 'QTV100001',
           LoaiTaiKhoan: 'QuanTriVien',
           TenTruyCap: 'admin',
           HoVaTenDem: 'Quản Trị',
@@ -51,16 +60,16 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         },
       });
 
-      // 3. Đảm bảo QTV001 tồn tại trong QUAN_TRI_VIEN
+      // 3. Đảm bảo QTV100001 tồn tại trong QUAN_TRI_VIEN
       await this.qUAN_TRI_VIEN.upsert({
-        where: { MaQuanTriVien: 'QTV001' },
+        where: { MaQuanTriVien: 'QTV100001' },
         update: {},
         create: {
-          MaQuanTriVien: 'QTV001',
+          MaQuanTriVien: 'QTV100001',
         },
       });
       
-      console.log('Successfully seeded system default records (NVDP001, QTV001).');
+      console.log('Successfully seeded system default records (NVDP100001, QTV100001).');
     } catch (e) {
       console.error('Failed to seed default records:', e);
     }

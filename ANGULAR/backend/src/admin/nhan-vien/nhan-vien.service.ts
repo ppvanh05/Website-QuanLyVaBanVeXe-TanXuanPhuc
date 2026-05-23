@@ -40,7 +40,7 @@ export class NhanVienService {
       select: { MaNhanVien: true },
     });
     
-    let maxIdNumber = 300; // Số mặc định nếu chưa có
+    let maxIdNumber = 100300; // Số mặc định nếu chưa có
     listNv.forEach(nv => {
       const match = nv.MaNhanVien.match(/\d+/);
       if (match) {
