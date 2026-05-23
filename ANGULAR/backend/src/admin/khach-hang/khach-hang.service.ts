@@ -63,7 +63,7 @@ export class KhachHangService {
     const list = await this.prisma.kHACH_HANG.findMany({
       orderBy: { NgayDangKy: 'desc' },
     });
-    
+
     return Promise.all(
       list.map(async (kh) => {
         const ticketCount = await this.prisma.vE_DIEN_TU.count({

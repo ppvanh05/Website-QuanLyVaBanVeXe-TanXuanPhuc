@@ -777,67 +777,142 @@ tbody tr:hover { background-color: #fafafa; }
 .btn-modal-save:hover { background-color: var(--primary-dark); }
 .btn-modal-save .material-icons { font-size: 18px; }
 
-/* === TOAST NOTIFICATION === */
-@keyframes slideInRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-.toast-notification {
+/* === CUSTOM PREMIUM ALERT OVERLAY & CARD === */
+.custom-alert-overlay {
   position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 3000;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  background-color: #ffffff;
-  border-left: 4px solid transparent;
-  min-width: 320px;
-  max-width: 450px;
-  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999 !important;
+  backdrop-filter: blur(2px);
+  animation: alertFadeIn 0.2s ease-out;
 }
 
-.toast-notification.success { border-left-color: var(--success-color); }
-.toast-notification.warning { border-left-color: var(--warning-color); }
-.toast-notification.error { border-left-color: var(--danger-color); }
+@keyframes alertFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-.toast-icon { display: flex; align-items: center; justify-content: center; font-size: 22px; }
-.toast-notification.success .toast-icon { color: var(--success-color); }
-.toast-notification.warning .toast-icon { color: var(--warning-color); }
-.toast-notification.error .toast-icon { color: var(--danger-color); }
+.custom-alert-card {
+  background: white;
+  border-radius: 20px;
+  width: 480px;
+  max-width: 90%;
+  padding: 30px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: alertSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
 
-.toast-content { flex: 1; }
+@keyframes alertSlideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 
-.toast-title {
-  font-size: 14px;
+.custom-alert-body {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.custom-alert-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.custom-alert-icon-wrapper.success {
+  background-color: rgba(0, 155, 161, 0.1);
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.custom-alert-icon-wrapper.warning {
+  background-color: rgba(243, 112, 33, 0.1);
+  border: 2.5px solid var(--secondary-color);
+  color: var(--secondary-color);
+}
+
+.custom-alert-icon-wrapper.error {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 2px solid var(--danger-color);
+  color: var(--danger-color);
+}
+
+.custom-alert-icon-wrapper .material-icons {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.custom-alert-content {
+  flex: 1;
+}
+
+.custom-alert-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-dark);
-  margin: 0 0 4px 0;
 }
 
-.toast-message {
-  font-size: 13px;
-  color: #777;
+.custom-alert-message {
   margin: 0;
-  line-height: 1.4;
+  font-size: 15px;
+  color: #333333;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
-.toast-close {
-  background: transparent;
+.custom-alert-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.btn-alert-ok {
   border: none;
+  padding: 10px 30px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
   cursor: pointer;
-  color: #ccc;
-  padding: 2px;
-  display: inline-flex;
-  border-radius: 50%;
   transition: all 0.2s;
+  text-transform: uppercase;
 }
 
-.toast-close:hover {
-  color: var(--text-dark);
-  background-color: #f1f5f9;
+.btn-alert-ok.success {
+  background-color: var(--primary-color);
+}
+
+.btn-alert-ok.success:hover {
+  background-color: var(--primary-dark);
+}
+
+.btn-alert-ok.warning {
+  background-color: var(--secondary-color);
+}
+
+.btn-alert-ok.warning:hover {
+  background-color: #d65c15;
+}
+
+.btn-alert-ok.error {
+  background-color: var(--danger-color);
+}
+
+.btn-alert-ok.error:hover {
+  background-color: #bd2130;
 }

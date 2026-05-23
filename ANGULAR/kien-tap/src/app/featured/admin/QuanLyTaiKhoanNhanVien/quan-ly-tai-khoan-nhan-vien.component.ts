@@ -1,5 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NhanVienService } from '../../../core/services/nhan-vien.service';
 
@@ -55,10 +55,15 @@ export interface RoleTemplate {
   styleUrls: ['./quan-ly-tai-khoan-nhan-vien.component.css']
 })
 export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
+  isBrowser: boolean = false;
+
   constructor(
     private readonly nhanVienService: NhanVienService,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+    private readonly cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   // Tabs: 'all' | 'active' | 'locked'
   activeTab: 'all' | 'active' | 'locked' = 'all';
@@ -403,7 +408,9 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       });
     });
 
-    this.loadEmployees();
+    if (this.isBrowser) {
+      this.loadEmployees();
+    }
   }
 
   createEmptyForm(): NhanVien {

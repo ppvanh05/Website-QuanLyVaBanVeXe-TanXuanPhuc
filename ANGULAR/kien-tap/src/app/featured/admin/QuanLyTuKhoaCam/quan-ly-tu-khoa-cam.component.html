@@ -146,8 +146,8 @@
               </span>
             </td>
             <td style="text-align: center;">
-              <span class="status-badge" [ngClass]="kw.status.toLowerCase()">
-                {{ kw.status === 'Active' ? 'Đang áp dụng' : 'Ngưng áp dụng' }}
+              <span class="status-badge" [ngClass]="kw.status === 'DangApDung' ? 'active' : 'inactive'">
+                {{ kw.status === 'DangApDung' ? 'Đang áp dụng' : 'Ngưng áp dụng' }}
               </span>
             </td>
             <td class="time-col">{{ kw.updatedAt }}</td>
@@ -213,9 +213,9 @@
         <span
           *ngIf="isEditing"
           class="status-badge"
-          [ngClass]="formModel.status === 'Active' ? 'active' : 'inactive'">
-          <span class="material-icons">{{ formModel.status === 'Active' ? 'check_circle' : 'cancel' }}</span>
-          {{ formModel.status === 'Active' ? 'Đang áp dụng' : 'Ngưng áp dụng' }}
+          [ngClass]="formModel.status === 'DangApDung' ? 'active' : 'inactive'">
+          <span class="material-icons">{{ formModel.status === 'DangApDung' ? 'check_circle' : 'cancel' }}</span>
+          {{ formModel.status === 'DangApDung' ? 'Đang áp dụng' : 'Ngưng áp dụng' }}
         </span>
       </div>
       <button class="btn-close" (click)="closeModal()">
@@ -253,11 +253,11 @@
       <button
         *ngIf="isEditing"
         class="btn-status-toggle"
-        [class.lock-mode]="formModel.status === 'Active'"
-        [class.unlock-mode]="formModel.status === 'Inactive'"
+        [class.lock-mode]="formModel.status === 'DangApDung'"
+        [class.unlock-mode]="formModel.status === 'NgungApDung'"
         (click)="toggleStatusInModal()">
-        <span class="material-icons">{{ formModel.status === 'Active' ? 'lock' : 'lock_open' }}</span>
-        {{ formModel.status === 'Active' ? 'Khóa từ khóa' : 'Mở khóa từ khóa' }}
+        <span class="material-icons">{{ formModel.status === 'DangApDung' ? 'lock' : 'lock_open' }}</span>
+        {{ formModel.status === 'DangApDung' ? 'Khóa từ khóa' : 'Mở khóa từ khóa' }}
       </button>
 
       <div class="footer-actions-right">
@@ -271,18 +271,24 @@
   </div>
 </div>
 
-<!-- Floating Toast Notification -->
-<div class="toast-notification" *ngIf="notification.show" [ngClass]="notification.type">
-  <div class="toast-icon">
-    <span class="material-icons" *ngIf="notification.type === 'success'">check_circle</span>
-    <span class="material-icons" *ngIf="notification.type === 'warning'">warning</span>
-    <span class="material-icons" *ngIf="notification.type === 'error'">error</span>
+<!-- Custom Premium Alert Notification Overlay -->
+<div class="custom-alert-overlay" *ngIf="notification.show" (click)="closeToast()">
+  <div class="custom-alert-card" (click)="$event.stopPropagation()">
+    <div class="custom-alert-body">
+      <div class="custom-alert-icon-wrapper" [class]="notification.type">
+        <span class="material-icons" *ngIf="notification.type === 'success'">check</span>
+        <span class="material-icons" *ngIf="notification.type === 'warning'">priority_high</span>
+        <span class="material-icons" *ngIf="notification.type === 'error'">close</span>
+      </div>
+      <div class="custom-alert-content">
+        <h4 class="custom-alert-title">{{ notification.title }}</h4>
+        <p class="custom-alert-message" [innerHTML]="notification.message"></p>
+      </div>
+    </div>
+    <div class="custom-alert-footer">
+      <button class="btn-alert-ok" [class]="notification.type" (click)="closeToast()">
+        Đồng ý
+      </button>
+    </div>
   </div>
-  <div class="toast-content">
-    <h4 class="toast-title">{{ notification.title }}</h4>
-    <p class="toast-message">{{ notification.message }}</p>
-  </div>
-  <button class="toast-close" (click)="closeToast()">
-    <span class="material-icons">close</span>
-  </button>
 </div>
