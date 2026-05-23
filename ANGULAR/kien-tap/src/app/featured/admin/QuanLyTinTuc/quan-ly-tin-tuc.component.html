@@ -95,12 +95,13 @@
       <table class="premium-table">
         <thead>
           <tr>
-            <th style="width: 100px;">Ảnh bìa</th>
-            <th>Tiêu đề & Nội dung</th>
-            <th>Người đăng</th>
-            <th style="width: 150px;">Lên lịch / Ngày đăng</th>
-            <th style="width: 140px;">Trạng thái</th>
-            <th style="width: 120px;" class="text-right">Chức năng</th>
+            <th style="width: 85px;">Ảnh bìa</th>
+            <th style="width: 45%;">Tiêu đề</th>
+            <th style="width: 110px;">Loại tin tức</th>
+            <th style="width: 130px;">Người đăng</th>
+            <th style="width: 140px;">Lên lịch / Ngày đăng</th>
+            <th style="width: 115px;">Trạng thái</th>
+            <th style="width: 80px;" class="text-center">Chức năng</th>
           </tr>
         </thead>
         <tbody>
@@ -114,14 +115,14 @@
               <div class="title-details-cell">
                 <div class="code-and-badge-row">
                   <span class="news-code">{{ news.maTinTuc }}</span>
-                  <span class="scheduled-time-badge" *ngIf="news.trangThai === 'HenGio'">
-                    <span class="material-icons">schedule</span>
-                    {{ news.ngayGioHenGio }}
-                  </span>
                 </div>
                 <h4 class="news-title-text">{{ news.tieuDe }}</h4>
-                <p class="news-desc-snippet">{{ news.moTaNgan }}</p>
               </div>
+            </td>
+            <td>
+              <span [ngClass]="['loai-badge', getLoaiTinTucColor(news.loaiTinTuc)]">
+                {{ getLoaiTinTucLabel(news.loaiTinTuc) }}
+              </span>
             </td>
             <td>
               <span class="author-label">{{ news.nguoiDang }}</span>
@@ -141,27 +142,8 @@
                 {{ getTrangThaiLabel(news.trangThai) }}
               </span>
             </td>
-            <td class="text-right">
+            <td class="text-center">
               <div class="table-actions">
-                <!-- Quick actions depending on status -->
-                <button 
-                  *ngIf="news.trangThai === 'BanNhap' || news.trangThai === 'NgungHienThi'" 
-                  class="btn-action-quick-publish" 
-                  (click)="openConfirm('publish', news)" 
-                  title="Đăng hiển thị ngay">
-                  <span class="material-icons">publish</span>
-                </button>
-                <button 
-                  *ngIf="news.trangThai === 'DaDang'" 
-                  class="btn-action-quick-hide" 
-                  (click)="openConfirm('hide', news)" 
-                  title="Ẩn khỏi website">
-                  <span class="material-icons">block</span>
-                </button>
-
-                <button class="btn-action-view" (click)="openPreviewModal(news)" title="Xem bài viết (Popup lớn)">
-                  <span class="material-icons">open_in_full</span>
-                </button>
                 <button class="btn-action-edit" (click)="openEditModal(news)" title="Chỉnh sửa bài viết">
                   <span class="material-icons">edit</span>
                 </button>
@@ -169,7 +151,7 @@
             </td>
           </tr>
           <tr *ngIf="displayNews.length === 0">
-            <td colspan="6" class="empty-state-row">
+            <td colspan="7" class="empty-state-row">
               <div class="empty-state-container">
                 <span class="material-icons">article_off</span>
                 <p>Không tìm thấy bài viết tin tức nào khớp với điều kiện lọc!</p>
@@ -364,10 +346,10 @@
       </div>
 
       <div class="modal-body">
-        <!-- ADVANCED RESTYLING: 2-column layout (Left: Write Content | Right: Real-time Preview) -->
+        <!-- 2-column layout: Left = form scroll | Right = preview sticky -->
         <div class="form-split-grid" [class.preview-hidden]="!showLivePreview">
           
-          <!-- COLUMN 1: Write Content Column (Metadata + Rich Editor) -->
+          <!-- COLUMN 1: Form content (scrollable independently) -->
           <div class="form-write-column">
             
             <h4 class="form-section-title" style="margin-bottom: 16px;">Thông tin cơ bản tin tức</h4>
@@ -389,6 +371,21 @@
                   </select>
                 </div>
               </div>
+
+              <!-- Loại tin tức -->
+              <div class="form-group">
+                <label class="required-field">Loại tin tức</label>
+                <div class="loai-select-group">
+                  <button
+                    type="button"
+                    *ngFor="let loai of loaiTinTucList"
+                    [ngClass]="['loai-chip-btn', getLoaiTinTucColor(loai.value), formModel.loaiTinTuc === loai.value ? 'active' : '']"
+                    (click)="formModel.loaiTinTuc = loai.value">
+                    {{ loai.label }}
+                  </button>
+                </div>
+              </div>
+
 
               <!-- FACEBOOK STYLE SCHEDULE PUBLISHING -->
               <div class="facebook-scheduler-card">
@@ -694,14 +691,12 @@
 
           </div>
 
-          <!-- COLUMN 2: Real-time public article layout visualizer preview box (Right Column) -->
+          <!-- COLUMN 2: Preview column (sticky, scrolls independently) -->
           <div class="form-preview-column" *ngIf="showLivePreview">
-            <h4 class="form-section-title">Xem trước hiển thị (Real-time)</h4>
-            
             <div class="editor-live-preview-box">
               <div class="preview-box-header">
                 <span class="material-icons preview-indicator-icon">visibility</span>
-                <span>XEM TRƯỚC HIỂN THỊ TRÊN WEBSITE (REAL-TIME):</span>
+                <span>Giao diện hiển thị trên Website:</span>
               </div>
               
               <div class="preview-live-web-container">
@@ -716,7 +711,7 @@
                     </span>
                     <span class="meta-item-badge">
                       <span class="material-icons">calendar_today</span>
-                      {{ formModel.henGioDang ? (formModel.ngayHenGio ? (formModel.ngayHenGio | date:'dd-MM-yyyy') : 'Hẹn giờ đăng') : ('Hôm nay' | date:'dd-MM-yyyy') }}
+                      {{ formModel.henGioDang ? (formModel.ngayHenGio ? (formModel.ngayHenGio | date:'dd-MM-yyyy') : 'Hẹn giờ đăng') : (formModel.ngayDang ? (formModel.ngayDang | date:'dd-MM-yyyy') : (todayDate | date:'dd-MM-yyyy')) }}
                     </span>
                   </div>
 
@@ -743,11 +738,32 @@
 
       <!-- Footer action controls -->
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="closeModal()">Hủy bỏ</button>
-        <button class="btn-save-confirm" (click)="saveNews()">
-          <span class="material-icons">save</span>
-          Lưu bài viết
-        </button>
+        <div class="modal-footer-left" *ngIf="isEditing && selectedNews">
+          <!-- Quick status action buttons inside edit modal -->
+          <button 
+            *ngIf="selectedNews.trangThai === 'BanNhap' || selectedNews.trangThai === 'NgungHienThi'" 
+            class="btn-footer-publish" 
+            (click)="openConfirm('publish', selectedNews)"
+            type="button">
+            <span class="material-icons">public</span>
+            Đăng bài
+          </button>
+          <button 
+            *ngIf="selectedNews.trangThai === 'DaDang'" 
+            class="btn-footer-hide" 
+            (click)="openConfirm('hide', selectedNews)"
+            type="button">
+            <span class="material-icons">visibility_off</span>
+            Ẩn bài
+          </button>
+        </div>
+        <div class="modal-footer-right">
+          <button class="btn-cancel" (click)="closeModal()">Hủy bỏ</button>
+          <button class="btn-save-confirm" (click)="saveNews()">
+            <span class="material-icons">save</span>
+            Lưu bài viết
+          </button>
+        </div>
       </div>
     </div>
   </div>

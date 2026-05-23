@@ -6,6 +6,7 @@ export interface TinTuc {
   maTinTuc: string;
   tieuDe: string;
   anhBia: string;
+  loaiTinTuc: string;
   moTaNgan: string;
   noiDungChiTiet: string;
   ngayDang: string;
@@ -61,6 +62,7 @@ export class QuanLyTinTucComponent implements OnInit {
     maTinTuc: '',
     tieuDe: '',
     anhBia: '',
+    loaiTinTuc: 'TinTuc',
     moTaNgan: '',
     noiDungChiTiet: '',
     trangThai: 'BanNhap',
@@ -68,6 +70,16 @@ export class QuanLyTinTucComponent implements OnInit {
     ngayHenGio: '',
     gioHenGio: ''
   };
+
+  // Danh sách loại tin tức
+  loaiTinTucList = [
+    { value: 'TinTuc', label: 'Tin tức chung' },
+    { value: 'ThongBao', label: 'Thông báo' },
+    { value: 'KhuyenMai', label: 'Khuyến mãi' },
+    { value: 'SuKien', label: 'Sự kiện' },
+    { value: 'HuongDan', label: 'Hướng dẫn' },
+    { value: 'TuyenDung', label: 'Tuyển dụng' }
+  ];
 
   // Preset images for cover photo suggestions
   presetImages = [
@@ -87,8 +99,9 @@ export class QuanLyTinTucComponent implements OnInit {
   // Status confirm overlay controls (Removed Delete from confirmations)
   showConfirmModal: boolean = false;
   showLivePreview: boolean = true; // Toggle live Web preview column (2-columns vs 1-column)
-  confirmType: 'hide' | 'publish' | 'clear' = 'hide';
+  confirmType: 'hide' | 'publish' | 'clear' | 'lock' = 'hide';
   targetNews: TinTuc | null = null;
+  todayDate: Date = new Date();
 
   // Pagination fields
   currentPage: number = 1;
@@ -162,6 +175,7 @@ export class QuanLyTinTucComponent implements OnInit {
         maTinTuc: 'TT001',
         tieuDe: 'Nhà xe Tân Xuân Phúc mở thêm tuyến mới Hà Nội - SaPa giảm giá 20%',
         anhBia: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800',
+        loaiTinTuc: 'KhuyenMai',
         moTaNgan: 'TXP BUS chính thức khai trương chặng đường mới Hà Nội - SaPa với đội ngũ xe Limousine giường nằm VIP thế hệ mới nhất, phục vụ đầy đủ nước uống, wifi tốc độ cao miễn phí và chăn ấm.',
         noiDungChiTiet: '<p>TXP BUS hân hạnh thông báo đến quý hành khách về việc chính thức khai trương và đưa vào vận hành <strong>tuyến xe chất lượng cao Hà Nội - SaPa</strong> từ ngày 01/06/2026.</p><p>Nhân dịp khai trương chặng mới, nhà xe triển khai chương trình tri ân đặc biệt cực sốc: <strong>Giảm ngay 20% giá vé khứ hồi</strong> cho toàn bộ hành khách đặt trực tuyến thông qua ứng dụng hoặc website chính thức của nhà xe từ nay cho đến hết ngày 15/06/2026.</p><p>Đội ngũ xe vận hành trên tuyến là xe giường nằm cao cấp 34 phòng VIP riêng tư, trang bị đầy đủ cổng sạc USB tiện lợi, màn hình giải trí cá nhân chất lượng cao và wifi băng thông lớn hoạt động liên tục.</p>',
         ngayDang: '2026-05-15',
@@ -174,6 +188,7 @@ export class QuanLyTinTucComponent implements OnInit {
         maTinTuc: 'TT002',
         tieuDe: 'Thông báo lịch vận hành và tăng cường chuyến phục vụ Tết Đoan Ngọ 2026',
         anhBia: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800',
+        loaiTinTuc: 'ThongBao',
         moTaNgan: 'Nhằm đáp ứng tối đa nhu cầu đi lại thăm quê, du lịch của quý khách hàng trong kỳ nghỉ lễ Tết Đoan Ngọ (Mùng 5 tháng 5 âm lịch), TXP BUS xin gửi tới quý khách hàng lịch vận hành chi tiết.',
         noiDungChiTiet: '<p>Để đảm bảo hành trình của quý khách diễn ra suôn sẻ, an toàn và đúng kế hoạch, Ban điều phối nhà xe Tân Xuân Phúc xin trân trọng thông báo:</p><ol><li><strong>Tăng tần suất chuyến:</strong> Các chặng Hải Phòng - Hà Nội và Hà Nội - Quảng Ninh tăng thêm 15 chuyến/ngày.</li><li><strong>Giờ xuất phát:</strong> Chuyến xe sớm nhất khởi hành lúc 04h30 sáng, chuyến muộn nhất lúc 22h30 đêm tại các bến trung chuyển chính.</li><li><strong>Cam kết giá vé:</strong> Cam kết duy trì bình ổn giá vé niêm yết theo quy định của sở giao thông vận tải, tuyệt đối không tự ý tăng giá vé, không phụ thu bất hợp pháp ngày lễ.</li></ol>',
         ngayDang: '2026-05-17',
@@ -186,6 +201,7 @@ export class QuanLyTinTucComponent implements OnInit {
         maTinTuc: 'TT003',
         tieuDe: 'Hướng dẫn cài đặt ứng dụng TXP BUS và nhận mã ưu đãi đón hè rực rỡ',
         anhBia: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800',
+        loaiTinTuc: 'HuongDan',
         moTaNgan: 'Chỉ với 3 bước cài đặt app đơn giản trên App Store hoặc Google Play, khách hàng sẽ nhận ngay voucher trị giá 50.000đ trừ trực tiếp vào lượt đặt vé đầu tiên trên toàn hệ thống.',
         noiDungChiTiet: '<p>TXP BUS chính thức giới thiệu ứng dụng đặt vé xe khách tiện lợi thông minh trên hai hệ điều hành phổ biến nhất hiện nay.</p><p><strong>Hướng dẫn các bước tải app nhận thưởng:</strong></p><ul><li>Bước 1: Tìm kiếm từ khóa "TXP BUS" trên cửa hàng ứng dụng và tải app về điện thoại.</li><li>Bước 2: Đăng ký tài khoản khách hàng mới bằng số điện thoại chính chủ và xác thực mã OTP.</li><li>Bước 3: Nhập mã khuyến mãi <strong>"HELLOHE"</strong> tại bước thanh toán để được giảm trừ trực tiếp 50.000đ vào tổng giá trị đơn hàng.</li></ul>',
         ngayDang: '',
@@ -198,6 +214,7 @@ export class QuanLyTinTucComponent implements OnInit {
         maTinTuc: 'TT004',
         tieuDe: 'Khuyến cáo hành khách về việc mang theo hành lý quá khổ và vật nuôi trên xe',
         anhBia: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800',
+        loaiTinTuc: 'ThongBao',
         moTaNgan: 'Để đảm bảo an toàn phòng chống cháy nổ và tạo không gian di chuyển thoải mái, thơm tho sạch sẽ cho toàn bộ hành khách, TXP ban hành quy định hành lý kèm theo.',
         noiDungChiTiet: '<p>Ban quản lý chất lượng dịch vụ vận tải Tân Xuân Phúc trân trọng nhắc nhở quý khách hàng một số quy định quan trọng về hành lý ký gửi và xách tay mang theo chuyến đi:</p><ul><li><strong>Vật nuôi, thú cưng:</strong> Chỉ cho phép vận chuyển nếu vật nuôi được nhốt trong lồng vận chuyển chuyên dụng chắc chắn và để dưới hầm hàng của xe khách. Tuyệt đối không mang thú cưng lên khoang hành khách chung.</li><li><strong>Chất cấm:</strong> Nghiêm cấm vận chuyển hàng quốc cấm, vũ khí, chất dễ cháy nổ (như bình gas mini, xăng dầu, pháo hoa) hoặc các loại thực phẩm có mùi nặng như sầu riêng, hải sản tươi sống mà không được đóng thùng xốp dán kín.</li></ul>',
         ngayDang: '2026-04-20',
@@ -210,6 +227,7 @@ export class QuanLyTinTucComponent implements OnInit {
         maTinTuc: 'TT005',
         tieuDe: 'Nhà xe bàn giao tài sản thất lạc trị giá hơn 30 triệu đồng cho hành khách',
         anhBia: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
+        loaiTinTuc: 'TinTuc',
         moTaNgan: 'Sự việc diễn ra trên chuyến xe Hải Phòng đi Hà Nội mang biển số 15B-098.22, tài xế Nguyễn Hữu Thành đã nhặt được ví chứa tiền mặt và trang sức của khách hàng để quên.',
         noiDungChiTiet: '<p>Tân Xuân Phúc luôn đặt sự uy tín, trung thực và tận tâm phục vụ khách hàng lên vị trí hàng đầu của hoạt động kinh doanh.</p><p>Ngày 10/05/2026 vừa qua, sau khi trả khách tại bến xe Gia Lâm, tài xế Nguyễn Hữu Thành cùng phụ xe trong quá trình dọn dẹp vệ sinh khoang hành khách giường nằm đã phát hiện một chiếc ví cầm tay màu đen để quên tại vị trí giường số A12.</p><p>Ngay sau đó, tổ lái đã báo cáo nhanh về phòng điều hành tổng đài. Bằng các biện pháp nghiệp vụ rà soát vé xe, nhà xe đã nhanh chóng liên hệ với vị khách may mắn là chị Trần Thị Hoa và tiến hành thủ tục xác minh, trao trả nguyên vẹn toàn bộ tài sản tại văn phòng số 25 Nguyễn Văn Linh.</p>',
         ngayDang: '2026-05-11',
@@ -222,6 +240,7 @@ export class QuanLyTinTucComponent implements OnInit {
         maTinTuc: 'TT006',
         tieuDe: 'Chương trình tuyển dụng tài xế lái xe giường nằm cabin chất lượng cao hè 2026',
         anhBia: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800',
+        loaiTinTuc: 'TuyenDung',
         moTaNgan: 'TXP BUS thông báo tuyển dụng 15 tài xế lái xe cabin hạng E VIP, làm việc tại khu vực miền Bắc, lương cứng 18 triệu kèm trợ cấp ăn uống nghỉ đêm đầy đủ.',
         noiDungChiTiet: '<p>Để mở rộng quy mô phục vụ khách du lịch đón hè 2026, TXP BUS thông báo tuyển dụng rộng rãi:</p><ul><li><strong>Số lượng:</strong> 15 tài xế chính thức.</li><li><strong>Yêu cầu bằng cấp:</strong> Giấy phép lái xe hạng E, tối thiểu 3 năm kinh nghiệm lái xe giường nằm trên 30 chỗ hoặc xe cabin VIP.</li><li><strong>Quyền lợi:</strong> Đóng bảo hiểm đầy đủ, thưởng an toàn theo tháng, cấp phát đồng phục cao cấp miễn phí.</li></ul>',
         ngayDang: '',
@@ -470,6 +489,7 @@ export class QuanLyTinTucComponent implements OnInit {
       maTinTuc: newCode,
       tieuDe: '',
       anhBia: '',
+      loaiTinTuc: 'TinTuc',
       moTaNgan: '',
       noiDungChiTiet: '', // Start completely clean without technical tag templates
       trangThai: 'BanNhap',
@@ -1024,6 +1044,16 @@ export class QuanLyTinTucComponent implements OnInit {
         news.ngayGioHenGio = '';
         news.ngayCapNhat = this.formatCurrentDate();
         
+        // Sync with form model if currently editing this news
+        if (this.formModel && this.formModel.maTinTuc === news.maTinTuc) {
+          this.formModel.trangThai = 'NgungHienThi';
+          this.formModel.henGioDang = false;
+          this.formModel.ngayGioHenGio = '';
+        }
+        if (this.selectedNews && this.selectedNews.maTinTuc === news.maTinTuc) {
+          this.selectedNews.trangThai = 'NgungHienThi';
+        }
+        
         this.pushActivityLog(
           'Ẩn tin tức',
           `Ẩn bài viết khỏi cổng thông tin chính thức. Bài viết: "${news.tieuDe}" (${news.maTinTuc}).`
@@ -1041,6 +1071,17 @@ export class QuanLyTinTucComponent implements OnInit {
         news.ngayGioHenGio = '';
         news.ngayDang = this.formatCurrentDate();
         news.ngayCapNhat = this.formatCurrentDate();
+
+        // Sync with form model if currently editing this news
+        if (this.formModel && this.formModel.maTinTuc === news.maTinTuc) {
+          this.formModel.trangThai = 'DaDang';
+          this.formModel.henGioDang = false;
+          this.formModel.ngayGioHenGio = '';
+          this.formModel.ngayDang = news.ngayDang;
+        }
+        if (this.selectedNews && this.selectedNews.maTinTuc === news.maTinTuc) {
+          this.selectedNews.trangThai = 'DaDang';
+        }
 
         this.pushActivityLog(
           'Đăng tin tức',
@@ -1107,6 +1148,23 @@ export class QuanLyTinTucComponent implements OnInit {
     if (status === 'NgungHienThi') return 'Ngừng hiển thị';
     if (status === 'HenGio') return 'Lịch hẹn đăng';
     return status;
+  }
+
+  getLoaiTinTucLabel(value: string): string {
+    const found = this.loaiTinTucList.find(l => l.value === value);
+    return found ? found.label : (value || 'Tin tức chung');
+  }
+
+  getLoaiTinTucColor(value: string): string {
+    const map: { [key: string]: string } = {
+      'TinTuc': 'loai-tintuc',
+      'ThongBao': 'loai-thongbao',
+      'KhuyenMai': 'loai-khuyenmai',
+      'SuKien': 'loai-sukien',
+      'HuongDan': 'loai-huongdan',
+      'TuyenDung': 'loai-tuyendung'
+    };
+    return map[value] || 'loai-tintuc';
   }
 
   showNotification(title: string, message: string, type: 'success' | 'warning' | 'error' = 'success') {
