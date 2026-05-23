@@ -8,8 +8,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { ChinhSachService } from './chinh-sach.service';
-import { CreateChinhSachDto } from './dto/create-chinh-sach.dto';
-import { CreateChinhSachHuyVeDto } from './dto/create-chinh-sach-huy-ve.dto';
+import { Prisma } from '@prisma/client';
 
 @Controller('chinh-sach')
 export class ChinhSachController {
@@ -28,14 +27,14 @@ export class ChinhSachController {
   }
 
   @Post('huy-ve')
-  createChinhSachHuyVe(@Body() dto: CreateChinhSachHuyVeDto) {
+  createChinhSachHuyVe(@Body() dto: Prisma.CHINH_SACH_HUY_VEUncheckedCreateInput) {
     return this.chinhSachService.createChinhSachHuyVe(dto);
   }
 
   @Put('huy-ve/:id')
   updateChinhSachHuyVe(
     @Param('id') id: string,
-    @Body() dto: Partial<CreateChinhSachHuyVeDto>,
+    @Body() dto: Prisma.CHINH_SACH_HUY_VEUncheckedUpdateInput,
   ) {
     return this.chinhSachService.updateChinhSachHuyVe(id, dto);
   }
@@ -58,14 +57,14 @@ export class ChinhSachController {
   }
 
   @Post()
-  createChinhSach(@Body() dto: CreateChinhSachDto) {
+  createChinhSach(@Body() dto: Prisma.CHINH_SACHUncheckedCreateInput) {
     return this.chinhSachService.createChinhSach(dto);
   }
 
   @Put(':id')
   updateChinhSach(
     @Param('id') id: string,
-    @Body() dto: Partial<CreateChinhSachDto>,
+    @Body() dto: Prisma.CHINH_SACHUncheckedUpdateInput,
   ) {
     return this.chinhSachService.updateChinhSach(id, dto);
   }

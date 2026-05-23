@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateChinhSachDto } from './dto/create-chinh-sach.dto';
-import { CreateChinhSachHuyVeDto } from './dto/create-chinh-sach-huy-ve.dto';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ChinhSachService {
@@ -21,24 +20,24 @@ export class ChinhSachService {
     });
   }
 
-  async createChinhSach(dto: CreateChinhSachDto) {
+  async createChinhSach(dto: Prisma.CHINH_SACHUncheckedCreateInput) {
     return this.prisma.cHINH_SACH.create({
       data: {
         MaChinhSach_ND: dto.MaChinhSach_ND,
         TieuDe: dto.TieuDe,
         LoaiChinhSach: dto.LoaiChinhSach,
         NoiDung: dto.NoiDung,
-        NgayApDung: new Date(dto.NgayApDung),
-        TrangThai: dto.TrangThai,
+        NgayApDung: new Date(dto.NgayApDung as any),
+        TrangThai: dto.TrangThai ?? 'DangApDung',
         MaQuanTriVien: dto.MaQuanTriVien,
       },
     });
   }
 
-  async updateChinhSach(id: string, dto: Partial<CreateChinhSachDto>) {
+  async updateChinhSach(id: string, dto: Prisma.CHINH_SACHUncheckedUpdateInput) {
     const data: any = { ...dto };
     if (dto.NgayApDung) {
-      data.NgayApDung = new Date(dto.NgayApDung);
+      data.NgayApDung = new Date(dto.NgayApDung as any);
     }
     return this.prisma.cHINH_SACH.update({
       where: { MaChinhSach_ND: id },
@@ -66,24 +65,24 @@ export class ChinhSachService {
     });
   }
 
-  async createChinhSachHuyVe(dto: CreateChinhSachHuyVeDto) {
+  async createChinhSachHuyVe(dto: Prisma.CHINH_SACH_HUY_VEUncheckedCreateInput) {
     return this.prisma.cHINH_SACH_HUY_VE.create({
       data: {
         MaChinhSach: dto.MaChinhSach,
         TenChinhSach: dto.TenChinhSach,
-        GioiHanGioTruocKhoiHanh: dto.GioiHanGioTruocKhoiHanh,
-        TyLePhiHuy: dto.TyLePhiHuy,
+        GioiHanGioTruocKhoiHanh: Number(dto.GioiHanGioTruocKhoiHanh),
+        TyLePhiHuy: Number(dto.TyLePhiHuy),
         MoTa: dto.MoTa ?? null,
-        TrangThai: dto.TrangThai,
-        NgayApDung: new Date(dto.NgayApDung),
+        TrangThai: dto.TrangThai ?? 'DangApDung',
+        NgayApDung: new Date(dto.NgayApDung as any),
       },
     });
   }
 
-  async updateChinhSachHuyVe(id: string, dto: Partial<CreateChinhSachHuyVeDto>) {
+  async updateChinhSachHuyVe(id: string, dto: Prisma.CHINH_SACH_HUY_VEUncheckedUpdateInput) {
     const data: any = { ...dto };
     if (dto.NgayApDung) {
-      data.NgayApDung = new Date(dto.NgayApDung);
+      data.NgayApDung = new Date(dto.NgayApDung as any);
     }
     return this.prisma.cHINH_SACH_HUY_VE.update({
       where: { MaChinhSach: id },
