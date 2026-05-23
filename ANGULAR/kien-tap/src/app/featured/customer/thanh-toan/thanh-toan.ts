@@ -45,12 +45,12 @@ export class ThanhToan implements OnInit, OnDestroy {
   expirationInterval: any = null;
 
   paymentMethods = [
-    { id: 'vietqr', name: 'Thanh toán qua VietQR', icon: 'asset/images/customer/VietQR_Logo.png', badge: '' },
-    { id: 'momo', name: 'Ví MoMo', icon: 'asset/images/customer/MoMo_Logo.png', badge: '' },
-    { id: 'vnpay', name: 'Ví VNPay', icon: 'asset/images/customer/VNPay_logo.png', badge: '' },
+    { id: 'vietqr', name: 'Thanh toán qua VietQR', icon: '/asset/images/customer/VietQR_Logo.png', badge: '' },
+    { id: 'momo', name: 'Ví MoMo', icon: '/asset/images/customer/MoMo_Logo.png', badge: '' },
+    { id: 'vnpay', name: 'Ví VNPay', icon: '/asset/images/customer/VNPay_logo.png', badge: '' },
     { id: 'zalopay', name: 'Ví ZaloPay', icon: 'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay.png', badge: 'Giảm 25% tối đa 20k cho khách lần đầu thanh toán. Giảm tối đa 50k cho đơn từ 500k cho tất cả các giao dịch' },
-    { id: 'atm', name: 'Thẻ ATM nội địa', icon: 'asset/images/customer/napas_logo.png', badge: '' },
-    { id: 'card', name: 'Thẻ Visa/Master/JCB', icon: 'asset/images/customer/the-quoc-te_logo.jpg', badge: '' }
+    { id: 'atm', name: 'Thẻ ATM nội địa', icon: '/asset/images/customer/napas_logo.png', badge: '' },
+    { id: 'card', name: 'Thẻ Visa/Master/JCB', icon: '/asset/images/customer/the-quoc-te_logo.jpg', badge: '' }
   ];
 
   constructor(private router: Router, private cdr: ChangeDetectorRef) {}
