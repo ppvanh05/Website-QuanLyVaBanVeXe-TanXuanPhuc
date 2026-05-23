@@ -133,6 +133,7 @@ model KHACH_HANG {
   GioiTinh          String             @db.VarChar
   NgaySinh          DateTime           @db.Date
   TrangThaiTaiKhoan String             @db.VarChar
+  LyDoKhoa          String?            @db.VarChar
   NgayDangKy        DateTime           @db.Timestamptz(6)
   DANH_GIA          DANH_GIA[]
   LICH_SU_HUY_VE    LICH_SU_HUY_VE[]
@@ -378,6 +379,7 @@ model TIN_TUC {
   NgayDang       DateTime? @db.Timestamptz(6)
   TrangThai      String?
   MaQuanTriVien  String?
+  NgayGioHenGio  DateTime? @db.Timestamptz(6)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

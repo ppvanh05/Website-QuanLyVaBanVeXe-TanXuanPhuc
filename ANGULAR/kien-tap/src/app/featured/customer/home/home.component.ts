@@ -38,6 +38,12 @@ export class HomeComponent {
     { from: 'TP. Hồ Chí Minh', to: 'Phú Yên', date: '25/05/2026' }
   ];
 
+  popularRoutes = [
+    { from: 'Bình Định', to: 'Bình Dương', price: '250.000đ', image: 'benxemientay.jpg' },
+    { from: 'Bình Định', to: 'TP. Hồ Chí Minh', price: '250.000đ', image: 'benxebencat.jpg' },
+    { from: 'Phú Yên', to: 'TP. Hồ Chí Minh', price: '250.000đ', image: 'benxemiendong.jpg' }
+  ];
+
   calendarDays = [
     { day: 1, label: '15/3', dateStr: '01/05/2026' },
     { day: 2, label: '16', dateStr: '02/05/2026' },
@@ -185,5 +191,11 @@ export class HomeComponent {
         infants: this.infantCount
       }
     });
+  }
+
+  selectPopularRoute(route: any) {
+    this.departure = route.from;
+    this.destination = route.to;
+    this.searchTrip();
   }
 }
