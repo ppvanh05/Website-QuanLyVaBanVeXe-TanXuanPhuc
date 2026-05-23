@@ -178,22 +178,11 @@
 }
 
 .search-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-bottom: 24px;
-}
-
-.filter-search {
-  width: 320px;
-}
-
-.filter-role {
-  width: 180px;
-}
-
-.filter-status {
-  width: 180px;
+  max-width: 100%;
 }
 
 .form-group {
@@ -208,21 +197,11 @@
   color: #475569;
 }
 
-.date-range-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.date-range-separator {
-  color: #94a3b8;
-  font-weight: bold;
-}
-
 input,
 select,
 input[type="date"] {
   font-family: 'Inter', sans-serif !important;
+  box-sizing: border-box;
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #cbd5e1;
@@ -411,10 +390,6 @@ td:nth-child(6) {
 /* Trạng thái */
 
 @media (max-width: 1350px) {
-  .search-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -422,7 +397,7 @@ td:nth-child(6) {
 
 @media (max-width: 768px) {
   .search-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 
   .kpi-grid {

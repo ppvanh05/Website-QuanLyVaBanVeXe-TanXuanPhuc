@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TuyenXeService } from '../../QuanLyDieuHanh/tuyen-xe.service';
 import { PhuongTienService } from '../../QuanLyDieuHanh/phuong-tien.service';
 import { TaiXeService } from '../../QuanLyDieuHanh/tai-xe.service'; // Import TaiXeService
+import { BaoCaoService } from '../../../../core/services/bao-cao.service';
 
 interface TripReportItem {
   maChuyen: string;
@@ -83,146 +84,31 @@ export class BaoCaoChiTietComponent implements OnInit {
   constructor(
     private tuyenXeService: TuyenXeService,
     private phuongTienService: PhuongTienService,
-    private taiXeService: TaiXeService // Inject TaiXeService
+    private taiXeService: TaiXeService, // Inject TaiXeService
+    private baoCaoService: BaoCaoService
   ) {}
 
   ngOnInit() {
     this.routesList = this.tuyenXeService.getRoutesList();
     this.vehiclesList = this.phuongTienService.getVehicles().map(v => v.licensePlate);
-    this.allTrips = this.generateMockData();
     this.onViewReport();
-  }
-
-  private generateMockData(): TripReportItem[] {
-    const data: TripReportItem[] = [];
-    const sysRoutes = this.tuyenXeService.getRoutes();
-    const sysVehicles = this.phuongTienService.getVehicles();
-    const sysDrivers = this.taiXeService.getDrivers(); // Get drivers
-    const sysAssistants = this.taiXeService.getAssistantsList(); // Get assistants
-    
-    if (sysRoutes.length === 0 || sysVehicles.length === 0 || sysDrivers.length === 0 || sysAssistants.length === 0) return [];
-
-    const tripStatuses: ('Còn chỗ' | 'Hết chỗ' | 'Đã khởi hành' | 'Hủy')[] = ['Còn chỗ', 'Hết chỗ', 'Đã khởi hành', 'Hủy'];
-
-    // Generate 60 trip records in May 2026
-    for (let i = 1; i <= 60; i++) {
-      const route = sysRoutes[i % sysRoutes.length];
-      const vehicle = sysVehicles[(i * 3) % sysVehicles.length];
-      const driver = sysDrivers[i % sysDrivers.length];
-      const assistant = sysAssistants[(i + 1) % sysAssistants.length];
-      
-      const day = (i % 28) + 1;
-      const dayStr = day < 10 ? `0${day}` : `${day}`;
-      const ngayDi = `2026-05-${dayStr}`;
-      
-      const times = ['08:00', '13:00', '19:00', '21:00'];
-      const gioDi = times[i % times.length];
-
-      const tongGhe = vehicle.seats;
-      let trangThai = tripStatuses[i % tripStatuses.length];
-      
-      let slDaBan = 0;
-      if (trangThai === 'Hết chỗ') {
-        slDaBan = tongGhe;
-      } else if (trangThai === 'Hủy') {
-        slDaBan = 0;
-      } else if (trangThai === 'Còn chỗ') {
-        slDaBan = Math.floor(tongGhe * 0.4) + (i % 6);
-      } else { // Đã khởi hành
-        slDaBan = Math.floor(tongGhe * 0.7) + (i % 5);
-      }
-
-      const tyLeLapDay = Math.min(100, Math.round((slDaBan / tongGhe) * 100));
-
-      // Calculate total revenue from tickets (ticket price = distance * 1000)
-      const singleFare = route.distance * 1000;
-      const doanhThuVe = slDaBan * singleFare;
-
-      // Expenses breakdown based on route distance
-      const baseDistance = route.distance;
-      let phiDau = 0;
-      let phiCauDuong = 0;
-      let phiRuaXe = 0;
-      let phiAnUong = 0;
-      let phiBenBai = 0;
-      let chiPhiVanHanh = 0;
-
-      if (trangThai !== 'Hủy') {
-        phiDau = Math.round(baseDistance * 12 * 20000 / 100); // ~12L per 100km, 20k per L
-        phiCauDuong = Math.round(baseDistance * 800);
-        phiRuaXe = 150000;
-        phiAnUong = 300000;
-        phiBenBai = 200000;
-        chiPhiVanHanh = phiDau + phiCauDuong + phiRuaXe + phiAnUong + phiBenBai;
-      }
-
-      const loiNhuan = doanhThuVe - chiPhiVanHanh;
-
-      // New fields
-      const taiXeChinh = driver.name;
-      const phuXe = assistant.name;
-      const diemDanhGiaTrungBinh = Math.round(Math.random() * (5 - 3) + 3); // Random rating between 3 and 5
-      const soLuongDanhGiaTieuCuc = i % 7 === 0 ? 1 : 0; // Mock some negative reviews
-      const tyLeDongGopDoanhThuTuyen = Math.round((doanhThuVe / (route.distance * 1000 * 100)) * 10000) / 100; // Mock percentage
-
-      data.push({
-        maChuyen: `LT-2605-${String(i).padStart(3, '0')}`,
-        tuyen: route.name,
-        bienSoXe: vehicle.licensePlate,
-        loaiXe: vehicle.type,
-        ngayDi: ngayDi,
-        gioDi: gioDi,
-        slDaBan: slDaBan,
-        tongGhe: tongGhe,
-        tyLeLapDay: tyLeLapDay,
-        doanhThuVe: doanhThuVe,
-        chiPhiVanHanh: chiPhiVanHanh,
-        loiNhuan: loiNhuan,
-        trangThai: trangThai,
-        phiCauDuong: phiCauDuong,
-        phiDau: phiDau,
-        phiRuaXe: phiRuaXe,
-        phiAnUong: phiAnUong,
-        phiBenBai: phiBenBai,
-        taiXeChinh: taiXeChinh,
-        phuXe: phuXe,
-        diemDanhGiaTrungBinh: diemDanhGiaTrungBinh,
-        soLuongDanhGiaTieuCuc: soLuongDanhGiaTieuCuc,
-        tyLeDongGopDoanhThuTuyen: tyLeDongGopDoanhThuTuyen
-      });
-    }
-
-    // Sort by departure date descending, then departure time descending
-    return data.sort((a, b) => {
-      if (a.ngayDi !== b.ngayDi) {
-        return b.ngayDi.localeCompare(a.ngayDi);
-      }
-      return b.gioDi.localeCompare(a.gioDi);
-    });
   }
 
   onViewReport() {
     this.isReportViewed = true;
-    this.filteredTrips = this.allTrips.filter(item => {
-      // Date filter
-      if (this.filters.fromDate && item.ngayDi < this.filters.fromDate) return false;
-      if (this.filters.toDate && item.ngayDi > this.filters.toDate) return false;
-
-      // Advanced filters
-      if (this.filters.route !== 'Tất cả' && item.tuyen !== this.filters.route) return false;
-      if (this.filters.licensePlate !== 'Tất cả' && item.bienSoXe !== this.filters.licensePlate) return false;
-      if (this.filters.status !== 'Tất cả' && item.trangThai !== this.filters.status) return false;
-
-      return true;
+    this.baoCaoService.getBaoCaoChuyenXe(this.filters).subscribe({
+      next: (data: any[]) => {
+        this.filteredTrips = data as TripReportItem[];
+        this.calculateStats();
+        this.currentPage = 1;
+        this.calculateTotalPages();
+      },
+      error: (err: any) => {
+        console.error('Error fetching chuyến xe report:', err);
+      }
     });
-
-    // Calculate summaries
-    this.calculateStats();
-    
-    // Reset pagination
-    this.currentPage = 1;
-    this.calculateTotalPages();
   }
+
 
   private calculateStats() {
     let totalRevenue = 0;
