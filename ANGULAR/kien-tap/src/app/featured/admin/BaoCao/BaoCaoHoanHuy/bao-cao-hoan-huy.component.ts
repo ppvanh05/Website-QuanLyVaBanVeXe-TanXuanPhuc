@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { BaoCaoService } from '../../../../core/services/bao-cao.service';
 
 interface RefundReportItem {
   maVe: string;
@@ -27,7 +28,6 @@ export class BaoCaoHoanHuyComponent implements OnInit {
     nguoiHuy: 'Tất cả'
   };
 
-  allRefunds: RefundReportItem[] = [];
   filteredRefunds: RefundReportItem[] = [];
   isReportViewed = true;
 
@@ -41,73 +41,23 @@ export class BaoCaoHoanHuyComponent implements OnInit {
 
   nguoiHuyList: string[] = ['Khách hàng tự hủy trên web', 'Nhân viên bán vé hủy hộ'];
 
-  constructor() {}
+  constructor(private baoCaoService: BaoCaoService) {}
 
   ngOnInit() {
-    this.allRefunds = this.generateMockRefunds();
     this.onViewReport();
-  }
-
-  private generateMockRefunds(): RefundReportItem[] {
-    const data: RefundReportItem[] = [];
-    const nguoiHuyOptions = ['Khách hàng tự hủy trên web', 'Nhân viên bán vé hủy hộ'];
-
-    for (let i = 1; i <= 30; i++) { // Generate 30 mock cancellation records
-      const maVe = `TXP${String(10000 + i)}`;
-      const nguoiHuy = nguoiHuyOptions[i % nguoiHuyOptions.length];
-      const tienGoc = Math.floor(Math.random() * (500000 - 100000 + 1) + 100000); // Random original price between 100k and 500k
-
-      let tyLePhi: number;
-      // Mock cancellation fee based on some logic (e.g., time before departure, or source)
-      if (nguoiHuy === 'Khách hàng tự hủy trên web') {
-        if (i % 5 === 0) tyLePhi = 0; // 0% fee
-        else if (i % 5 === 1) tyLePhi = 0.1; // 10% fee
-        else if (i % 5 === 2) tyLePhi = 0.25; // 25% fee
-        else if (i % 5 === 3) tyLePhi = 0.5; // 50% fee
-        else tyLePhi = 1; // 100% fee
-      } else { // Nhân viên bán vé hủy hộ
-        if (i % 3 === 0) tyLePhi = 0; // 0% fee (e.g., company cancellation)
-        else if (i % 3 === 1) tyLePhi = 0.05; // 5% fee (e.g., administrative)
-        else tyLePhi = 0.1; // 10% fee
-      }
-
-      const lePhiHuy = tienGoc * tyLePhi;
-      const tienHoan = tienGoc - lePhiHuy;
-      const maGiaoDich = `GD${Date.now()}${String(i).padStart(3, '0')}`;
-
-      const day = (i % 28) + 1; // Day in May
-      const dayStr = day < 10 ? `0${day}` : `${day}`;
-      const ngayHuy = `2026-05-${dayStr}`;
-
-      data.push({
-        maVe,
-        nguoiHuy,
-        tienGoc,
-        tyLePhi,
-        lePhiHuy,
-        tienHoan,
-        maGiaoDich,
-        ngayHuy
-      });
-    }
-
-    return data.sort((a, b) => b.ngayHuy.localeCompare(a.ngayHuy));
   }
 
   onViewReport() {
     this.isReportViewed = true;
-    this.filteredRefunds = this.allRefunds.filter(item => {
-      // Date filter
-      if (this.filters.fromDate && item.ngayHuy < this.filters.fromDate) return false;
-      if (this.filters.toDate && item.ngayHuy > this.filters.toDate) return false;
-
-      // Nguoi Huy filter
-      if (this.filters.nguoiHuy !== 'Tất cả' && item.nguoiHuy !== this.filters.nguoiHuy) return false;
-
-      return true;
+    this.baoCaoService.getBaoCaoHoanHuy(this.filters).subscribe({
+      next: (data: any[]) => {
+        this.filteredRefunds = data as RefundReportItem[];
+        this.calculateStats();
+      },
+      error: (err: any) => {
+        console.error('Error fetching hoan huy report:', err);
+      }
     });
-
-    this.calculateStats();
   }
 
   private calculateStats() {

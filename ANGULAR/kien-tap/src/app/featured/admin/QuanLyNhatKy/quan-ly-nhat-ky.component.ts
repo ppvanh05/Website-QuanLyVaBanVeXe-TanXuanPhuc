@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NhatKyService } from '../../../core/services/nhat-ky.service';
 
 export interface AuditLog {
   maNhatKy: string;
@@ -93,11 +94,84 @@ export class QuanLyNhatKyComponent implements OnInit {
 
   todayDateStr = '';
 
+  constructor(private readonly nhatKyService: NhatKyService) {}
+
   ngOnInit() {
     this.initializeDates();
-    this.allLogs = this.generateMockLogs();
-    this.calculateStats();
-    this.applyFilters();
+    this.loadLogs();
+  }
+
+  loadLogs() {
+    this.nhatKyService.getAll().subscribe({
+      next: (data) => {
+        this.allLogs = data.map(log => this.mapToFrontend(log));
+        this.calculateStats();
+        this.applyFilters();
+      },
+      error: (err) => {
+        console.error('Error loading logs from backend:', err);
+        this.allLogs = [];
+        this.calculateStats();
+        this.applyFilters();
+      }
+    });
+  }
+
+  formatDateTime(date: Date): string {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const sec = String(date.getSeconds()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
+  }
+
+  mapToFrontend(l: any): AuditLog {
+    let loaiTaiKhoan: 'Khách hàng' | 'Bán vé' | 'Điều phối' | 'Quản trị viên' | 'Ban quản lý' = 'Quản trị viên';
+    const tenKhachHang = l.KHACH_HANG?.HoTenKhachHang;
+    const tenNhanVien = l.NHAN_VIEN?.TenHienThi || l.NHAN_VIEN?.Ten;
+    const soDienThoai = l.KHACH_HANG?.SoDienThoai || l.NHAN_VIEN?.SoDienThoai;
+
+    if (l.MaKhachHang) {
+      loaiTaiKhoan = 'Khách hàng';
+    } else if (l.NHAN_VIEN) {
+      const role = l.NHAN_VIEN.LoaiTaiKhoan;
+      if (role === 'BanVe') loaiTaiKhoan = 'Bán vé';
+      else if (role === 'DieuPhoi') loaiTaiKhoan = 'Điều phối';
+      else if (role === 'BanQuanLy') loaiTaiKhoan = 'Ban quản lý';
+      else loaiTaiKhoan = 'Quản trị viên';
+    }
+
+    let duLieuThayDoi = undefined;
+    if (l.DuLieuThayDoi) {
+      try {
+        duLieuThayDoi = typeof l.DuLieuThayDoi === 'string' ? JSON.parse(l.DuLieuThayDoi) : l.DuLieuThayDoi;
+      } catch (e) {
+        duLieuThayDoi = undefined;
+      }
+    }
+
+    return {
+      maNhatKy: l.MaNhatKy,
+      maVe: l.MaVe || undefined,
+      tuyenXe: l.TuyenXe || undefined,
+      maKhachHang: l.MaKhachHang || undefined,
+      tenKhachHang: tenKhachHang || undefined,
+      soDienThoai: soDienThoai || undefined,
+      maNhanVien: l.MaNhanVien || undefined,
+      tenNhanVien: tenNhanVien || undefined,
+      loaiTaiKhoan: loaiTaiKhoan,
+      loaiThaoTac: l.LoaiThaoTac || 'Khác',
+      thoiGian: l.ThoiGian ? this.formatDateTime(new Date(l.ThoiGian)) : '',
+      diaChiIP: l.DiaChiIP || '127.0.0.1',
+      trangThai: l.TrangThai === 'Thất bại' ? 'Thất bại' : 'Thành công',
+      noiDungChiTiet: l.NoiDungChiTiet || '',
+      thietBiTrinhDuyet: l.ThietBiTrinhDuyet || 'Web Client',
+      trangThaiCu: l.TrangThaiCu || undefined,
+      trangThaiMoi: l.TrangThaiMoi || undefined,
+      duLieuThayDoi: Array.isArray(duLieuThayDoi) ? duLieuThayDoi : undefined
+    };
   }
 
   // Set default dates dynamically to match current month
@@ -313,382 +387,5 @@ export class QuanLyNhatKyComponent implements OnInit {
       link.click();
       document.body.removeChild(link);
     }
-  }
-
-  // Consolidated Mock Logs Generator
-  private generateMockLogs(): AuditLog[] {
-    return [
-      {
-        maNhatKy: 'TXP_LOG0001',
-        maKhachHang: 'TXP_KH023',
-        tenKhachHang: 'Lê Văn Cường',
-        soDienThoai: '0905111222',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Đăng nhập',
-        thoiGian: this.getRelativeDateString(0, '19:42:01'),
-        diaChiIP: '192.168.1.10',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Khách hàng đăng nhập thành công vào website Tân Xuân Phúc qua xác thực mật khẩu.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0002',
-        maKhachHang: 'TXP_KH023',
-        tenKhachHang: 'Lê Văn Cường',
-        soDienThoai: '0905111222',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Đặt vé',
-        thoiGian: this.getRelativeDateString(0, '19:48:15'),
-        diaChiIP: '192.168.1.10',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Khách hàng đặt thành công vé mã TXP2605C103 tuyến Bình Định ↔ Sài Gòn khởi hành ngày 2026-05-20 lúc 19:00.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
-        maVe: 'TXP2605C103',
-        tuyenXe: 'Bình Định ↔ Sài Gòn',
-        trangThaiCu: 'Trống',
-        trangThaiMoi: 'Đã thanh toán',
-        duLieuThayDoi: [
-          { truong: 'Trạng thái ghế', giaTriCu: 'Trống', giaTriMoi: 'Đã Bán' },
-          { truong: 'Số lượng vé đặt', giaTriCu: '0', giaTriMoi: '1' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0003',
-        maNhanVien: 'TXP_NV02',
-        tenNhanVien: 'Vũ Quốc Hùng',
-        soDienThoai: '0935999888',
-        loaiTaiKhoan: 'Điều phối',
-        loaiThaoTac: 'Quản lý phương tiện',
-        thoiGian: this.getRelativeDateString(0, '16:30:10'),
-        diaChiIP: '10.20.30.45',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Cập nhật thông tin hạn kiểm định và trạng thái hoạt động của phương tiện biển số 81B-015.68.',
-        thietBiTrinhDuyet: 'Firefox 125.0 (macOS)',
-        duLieuThayDoi: [
-          { truong: 'HanDangKiem', giaTriCu: '2026-05-01', giaTriMoi: '2026-11-01' },
-          { truong: 'TrangThai', giaTriCu: 'Bảo trì', giaTriMoi: 'Hoạt động' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0004',
-        maNhanVien: 'TXP_NV01',
-        tenNhanVien: 'Phan Văn Anh',
-        soDienThoai: '0988777666',
-        loaiTaiKhoan: 'Quản trị viên',
-        loaiThaoTac: 'Quản lý chính sách',
-        thoiGian: this.getRelativeDateString(0, '15:20:12'),
-        diaChiIP: '10.20.30.12',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Điều chỉnh chính sách hủy vé hoàn tiền cho các tuyến limousine dịp hè 2026.',
-        thietBiTrinhDuyet: 'Edge 124.0 (Windows 11)',
-        duLieuThayDoi: [
-          { truong: 'TyLePhiHuy (%)', giaTriCu: '5%', giaTriMoi: '10%' },
-          { truong: 'NgayApDung', giaTriCu: '2026-01-01', giaTriMoi: '2026-05-20' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0005',
-        maKhachHang: 'TXP_KH008',
-        tenKhachHang: 'Vũ Thanh Hằng',
-        soDienThoai: '0912345678',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Hủy vé',
-        thoiGian: this.getRelativeDateString(1, '10:15:30'),
-        diaChiIP: '172.16.8.99',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Khách hàng yêu cầu hủy vé trực tuyến cho vé mã TXP2605C108 tuyến Phú Yên ↔ Sài Gòn. Lý do: Khách hàng chủ động hủy.',
-        thietBiTrinhDuyet: 'Safari (iOS 17)',
-        maVe: 'TXP2605C108',
-        tuyenXe: 'Phú Yên ↔ Sài Gòn',
-        trangThaiCu: 'Đã thanh toán',
-        trangThaiMoi: 'Đã hủy',
-        duLieuThayDoi: [
-          { truong: 'TrangThaiVe', giaTriCu: 'ConHieuLuc', giaTriMoi: 'DaHuy' },
-          { truong: 'TrangThaiGhe', giaTriCu: 'DaBan', giaTriMoi: 'Trong' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0006',
-        maKhachHang: 'TXP_KH005',
-        tenKhachHang: 'Hoàng Thị Dung',
-        soDienThoai: '0944333222',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Đổi mật khẩu',
-        thoiGian: this.getRelativeDateString(0, '20:11:45'),
-        diaChiIP: '14.23.45.67',
-        trangThai: 'Thất bại',
-        noiDungChiTiet: 'Thay đổi mật khẩu tài khoản khách hàng thất bại do nhập sai mật khẩu cũ quá 3 lần.',
-        thietBiTrinhDuyet: 'Safari (iPhone 15 Pro)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0007',
-        maNhanVien: 'TXP_NV03',
-        tenNhanVien: 'Trần Thị Thu',
-        soDienThoai: '0977666555',
-        loaiTaiKhoan: 'Bán vé',
-        loaiThaoTac: 'Đăng nhập',
-        thoiGian: this.getRelativeDateString(0, '07:45:00'),
-        diaChiIP: '192.168.2.11',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Nhân viên Trần Thị Thu đăng nhập thành công vào hệ thống quản lý bán vé tại văn phòng Gia Lai.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 10)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0008',
-        maNhanVien: 'TXP_QL01',
-        tenNhanVien: 'Nguyễn Văn Tuyến',
-        soDienThoai: '0966555444',
-        loaiTaiKhoan: 'Ban quản lý',
-        loaiThaoTac: 'Quản lý tài khoản',
-        thoiGian: this.getRelativeDateString(0, '09:30:00'),
-        diaChiIP: '10.20.30.5',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Khóa tài khoản khách hàng TXP_KH042 do có hành vi đặt vé ảo nhiều lần không thanh toán.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
-        duLieuThayDoi: [
-          { truong: 'TrangThaiTaikhoan', giaTriCu: 'HoatDong', giaTriMoi: 'BiKhoa' },
-          { truong: 'LyDoKhoa', giaTriCu: 'Trống', giaTriMoi: 'Đặt ảo nhiều lần' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0009',
-        maNhanVien: 'TXP_QL01',
-        tenNhanVien: 'Nguyễn Văn Tuyến',
-        soDienThoai: '0966555444',
-        loaiTaiKhoan: 'Ban quản lý',
-        loaiThaoTac: 'Báo cáo & Xuất file',
-        thoiGian: this.getRelativeDateString(0, '11:00:00'),
-        diaChiIP: '10.20.30.5',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Kết xuất báo cáo tổng quan doanh thu vé tháng 04/2026 dạng định dạng Excel (XLSX).',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0010',
-        maNhanVien: 'TXP_NV03',
-        tenNhanVien: 'Trần Thị Thu',
-        soDienThoai: '0909888777', // Customer Nguyễn Văn Nam SĐT
-        loaiTaiKhoan: 'Bán vé',
-        loaiThaoTac: 'Đặt vé',
-        thoiGian: this.getRelativeDateString(0, '14:15:22'),
-        diaChiIP: '192.168.2.11',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Nhân viên Trần Thị Thu đặt vé thay khách hàng Nguyễn Văn Nam, mã vé TXP2605A401, tuyến Sài Gòn ↔ Nha Trang tại quầy.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 10)',
-        maVe: 'TXP2605A401',
-        tuyenXe: 'Sài Gòn ↔ Nha Trang',
-        trangThaiCu: 'Trống',
-        trangThaiMoi: 'Đã thanh toán',
-        duLieuThayDoi: [
-          { truong: 'Mã vé đặt', giaTriCu: 'Trống', giaTriMoi: 'TXP2605A401' },
-          { truong: 'Phương thức', giaTriCu: 'Trống', giaTriMoi: 'Tiền mặt tại quầy' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0011',
-        maKhachHang: 'TXP_KH098',
-        tenKhachHang: 'Nguyễn Hữu Tài',
-        soDienThoai: '0911222333',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Đăng nhập',
-        thoiGian: this.getRelativeDateString(0, '18:22:10'),
-        diaChiIP: '113.161.44.20',
-        trangThai: 'Thất bại',
-        noiDungChiTiet: 'Đăng nhập thất bại do nhập mật khẩu không chính xác.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Android 14)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0012',
-        maKhachHang: 'TXP_KH023',
-        tenKhachHang: 'Lê Văn Cường',
-        soDienThoai: '0905111222',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Đánh giá chuyến xe',
-        thoiGian: this.getRelativeDateString(1, '21:05:00'),
-        diaChiIP: '192.168.1.10',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Đánh giá 5 sao cho chuyến Bình Định ↔ Sài Gòn đi ngày 2026-05-18.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0013',
-        maNhanVien: 'TXP_NV02',
-        tenNhanVien: 'Vũ Quốc Hùng',
-        soDienThoai: '0935999888',
-        loaiTaiKhoan: 'Điều phối',
-        loaiThaoTac: 'Quản lý lịch trình',
-        thoiGian: this.getRelativeDateString(0, '08:10:00'),
-        diaChiIP: '10.20.30.45',
-        trangThai: 'Thất bại',
-        noiDungChiTiet: 'Không thể cập nhật lịch trình tuyến SG-NT-20260520-01 do xe gán bị xung đột lịch chạy.',
-        thietBiTrinhDuyet: 'Firefox 125.0 (macOS)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0014',
-        maNhanVien: 'TXP_NV02',
-        tenNhanVien: 'Vũ Quốc Hùng',
-        soDienThoai: '0935999888',
-        loaiTaiKhoan: 'Điều phối',
-        loaiThaoTac: 'Quản lý tài xế',
-        thoiGian: this.getRelativeDateString(1, '14:30:00'),
-        diaChiIP: '10.20.30.45',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Phân công tài xế Nguyễn Thanh Sơn chịu trách nhiệm lái chính cho xe 79B-023.45 ngày 2026-05-21.',
-        thietBiTrinhDuyet: 'Firefox 125.0 (macOS)',
-        duLieuThayDoi: [
-          { truong: 'Tài xế phân công', giaTriCu: 'Trống', giaTriMoi: 'Nguyễn Thanh Sơn' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0015',
-        maKhachHang: 'TXP_KH055',
-        tenKhachHang: 'Hoàng Văn Bảo',
-        soDienThoai: '0912345678',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Đăng ký',
-        thoiGian: this.getRelativeDateString(1, '09:00:00'),
-        diaChiIP: '171.244.12.30',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Đăng ký tài khoản khách hàng thành công trực tuyến qua xác minh mã OTP gửi tới 0912345678.',
-        thietBiTrinhDuyet: 'Safari (iOS 17)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0016',
-        maNhanVien: 'TXP_NV01',
-        tenNhanVien: 'Phan Văn Anh',
-        soDienThoai: '0988777666',
-        loaiTaiKhoan: 'Quản trị viên',
-        loaiThaoTac: 'Quản lý tin tức',
-        thoiGian: this.getRelativeDateString(2, '10:00:00'),
-        diaChiIP: '10.20.30.12',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Đăng tải bài viết chương trình ưu đãi chào hè giảm 15% vé giường nằm trên trang chủ.',
-        thietBiTrinhDuyet: 'Edge 124.0 (Windows 11)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0017',
-        maKhachHang: 'TXP_KH023',
-        tenKhachHang: 'Lê Văn Cường',
-        soDienThoai: '0905111222',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Cập nhật thông tin cá nhân',
-        thoiGian: this.getRelativeDateString(2, '16:45:00'),
-        diaChiIP: '192.168.1.10',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Cập nhật địa chỉ email đăng ký liên lạc thành công.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
-        duLieuThayDoi: [
-          { truong: 'Email', giaTriCu: 'cuonglv@gmail.com', giaTriMoi: 'cuongle.work@gmail.com' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0018',
-        maNhanVien: 'TXP_NV01',
-        tenNhanVien: 'Phan Văn Anh',
-        soDienThoai: '0988777666',
-        loaiTaiKhoan: 'Quản trị viên',
-        loaiThaoTac: 'Quản lý đánh giá',
-        thoiGian: this.getRelativeDateString(2, '14:00:00'),
-        diaChiIP: '10.20.30.12',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Ẩn phản hồi tiêu cực vi phạm quy tắc ngôn từ của tài khoản ẩn danh khỏi trang đánh giá công khai.',
-        thietBiTrinhDuyet: 'Edge 124.0 (Windows 11)'
-      },
-      {
-        maNhatKy: 'TXP_LOG0019',
-        maKhachHang: 'TXP_KH023',
-        tenKhachHang: 'Lê Văn Cường',
-        soDienThoai: '0905111222',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Tra cứu vé',
-        thoiGian: this.getRelativeDateString(0, '15:30:00'),
-        diaChiIP: '192.168.1.10',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Khách hàng thực hiện tra cứu mã vé TXP2605C103 trên trang chủ.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
-        maVe: 'TXP2605C103'
-      },
-      {
-        maNhatKy: 'TXP_LOG0020',
-        maKhachHang: 'TXP_KH023',
-        tenKhachHang: 'Lê Văn Cường',
-        soDienThoai: '0905111222',
-        loaiTaiKhoan: 'Khách hàng',
-        loaiThaoTac: 'Chỉnh sửa thông tin vé',
-        thoiGian: this.getRelativeDateString(0, '20:00:00'),
-        diaChiIP: '192.168.1.10',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Khách hàng cập nhật số điện thoại liên lạc khẩn cấp trên trang thông tin vé.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 11)',
-        maVe: 'TXP2605C103',
-        tuyenXe: 'Bình Định ↔ Sài Gòn',
-        trangThaiCu: 'Đã thanh toán',
-        trangThaiMoi: 'Đã thanh toán',
-        duLieuThayDoi: [
-          { truong: 'Số điện thoại', giaTriCu: '0905111222', giaTriMoi: '0905333444' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0021',
-        maKhachHang: 'TXP_KH011',
-        tenKhachHang: 'Trần Quốc Anh',
-        maNhanVien: 'TXP_NV03',
-        tenNhanVien: 'Trần Thị Thu',
-        soDienThoai: '0967888999',
-        loaiTaiKhoan: 'Bán vé',
-        loaiThaoTac: 'Chỉnh sửa thông tin vé',
-        thoiGian: this.getRelativeDateString(0, '18:45:00'),
-        diaChiIP: '192.168.2.11',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Nhân viên bán vé Trần Thị Thu ghi nhận khách check-in lên xe tại Văn phòng Gia Lai.',
-        thietBiTrinhDuyet: 'Chrome 124.0 (Windows 10)',
-        maVe: 'TXP2605C101',
-        tuyenXe: 'Gia Lai ↔ Đà Nẵng',
-        trangThaiCu: 'Đã thanh toán',
-        trangThaiMoi: 'Đã lên xe'
-      },
-      {
-        maNhatKy: 'TXP_LOG0022',
-        maKhachHang: 'TXP_KH002',
-        tenKhachHang: 'Trần Thị Bích',
-        maNhanVien: 'TXP_NV02',
-        tenNhanVien: 'Vũ Quốc Hùng',
-        soDienThoai: '0989111222',
-        loaiTaiKhoan: 'Điều phối',
-        loaiThaoTac: 'Chỉnh sửa thông tin vé',
-        thoiGian: this.getRelativeDateString(0, '14:10:00'),
-        diaChiIP: '10.20.30.45',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Điều phối viên Vũ Quốc Hùng hỗ trợ khách hàng đổi giờ khởi hành sang 19:00 cùng ngày.',
-        thietBiTrinhDuyet: 'Firefox 125.0 (macOS)',
-        maVe: 'TXP2605C102',
-        tuyenXe: 'Sài Gòn ↔ Nha Trang',
-        trangThaiCu: 'Đã thanh toán',
-        trangThaiMoi: 'Đã đổi vé',
-        duLieuThayDoi: [
-          { truong: 'Giờ chạy', giaTriCu: '08:00 ngày 2026-05-20', giaTriMoi: '19:00 ngày 2026-05-20' },
-          { truong: 'Số giường', giaTriCu: 'Phòng 04 (A)', giaTriMoi: 'Phòng 12 (B)' }
-        ]
-      },
-      {
-        maNhatKy: 'TXP_LOG0023',
-        maKhachHang: 'TXP_KH055',
-        tenKhachHang: 'Hoàng Văn Bảo',
-        maNhanVien: 'TXP_NV01',
-        tenNhanVien: 'Phan Văn Anh',
-        soDienThoai: '0912345678',
-        loaiTaiKhoan: 'Quản trị viên',
-        loaiThaoTac: 'Hủy vé',
-        thoiGian: this.getRelativeDateString(0, '09:10:00'),
-        diaChiIP: '10.20.30.12',
-        trangThai: 'Thành công',
-        noiDungChiTiet: 'Quản trị viên Phan Văn Anh hủy vé thay khách do tuyến đi bị dời lịch khởi hành đột xuất.',
-        thietBiTrinhDuyet: 'Edge 124.0 (Windows 11)',
-        maVe: 'TXP2605A505',
-        tuyenXe: 'Sài Gòn ↔ Nha Trang',
-        trangThaiCu: 'Đã thanh toán',
-        trangThaiMoi: 'Đã hủy'
-      }
-    ];
   }
 }
