@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TuyenXeService } from '../../QuanLyDieuHanh/tuyen-xe.service';
 import { PhuongTienService } from '../../QuanLyDieuHanh/phuong-tien.service';
 import { TaiXeService } from '../../QuanLyDieuHanh/tai-xe.service'; // Import TaiXeService
-import { BaoCaoService } from '../../../core/services/bao-cao.service';
+import { BaoCaoService } from '../../../../core/services/bao-cao.service';
 
 interface TripReportItem {
   maChuyen: string;
@@ -97,13 +97,13 @@ export class BaoCaoChiTietComponent implements OnInit {
   onViewReport() {
     this.isReportViewed = true;
     this.baoCaoService.getBaoCaoChuyenXe(this.filters).subscribe({
-      next: (data) => {
-        this.filteredTrips = data;
+      next: (data: any[]) => {
+        this.filteredTrips = data as TripReportItem[];
         this.calculateStats();
         this.currentPage = 1;
         this.calculateTotalPages();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error fetching chuyến xe report:', err);
       }
     });
