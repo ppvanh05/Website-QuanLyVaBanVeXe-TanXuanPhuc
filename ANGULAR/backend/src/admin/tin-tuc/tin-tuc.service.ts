@@ -49,7 +49,6 @@ export class TinTucService {
         NgayDang: dto.NgayDang ? new Date(dto.NgayDang as any) : null,
         TrangThai: dto.TrangThai,
         MaQuanTriVien: dto.MaQuanTriVien ?? null,
-        NgayGioHenGio: dto.NgayGioHenGio ? new Date(dto.NgayGioHenGio as any) : null,
       },
     });
   }
@@ -60,9 +59,7 @@ export class TinTucService {
     if (dto.NgayDang) {
       data.NgayDang = new Date(dto.NgayDang as any);
     }
-    if (dto.NgayGioHenGio) {
-      data.NgayGioHenGio = new Date(dto.NgayGioHenGio as any);
-    }
+
     return this.prisma.tIN_TUC.update({
       where: { MaTinTuc: id },
       data,
