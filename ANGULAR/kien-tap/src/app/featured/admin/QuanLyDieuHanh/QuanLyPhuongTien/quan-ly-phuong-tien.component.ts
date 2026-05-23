@@ -331,17 +331,9 @@ export class QuanLyPhuongTienComponent implements OnInit {
     }
 
     if (this.isEditMode) {
-      const index = this.vehicles.findIndex(v => v.id === this.currentVehicle.id);
-      if (index !== -1) {
-        this.vehicles[index] = { ...this.currentVehicle as Vehicle };
-      }
+      this.phuongTienService.updateVehicle(this.currentVehicle.id!, this.currentVehicle);
     } else {
-      const newId = Math.max(...this.vehicles.map(v => v.id), 0) + 1;
-      const newVehicle = {
-        ...this.currentVehicle,
-        id: newId
-      } as Vehicle;
-      this.vehicles.unshift(newVehicle);
+      this.phuongTienService.addVehicle(this.currentVehicle as any);
     }
     this.filterVehicles();
     this.closeModal();
@@ -357,12 +349,9 @@ export class QuanLyPhuongTienComponent implements OnInit {
 
   deleteVehicle() {
     if (confirm('Bạn có chắc chắn muốn xóa phương tiện này không?')) {
-      const index = this.vehicles.findIndex(v => v.id === this.currentVehicle.id);
-      if (index !== -1) {
-        this.vehicles.splice(index, 1);
-        this.filterVehicles();
-        this.closeModal();
-      }
+      this.phuongTienService.deleteVehicle(this.currentVehicle.id!);
+      this.filterVehicles();
+      this.closeModal();
     }
   }
 

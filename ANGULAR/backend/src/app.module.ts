@@ -7,9 +7,10 @@ import { ChinhSachModule } from './admin/chinh-sach/chinh-sach.module';
 import { BaoCaoModule } from './admin/bao-cao/bao-cao.module';
 import { TinTucModule } from './admin/tin-tuc/tin-tuc.module';
 import { KhachHangModule } from './admin/khach-hang/khach-hang.module';
+import { DieuHanhModule } from './admin/dieu-hanh/dieu-hanh.module';
 
 @Module({
-  imports: [PrismaModule, TicketsModule, ChinhSachModule, BaoCaoModule, TinTucModule, KhachHangModule],
+  imports: [PrismaModule, TicketsModule, ChinhSachModule, BaoCaoModule, TinTucModule, KhachHangModule, DieuHanhModule],
   controllers: [AppController],
   providers: [AppService],
 })
