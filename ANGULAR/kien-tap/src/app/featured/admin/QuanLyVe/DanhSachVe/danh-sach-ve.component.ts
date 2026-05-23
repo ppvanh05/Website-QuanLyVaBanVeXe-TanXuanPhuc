@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastService } from '../../../../core/services/toast.service';
 
 interface Ticket {
   id: string;
@@ -41,7 +42,7 @@ export class DanhSachVeComponent {
 
   tickets: Ticket[] = this.generateMockTickets();
 
-  constructor() {
+  constructor(private toastService: ToastService) {
     this.displayTickets = [...this.tickets];
   }
 
@@ -184,7 +185,7 @@ export class DanhSachVeComponent {
 
   // Các thao tác trong modal chi tiết
   onCollectMoney() {
-    alert('Đang thực hiện thu tiền cho vé ' + this.selectedTicket?.id);
+    this.toastService.show('Đang thực hiện thu tiền cho vé ' + this.selectedTicket?.id, 'info');
     if (this.selectedTicket) {
       this.selectedTicket.paymentStatus = 'Đã thanh toán';
       this.selectedTicket.ticketStatus = 'Chờ khởi hành';
@@ -197,7 +198,7 @@ export class DanhSachVeComponent {
         this.selectedTicket.paymentStatus = 'Đã hoàn tiền';
         this.selectedTicket.ticketStatus = 'Đã hủy';
       }
-      alert('Đã cập nhật trạng thái: Đã hoàn tiền.');
+      this.toastService.show('Đã cập nhật trạng thái: Đã hoàn tiền.', 'success');
     }
   }
 
@@ -216,14 +217,14 @@ export class DanhSachVeComponent {
 
   confirmCancelWithOtp() {
     if (this.otpValue.length === 6) {
-      alert('Xác thực thành công! Hệ thống không thể hoàn tiền tự động. Vé ' + this.selectedTicket?.id + ' đã được chuyển sang trạng thái "Chờ hoàn tiền" để nhân viên xử lý thủ công.');
+      this.toastService.show('Xác thực thành công! Hệ thống không thể hoàn tiền tự động. Vé ' + this.selectedTicket?.id + ' đã được chuyển sang trạng thái "Chờ hoàn tiền" để nhân viên xử lý thủ công.', 'success');
       if (this.selectedTicket) {
         this.selectedTicket.paymentStatus = 'Chờ hoàn tiền';
         this.selectedTicket.ticketStatus = 'Đã hủy';
       }
       this.closeOtpModal();
     } else {
-      alert('Vui lòng nhập đúng mã OTP 6 chữ số.');
+      this.toastService.show('Vui lòng nhập đúng mã OTP 6 chữ số.', 'warning');
     }
   }
 
@@ -244,7 +245,7 @@ export class DanhSachVeComponent {
   }
 
   onResendNotification() {
-    alert('Đã gửi lại SMS/Email cho khách hàng ' + this.selectedTicket?.customer);
+    this.toastService.show('Đã gửi lại SMS/Email cho khách hàng ' + this.selectedTicket?.customer, 'success');
   }
 
   // Modal In vé (kế thừa từ logic cũ nhưng mở từ Details)
@@ -261,7 +262,7 @@ export class DanhSachVeComponent {
   }
 
   exportPDF() {
-    alert('Đang khởi tạo tệp PDF cho vé ' + this.selectedTicket?.id);
+    this.toastService.show('Đang khởi tạo tệp PDF cho vé ' + this.selectedTicket?.id, 'info');
   }
 
   printTicket() {

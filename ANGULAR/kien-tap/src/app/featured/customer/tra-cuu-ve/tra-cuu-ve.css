@@ -15,6 +15,10 @@
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.fill-icon {
+  font-variation-settings: 'FILL' 1;
+}
+
 @keyframes scaleUp {
   from {
     transform: scale(0.95);

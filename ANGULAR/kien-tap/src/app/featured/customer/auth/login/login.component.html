@@ -17,6 +17,7 @@
             <input type="text" [(ngModel)]="phoneOrEmail" name="phoneOrEmail" placeholder="Nhập số điện thoại hoặc email"
               class="w-full bg-transparent text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none" />
           </div>
+          <p *ngIf="phoneOrEmailError" class="text-sm text-danger font-semibold mt-1">{{ phoneOrEmailError }}</p>
         </div>
 
         <!-- Password input with eye toggle -->
@@ -30,6 +31,7 @@
               <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
             </button>
           </div>
+          <p *ngIf="passwordError" class="text-sm text-danger font-semibold mt-1">{{ passwordError }}</p>
         </div>
 
         <!-- Forgot password link -->
@@ -43,9 +45,10 @@
         </div>
 
         <!-- Submit button -->
-        <button type="submit" class="w-full rounded-xl bg-primary text-on-primary py-3 text-title-md font-bold hover:opacity-95 transition-all">
-          Đăng nhập
-        </button>
+        <button type="submit" class="w-full rounded-xl bg-secondary text-on-primary py-3 text-title-md font-bold hover:bg-secondary-hover transition-all">
+            Đăng nhập
+          </button>
+          <p *ngIf="loginError" class="text-sm text-danger font-semibold text-center mt-2">{{ loginError }}</p>
       </form>
 
       <div class="text-center border-t border-outline-variant/20 pt-4">

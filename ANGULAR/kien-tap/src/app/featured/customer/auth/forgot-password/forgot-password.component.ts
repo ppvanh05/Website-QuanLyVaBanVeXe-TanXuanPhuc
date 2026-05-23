@@ -21,6 +21,10 @@ export class ForgotPasswordComponent implements OnDestroy {
   otpDigits = Array(6).fill('');
   otpDigitsString = '';
   otpError = '';
+  phoneNumberError = '';
+  newPasswordError = '';
+  confirmPasswordError = '';
+  resetError = '';
   otpCountdown = 180;
   otpTimer: ReturnType<typeof setInterval> | null = null;
   generatedOtp = '';
@@ -97,18 +101,22 @@ export class ForgotPasswordComponent implements OnDestroy {
   }
 
   sendOtp() {
+    this.phoneNumberError = '';
+    this.otpError = '';
+    this.resetError = '';
+
     const cleaned = this.phoneNumber.trim();
     const phoneRegex = /^(0|\+84)\d{9}$/;
+
     if (!phoneRegex.test(cleaned)) {
-      this.otpError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
+      this.phoneNumberError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
       return;
     }
 
-    // Verify phone number exists in mock users database
     const users = this.getMockUsers();
-    const exists = users.some(u => u.phoneNumber === cleaned);
-    if (!exists) {
-      this.otpError = 'Số điện thoại này chưa được đăng ký.';
+    const userExists = users.some(u => u.phoneNumber === cleaned);
+    if (!userExists) {
+      this.phoneNumberError = 'Số điện thoại này chưa được đăng ký.';
       return;
     }
 
@@ -134,7 +142,10 @@ export class ForgotPasswordComponent implements OnDestroy {
   }
 
   verifyOtp() {
-    if (!this.isOtpValid) {
+    this.otpError = '';
+    this.resetError = '';
+
+    if (!this.otpDigitsString || this.otpDigitsString.length !== 6) {
       this.otpError = 'Vui lòng nhập đủ 6 chữ số mã xác thực.';
       return;
     }
@@ -170,12 +181,20 @@ export class ForgotPasswordComponent implements OnDestroy {
   }
 
   resetPassword() {
+    this.newPasswordError = '';
+    this.confirmPasswordError = '';
+    this.resetError = '';
+
     if (!this.newPassword || this.newPassword.length < 6) {
-      this.otpError = 'Mật khẩu phải có ít nhất 6 ký tự.';
+      this.newPasswordError = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+      return;
+    }
+    if (!this.confirmPassword) {
+      this.confirmPasswordError = 'Vui lòng nhập lại mật khẩu mới.';
       return;
     }
     if (this.newPassword !== this.confirmPassword) {
-      this.otpError = 'Mật khẩu nhập lại không khớp.';
+      this.confirmPasswordError = 'Mật khẩu nhập lại không khớp.';
       return;
     }
 

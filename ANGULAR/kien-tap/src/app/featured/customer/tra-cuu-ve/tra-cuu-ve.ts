@@ -1,289 +1,314 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 
 interface Ticket {
-  maVe: string;         // Mã vé, mã ghế, mã tra cứu hóa đơn
-  soGhe: string;        // Số ghế
+  maVe: string;
+  soGhe: string;
+  trangThaiVe: '�� thanh to�n' | '�� h?y' | 'Ch? thanh to�n';
 }
 
 interface Order {
-  maDonHang: string;            // Mã đặt vé (on UI)
+  maDonHang: string;
   hoTenKhachHang: string;
   soDienThoai: string;
   email: string;
-  tenTuyen: string;             // Tên tuyến đường
-  gioKhoiHanh: string;          // Giờ khởi hành
-  departureDate: string;        // Ngày khởi hành
-  diemDon: string;              // Điểm đón hoặc điểm lên xe
-  diemTra: string;              // Điểm trả
-  thoiGianCoMatTruoc: string;   // Thời gian có mặt trước giờ chạy (ví dụ "15 phút")
-  gioCanComat: string;          // Giờ cần có mặt
-  tongGiaVe: number;            // Tổng giá vé
-  phuongThucThanhToan: string;  // Phương thức thanh toán
-  trangThaiDonHang: string;     // Trạng thái đơn hàng
-  bienSoXe: string;             // Biển số xe
+  thoiGianDat: string;
+  soLuongVe: number;
+  tenTuyen: string;
+  gioKhoiHanh: string;
+  departureDate: string;
+  diemDon: string;
+  diemTra: string;
+  thoiGianCoMatTruoc: string;
+  gioCanComat: string;
+  tongGiaVe: number;
+  phuongThucThanhToan: string;
+  trangThaiDonHang: string;
+  bienSoXe: string;
+  maDiemDon: string;
+  maDiemTra: string;
+  soLanDaSua: number;
+  gioiHanChinhSua: number;
   tickets: Ticket[];
-  maDiemDon?: string;           // Mã điểm đón dạng key
-  maDiemTra?: string;           // Mã điểm trả dạng key
-  soLanDaSua?: number;          // Số lần đã sửa thông tin
-  gioiHanChinhSua?: number;     // Giới hạn số lần sửa
 }
 
+interface LocationOption {
+  maDiem: string;
+  tenDiem: string;
+}
+
+interface RatingCriteriaItem {
+  label: string;
+  score: number;
+}
+
+const MOCK_ORDERS: Order[] = [
+  {
+    maDonHang: 'P5CDWE67',
+    hoTenKhachHang: '�? Th? Phuong',
+    soDienThoai: '0908123456',
+    email: 'phuong@example.com',
+    thoiGianDat: '2026-05-15 09:30',
+    soLuongVe: 1,
+    tenTuyen: 'H� N?i - H?i Ph�ng',
+    gioKhoiHanh: '07:30',
+    departureDate: '2026-05-25',
+    diemDon: 'B?n xe M? ��nh',
+    diemTra: 'B?n xe H?i Ph�ng',
+    thoiGianCoMatTruoc: '07:00',
+    gioCanComat: '07:00',
+    tongGiaVe: 320000,
+    phuongThucThanhToan: 'Chuy?n kho?n',
+    trangThaiDonHang: '�� ho�n th�nh',
+    bienSoXe: '29A-12345',
+    maDiemDon: 'MD01',
+    maDiemTra: 'MT01',
+    soLanDaSua: 1,
+    gioiHanChinhSua: 3,
+    tickets: [
+      { maVe: 'VE-001', soGhe: 'A01', trangThaiVe: '�� thanh to�n' }
+    ]
+  },
+  {
+    maDonHang: 'P5CDWE88',
+    hoTenKhachHang: 'Tr?n Ng?c B?o Nghi',
+    soDienThoai: '0912345678',
+    email: 'bao.nghi@example.com',
+    thoiGianDat: '2026-05-16 10:15',
+    soLuongVe: 2,
+    tenTuyen: 'H� N?i - S�i G�n',
+    gioKhoiHanh: '08:00',
+    departureDate: '2026-06-02',
+    diemDon: 'B?n xe Gi�p B�t',
+    diemTra: 'B?n xe S�i G�n',
+    thoiGianCoMatTruoc: '07:30',
+    gioCanComat: '07:30',
+    tongGiaVe: 980000,
+    phuongThucThanhToan: 'Th? ng�n h�ng',
+    trangThaiDonHang: 'Ch? kh?i h�nh',
+    bienSoXe: '29B-67890',
+    maDiemDon: 'MD02',
+    maDiemTra: 'MT02',
+    soLanDaSua: 0,
+    gioiHanChinhSua: 2,
+    tickets: [
+      { maVe: 'VE-002', soGhe: 'B01', trangThaiVe: '�� thanh to�n' },
+      { maVe: 'VE-003', soGhe: 'B02', trangThaiVe: '�� thanh to�n' }
+    ]
+  }
+];
+
+const LOCATION_OPTIONS: LocationOption[] = [
+  { maDiem: 'MD01', tenDiem: 'B?n xe M? ��nh' },
+  { maDiem: 'MD02', tenDiem: 'B?n xe Gi�p B�t' },
+  { maDiem: 'MD03', tenDiem: 'B?n xe Gia L�m' },
+  { maDiem: 'MT01', tenDiem: 'B?n xe H?i Ph�ng' },
+  { maDiem: 'MT02', tenDiem: 'B?n xe S�i G�n' },
+  { maDiem: 'MT03', tenDiem: 'B?n xe �� N?ng' }
+];
+
 @Component({
-  selector: 'app-tra-cuu-ve',
+  selector: 'app-tim-kiem-chuyen-xe',
   standalone: true,
   imports: [CommonModule, FormsModule, HeaderComponent, FooterComponent],
   templateUrl: './tra-cuu-ve.html',
-  styleUrl: './tra-cuu-ve.css',
+  styleUrl: './tra-cuu-ve.css'
 })
-export class TraCuuVe implements OnInit {
-  // Search form input fields
-  phoneNumber = '';
-  bookingCode = ''; // MaDonHang
-  searchError = '';
-
-  // App UI State
-  currentStep: 'search' | 'results' = 'search';
+export class TraCuuVeComponent {
+  phoneNumber: string = '';
+  bookingCode: string = '';
+  ticketCode: string = '';
+  isLoading: boolean = false;
+  foundOrder: Order | null = null;
   currentOrder: Order | null = null;
-  isLoading = false;
+  errorMessage: string = '';
+  searchError: string = '';
+  currentStep: 'search' | 'results' = 'search';
 
-  // Station dropdown options
-  diemDonOptions = [
-    { maDiem: 'BX_MD', tenDiem: 'Bến xe Miền Đông mới (39448 Xa Lộ Hà Nội, TP Thủ Đức, TP.HCM)' },
-    { maDiem: 'BX_MT', tenDiem: 'Bến xe Miền Tây (395 Kinh Dương Vương, P.An Lạc, Q.Bình Tân, TP.HCM)' },
-    { maDiem: 'VP_DL', tenDiem: 'Văn phòng Đà Lạt (795 Q Lộ 20, TT Liên Nghĩa, H.Đức Trọng, Lâm Đồng)' },
-    { maDiem: 'VP_BD', tenDiem: 'Văn phòng Bình Định (Bến xe Quy Nhơn, 71 Tây Sơn, Quy Nhơn)' }
-  ];
-
-  diemTraOptions = [
-    { maDiem: 'BX_MD', tenDiem: 'Bến xe Miền Đông mới (39448 Xa Lộ Hà Nội, TP Thủ Đức, TP.HCM)' },
-    { maDiem: 'BX_MT', tenDiem: 'Bến xe Miền Tây (395 Kinh Dương Vương, P.An Lạc, Q.Bình Tân, TP.HCM)' },
-    { maDiem: 'VP_DL', tenDiem: 'Văn phòng Đà Lạt (795 Q Lộ 20, TT Liên Nghĩa, H.Đức Trọng, Lâm Đồng)' },
-    { maDiem: 'VP_BD', tenDiem: 'Văn phòng Bình Định (Bến xe Quy Nhơn, 71 Tây Sơn, Quy Nhơn)' }
-  ];
-
-  // Edit ticket information modal state
-  showEditModal = false;
-  editFullName = '';
-  editPhone = '';
-  editEmail = '';
-  editMaDiemDon = '';
-  editMaDiemTra = '';
-
-  // Other Modals state
-  showCancelModal = false;
-  showReviewModal = false;
-  reviewStars = 5;
-  reviewComment = '';
-  toastMessage = '';
+  toastMessage: string = '';
   toastType: 'success' | 'error' = 'success';
 
-  // Mock data matching the requested scenarios:
-  mockOrders: Order[] = [
-    {
-      maDonHang: 'P5CDWE67',
-      hoTenKhachHang: 'Đỗ Thị Phương',
-      soDienThoai: '0333555412',
-      email: 'dtp.phuong@gmail.com',
-      tenTuyen: 'Mien Dong moi - Da Lat',
-      gioKhoiHanh: '22:25',
-      departureDate: '24-04-2026',
-      diemDon: 'Bến xe Miền Đông mới (39448 Xa Lộ Hà Nội, TP Thủ Đức, TP.HCM)',
-      diemTra: 'Văn phòng Đà Lạt (795 Q Lộ 20, TT Liên Nghĩa, H.Đức Trọng, Lâm Đồng)',
-      thoiGianCoMatTruoc: '30 phút',
-      gioCanComat: '', // Will be calculated dynamically
-      tongGiaVe: 260000,
-      phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Thành công',
-      bienSoXe: '50H70313',
-      maDiemDon: 'BX_MD',
-      maDiemTra: 'VP_DL',
-      soLanDaSua: 0,
-      gioiHanChinhSua: 2,
-      tickets: [
-        {
-          maVe: 'P5C0ZVVO1',
-          soGhe: 'B05'
-        }
-      ]
-    },
-    {
-      maDonHang: 'P5CDWE88',
-      hoTenKhachHang: 'Trần Ngọc Bảo Nghi',
-      soDienThoai: '0981939379',
-      email: 'nghitnb23406@st.uel.edu.vn',
-      tenTuyen: 'Bến xe Miền Tây - Bến xe Quy Nhơn',
-      gioKhoiHanh: '18:00',
-      departureDate: '22-05-2026',
-      diemDon: 'Bến xe Miền Tây (395 Kinh Dương Vương, P.An Lạc, Q.Bình Tân, TP.HCM)',
-      diemTra: 'Văn phòng Bình Định (Bến xe Quy Nhơn, 71 Tây Sơn, Quy Nhơn)',
-      thoiGianCoMatTruoc: '30 phút',
-      gioCanComat: '', // Will be calculated dynamically
-      tongGiaVe: 800000,
-      phuongThucThanhToan: 'VietQR / Napas',
-      trangThaiDonHang: 'Thành công',
-      bienSoXe: '77B-012.34',
-      maDiemDon: 'BX_MT',
-      maDiemTra: 'VP_BD',
-      soLanDaSua: 0,
-      gioiHanChinhSua: 2,
-      tickets: [
-        {
-          maVe: 'P5C0ZVVO2',
-          soGhe: 'A08'
-        },
-        {
-          maVe: 'P5C0ZVVO3',
-          soGhe: 'A09'
-        }
-      ]
-    }
+  showEditModal: boolean = false;
+  showCancelModal: boolean = false;
+  showReviewModal: boolean = false;
+  showDiemDonDropdown: boolean = false;
+  showDiemTraDropdown: boolean = false;
+
+  editFullName: string = '';
+  editPhone: string = '';
+  editEmail: string = '';
+  editDiemDonSearchText: string = '';
+  editDiemTraSearchText: string = '';
+  editMaDiemDon: string = '';
+  editMaDiemTra: string = '';
+
+  filterDiemDonOptions: LocationOption[] = [];
+  filterDiemTraOptions: LocationOption[] = [];
+
+  reviewComment: string = '';
+  ratingCriteria: RatingCriteriaItem[] = [
+    { label: 'Nh�n vi�n', score: 5 },
+    { label: 'Xe s?ch s?', score: 5 },
+    { label: 'Gi? kh?i h�nh', score: 5 },
+    { label: 'Ch?t lu?ng d?ch v?', score: 5 }
   ];
+  quickReviewTags: string[] = ['��ng gi?', 'Xe d?p', 'Tho?i m�i', 'Nh�n vi�n nhi?t t�nh'];
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  ngOnInit(): void {
-    // Read route query parameters to trigger automatic search if present
-    this.route.queryParams.subscribe(params => {
-      const phone = params['phone'];
-      const code = params['code'];
-      if (phone && code) {
-        this.phoneNumber = phone;
-        this.bookingCode = code;
-        this.searchTickets();
+  searchTickets(): void {
+    this.isLoading = true;
+    this.foundOrder = null;
+    this.currentOrder = null;
+    this.errorMessage = '';
+    this.searchError = '';
+
+    setTimeout(() => {
+      const found = MOCK_ORDERS.find(
+        (order) =>
+          order.maDonHang.toLowerCase() === this.bookingCode.trim().toLowerCase() &&
+          order.soDienThoai.includes(this.phoneNumber.trim())
+      );
+
+      if (!found) {
+        this.searchError = 'Kh�ng t�m th?y don h�ng n�o v?i th�ng tin d� cung c?p.';
+        this.currentStep = 'search';
+        this.isLoading = false;
+        this.cdr.detectChanges();
+        return;
       }
-    });
+
+      this.foundOrder = found;
+      this.currentOrder = { ...found };
+      this.currentStep = 'results';
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }, 800);
   }
 
-  // Calculate presence time (subtracting 30 minutes from GioKhoiHanh)
-  calculatePresenceTime(gioKhoiHanh: string, departureDate: string): string {
-    if (!gioKhoiHanh || !departureDate) return '';
-    const parts = gioKhoiHanh.split(':');
-    if (parts.length !== 2) return `${gioKhoiHanh} ${departureDate}`;
-    let hour = parseInt(parts[0], 10);
-    let min = parseInt(parts[1], 10);
-    
-    min -= 30;
-    if (min < 0) {
-      min += 60;
-      hour -= 1;
-    }
-    if (hour < 0) {
-      hour += 24;
-    }
-    
-    const hourStr = hour.toString().padStart(2, '0');
-    const minStr = min.toString().padStart(2, '0');
-    return `${hourStr}:${minStr} ngày ${departureDate}`;
-  }
-
-  // Helper method to mask passenger phone (matching Figure 2 e.g. 033xxxx412)
-  maskPhone(phone: string): string {
-    if (!phone || phone.length < 7) return phone;
-    return phone.substring(0, 3) + 'xxxx' + phone.substring(phone.length - 3);
-  }
-
-  // Helper method to mask email (matching Figure 2 e.g. dtp*********@gmail.com)
-  maskEmail(email: string): string {
-    if (!email || !email.includes('@')) return email;
-    const parts = email.split('@');
-    const name = parts[0];
-    const domain = parts[1];
-    if (name.length <= 3) {
-      return name + '***@' + domain;
-    }
-    return name.substring(0, 3) + '*'.repeat(Math.max(name.length - 3, 5)) + '@' + domain;
-  }
-
-  // Pre-fill mock data for quick visualization
-  fillMockData(caseNumber: number): void {
-    if (caseNumber === 1) {
-      this.phoneNumber = '0333555412';
+  fillMockData(id: number): void {
+    if (id === 1) {
+      this.phoneNumber = '0908123456';
       this.bookingCode = 'P5CDWE67';
     } else {
-      this.phoneNumber = '0981939379';
+      this.phoneNumber = '0912345678';
       this.bookingCode = 'P5CDWE88';
     }
+
     this.searchTickets();
   }
 
-  // Search logic
-  searchTickets(): void {
-    const cleanPhone = this.phoneNumber.trim();
-    const cleanCode = this.bookingCode.trim().toUpperCase();
+  backToSearch(): void {
+    this.currentStep = 'search';
+    this.foundOrder = null;
+    this.currentOrder = null;
+    this.errorMessage = '';
+    this.searchError = '';
+    this.showEditModal = false;
+    this.showCancelModal = false;
+    this.showReviewModal = false;
+  }
 
-    if (!cleanPhone || !cleanCode) {
-      this.searchError = 'Vui lòng nhập đầy đủ Số điện thoại và Mã đặt vé';
-      return;
+  maskPhone(phone: string): string {
+    if (!phone || phone.length < 8) {
+      return phone;
     }
 
-    this.searchError = '';
-    this.isLoading = true;
-
-    // Simulate API lookup
-    setTimeout(() => {
-      const order = this.mockOrders.find(
-        (o) =>
-          o.soDienThoai === cleanPhone &&
-          (o.maDonHang.toUpperCase() === cleanCode || o.tickets.some((t) => t.maVe.toUpperCase() === cleanCode))
-      );
-
-      if (order) {
-        // Deep copy order to prevent direct mutations to mockOrders template
-        this.currentOrder = JSON.parse(JSON.stringify(order));
-        this.currentStep = 'results';
-      } else {
-        this.searchError = 'Không tìm thấy thông tin đặt vé với dữ liệu cung cấp. Vui lòng thử lại với SĐT: 0333555412, Mã: P5CDWE67 hoặc SĐT: 0981939379, Mã: P5CDWE88.';
-      }
-
-      this.isLoading = false;
-    }, 600);
+    const visibleStart = phone.slice(0, 3);
+    const visibleEnd = phone.slice(-2);
+    return `${visibleStart}****${visibleEnd}`;
   }
 
-  // Back from results to search
-  backToSearch(): void {
-    this.phoneNumber = '';
-    this.bookingCode = '';
-    this.searchError = '';
-    this.currentOrder = null;
-    this.currentStep = 'search';
-    
-    // Clear URL query parameters when going back
-    this.router.navigate([], {
-      queryParams: {
-        phone: null,
-        code: null
-      },
-      queryParamsHandling: 'merge'
-    });
+  maskEmail(email: string): string {
+    if (!email || !email.includes('@')) {
+      return email;
+    }
+
+    const [name, domain] = email.split('@');
+    const maskedName = name.length <= 2 ? `${name[0]}*` : `${name.slice(0, 2)}***`;
+    return `${maskedName}@${domain}`;
   }
 
-  // Re-booking action
-  rebookTickets(): void {
-    this.showToast('Tính năng mua lại vé xe đang được xử lý!', 'success');
+  getStatusClasses(status: string): { [key: string]: boolean } {
+    return {
+      'bg-success-light': status === '�� ho�n th�nh' || status === '�� d�nh gi�',
+      'text-success-text': status === '�� ho�n th�nh' || status === '�� d�nh gi�',
+      'bg-danger-light': status === '�� h?y',
+      'text-danger-text': status === '�� h?y',
+      'bg-info-light': status === 'Ch? thanh to�n',
+      'text-info-text': status === 'Ch? thanh to�n',
+      'bg-warning-light': status === 'Ch? kh?i h�nh' || status === 'Chua d�nh gi�',
+      'text-warning-text': status === 'Ch? kh?i h�nh' || status === 'Chua d�nh gi�'
+    };
   }
 
-  // Unified Edit Info Modal Actions
+  calculatePresenceTime(gioKhoiHanh: string, _departureDate?: string): string {
+    const [hour, minute] = gioKhoiHanh.split(':').map(Number);
+
+    if (Number.isNaN(hour) || Number.isNaN(minute)) {
+      return '30 ph�t tru?c gi? kh?i h�nh';
+    }
+
+    const totalMinutes = hour * 60 + minute - 30;
+    const safeMinutes = (totalMinutes + 24 * 60) % (24 * 60);
+    const hh = Math.floor(safeMinutes / 60).toString().padStart(2, '0');
+    const mm = (safeMinutes % 60).toString().padStart(2, '0');
+
+    return `${hh}:${mm}`;
+  }
+
+  formatPrice(price: number): string {
+    return (price || 0).toLocaleString('vi-VN') + 'd';
+  }
+
+  getRefundPercentage(departureDate: string, gioKhoiHanh: string): number {
+    if (!departureDate || !gioKhoiHanh) {
+      return 0;
+    }
+
+    const [year, month, day] = departureDate.split('-').map(Number);
+    const [hour, minute] = gioKhoiHanh.split(':').map(Number);
+
+    const departure = new Date(year, month - 1, day, hour, minute, 0, 0);
+    const now = new Date();
+    const diffHours = (departure.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (diffHours <= 0) {
+      return 0;
+    }
+
+    if (diffHours >= 24) {
+      return 100;
+    }
+
+    if (diffHours >= 12) {
+      return 50;
+    }
+
+    return 0;
+  }
+
   openEditOrderModal(): void {
-    if (!this.currentOrder) return;
-    
-    // Check if edits limit is reached
-    const edits = this.currentOrder.soLanDaSua || 0;
-    const limit = this.currentOrder.gioiHanChinhSua || 2;
-    if (edits >= limit) {
-      this.showToast('Bạn đã hết lượt chỉnh sửa thông tin cho vé này!', 'error');
+    if (!this.currentOrder) {
       return;
     }
 
     this.editFullName = this.currentOrder.hoTenKhachHang;
     this.editPhone = this.currentOrder.soDienThoai;
     this.editEmail = this.currentOrder.email;
-    this.editMaDiemDon = this.currentOrder.maDiemDon || '';
-    this.editMaDiemTra = this.currentOrder.maDiemTra || '';
+    this.editDiemDonSearchText = this.currentOrder.diemDon;
+    this.editDiemTraSearchText = this.currentOrder.diemTra;
+    this.editMaDiemDon = this.currentOrder.maDiemDon;
+    this.editMaDiemTra = this.currentOrder.maDiemTra;
+    this.filterDiemDonOptions = LOCATION_OPTIONS;
+    this.filterDiemTraOptions = LOCATION_OPTIONS;
     this.showEditModal = true;
   }
 
@@ -292,69 +317,32 @@ export class TraCuuVe implements OnInit {
   }
 
   saveEditChanges(): void {
-    if (!this.currentOrder) return;
-
-    const edits = this.currentOrder.soLanDaSua || 0;
-    const limit = this.currentOrder.gioiHanChinhSua || 2;
-    if (edits >= limit) {
-      this.showToast('Bạn đã hết lượt chỉnh sửa thông tin cho vé này!', 'error');
+    if (!this.currentOrder) {
       return;
     }
 
-    const name = this.editFullName.trim();
-    const phone = this.editPhone.trim();
-    const email = this.editEmail.trim();
+    this.currentOrder.hoTenKhachHang = this.editFullName.trim() || this.currentOrder.hoTenKhachHang;
+    this.currentOrder.soDienThoai = this.editPhone.trim() || this.currentOrder.soDienThoai;
+    this.currentOrder.email = this.editEmail.trim() || this.currentOrder.email;
 
-    if (!name || !phone || !email || !this.editMaDiemDon || !this.editMaDiemTra) {
-      this.showToast('Vui lòng nhập đầy đủ tất cả thông tin!', 'error');
-      return;
+    const selectedDon = LOCATION_OPTIONS.find((item) => item.maDiem === this.editMaDiemDon);
+    const selectedTra = LOCATION_OPTIONS.find((item) => item.maDiem === this.editMaDiemTra);
+
+    if (selectedDon) {
+      this.currentOrder.diemDon = selectedDon.tenDiem;
+      this.currentOrder.maDiemDon = selectedDon.maDiem;
     }
 
-    // Vietnam phone verification
-    const vnPhoneRegex = /^(0[35789])[0-9]{8}$/;
-    if (!vnPhoneRegex.test(phone)) {
-      this.showToast('Số điện thoại không hợp lệ! (Phải gồm 10 chữ số bắt đầu bằng 03, 05, 07, 08 hoặc 09)', 'error');
-      return;
+    if (selectedTra) {
+      this.currentOrder.diemTra = selectedTra.tenDiem;
+      this.currentOrder.maDiemTra = selectedTra.maDiem;
     }
 
-    // Email address formatting verification
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      this.showToast('Email không đúng định dạng! (Ví dụ: example@gmail.com)', 'error');
-      return;
-    }
-
-    // Save changes
-    this.currentOrder.hoTenKhachHang = name;
-    this.currentOrder.soDienThoai = phone;
-    this.currentOrder.email = email;
-    this.currentOrder.maDiemDon = this.editMaDiemDon;
-    this.currentOrder.maDiemTra = this.editMaDiemTra;
-
-    // Map stations labels
-    const matchDiemDon = this.diemDonOptions.find(o => o.maDiem === this.editMaDiemDon);
-    if (matchDiemDon) {
-      this.currentOrder.diemDon = matchDiemDon.tenDiem;
-    }
-    const matchDiemTra = this.diemTraOptions.find(o => o.maDiem === this.editMaDiemTra);
-    if (matchDiemTra) {
-      this.currentOrder.diemTra = matchDiemTra.tenDiem;
-    }
-
-    // Increment count
-    this.currentOrder.soLanDaSua = edits + 1;
-
-    // Sync back to template array
-    const originalIndex = this.mockOrders.findIndex(o => o.maDonHang === this.currentOrder?.maDonHang);
-    if (originalIndex !== -1) {
-      this.mockOrders[originalIndex] = JSON.parse(JSON.stringify(this.currentOrder));
-    }
-
+    this.currentOrder.soLanDaSua = (this.currentOrder.soLanDaSua || 0) + 1;
     this.showEditModal = false;
-    this.showToast('Lưu thay đổi thành công!', 'success');
+    this.showToast('C?p nh?t th�ng tin v� th�nh c�ng.', 'success');
   }
 
-  // Ticket cancellation and review
   openCancelModal(): void {
     this.showCancelModal = true;
   }
@@ -364,40 +352,75 @@ export class TraCuuVe implements OnInit {
   }
 
   confirmCancelTicket(): void {
-    if (this.currentOrder) {
-      this.currentOrder.trangThaiDonHang = 'Đã hủy';
-      
-      // Sync back to template array
-      const originalIndex = this.mockOrders.findIndex(o => o.maDonHang === this.currentOrder?.maDonHang);
-      if (originalIndex !== -1) {
-        this.mockOrders[originalIndex] = JSON.parse(JSON.stringify(this.currentOrder));
-      }
-      this.showToast('Hủy đơn đặt vé thành công!', 'success');
+    if (!this.currentOrder) {
+      return;
     }
+
+    this.currentOrder.trangThaiDonHang = '�� h?y';
     this.showCancelModal = false;
+    this.showToast('Y�u c?u h?y v� d� du?c g?i.', 'success');
   }
 
   openReviewModal(): void {
     this.showReviewModal = true;
-    this.reviewStars = 5;
-    this.reviewComment = '';
   }
 
   closeReviewModal(): void {
     this.showReviewModal = false;
   }
 
-  submitReview(): void {
-    this.showToast(`Cảm ơn bạn đã gửi đánh giá ${this.reviewStars} sao cho chúng tôi!`, 'success');
-    this.showReviewModal = false;
+  setRating(index: number, score: number): void {
+    this.ratingCriteria[index].score = score;
   }
 
-  // Toast feedback helper
-  showToast(message: string, type: 'success' | 'error' = 'success'): void {
+  addReviewTag(tag: string): void {
+    if (this.reviewComment.includes(tag)) {
+      this.reviewComment = this.reviewComment.replace(tag, '').replace(/\s{2,}/g, ' ').trim();
+      return;
+    }
+
+    this.reviewComment = this.reviewComment ? `${this.reviewComment}, ${tag}` : tag;
+  }
+
+  submitReview(): void {
+    if (!this.currentOrder) {
+      return;
+    }
+
+    this.currentOrder.trangThaiDonHang = '�� d�nh gi�';
+    this.showReviewModal = false;
+    this.showToast('C?m on b?n d� d�nh gi� d?ch v?.', 'success');
+  }
+
+  printTicket(ticket: Ticket): void {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
+
+    this.showToast(`�ang in v� ${ticket.maVe}.`, 'success');
+  }
+
+  selectDiemDon(option: LocationOption): void {
+    this.editMaDiemDon = option.maDiem;
+    this.editDiemDonSearchText = option.tenDiem;
+    this.showDiemDonDropdown = false;
+    this.filterDiemDonOptions = [option];
+  }
+
+  selectDiemTra(option: LocationOption): void {
+    this.editMaDiemTra = option.maDiem;
+    this.editDiemTraSearchText = option.tenDiem;
+    this.showDiemTraDropdown = false;
+    this.filterDiemTraOptions = [option];
+  }
+
+  private showToast(message: string, type: 'success' | 'error'): void {
     this.toastMessage = message;
     this.toastType = type;
+
     setTimeout(() => {
       this.toastMessage = '';
-    }, 3000);
+      this.cdr.detectChanges();
+    }, 2500);
   }
 }

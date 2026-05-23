@@ -128,15 +128,9 @@
                 *ngIf="currentOrder.trangThaiDonHang !== 'Đã hủy'"
                 [disabled]="(currentOrder.soLanDaSua || 0) >= (currentOrder.gioiHanChinhSua || 2)"
                 (click)="openEditOrderModal()" 
-                class="flex items-center gap-1.5 bg-primary text-white hover:bg-primary-hover font-bold px-6 py-2.5 rounded-full text-body-sm transition-all active:scale-[0.98] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                class="flex items-center gap-1.5 bg-secondary text-white hover:bg-secondary-hover font-bold px-6 py-2.5 rounded-full text-body-sm transition-all active:scale-[0.98] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 <span class="material-symbols-outlined text-lg">edit</span>
                 Sửa thông tin
-              </button>
-
-              <button 
-                (click)="rebookTickets()" 
-                class="bg-secondary text-white font-bold px-6 py-2.5 rounded-full hover:bg-secondary-hover hover:shadow-md transition-all active:scale-[0.98] text-body-sm shadow-sm">
-                Mua lại vé xe
               </button>
             </div>
           </div>
@@ -163,6 +157,18 @@
               <div class="flex justify-between items-center border-b border-dashed border-outline-variant/20 py-2">
                 <span class="text-body-sm text-on-surface-variant font-medium">Email</span>
                 <span class="font-bold text-navy text-body-md">{{ maskEmail(currentOrder.email) }}</span>
+              </div>
+
+              <!-- Thời gian đặt -->
+              <div class="flex justify-between items-center border-b border-dashed border-outline-variant/20 py-2">
+                <span class="text-body-sm text-on-surface-variant font-medium">Thời gian đặt</span>
+                <span class="font-bold text-navy text-body-md">{{ currentOrder.thoiGianDat }}</span>
+              </div>
+
+              <!-- Số lượng vé đã đặt -->
+              <div class="flex justify-between items-center border-b border-dashed border-outline-variant/20 py-2">
+                <span class="text-body-sm text-on-surface-variant font-medium">Số lượng vé đã đặt</span>
+                <span class="font-bold text-navy text-body-md">{{ currentOrder.soLuongVe }}</span>
               </div>
             </div>
 
@@ -198,13 +204,10 @@
               <div class="flex justify-between items-center border-b border-dashed border-outline-variant/20 py-2">
                 <span class="text-body-sm text-on-surface-variant font-medium">Trạng thái đơn hàng</span>
                 <span 
-                  class="px-3.5 py-1 rounded-full font-bold text-label-md shadow-xs"
-                  [class.bg-success-light]="currentOrder.trangThaiDonHang === 'Thành công'"
-                  [class.text-success-text]="currentOrder.trangThaiDonHang === 'Thành công'"
-                  [class.bg-danger-light]="currentOrder.trangThaiDonHang === 'Đã hủy'"
-                  [class.text-danger-text]="currentOrder.trangThaiDonHang === 'Đã hủy'">
-                  {{ currentOrder.trangThaiDonHang }}
-                </span>
+                    class="px-3.5 py-1 rounded-full font-bold text-label-md shadow-xs"
+                    [ngClass]="getStatusClasses(currentOrder.trangThaiDonHang)">
+                    {{ currentOrder.trangThaiDonHang }}
+                  </span>
               </div>
             </div>
           </div>
@@ -273,7 +276,7 @@
                   <div class="flex items-center gap-2.5 bg-secondary-light/40 border border-secondary/15 p-4 rounded-xl text-secondary">
                     <span class="material-symbols-outlined text-[22px]">schedule</span>
                     <span class="text-body-sm font-semibold leading-relaxed">
-                      Có mặt tại điểm đón trước 30 phút để chuẩn bị làm thủ tục lên xe. Giờ cần có mặt: 
+                      Có mặt tại điểm đón <span class="font-bold text-secondary">trước 30 phút</span> để chuẩn bị làm thủ tục lên xe. <span class="font-bold text-secondary">Giờ cần có mặt</span>: 
                       <span class="font-bold text-navy">{{ calculatePresenceTime(currentOrder.gioKhoiHanh, currentOrder.departureDate) }}</span>.
                     </span>
                   </div>
@@ -294,7 +297,7 @@
                     </div>
                     <div class="flex flex-col gap-1 border-l border-outline-variant/20">
                       <span class="text-label-sm text-outline uppercase tracking-wider">Trạng thái</span>
-                      <span class="font-bold text-success text-body-md">Đã thanh toán</span>
+                      <span class="font-bold text-success text-body-md">{{ ticket.trangThaiVe }}</span>
                     </div>
                   </div>
                 </div>
@@ -326,6 +329,13 @@
                       <p class="font-bold text-navy text-body-md font-mono">{{ ticket.maVe }}</p>
                     </div>
                   </div>
+                  <!-- Print Ticket Button -->
+                  <button 
+                    (click)="printTicket(ticket)" 
+                    class="mt-4 w-full flex items-center justify-center gap-2 bg-secondary text-white hover:bg-secondary-hover font-bold px-4 py-2.5 rounded-xl text-body-sm transition-all active:scale-[0.98] shadow-sm">
+                    <span class="material-symbols-outlined text-lg">print</span>
+                    In vé này
+                  </button>
                 </div>
               </div>
             </div>
@@ -342,8 +352,9 @@
             </button>
 
             <button 
+              [disabled]="currentOrder.trangThaiDonHang !== 'Đã hoàn thành'"
               (click)="openReviewModal()" 
-              class="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-xl px-6 py-3 font-bold text-body-sm transition-all shadow-sm">
+              class="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-xl px-6 py-3 font-bold text-body-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
               <span class="material-symbols-outlined text-lg">star</span>
               Đánh giá dịch vụ
             </button>
@@ -412,29 +423,49 @@
           />
         </div>
 
-        <!-- Điểm đón (Dropdown Select) -->
-        <div class="flex flex-col gap-1.5">
+        <!-- Điểm đón (Dropdown Select with Search) -->
+        <div class="flex flex-col gap-1.5 relative">
           <label class="text-label-sm font-bold text-navy uppercase tracking-wide">Điểm đón khách</label>
-          <div class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2.5 focus-within:border-primary focus-within:bg-white focus-within:ring-4 focus-within:ring-primary/10 transition-all">
-            <span class="material-symbols-outlined text-primary mr-2 text-[20px]">radio_button_checked</span>
-            <select 
-              [(ngModel)]="editMaDiemDon" 
-              class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-body-md font-semibold cursor-pointer outline-none">
-              <option *ngFor="let opt of diemDonOptions" [value]="opt.maDiem">{{ opt.tenDiem }}</option>
-            </select>
+          <input
+            id="diemDonInput"
+            type="text"
+            [(ngModel)]="editDiemDonSearchText"
+            (focus)="showDiemDonDropdown = true"
+            (input)="editMaDiemDon = ''"
+            placeholder="Tìm kiếm điểm đón"
+            class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-md focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+          />
+          <div *ngIf="showDiemDonDropdown && filterDiemDonOptions.length > 0"
+               id="diemDonDropdown"
+               class="absolute top-full left-0 right-0 bg-white border border-outline-variant/30 rounded-xl shadow-lg max-h-60 overflow-y-auto z-10 mt-1">
+            <div *ngFor="let opt of filterDiemDonOptions"
+                 (click)="selectDiemDon(opt)"
+                 class="px-4 py-2 hover:bg-surface-container-low cursor-pointer text-body-md text-on-surface-variant">
+              {{ opt.tenDiem }}
+            </div>
           </div>
         </div>
 
-        <!-- Điểm trả (Dropdown Select) -->
-        <div class="flex flex-col gap-1.5">
+        <!-- Điểm trả (Dropdown Select with Search) -->
+        <div class="flex flex-col gap-1.5 relative">
           <label class="text-label-sm font-bold text-navy uppercase tracking-wide">Điểm trả khách</label>
-          <div class="flex items-center bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2.5 focus-within:border-primary focus-within:bg-white focus-within:ring-4 focus-within:ring-primary/10 transition-all">
-            <span class="material-symbols-outlined text-primary mr-2 text-[20px]">location_on</span>
-            <select 
-              [(ngModel)]="editMaDiemTra" 
-              class="bg-transparent border-none focus:ring-0 w-full text-on-surface text-body-md font-semibold cursor-pointer outline-none">
-              <option *ngFor="let opt of diemTraOptions" [value]="opt.maDiem">{{ opt.tenDiem }}</option>
-            </select>
+          <input
+            id="diemTraInput"
+            type="text"
+            [(ngModel)]="editDiemTraSearchText"
+            (focus)="showDiemTraDropdown = true"
+            (input)="editMaDiemTra = ''"
+            placeholder="Tìm kiếm điểm trả"
+            class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-md focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+          />
+          <div *ngIf="showDiemTraDropdown && filterDiemTraOptions.length > 0"
+               id="diemTraDropdown"
+               class="absolute top-full left-0 right-0 bg-white border border-outline-variant/30 rounded-xl shadow-lg max-h-60 overflow-y-auto z-10 mt-1">
+            <div *ngFor="let opt of filterDiemTraOptions"
+                 (click)="selectDiemTra(opt)"
+                 class="px-4 py-2 hover:bg-surface-container-low cursor-pointer text-body-md text-on-surface-variant">
+              {{ opt.tenDiem }}
+            </div>
           </div>
         </div>
 
@@ -458,7 +489,7 @@
           Hủy
         </button>
         <button 
-          class="bg-primary text-white hover:bg-primary-hover px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm" 
+          class="bg-secondary text-white hover:bg-secondary-hover px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm" 
           (click)="saveEditChanges()">
           Lưu thay đổi
         </button>
@@ -467,28 +498,71 @@
   </div>
 
   <!-- CANCEL CONFIRMATION MODAL -->
-  <div class="fixed inset-0 z-50 bg-navy/60 backdrop-blur-xs flex items-center justify-center p-4" *ngIf="showCancelModal">
-    <div class="bg-white rounded-2xl max-w-[480px] w-full overflow-hidden shadow-modal border border-outline-variant/10 animate-scale-up">
+  <div class="fixed inset-0 z-50 bg-navy/60 backdrop-blur-xs flex items-center justify-center p-4" *ngIf="showCancelModal && currentOrder">
+    <div class="bg-white rounded-2xl max-w-[540px] w-full overflow-hidden shadow-modal border border-outline-variant/10 animate-scale-up">
       <div class="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
-        <h3 class="font-bold text-danger text-title-lg uppercase tracking-wider">HỦY ĐƠN ĐẶT VÉ</h3>
+        <h3 class="font-bold text-danger text-title-lg uppercase tracking-wider">XÁC NHẬN HỦY VÉ</h3>
         <span class="material-symbols-outlined text-outline-variant hover:text-navy cursor-pointer select-none" (click)="closeCancelModal()">close</span>
       </div>
-      <div class="p-6 space-y-4">
-        <p class="text-body-md text-on-surface-variant font-medium leading-relaxed">
-          Bạn có chắc chắn muốn gửi yêu cầu hủy cho đơn đặt vé <span class="font-bold text-navy">{{ currentOrder?.maDonHang }}</span>? Hành động này không thể hoàn tác.
-        </p>
-        <div class="flex gap-2.5 bg-warning-light border border-warning/20 text-warning-text p-4 rounded-xl">
-          <span class="material-symbols-outlined text-warning text-[20px]">warning</span>
-          <span class="text-body-xs font-semibold leading-relaxed">
-            Chính sách hủy vé quy định phí hủy từ 10% - 30% tùy vào thời điểm yêu cầu hủy trước giờ khởi hành.
-          </span>
+      
+      <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div class="flex items-start gap-3 bg-warning-light border border-warning/20 p-4 rounded-xl">
+          <span class="material-symbols-outlined text-warning text-[22px]">warning</span>
+          <p class="text-warning-text text-body-sm font-semibold leading-relaxed">
+            Bạn đang yêu cầu hủy vé cho đơn hàng <span class="font-bold">{{ currentOrder.maDonHang }}</span>. Vui lòng đọc kỹ chính sách hoàn tiền trước khi xác nhận.
+          </p>
+        </div>
+
+        <!-- Refund Policy Details -->
+        <div class="space-y-3">
+          <h4 class="font-bold text-navy text-body-md uppercase tracking-wider">Chính sách hoàn tiền:</h4>
+          <ul class="list-disc list-inside text-body-sm text-on-surface-variant space-y-1">
+            <li>Hủy vé trước 24 giờ khởi hành: Hoàn tiền 100%.</li>
+            <li>Hủy vé từ 12 - 24 giờ khởi hành: Hoàn tiền 50%.</li>
+            <li>Hủy vé dưới 12 giờ khởi hành: Không hỗ trợ hoàn tiền (0%).</li>
+          </ul>
+
+          <p class="text-body-xs font-semibold leading-relaxed pl-7 text-on-surface">
+            <span *ngIf="getRefundPercentage(currentOrder.departureDate, currentOrder.gioKhoiHanh) === 100">
+              Thời gian khởi hành cách thời điểm hiện tại trên 24 tiếng. Bạn được hoàn trả <span class="font-bold text-success-text">100%</span> giá tiền vé, số tiền được nhận lại: <span class="font-bold text-success-text">{{ formatPrice(currentOrder.tongGiaVe) }}</span>.
+            </span>
+            <span *ngIf="getRefundPercentage(currentOrder.departureDate, currentOrder.gioKhoiHanh) === 50">
+              Thời gian khởi hành cách thời điểm hiện tại từ 12 đến 24 tiếng. Bạn được hoàn trả <span class="font-bold text-warning-text">50%</span> giá tiền vé, số tiền được nhận lại: <span class="font-bold text-warning-text">{{ formatPrice(currentOrder.tongGiaVe * 0.5) }}</span>.
+            </span>
+            <span *ngIf="getRefundPercentage(currentOrder.departureDate, currentOrder.gioKhoiHanh) === 0" class="text-danger-text">
+              Thời gian khởi hành còn dưới 12 tiếng. Nhà xe <span class="font-bold">không hỗ trợ hủy vé</span> cho các trường hợp sát giờ chạy. Số tiền được nhận lại: <span class="font-bold text-danger-text">0đ</span>.
+            </span>
+          </p>
+
+          <!-- Refund Details Table -->
+          <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/15 text-body-sm">
+            <div class="flex justify-between py-1">
+              <span class="text-on-surface-variant">Giá vé ban đầu:</span>
+              <span class="font-bold text-navy">{{ formatPrice(currentOrder.tongGiaVe) }}</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-on-surface-variant">Phí hủy ({{ 100 - getRefundPercentage(currentOrder.departureDate, currentOrder.gioKhoiHanh) }}%):</span>
+              <span class="font-bold text-danger">- {{ formatPrice(currentOrder.tongGiaVe * (100 - getRefundPercentage(currentOrder.departureDate, currentOrder.gioKhoiHanh)) / 100) }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-t border-dashed border-outline-variant/20 mt-2 pt-2">
+              <span class="text-on-surface-variant font-bold">Số tiền thực nhận:</span>
+              <span class="font-bold text-success">{{ formatPrice(currentOrder.tongGiaVe * getRefundPercentage(currentOrder.departureDate, currentOrder.gioKhoiHanh) / 100) }}</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-on-surface-variant">Phương thức nhận tiền:</span>
+              <span class="font-bold text-navy">{{ currentOrder.phuongThucThanhToan }}</span>
+            </div>
+          </div>
         </div>
       </div>
       <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant/10 flex justify-end gap-3">
         <button class="bg-white hover:bg-surface-container-low border border-outline-variant px-5 py-2.5 rounded-xl font-bold text-body-sm text-navy transition-all" (click)="closeCancelModal()">
           Đóng
         </button>
-        <button class="bg-danger text-white hover:bg-danger/90 px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm" (click)="confirmCancelTicket()">
+        <button 
+          [disabled]="getRefundPercentage(currentOrder.departureDate, currentOrder.gioKhoiHanh) === 0"
+          class="bg-danger text-white hover:bg-danger/90 px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed" 
+          (click)="confirmCancelTicket()">
           Xác nhận hủy
         </button>
       </div>
@@ -496,43 +570,78 @@
   </div>
 
   <!-- REVIEW SUBMIT MODAL -->
-  <div class="fixed inset-0 z-50 bg-navy/60 backdrop-blur-xs flex items-center justify-center p-4" *ngIf="showReviewModal">
-    <div class="bg-white rounded-2xl max-w-[480px] w-full overflow-hidden shadow-modal border border-outline-variant/10 animate-scale-up">
-      <div class="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
-        <h3 class="font-bold text-navy text-title-lg uppercase tracking-wider">ĐÁNH GIÁ CHẤT LƯỢNG</h3>
-        <span class="material-symbols-outlined text-outline-variant hover:text-navy cursor-pointer select-none" (click)="closeReviewModal()">close</span>
+  <div class="fixed inset-0 z-50 bg-navy/60 backdrop-blur-xs flex items-center justify-center p-4" *ngIf="showReviewModal && currentOrder">
+    <div class="relative bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+      <div class="flex justify-between items-center px-8 py-5 border-b border-outline-variant/10">
+        <h3 class="text-title-lg font-bold text-navy uppercase tracking-tight">Đánh giá chuyến đi [{{ currentOrder.maDonHang }}]</h3>
+        <button (click)="closeReviewModal()" class="text-outline hover:text-error transition-colors">
+          <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
       </div>
-      <div class="p-6 space-y-6">
-        <p class="text-center font-semibold text-navy text-body-md">Cảm nhận của bạn về chuyến xe {{ currentOrder?.tenTuyen }}?</p>
+
+      <div class="p-8 space-y-6">
+        <p class="text-on-surface-variant text-body-md font-medium">Vui lòng chấm điểm cho các dịch vụ của chuyến đi:</p>
         
-        <!-- Stars quality selectors -->
-        <div class="flex justify-center gap-2">
-          <span 
-            *ngFor="let star of [1, 2, 3, 4, 5]" 
-            (click)="reviewStars = star"
-            class="material-symbols-outlined text-[40px] cursor-pointer select-none transition-all duration-150 hover:scale-110"
-            [class.text-warning]="star <= reviewStars"
-            [class.text-outline-variant/40]="star > reviewStars">
-            star
-          </span>
+        <!-- Star Rating Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
+          <div *ngFor="let criteria of ratingCriteria; let i = index" class="flex flex-col gap-2">
+            <label class="text-body-md font-semibold text-navy">{{ criteria.label }}</label>
+            <div class="flex items-center gap-1">
+              <span *ngFor="let star of [1,2,3,4,5]" 
+                    class="material-symbols-outlined text-2xl cursor-pointer transition-all"
+                    [class.text-secondary]="criteria.score >= star"
+                    [class.text-outline-variant]="criteria.score < star"
+                    [class.fill-icon]="criteria.score >= star"
+                    (click)="setRating(i, star)">
+                star
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <label class="text-label-sm font-bold text-navy uppercase tracking-wide">Ý kiến đóng góp (nếu có)</label>
-          <textarea 
-            [(ngModel)]="reviewComment" 
-            placeholder="Chia sẻ trải nghiệm của bạn về phương tiện, tài xế hoặc điểm đón..." 
-            class="border border-outline-variant rounded-xl p-3 text-body-sm font-medium w-full h-[100px] focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all resize-none"
-          ></textarea>
+          <!-- Review Comment -->
+          <div class="flex flex-col gap-1.5">
+            <label for="reviewComment" class="text-label-sm font-bold text-navy uppercase tracking-wide">Bình luận thêm (Không bắt buộc)</label>
+            <textarea 
+              id="reviewComment"
+              [(ngModel)]="reviewComment" 
+              rows="4" 
+              placeholder="Chia sẻ thêm trải nghiệm của bạn..."
+              class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-md focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+            ></textarea>
+          </div>
+
+          <!-- Quick Review Tags -->
+          <div class="flex flex-wrap gap-2 mt-4">
+            <span *ngFor="let tag of quickReviewTags"
+                  (click)="addReviewTag(tag)"
+                  class="px-4 py-2 rounded-full text-body-sm font-semibold cursor-pointer transition-all"
+                  [class.bg-secondary-light]="!reviewComment.includes(tag)"
+                  [class.text-secondary]="!reviewComment.includes(tag)"
+                  [class.hover:bg-secondary/20]="!reviewComment.includes(tag)"
+                  [class.bg-secondary]="reviewComment.includes(tag)"
+                  [class.text-white]="reviewComment.includes(tag)"
+                  [class.hover:bg-secondary-hover]="reviewComment.includes(tag)">
+              {{ tag }}
+            </span>
+          </div>
+
+        <!-- Upload Section -->
+        <div class="border-2 border-dashed border-outline-variant/30 rounded-2xl p-6 text-center hover:bg-surface-container-low transition-all cursor-pointer group">
+          <span class="material-symbols-outlined text-secondary text-3xl mb-2 group-hover:scale-110 transition-transform">add_a_photo</span>
+          <p class="text-on-surface-variant font-bold text-[13px]">Thêm hình ảnh/video thực tế</p>
+          <p class="text-outline text-[10px] uppercase mt-1">(Tối đa 3 file)</p>
         </div>
-      </div>
-      <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant/10 flex justify-end gap-3">
-        <button class="bg-white hover:bg-surface-container-low border border-outline-variant px-5 py-2.5 rounded-xl font-bold text-body-sm text-navy transition-all" (click)="closeReviewModal()">
-          Đóng
-        </button>
-        <button class="bg-primary text-white hover:bg-primary-hover px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm" (click)="submitReview()">
-          Gửi đánh giá
-        </button>
+
+        <!-- Actions -->
+        <div class="flex gap-4 pt-2">
+          <button (click)="closeReviewModal()" class="flex-1 py-3 border-2 border-outline-variant/30 rounded-2xl font-bold text-on-surface-variant hover:bg-surface-container-low transition-all">
+            Hủy bỏ
+          </button>
+          <button (click)="submitReview()" class="flex-1 py-3 bg-secondary text-white rounded-2xl font-bold shadow-lg shadow-secondary/20 hover:bg-secondary-hover transition-all">
+            Gửi đánh giá
+          </button>
+        </div>
       </div>
     </div>
   </div>
