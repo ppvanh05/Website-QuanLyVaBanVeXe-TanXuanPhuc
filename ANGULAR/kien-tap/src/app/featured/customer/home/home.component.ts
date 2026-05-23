@@ -192,4 +192,10 @@ export class HomeComponent {
       }
     });
   }
+
+  selectPopularRoute(route: any) {
+    this.departure = route.from;
+    this.destination = route.to;
+    this.searchTrip();
+  }
 }
