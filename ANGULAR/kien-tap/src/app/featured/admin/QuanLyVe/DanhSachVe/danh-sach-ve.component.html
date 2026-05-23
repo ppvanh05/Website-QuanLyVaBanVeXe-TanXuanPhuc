@@ -1,15 +1,16 @@
-<div class="page-container">
-  <div class="page-header">
-    <div class="breadcrumb">
-      <span class="parent">Quản lý vé</span>
-      <span class="separator">/</span>
-      <span class="current">Danh sách vé</span>
+<div class="py-8 mt-4">
+  <div class="max-w-container-max mx-auto px-margin-desktop">
+    <div class="page-header mb-8">
+      <div class="breadcrumb">
+        <span class="parent">Quản lý vé</span>
+        <span class="separator">/</span>
+        <span class="current">Danh sách vé</span>
+      </div>
+      <h1>Tra cứu vé</h1>
     </div>
-    <h1>Tra cứu vé</h1>
-  </div>
 
-  <!-- Search Section -->
-  <div class="card search-card">
+    <!-- Search Section -->
+    <section class="bg-surface rounded-2xl shadow-[0px_8px_30px_rgba(11,42,74,0.08)] p-6 mb-8 border border-outline-variant/10 relative z-25">
     <div class="search-grid">
       <div class="form-group">
         <label>Tìm kiếm</label>
@@ -115,8 +116,8 @@
     </div>
   </div>
 
-  <!-- Table Section -->
-  <div class="card table-card">
+    <!-- Table Section -->
+    <section class="bg-surface rounded-2xl shadow-[0px_8px_30px_rgba(11,42,74,0.08)] p-6 border border-outline-variant/10">
     <div class="table-card-header">
       <h2>
         Danh sách vé đã đặt
@@ -175,28 +176,28 @@
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="pagination">
-      <div class="page-info">
-        Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - {{ (currentPage * pageSize > displayTickets.length) ? displayTickets.length : (currentPage * pageSize) }} của {{ displayTickets.length }} bản ghi
+      <!-- Pagination -->
+      <div class="pagination">
+        <div class="page-info">
+          Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - {{ (currentPage * pageSize > displayTickets.length) ? displayTickets.length : (currentPage * pageSize) }} của {{ displayTickets.length }} bản ghi
+        </div>
+        <div class="page-controls">
+          <button class="btn-prev" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">
+            <span class="material-icons">chevron_left</span>
+          </button>
+          <button 
+            *ngFor="let p of getPageNumbers()" 
+            class="btn-page" 
+            [class.active]="p === currentPage"
+            (click)="setPage(p)">
+            {{ p }}
+          </button>
+          <button class="btn-next" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">
+            <span class="material-icons">chevron_right</span>
+          </button>
+        </div>
       </div>
-      <div class="page-controls">
-        <button class="btn-prev" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">
-          <span class="material-icons">chevron_left</span>
-        </button>
-        <button 
-          *ngFor="let p of getPageNumbers()" 
-          class="btn-page" 
-          [class.active]="p === currentPage"
-          (click)="setPage(p)">
-          {{ p }}
-        </button>
-        <button class="btn-next" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">
-          <span class="material-icons">chevron_right</span>
-        </button>
-      </div>
-    </div>
-  </div>
+    </section>
 
   <!-- Details Modal -->
   <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
@@ -461,5 +462,6 @@
         <button class="btn-close" (click)="closePrintModal()">Thoát</button>
       </div>
     </div>
+  </div>
   </div>
 </div>
