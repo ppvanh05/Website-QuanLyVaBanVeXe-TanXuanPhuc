@@ -131,7 +131,7 @@ model KHACH_HANG {
   MatKhau           String
   AnhDaiDien        String?
   GioiTinh          String             @db.VarChar
-  NgaySinh          DateTime           @db.Date
+  NgaySinh          DateTime?          @db.Date
   TrangThaiTaiKhoan String             @db.VarChar
   LyDoKhoa          String?            @db.VarChar
   NgayDangKy        DateTime           @db.Timestamptz(6)
@@ -239,6 +239,7 @@ model NHAN_VIEN {
   AnhDaiDien       String?
   GhiChu           String?
   TrangThai        String?
+  Quyen            String[]           @default([])
   BAN_QUAN_LY      BAN_QUAN_LY?
   NHAN_VIEN_BAN_VE NHAN_VIEN_BAN_VE?
   NHAT_KY_HE_THONG NHAT_KY_HE_THONG[]
@@ -265,15 +266,22 @@ model NHAN_VIEN_DIEU_PHOI {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model NHAT_KY_HE_THONG {
-  MaNhatKy       String     @id @db.VarChar
-  MaKhachHang    String     @db.VarChar
-  MaNhanVien     String?    @db.VarChar
-  LoaiThaoTac    String?
-  ThoiGian       DateTime?  @db.Timestamptz(6)
-  DiaChiIP       String?
-  NoiDungChiTiet String?
-  KHACH_HANG     KHACH_HANG @relation(fields: [MaKhachHang], references: [MaKhachHang], onDelete: NoAction, onUpdate: NoAction)
-  NHAN_VIEN      NHAN_VIEN? @relation(fields: [MaNhanVien], references: [MaNhanVien], onDelete: NoAction, onUpdate: NoAction)
+  MaNhatKy          String      @id @db.VarChar
+  MaKhachHang       String?     @db.VarChar
+  MaNhanVien        String?     @db.VarChar
+  LoaiThaoTac       String?
+  ThoiGian          DateTime?   @db.Timestamptz(6)
+  DiaChiIP          String?
+  NoiDungChiTiet    String?
+  MaVe              String?     @db.VarChar
+  TuyenXe           String?     @db.VarChar
+  TrangThai         String?     @db.VarChar
+  ThietBiTrinhDuyet String?     @db.VarChar
+  TrangThaiCu       String?     @db.VarChar
+  TrangThaiMoi      String?     @db.VarChar
+  DuLieuThayDoi     Json?
+  KHACH_HANG        KHACH_HANG? @relation(fields: [MaKhachHang], references: [MaKhachHang], onDelete: NoAction, onUpdate: NoAction)
+  NHAN_VIEN         NHAN_VIEN?  @relation(fields: [MaNhanVien], references: [MaNhanVien], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -403,9 +411,9 @@ model TU_KHOA_HAN_CHE {
   NoiDungTuKhoa   String        @db.VarChar(255)
   LoaiViPham      String        @db.VarChar(100)
   TrangThai       String        @db.VarChar(30)
-  ThoiGianCapNhat DateTime      @db.Timestamp(6)
-  MaQuanTriVien   String        @db.VarChar(10)
-  QUAN_TRI_VIEN   QUAN_TRI_VIEN @relation(fields: [MaQuanTriVien], references: [MaQuanTriVien], onDelete: NoAction, onUpdate: NoAction)
+  ThoiGianCapNhat DateTime       @db.Timestamp(6)
+  MaQuanTriVien   String?        @db.VarChar(10)
+  QUAN_TRI_VIEN   QUAN_TRI_VIEN? @relation(fields: [MaQuanTriVien], references: [MaQuanTriVien], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

@@ -297,8 +297,12 @@ export class BaoCaoService {
         customers.map(async c => {
           let tongVeDat = 0;
           try {
-            tongVeDat = await this.prisma.dON_HANG.count({
-              where: { MaKhachHang: c.MaKhachHang },
+            tongVeDat = await this.prisma.vE_DIEN_TU.count({
+              where: {
+                DON_HANG: {
+                  MaKhachHang: c.MaKhachHang,
+                },
+              },
             });
           } catch (e) {
             // Mismatch handling
@@ -374,16 +378,23 @@ export class BaoCaoService {
         },
       });
 
-      const mapped = staffList.map(s => ({
-        maNhanSu: s.MaTaiXePhuXe,
-        hoTen: s.HoTen || 'N/A',
-        vaiTro: s.LoaiNhanVien === 'driver' || s.LoaiNhanVien === 'Tài xế' ? 'Tài xế' : 'Phụ xe',
-        sdt: s.SoDienThoai || 'N/A',
-        cccd: s.CCCD || 'N/A',
-        loaiBangLai: s.LoaiBangLai || 'Không có',
-        thoiHanBangLai: s.ThoiHanBangLai ? s.ThoiHanBangLai.toISOString().slice(0, 10) : 'N/A',
-        trangThaiLamViec: s.TrangThaiLamViec === 'active' || s.TrangThaiLamViec === 'Đang hoạt động' ? 'Đang hoạt động' : 'Đã khóa',
-      }));
+      const mapped = staffList.map(s => {
+        let thoiHanBangLai = 'N/A';
+        if (s.ThoiHanBangLai) {
+          const d = s.ThoiHanBangLai;
+          thoiHanBangLai = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        }
+        return {
+          maNhanSu: s.MaTaiXePhuXe,
+          hoTen: s.HoTen || 'N/A',
+          vaiTro: s.LoaiNhanVien === 'driver' || s.LoaiNhanVien === 'Tài xế' ? 'Tài xế' : 'Phụ xe',
+          sdt: s.SoDienThoai || 'N/A',
+          cccd: s.CCCD || 'N/A',
+          loaiBangLai: s.LoaiBangLai || 'Không có',
+          thoiHanBangLai,
+          trangThaiLamViec: s.TrangThaiLamViec === 'active' || s.TrangThaiLamViec === 'Đang hoạt động' ? 'Đang hoạt động' : 'Đã khóa',
+        };
+      });
 
       return mapped.filter(item => {
         if (filters.searchTerm) {
@@ -473,7 +484,10 @@ export class BaoCaoService {
         const doanhThuTrungBinhChuyen = slChuyenChay > 0 ? Math.round(tongDoanhThu / slChuyenChay) : 0;
         const loiNhuanTrungBinhChuyen = slChuyenChay > 0 ? Math.round(loiNhuanTuyen / slChuyenChay) : 0;
 
-        const duration = r.ThoiGianDiChuyenDuKien.toISOString().slice(11, 16);
+        const durationDate = typeof r.ThoiGianDiChuyenDuKien === 'string' ? new Date(r.ThoiGianDiChuyenDuKien) : r.ThoiGianDiChuyenDuKien;
+        const duration = durationDate instanceof Date && !isNaN(durationDate.getTime())
+          ? durationDate.toISOString().slice(11, 16)
+          : '00:00';
         const khoangCachThoiGian = `${r.KhoangCach || 0} km / ${duration.replace(':', 'h')}m`;
 
         return {

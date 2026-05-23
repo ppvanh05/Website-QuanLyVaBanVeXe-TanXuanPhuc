@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
 
 @Injectable()
 export class TinTucService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private nhatKyService: NhatKyHeThongService,
+  ) { }
 
   // ===== LẤY TẤT CẢ TIN TỨC =====
   async getAll() {
@@ -38,7 +42,7 @@ export class TinTucService {
 
   // ===== TẠO MỚI =====
   async create(dto: Prisma.TIN_TUCUncheckedCreateInput) {
-    return this.prisma.tIN_TUC.create({
+    const res = await this.prisma.tIN_TUC.create({
       data: {
         MaTinTuc: dto.MaTinTuc,
         TieuDe: dto.TieuDe,
@@ -51,38 +55,105 @@ export class TinTucService {
         MaQuanTriVien: dto.MaQuanTriVien ?? null,
       },
     });
+
+    await this.nhatKyService.ghiLog({
+      MaNhanVien: 'NVDP001',
+      LoaiThaoTac: 'Quản lý tin tức',
+      NoiDungChiTiet: `Đăng bài viết tin tức mới: ${res.TieuDe} (Mã: ${res.MaTinTuc})`,
+      TrangThai: 'Thành công',
+      DuLieuThayDoi: [
+        { truong: 'MaTinTuc', giaTriCu: null, giaTriMoi: res.MaTinTuc },
+        { truong: 'TieuDe', giaTriCu: null, giaTriMoi: res.TieuDe },
+        { truong: 'TrangThai', giaTriCu: null, giaTriMoi: res.TrangThai },
+      ],
+    });
+
+    return res;
   }
 
   // ===== CẬP NHẬT =====
   async update(id: string, dto: Prisma.TIN_TUCUncheckedUpdateInput) {
+    const original = await this.getById(id);
     const data: any = { ...dto };
     if (dto.NgayDang) {
       data.NgayDang = new Date(dto.NgayDang as any);
     }
-
-    return this.prisma.tIN_TUC.update({
+    if (dto.NgayGioHenGio) {
+      data.NgayGioHenGio = new Date(dto.NgayGioHenGio as any);
+    }
+    const res = await this.prisma.tIN_TUC.update({
       where: { MaTinTuc: id },
       data,
     });
+
+    const changes: any[] = [];
+    if (dto.TieuDe && dto.TieuDe !== original?.TieuDe) {
+      changes.push({ truong: 'TieuDe', giaTriCu: original?.TieuDe || '', giaTriMoi: dto.TieuDe as string });
+    }
+    if (dto.LoaiTinTuc && dto.LoaiTinTuc !== original?.LoaiTinTuc) {
+      changes.push({ truong: 'LoaiTinTuc', giaTriCu: original?.LoaiTinTuc || '', giaTriMoi: dto.LoaiTinTuc as string });
+    }
+    if (dto.TrangThai && dto.TrangThai !== original?.TrangThai) {
+      changes.push({ truong: 'TrangThai', giaTriCu: original?.TrangThai || '', giaTriMoi: dto.TrangThai as string });
+    }
+
+    await this.nhatKyService.ghiLog({
+      MaNhanVien: 'NVDP001',
+      LoaiThaoTac: 'Quản lý tin tức',
+      NoiDungChiTiet: `Cập nhật bài viết tin tức: ${res.TieuDe} (Mã: ${id}). Chi tiết: ${changes.map(c => `${c.truong}: ${c.giaTriCu} -> ${c.giaTriMoi}`).join(', ') || 'Không thay đổi trường cốt lõi'}`,
+      TrangThai: 'Thành công',
+      DuLieuThayDoi: changes,
+    });
+
+    return res;
   }
 
   // ===== CẬP NHẬT TRẠNG THÁI =====
   async updateTrangThai(id: string, trangThai: string) {
+    const original = await this.getById(id);
     const data: any = { TrangThai: trangThai };
     // Nếu đổi sang "Đã đăng" thì ghi ngày đăng hiện tại
     if (trangThai === 'DaDang') {
       data.NgayDang = new Date();
     }
-    return this.prisma.tIN_TUC.update({
+    const res = await this.prisma.tIN_TUC.update({
       where: { MaTinTuc: id },
       data,
     });
+
+    await this.nhatKyService.ghiLog({
+      MaNhanVien: 'NVDP001',
+      LoaiThaoTac: 'Quản lý tin tức',
+      NoiDungChiTiet: `Thay đổi trạng thái bài viết tin tức: ${res.TieuDe} (Mã: ${id}) sang ${trangThai}`,
+      TrangThai: 'Thành công',
+      TrangThaiCu: original?.TrangThai || '',
+      TrangThaiMoi: trangThai,
+      DuLieuThayDoi: [
+        { truong: 'TrangThai', giaTriCu: original?.TrangThai || '', giaTriMoi: trangThai },
+      ],
+    });
+
+    return res;
   }
 
   // ===== XÓA =====
   async delete(id: string) {
-    return this.prisma.tIN_TUC.delete({
+    const original = await this.getById(id);
+    const res = await this.prisma.tIN_TUC.delete({
       where: { MaTinTuc: id },
     });
+
+    await this.nhatKyService.ghiLog({
+      MaNhanVien: 'NVDP001',
+      LoaiThaoTac: 'Quản lý tin tức',
+      NoiDungChiTiet: `Xóa bài viết tin tức: ${original?.TieuDe || ''} (Mã: ${id})`,
+      TrangThai: 'Thành công',
+      DuLieuThayDoi: [
+        { truong: 'MaTinTuc', giaTriCu: id, giaTriMoi: null },
+      ],
+    });
+
+    return res;
   }
 }
+

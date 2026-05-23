@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TaiXeService } from '../../QuanLyDieuHanh/tai-xe.service';
+import { BaoCaoService } from '../../../../core/services/bao-cao.service';
 
 interface CrewReportItem {
   maNhanSu: string;
@@ -28,7 +28,6 @@ export class BaoCaoTaiXePhuXeComponent implements OnInit {
     status: 'Tất cả'
   };
 
-  allCrew: CrewReportItem[] = [];
   filteredCrew: CrewReportItem[] = [];
   isReportViewed = true;
 
@@ -42,27 +41,10 @@ export class BaoCaoTaiXePhuXeComponent implements OnInit {
 
   rolesList = ['Tài xế', 'Phụ xe'];
 
-  constructor(private taiXeService: TaiXeService) {}
+  constructor(private baoCaoService: BaoCaoService) {}
 
   ngOnInit() {
-    this.loadCrewData();
     this.onViewReport();
-  }
-
-  loadCrewData() {
-    const drivers = this.taiXeService.getDrivers();
-    this.allCrew = drivers.map(d => {
-      return {
-        maNhanSu: `TXP_NS${String(d.id).padStart(3, '0')}`,
-        hoTen: d.name,
-        vaiTro: d.role === 'driver' ? 'Tài xế' : 'Phụ xe',
-        sdt: d.phone,
-        cccd: d.cccdNumber || 'N/A',
-        loaiBangLai: d.licenseClass || 'Không có',
-        thoiHanBangLai: d.licenseExpiry || 'N/A',
-        trangThaiLamViec: d.status === 'active' ? 'Đang hoạt động' : 'Đã khóa'
-      };
-    });
   }
 
   isLicenseExpiringSoon(expiryStr: string): boolean {
@@ -87,30 +69,15 @@ export class BaoCaoTaiXePhuXeComponent implements OnInit {
 
   onViewReport() {
     this.isReportViewed = true;
-    this.filteredCrew = this.allCrew.filter(item => {
-      // Search term
-      if (this.filters.searchTerm) {
-        const query = this.filters.searchTerm.toLowerCase();
-        const matchName = item.hoTen.toLowerCase().includes(query);
-        const matchPhone = item.sdt.includes(query);
-        const matchCccd = item.cccd.includes(query);
-        const matchCode = item.maNhanSu.toLowerCase().includes(query);
-        if (!matchName && !matchPhone && !matchCccd && !matchCode) return false;
+    this.baoCaoService.getBaoCaoTaiXePhuXe(this.filters).subscribe({
+      next: (data: any[]) => {
+        this.filteredCrew = data as CrewReportItem[];
+        this.calculateStats();
+      },
+      error: (err: any) => {
+        console.error('Error fetching tai xe phu xe report:', err);
       }
-
-      // Role
-      if (this.filters.role !== 'Tất cả' && item.vaiTro !== this.filters.role) return false;
-
-      // Status
-      if (this.filters.status !== 'Tất cả') {
-        const statusMap = this.filters.status === 'Hoạt động' ? 'Đang hoạt động' : 'Đã khóa';
-        if (item.trangThaiLamViec !== statusMap) return false;
-      }
-
-      return true;
     });
-
-    this.calculateStats();
   }
 
   private calculateStats() {

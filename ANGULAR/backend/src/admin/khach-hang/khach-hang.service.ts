@@ -1,27 +1,84 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
 
 @Injectable()
 export class KhachHangService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private nhatKyService: NhatKyHeThongService,
+  ) {}
+
+  // ===== TẠO MỚI KHÁCH HÀNG =====
+  async create(dto: Prisma.KHACH_HANGCreateInput) {
+    // Kiểm tra email đã tồn tại chưa
+    const existingKh = await this.prisma.kHACH_HANG.findFirst({
+      where: { Email: dto.Email as string },
+    });
+
+    if (existingKh) {
+      throw new BadRequestException('Email này đã được đăng ký trước đó!');
+    }
+
+    // Kiểm tra số điện thoại đã tồn tại chưa
+    if (dto.SoDienThoai) {
+      const existingPhone = await this.prisma.kHACH_HANG.findFirst({
+        where: { SoDienThoai: dto.SoDienThoai as string },
+      });
+
+      if (existingPhone) {
+        throw new BadRequestException('Số điện thoại này đã được đăng ký trước đó!');
+      }
+    }
+
+    // Xử lý ngày sinh
+    const data: any = { ...dto };
+    if (dto.NgaySinh) {
+      data.NgaySinh = new Date(dto.NgaySinh as any);
+    }
+
+    // Nếu không có trạng thái, mặc định là HoatDong
+    if (!data.TrangThaiTaiKhoan) {
+      data.TrangThaiTaiKhoan = 'HoatDong';
+    }
+
+    const res = await this.prisma.kHACH_HANG.create({
+      data,
+    });
+
+    // Ghi log tạo mới khách hàng
+    await this.nhatKyService.ghiLog({
+      MaKhachHang: res.MaKhachHang,
+      LoaiThaoTac: 'Tạo mới',
+      NoiDungChiTiet: `Tạo mới tài khoản khách hàng: ${res.HoTenKhachHang}`,
+      TrangThai: 'Thành công',
+    });
+
+    return res;
+  }
 
   // ===== LẤY TẤT CẢ KHÁCH HÀNG =====
   async getAll() {
-    return this.prisma.kHACH_HANG.findMany({
+    const list = await this.prisma.kHACH_HANG.findMany({
       orderBy: { NgayDangKy: 'desc' },
-      select: {
-        MaKhachHang: true,
-        HoTenKhachHang: true,
-        SoDienThoai: true,
-        Email: true,
-        AnhDaiDien: true,
-        GioiTinh: true,
-        NgaySinh: true,
-        TrangThaiTaiKhoan: true,
-        NgayDangKy: true,
-      },
     });
+    
+    return Promise.all(
+      list.map(async (kh) => {
+        const ticketCount = await this.prisma.vE_DIEN_TU.count({
+          where: {
+            DON_HANG: {
+              MaKhachHang: kh.MaKhachHang,
+            },
+          },
+        });
+        return {
+          ...kh,
+          tongSoVeDaDat: ticketCount,
+        };
+      }),
+    );
   }
 
   // ===== LẤY THEO ID =====
@@ -43,15 +100,36 @@ export class KhachHangService {
 
   // ===== CẬP NHẬT THÔNG TIN CƠ BẢN =====
   async update(id: string, dto: Prisma.KHACH_HANGUncheckedUpdateInput) {
-    await this.getById(id); // kiểm tra tồn tại
+    const original = await this.getById(id); // kiểm tra tồn tại
     const data: any = { ...dto };
     if (dto.NgaySinh) {
       data.NgaySinh = new Date(dto.NgaySinh as any);
     }
-    return this.prisma.kHACH_HANG.update({
+    const res = await this.prisma.kHACH_HANG.update({
       where: { MaKhachHang: id },
       data,
     });
+
+    const changes: any[] = [];
+    if (dto.HoTenKhachHang && dto.HoTenKhachHang !== original.HoTenKhachHang) {
+      changes.push({ truong: 'HoTenKhachHang', giaTriCu: original.HoTenKhachHang, giaTriMoi: dto.HoTenKhachHang as string });
+    }
+    if (dto.SoDienThoai && dto.SoDienThoai !== original.SoDienThoai) {
+      changes.push({ truong: 'SoDienThoai', giaTriCu: original.SoDienThoai, giaTriMoi: dto.SoDienThoai as string });
+    }
+    if (dto.Email && dto.Email !== original.Email) {
+      changes.push({ truong: 'Email', giaTriCu: original.Email, giaTriMoi: dto.Email as string });
+    }
+
+    await this.nhatKyService.ghiLog({
+      MaKhachHang: id,
+      LoaiThaoTac: 'Cập nhật thông tin cá nhân',
+      NoiDungChiTiet: `Cập nhật thông tin khách hàng ${res.HoTenKhachHang}. Chi tiết: ${changes.map(c => `${c.truong}: ${c.giaTriCu} -> ${c.giaTriMoi}`).join(', ') || 'Không thay đổi trường cốt lõi'}`,
+      TrangThai: 'Thành công',
+      DuLieuThayDoi: changes,
+    });
+
+    return res;
   }
 
   // ===== KHÓA TÀI KHOẢN =====
@@ -79,12 +157,27 @@ export class KhachHangService {
       );
     }
 
-    return this.prisma.kHACH_HANG.update({
+    const res = await this.prisma.kHACH_HANG.update({
       where: { MaKhachHang: id },
       data: {
         TrangThaiTaiKhoan: 'DaKhoa',
       },
     });
+
+    await this.nhatKyService.ghiLog({
+      MaKhachHang: id,
+      LoaiThaoTac: 'Quản lý tài khoản',
+      NoiDungChiTiet: `Khóa tài khoản khách hàng. Lý do: ${dto.LyDoKhoa}`,
+      TrangThai: 'Thành công',
+      TrangThaiCu: 'HoatDong',
+      TrangThaiMoi: 'DaKhoa',
+      DuLieuThayDoi: [
+        { truong: 'TrangThaiTaiKhoan', giaTriCu: 'HoatDong', giaTriMoi: 'DaKhoa' },
+        { truong: 'LyDoKhoa', giaTriCu: null, giaTriMoi: dto.LyDoKhoa },
+      ],
+    });
+
+    return res;
   }
 
   // ===== MỞ KHÓA TÀI KHOẢN =====
@@ -95,12 +188,26 @@ export class KhachHangService {
       throw new BadRequestException('Tài khoản này đang hoạt động bình thường!');
     }
 
-    return this.prisma.kHACH_HANG.update({
+    const res = await this.prisma.kHACH_HANG.update({
       where: { MaKhachHang: id },
       data: {
         TrangThaiTaiKhoan: 'HoatDong',
       },
     });
+
+    await this.nhatKyService.ghiLog({
+      MaKhachHang: id,
+      LoaiThaoTac: 'Quản lý tài khoản',
+      NoiDungChiTiet: 'Mở khóa tài khoản khách hàng',
+      TrangThai: 'Thành công',
+      TrangThaiCu: 'DaKhoa',
+      TrangThaiMoi: 'HoatDong',
+      DuLieuThayDoi: [
+        { truong: 'TrangThaiTaiKhoan', giaTriCu: 'DaKhoa', giaTriMoi: 'HoatDong' },
+      ],
+    });
+
+    return res;
   }
 
   // ===== LẤY LỊCH SỬ VÉ CỦA KHÁCH HÀNG =====
