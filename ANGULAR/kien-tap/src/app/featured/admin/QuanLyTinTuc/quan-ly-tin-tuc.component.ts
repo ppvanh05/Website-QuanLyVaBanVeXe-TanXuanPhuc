@@ -1,8 +1,9 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ElementRef, ViewChild, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TinTucService } from '../../../core/services/tin-tuc.service';
 import { NhatKyService } from '../../../core/services/nhat-ky.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface TinTuc {
   maTinTuc: string;
@@ -40,10 +41,21 @@ export class QuanLyTinTucComponent implements OnInit {
   @ViewChild('editor') editorElement!: ElementRef;
   @ViewChild('imageInput') imageInputElement!: ElementRef;
 
+  isBrowser: boolean = false;
+
   constructor(
     private readonly tinTucService: TinTucService,
-    private readonly nhatKyService: NhatKyService
-  ) {}
+    private readonly nhatKyService: NhatKyService,
+    private sanitizer: DomSanitizer,
+    private readonly cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
+  getSafeHtml(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html || '');
+  }
 
   // Expose Math for HTML templates
   protected readonly Math = Math;
@@ -171,8 +183,10 @@ export class QuanLyTinTucComponent implements OnInit {
   formErrors: { [key: string]: string } = {};
 
   ngOnInit() {
-    this.loadNews();
-    this.loadLogs();
+    if (this.isBrowser) {
+      this.loadNews();
+      this.loadLogs();
+    }
   }
 
   loadNews() {
@@ -180,11 +194,13 @@ export class QuanLyTinTucComponent implements OnInit {
       next: (data) => {
         this.newsList = data.map(n => this.mapNewsToFrontend(n));
         this.filterNews();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading news from backend:', err);
         this.newsList = [];
         this.filterNews();
+        this.cdr.detectChanges();
       }
     });
   }
@@ -193,10 +209,12 @@ export class QuanLyTinTucComponent implements OnInit {
     this.nhatKyService.getAll().subscribe({
       next: (data) => {
         this.activityLogs = data.map(l => this.mapLogToFrontend(l));
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading logs:', err);
         this.activityLogs = [];
+        this.cdr.detectChanges();
       }
     });
   }
@@ -263,6 +281,10 @@ export class QuanLyTinTucComponent implements OnInit {
     this.activeTab = tab;
     this.currentPage = 1;
     this.filterNews();
+  }
+
+  getCountByStatus(status: string): number {
+    return this.newsList.filter(n => n.trangThai === status).length;
   }
 
   // Advanced Filtering
@@ -476,8 +498,20 @@ export class QuanLyTinTucComponent implements OnInit {
     this.formErrors = {};
     
     // Auto-generate code
-    const nextNum = Math.max(...this.newsList.map(n => parseInt(n.maTinTuc.replace('TT', ''), 10)), 0) + 1;
-    const newCode = 'TT' + String(nextNum).padStart(3, '0');
+    let newCode = '';
+    if (this.newsList && this.newsList.length > 0) {
+      const validNums = this.newsList
+        .map(n => {
+          const clean = n.maTinTuc.replace('TT', '').trim();
+          const parsed = parseInt(clean, 10);
+          return isNaN(parsed) ? 0 : parsed;
+        });
+      const nextNum = Math.max(...validNums, 0) + 1;
+      newCode = 'TT' + String(nextNum).padStart(3, '0');
+    } else {
+      // Fallback to a random 3-digit number to avoid clashing with pre-existing records (e.g. TT001, TT002)
+      newCode = 'TT' + String(Math.floor(Math.random() * 900) + 100);
+    }
 
     this.formModel = {
       maTinTuc: newCode,

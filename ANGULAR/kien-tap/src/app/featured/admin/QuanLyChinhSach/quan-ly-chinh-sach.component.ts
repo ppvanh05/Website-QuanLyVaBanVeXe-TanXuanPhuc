@@ -1,5 +1,5 @@
-import { Component, OnInit, ElementRef, ViewChild, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ElementRef, ViewChild, ViewEncapsulation, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChinhSachService } from '../../../core/services/chinh-sach.service';
 import { HttpClientModule } from '@angular/common/http';
@@ -118,10 +118,15 @@ export class QuanLyChinhSachComponent implements OnInit {
     onConfirm: () => {}
   };
 
+  isBrowser: boolean = false;
+
   constructor(
     private chinhSachService: ChinhSachService,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   closeConfirm() {
     this.confirmModal.show = false;
@@ -133,7 +138,9 @@ export class QuanLyChinhSachComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadPolicies();
+    if (this.isBrowser) {
+      this.loadPolicies();
+    }
   }
 
   loadPolicies() {

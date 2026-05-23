@@ -65,7 +65,7 @@ export class DieuHanhService implements OnModuleInit {
 
   async createRoute(data: any) {
     const count = await this.prisma.tUYEN_XE.count();
-    const id = `TX${String(count + 1).padStart(3, '0')}`;
+    const id = `TX${100000 + count + 1}`;
 
     // Convert totalTime string or numeric values to DateTime for ThoiGianDiChuyenDuKien
     let thoiGianDuKien = new Date();
@@ -130,7 +130,7 @@ export class DieuHanhService implements OnModuleInit {
 
   async createVehicle(data: any) {
     const count = await this.prisma.pHUONG_TIEN.count();
-    const id = `XE${String(count + 1).padStart(3, '0')}`;
+    const id = `XE${100000 + count + 1}`;
 
     return this.prisma.pHUONG_TIEN.create({
       data: {
@@ -194,7 +194,7 @@ export class DieuHanhService implements OnModuleInit {
 
   async createStaffMember(data: any) {
     const count = await this.prisma.tAI_XE_PHU_XE.count();
-    const id = `TXPX${String(count + 1).padStart(3, '0')}`;
+    const id = `TXPX${100000 + count + 1}`;
 
     return this.prisma.tAI_XE_PHU_XE.create({
       data: {
@@ -257,7 +257,7 @@ export class DieuHanhService implements OnModuleInit {
 
   async createPoint(data: any) {
     const count = await this.prisma.dIEM_DON_TRA_DUNG.count();
-    const id = `DDT${String(count + 1).padStart(3, '0')}`;
+    const id = `DDT${100000 + count + 1}`;
 
     let tuyenXeId = data.routeId;
     if (!tuyenXeId) {
@@ -360,7 +360,7 @@ export class DieuHanhService implements OnModuleInit {
 
   async createSchedule(data: any) {
     const count = await this.prisma.lICH_TRINH.count();
-    const id = `LT${String(count + 1).padStart(3, '0')}`;
+    const id = `LT${100000 + count + 1}`;
 
     let route = await this.prisma.tUYEN_XE.findFirst({
       where: { TenTuyenXe: data.routeName },

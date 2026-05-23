@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TuKhoaCamService } from '../../../core/services/tu-khoa-cam.service';
 
@@ -7,7 +7,7 @@ export interface RestrictedKeyword {
   id: string;             // Mã từ khóa
   keyword: string;        // Nội dung từ khóa
   violationLevel: 'Cao' | 'TrungBinh' | 'Thap'; // Mức độ vi phạm
-  status: 'Active' | 'Inactive';             // Trạng thái áp dụng
+  status: 'DangApDung' | 'NgungApDung';             // Trạng thái áp dụng
   updatedAt: string;      // Thời gian cập nhật danh sách
   updatedBy: string;      // Người cập nhật
 }
@@ -20,7 +20,14 @@ export interface RestrictedKeyword {
   styleUrls: ['./quan-ly-tu-khoa-cam.component.css']
 })
 export class QuanLyTuKhoaCamComponent implements OnInit {
-  constructor(private readonly tuKhoaCamService: TuKhoaCamService) {}
+  isBrowser: boolean = false;
+
+  constructor(
+    private readonly tuKhoaCamService: TuKhoaCamService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   protected readonly Math = Math;
 
@@ -49,7 +56,7 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
   formModel = {
     keyword: '',
     violationLevel: 'TrungBinh' as 'Cao' | 'TrungBinh' | 'Thap',
-    status: 'Active' as 'Active' | 'Inactive'
+    status: 'DangApDung' as 'DangApDung' | 'NgungApDung'
   };
 
   // Thống kê (KPIs) - luôn tính từ toàn bộ keywords, không phụ thuộc tab
@@ -79,7 +86,7 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
       id: tk.MaTuKhoa,
       keyword: tk.NoiDungTuKhoa,
       violationLevel: level,
-      status: tk.TrangThai === 'Active' ? 'Active' : 'Inactive',
+      status: (tk.TrangThai === 'DangApDung' || tk.TrangThai === 'Active') ? 'DangApDung' : 'NgungApDung',
       updatedAt: tk.ThoiGianCapNhat ? this.formatDateTime(new Date(tk.ThoiGianCapNhat)) : '',
       updatedBy: tk.MaQuanTriVien || 'Hệ thống'
     };
@@ -118,7 +125,9 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadKeywords();
+    if (this.isBrowser) {
+      this.loadKeywords();
+    }
   }
 
   // Đặt tab lọc trạng thái
@@ -131,7 +140,7 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
   calculateStats() {
     this.stats = {
       total: this.keywords.length,
-      active: this.keywords.filter(k => k.status === 'Active').length,
+      active: this.keywords.filter(k => k.status === 'DangApDung').length,
       high: this.keywords.filter(k => k.violationLevel === 'Cao').length,
       medium: this.keywords.filter(k => k.violationLevel === 'TrungBinh').length,
       low: this.keywords.filter(k => k.violationLevel === 'Thap').length
@@ -144,9 +153,9 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
 
     // 1. Lọc theo tab trạng thái
     if (this.activeTab === 'active') {
-      result = result.filter(k => k.status === 'Active');
+      result = result.filter(k => k.status === 'DangApDung');
     } else if (this.activeTab === 'inactive') {
-      result = result.filter(k => k.status === 'Inactive');
+      result = result.filter(k => k.status === 'NgungApDung');
     }
 
     // 2. Tìm kiếm theo từ khóa hoặc mã từ khóa
@@ -209,7 +218,7 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
     this.formModel = {
       keyword: '',
       violationLevel: 'TrungBinh',
-      status: 'Active'
+      status: 'DangApDung'
     };
     this.showModal = true;
   }
@@ -233,10 +242,10 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
 
   // Chuyển đổi trạng thái trong modal (nút Khóa / Kích hoạt)
   toggleStatusInModal() {
-    if (this.formModel.status === 'Active') {
-      this.formModel.status = 'Inactive';
+    if (this.formModel.status === 'DangApDung') {
+      this.formModel.status = 'NgungApDung';
     } else {
-      this.formModel.status = 'Active';
+      this.formModel.status = 'DangApDung';
     }
   }
 

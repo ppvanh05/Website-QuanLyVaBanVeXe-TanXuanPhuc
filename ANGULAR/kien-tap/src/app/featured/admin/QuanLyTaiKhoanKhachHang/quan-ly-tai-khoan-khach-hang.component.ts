@@ -1,5 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { KhachHangService } from '../../../core/services/khach-hang.service';
 
@@ -43,10 +43,15 @@ export interface NhatKyKhachHang {
   styleUrls: ['./quan-ly-tai-khoan-khach-hang.component.css']
 })
 export class QuanLyTaiKhoanKhachHangComponent implements OnInit {
+  isBrowser: boolean = false;
+
   constructor(
     private readonly khachHangService: KhachHangService,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+    private readonly cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   // Expose Math for template use
   protected readonly Math = Math;
@@ -144,7 +149,9 @@ export class QuanLyTaiKhoanKhachHangComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadCustomers();
+    if (this.isBrowser) {
+      this.loadCustomers();
+    }
   }
 
 
@@ -273,12 +280,12 @@ export class QuanLyTaiKhoanKhachHangComponent implements OnInit {
     this.formErrors = {};
     const newCust = this.createEmptyForm();
     
-    // Auto-generate customer ID KHxxx
+    // Auto-generate customer ID KHxxxxxx (6 digits)
     const numericIds = this.customers
       .map(c => parseInt(c.maKhachHang.replace(/[^\d]/g, '')))
-      .filter(id => !isNaN(id) && id < 10000);
-    const maxIdNumber = numericIds.length > 0 ? Math.max(...numericIds) : 100;
-    newCust.maKhachHang = 'KH' + String(maxIdNumber + 1).padStart(3, '0');
+      .filter(id => !isNaN(id) && id >= 100000 && id < 1000000);
+    const maxIdNumber = numericIds.length > 0 ? Math.max(...numericIds) : 100000;
+    newCust.maKhachHang = 'KH' + String(maxIdNumber + 1).padStart(6, '0');
 
     this.selectedCustomer = newCust;
     this.editedCustomer = { ...newCust };

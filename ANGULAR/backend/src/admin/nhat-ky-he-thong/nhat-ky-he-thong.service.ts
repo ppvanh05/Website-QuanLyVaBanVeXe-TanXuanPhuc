@@ -48,7 +48,7 @@ export class NhatKyHeThongService {
       select: { MaNhatKy: true },
     });
 
-    let maxIdNumber = 0;
+    let maxIdNumber = 100000;
     listLog.forEach(log => {
       const match = log.MaNhatKy.match(/\d+/);
       if (match) {
@@ -59,7 +59,7 @@ export class NhatKyHeThongService {
       }
     });
 
-    const newId = `TXP_LOG${String(maxIdNumber + 1).padStart(4, '0')}`;
+    const newId = `TXP_LOG${maxIdNumber + 1}`;
 
     return this.prisma.nHAT_KY_HE_THONG.create({
       data: {

@@ -51,19 +51,19 @@
         </button>
         <button class="tab-btn" [class.active]="activeTab === 'published'" (click)="setTab('published')">
           Đang hiển thị
-          <span class="badge-count active-count">3</span>
+          <span class="badge-count active-count">{{ getCountByStatus('DaDang') }}</span>
         </button>
         <button class="tab-btn" [class.active]="activeTab === 'scheduled'" (click)="setTab('scheduled')">
           Lịch hẹn đăng
-          <span class="badge-count scheduled-count">1</span>
+          <span class="badge-count scheduled-count">{{ getCountByStatus('HenGio') }}</span>
         </button>
         <button class="tab-btn" [class.active]="activeTab === 'draft'" (click)="setTab('draft')">
           Bản nháp
-          <span class="badge-count draft-count">1</span>
+          <span class="badge-count draft-count">{{ getCountByStatus('BanNhap') }}</span>
         </button>
         <button class="tab-btn" [class.active]="activeTab === 'hidden'" (click)="setTab('hidden')">
           Đã ẩn
-          <span class="badge-count hidden-count">1</span>
+          <span class="badge-count hidden-count">{{ getCountByStatus('NgungHienThi') }}</span>
         </button>
       </div>
     </div>
@@ -95,13 +95,13 @@
       <table class="premium-table">
         <thead>
           <tr>
-            <th style="width: 85px;">Ảnh bìa</th>
-            <th style="width: 45%;">Tiêu đề</th>
-            <th style="width: 110px;">Loại tin tức</th>
+            <th style="width: 90px;" class="text-center">Ảnh bìa</th>
+            <th style="width: auto; min-width: 200px;">Tiêu đề</th>
+            <th style="width: 120px;" class="text-center">Loại tin tức</th>
             <th style="width: 130px;">Người đăng</th>
             <th style="width: 140px;">Lên lịch / Ngày đăng</th>
-            <th style="width: 115px;">Trạng thái</th>
-            <th style="width: 80px;" class="text-center">Chức năng</th>
+            <th style="width: 120px;" class="text-center">Trạng thái</th>
+            <th style="width: 110px;" class="text-center">Chức năng</th>
           </tr>
         </thead>
         <tbody>
@@ -279,7 +279,7 @@
           </div>
 
           <!-- HTML output viewer -->
-          <div class="preview-article-body-rendered" [innerHTML]="previewNews.noiDungChiTiet"></div>
+          <div class="preview-article-body-rendered" [innerHTML]="getSafeHtml(previewNews.noiDungChiTiet)"></div>
         </div>
 
         <!-- Tab 2: Activity logs timeline inside Modal -->
@@ -728,7 +728,7 @@
                 </div>
 
                 <!-- Renders the actual Rich text HTML output underneath -->
-                <div class="preview-live-body-rendered" [innerHTML]="formModel.noiDungChiTiet"></div>
+                <div class="preview-live-body-rendered" [innerHTML]="getSafeHtml(formModel.noiDungChiTiet)"></div>
               </div>
             </div>
           </div>

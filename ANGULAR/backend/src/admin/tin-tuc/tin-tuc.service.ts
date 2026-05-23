@@ -81,7 +81,7 @@ export class TinTucService {
     if (dto.NgayGioHenGio) {
       data.NgayGioHenGio = new Date(dto.NgayGioHenGio as any);
     }
-    return this.prisma.tIN_TUC.update({
+    const res = await this.prisma.tIN_TUC.update({
       where: { MaTinTuc: id },
       data,
     });
