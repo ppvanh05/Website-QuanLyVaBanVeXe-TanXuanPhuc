@@ -5,3 +5,10 @@
 .hero-gradient {
     background: linear-gradient(0deg, rgba(11, 42, 74, 0.4) 0%, rgba(11, 42, 74, 0) 100%);
 }
+
+.value-card-title {
+    font-size: 1.3rem; /* Giảm kích thước chữ */
+    white-space: nowrap; /* Ngăn không cho chữ nhảy dòng */
+    overflow: hidden; /* Ẩn phần chữ bị tràn */
+    text-overflow: ellipsis; /* Thêm dấu "..." nếu chữ bị tràn */
+}
