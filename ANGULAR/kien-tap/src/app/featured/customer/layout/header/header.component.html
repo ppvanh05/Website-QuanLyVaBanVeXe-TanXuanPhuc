@@ -52,7 +52,7 @@
         </nav>
         <div class="flex items-center gap-4">
             <button *ngIf="!isLoggedIn" (click)="login()"
-                class="px-6 py-2 bg-secondary text-white font-bold rounded-xl shadow-lg hover:bg-secondary-hover hover:scale-102 active:scale-98 transition-all flex items-center justify-center gap-2 text-body-md outline-none focus:outline-none focus:ring-0">
+                class="px-6 py-2 bg-secondary text-white font-bold rounded-xl shadow-lg border-2 border-transparent hover:border-secondary hover:bg-secondary-light hover:text-secondary hover:scale-102 active:scale-98 transition-all flex items-center justify-center gap-2 text-body-md outline-none focus:outline-none focus:ring-0">
                 Đăng nhập / Đăng ký
             </button>
 
@@ -97,7 +97,7 @@
                         </li>
                         <li class="pt-2 mt-2 border-t border-outline-variant/10">
                             <button (click)="logout()"
-                                class="w-full flex items-center gap-3 px-6 py-3 text-error hover:bg-error/5 transition-colors group">
+                                class="w-full flex items-center gap-3 px-6 py-3 text-error hover:bg-secondary-light hover:text-secondary transition-all duration-200 group">
                                 <span class="material-symbols-outlined text-xl">logout</span>
                                 <span class="font-body-md font-bold">Đăng xuất</span>
                             </button>
