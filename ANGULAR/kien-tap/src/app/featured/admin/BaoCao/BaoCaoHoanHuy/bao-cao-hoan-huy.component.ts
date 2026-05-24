@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaoCaoService } from '../../../../core/services/bao-cao.service';
@@ -41,7 +41,10 @@ export class BaoCaoHoanHuyComponent implements OnInit {
 
   nguoiHuyList: string[] = ['Khách hàng tự hủy trên web', 'Nhân viên bán vé hủy hộ'];
 
-  constructor(private baoCaoService: BaoCaoService) {}
+  constructor(
+    private baoCaoService: BaoCaoService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.onViewReport();
@@ -53,9 +56,15 @@ export class BaoCaoHoanHuyComponent implements OnInit {
       next: (data: any[]) => {
         this.filteredRefunds = data as RefundReportItem[];
         this.calculateStats();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       },
       error: (err: any) => {
         console.error('Error fetching hoan huy report:', err);
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaoCaoService } from '../../../../core/services/bao-cao.service';
@@ -41,7 +41,10 @@ export class BaoCaoTaiXePhuXeComponent implements OnInit {
 
   rolesList = ['Tài xế', 'Phụ xe'];
 
-  constructor(private baoCaoService: BaoCaoService) {}
+  constructor(
+    private baoCaoService: BaoCaoService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.onViewReport();
@@ -73,9 +76,15 @@ export class BaoCaoTaiXePhuXeComponent implements OnInit {
       next: (data: any[]) => {
         this.filteredCrew = data as CrewReportItem[];
         this.calculateStats();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       },
       error: (err: any) => {
         console.error('Error fetching tai xe phu xe report:', err);
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       }
     });
   }

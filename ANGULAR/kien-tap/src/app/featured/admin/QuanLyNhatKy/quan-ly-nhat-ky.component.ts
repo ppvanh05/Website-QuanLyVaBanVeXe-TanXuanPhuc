@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NhatKyService } from '../../../core/services/nhat-ky.service';
@@ -94,7 +94,10 @@ export class QuanLyNhatKyComponent implements OnInit {
 
   todayDateStr = '';
 
-  constructor(private readonly nhatKyService: NhatKyService) {}
+  constructor(
+    private readonly nhatKyService: NhatKyService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.initializeDates();
@@ -107,12 +110,18 @@ export class QuanLyNhatKyComponent implements OnInit {
         this.allLogs = data.map(log => this.mapToFrontend(log));
         this.calculateStats();
         this.applyFilters();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       },
       error: (err) => {
         console.error('Error loading logs from backend:', err);
         this.allLogs = [];
         this.calculateStats();
         this.applyFilters();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       }
     });
   }
