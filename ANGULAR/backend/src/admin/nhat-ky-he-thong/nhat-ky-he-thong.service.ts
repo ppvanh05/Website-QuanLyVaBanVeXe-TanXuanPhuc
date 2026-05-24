@@ -8,7 +8,7 @@ export class NhatKyHeThongService {
 
   // ===== LẤY TOÀN BỘ NHẬT KÝ =====
   async getAll() {
-    return this.prisma.nHAT_KY_HE_THONG.findMany({
+    const list = await this.prisma.nHAT_KY_HE_THONG.findMany({
       orderBy: { ThoiGian: 'desc' },
       include: {
         KHACH_HANG: {
@@ -26,6 +26,11 @@ export class NhatKyHeThongService {
         },
       },
     });
+
+    return list.map(item => ({
+      ...item,
+      TrangThai: item.TrangThai === 'ThatBai' ? 'Thất bại' : 'Thành công',
+    }));
   }
 
   // ===== TỰ ĐỘNG GHI NHẬT KÝ =====
@@ -61,7 +66,7 @@ export class NhatKyHeThongService {
 
     const newId = `TXP_LOG${maxIdNumber + 1}`;
 
-    return this.prisma.nHAT_KY_HE_THONG.create({
+    const res = await this.prisma.nHAT_KY_HE_THONG.create({
       data: {
         MaNhatKy: newId,
         MaKhachHang: dto.MaKhachHang || null,
@@ -72,12 +77,17 @@ export class NhatKyHeThongService {
         NoiDungChiTiet: dto.NoiDungChiTiet,
         MaVe: dto.MaVe || null,
         TuyenXe: dto.TuyenXe || null,
-        TrangThai: dto.TrangThai ?? 'Thành công',
+        TrangThai: dto.TrangThai === 'Thất bại' ? 'ThatBai' : 'ThanhCong',
         ThietBiTrinhDuyet: dto.ThietBiTrinhDuyet || 'Web Client',
         TrangThaiCu: dto.TrangThaiCu || null,
         TrangThaiMoi: dto.TrangThaiMoi || null,
         DuLieuThayDoi: dto.DuLieuThayDoi ? (dto.DuLieuThayDoi as Prisma.InputJsonValue) : Prisma.DbNull,
       },
     });
+
+    return {
+      ...res,
+      TrangThai: res.TrangThai === 'ThatBai' ? 'Thất bại' : 'Thành công',
+    };
   }
 }

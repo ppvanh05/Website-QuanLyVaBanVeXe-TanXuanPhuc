@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, LoaiChinhSachEnum, TrangThaiChinhSachEnum } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
 
 @Injectable()
@@ -10,18 +10,61 @@ export class ChinhSachService {
     private nhatKyService: NhatKyHeThongService,
   ) { }
 
+  private mapLoaiChinhSachToBackend(loai: string): LoaiChinhSachEnum {
+    if (loai === 'Chính sách bảo hiểm' || loai === 'ChinhSachBaoHiem') return 'ChinhSachBaoHiem';
+    if (loai === 'Chính sách thanh toán' || loai === 'ChinhSachThanhToan') return 'ChinhSachThanhToan';
+    if (loai === 'Chính sách hủy vé' || loai === 'ChinhSachHuyVe') return 'ChinhSachHuyVe';
+    return 'ChinhSachKhac';
+  }
+
+  private mapLoaiChinhSachToFrontend(loai: LoaiChinhSachEnum): string {
+    if (loai === 'ChinhSachBaoHiem') return 'Chính sách bảo hiểm';
+    if (loai === 'ChinhSachThanhToan') return 'Chính sách thanh toán';
+    if (loai === 'ChinhSachHuyVe') return 'Chính sách hủy vé';
+    return 'Chính sách khác';
+  }
+
+  private mapTrangThaiToBackend(status: string): TrangThaiChinhSachEnum {
+    if (status === 'VoHieuHoa' || status === 'NgungApDung') return 'NgungApDung';
+    return 'DangApDung';
+  }
+
+  private mapTrangThaiToFrontend(status: TrangThaiChinhSachEnum): string {
+    if (status === 'NgungApDung') return 'VoHieuHoa';
+    return 'DangApDung';
+  }
+
+  private mapChinhSachToFrontend(cs: any) {
+    if (!cs) return null;
+    return {
+      ...cs,
+      LoaiChinhSach: this.mapLoaiChinhSachToFrontend(cs.LoaiChinhSach),
+      TrangThai: this.mapTrangThaiToFrontend(cs.TrangThai),
+    };
+  }
+
+  private mapChinhSachHuyVeToFrontend(cs: any) {
+    if (!cs) return null;
+    return {
+      ...cs,
+      TrangThai: this.mapTrangThaiToFrontend(cs.TrangThai),
+    };
+  }
+
   // ===== CHINH_SACH (Chính sách chung) =====
 
   async getAllChinhSach() {
-    return this.prisma.cHINH_SACH.findMany({
+    const list = await this.prisma.cHINH_SACH.findMany({
       orderBy: { NgayApDung: 'desc' },
     });
+    return list.map(item => this.mapChinhSachToFrontend(item));
   }
 
   async getChinhSachById(id: string) {
-    return this.prisma.cHINH_SACH.findUnique({
+    const item = await this.prisma.cHINH_SACH.findUnique({
       where: { MaChinhSach_ND: id },
     });
+    return this.mapChinhSachToFrontend(item);
   }
 
   async createChinhSach(dto: Prisma.CHINH_SACHUncheckedCreateInput) {
@@ -29,10 +72,10 @@ export class ChinhSachService {
       data: {
         MaChinhSach_ND: dto.MaChinhSach_ND,
         TieuDe: dto.TieuDe,
-        LoaiChinhSach: dto.LoaiChinhSach,
+        LoaiChinhSach: this.mapLoaiChinhSachToBackend(dto.LoaiChinhSach as string),
         NoiDung: dto.NoiDung,
         NgayApDung: new Date(dto.NgayApDung as any),
-        TrangThai: dto.TrangThai ?? 'DangApDung',
+        TrangThai: this.mapTrangThaiToBackend(dto.TrangThai as string),
         MaQuanTriVien: dto.MaQuanTriVien,
       },
     });
@@ -50,12 +93,20 @@ export class ChinhSachService {
       ],
     });
 
-    return res;
+    return this.mapChinhSachToFrontend(res);
   }
 
   async updateChinhSach(id: string, dto: Prisma.CHINH_SACHUncheckedUpdateInput) {
     const original = await this.getChinhSachById(id);
+    const originalDbStatus = this.mapTrangThaiToBackend(original?.TrangThai);
+
     const data: any = { ...dto };
+    if (dto.LoaiChinhSach) {
+      data.LoaiChinhSach = this.mapLoaiChinhSachToBackend(dto.LoaiChinhSach as string);
+    }
+    if (dto.TrangThai) {
+      data.TrangThai = this.mapTrangThaiToBackend(dto.TrangThai as string);
+    }
     if (dto.NgayApDung) {
       data.NgayApDung = new Date(dto.NgayApDung as any);
     }
@@ -71,8 +122,8 @@ export class ChinhSachService {
     if (dto.NoiDung && dto.NoiDung !== original?.NoiDung) {
       changes.push({ truong: 'NoiDung', giaTriCu: original?.NoiDung || '', giaTriMoi: dto.NoiDung as string });
     }
-    if (dto.TrangThai && dto.TrangThai !== original?.TrangThai) {
-      changes.push({ truong: 'TrangThai', giaTriCu: original?.TrangThai || '', giaTriMoi: dto.TrangThai as string });
+    if (dto.TrangThai && this.mapTrangThaiToBackend(dto.TrangThai as string) !== originalDbStatus) {
+      changes.push({ truong: 'TrangThai', giaTriCu: originalDbStatus, giaTriMoi: this.mapTrangThaiToBackend(dto.TrangThai as string) });
     }
 
     this.nhatKyService.ghiLog({
@@ -83,7 +134,7 @@ export class ChinhSachService {
       DuLieuThayDoi: changes,
     });
 
-    return res;
+    return this.mapChinhSachToFrontend(res);
   }
 
   async deleteChinhSach(id: string) {
@@ -102,21 +153,23 @@ export class ChinhSachService {
       ],
     });
 
-    return res;
+    return this.mapChinhSachToFrontend(res);
   }
 
   // ===== CHINH_SACH_HUY_VE (Chính sách hủy vé) =====
 
   async getAllChinhSachHuyVe() {
-    return this.prisma.cHINH_SACH_HUY_VE.findMany({
+    const list = await this.prisma.cHINH_SACH_HUY_VE.findMany({
       orderBy: { NgayApDung: 'desc' },
     });
+    return list.map(item => this.mapChinhSachHuyVeToFrontend(item));
   }
 
   async getChinhSachHuyVeById(id: string) {
-    return this.prisma.cHINH_SACH_HUY_VE.findUnique({
+    const item = await this.prisma.cHINH_SACH_HUY_VE.findUnique({
       where: { MaChinhSach: id },
     });
+    return this.mapChinhSachHuyVeToFrontend(item);
   }
 
   async createChinhSachHuyVe(dto: Prisma.CHINH_SACH_HUY_VEUncheckedCreateInput) {
@@ -127,7 +180,7 @@ export class ChinhSachService {
         GioiHanGioTruocKhoiHanh: Number(dto.GioiHanGioTruocKhoiHanh),
         TyLePhiHuy: Number(dto.TyLePhiHuy),
         MoTa: dto.MoTa ?? null,
-        TrangThai: dto.TrangThai ?? 'DangApDung',
+        TrangThai: this.mapTrangThaiToBackend(dto.TrangThai ?? 'DangApDung'),
         NgayApDung: new Date(dto.NgayApDung as any),
       },
     });
@@ -145,12 +198,17 @@ export class ChinhSachService {
       ],
     });
 
-    return res;
+    return this.mapChinhSachHuyVeToFrontend(res);
   }
 
   async updateChinhSachHuyVe(id: string, dto: Prisma.CHINH_SACH_HUY_VEUncheckedUpdateInput) {
     const original = await this.getChinhSachHuyVeById(id);
+    const originalDbStatus = this.mapTrangThaiToBackend(original?.TrangThai);
+
     const data: any = { ...dto };
+    if (dto.TrangThai) {
+      data.TrangThai = this.mapTrangThaiToBackend(dto.TrangThai as string);
+    }
     if (dto.NgayApDung) {
       data.NgayApDung = new Date(dto.NgayApDung as any);
     }
@@ -169,8 +227,8 @@ export class ChinhSachService {
     if (dto.TyLePhiHuy !== undefined && Number(dto.TyLePhiHuy) !== original?.TyLePhiHuy) {
       changes.push({ truong: 'TyLePhiHuy', giaTriCu: String(original?.TyLePhiHuy || 0), giaTriMoi: String(dto.TyLePhiHuy) });
     }
-    if (dto.TrangThai && dto.TrangThai !== original?.TrangThai) {
-      changes.push({ truong: 'TrangThai', giaTriCu: original?.TrangThai || '', giaTriMoi: dto.TrangThai as string });
+    if (dto.TrangThai && this.mapTrangThaiToBackend(dto.TrangThai as string) !== originalDbStatus) {
+      changes.push({ truong: 'TrangThai', giaTriCu: originalDbStatus, giaTriMoi: this.mapTrangThaiToBackend(dto.TrangThai as string) });
     }
 
     this.nhatKyService.ghiLog({
@@ -181,7 +239,7 @@ export class ChinhSachService {
       DuLieuThayDoi: changes,
     });
 
-    return res;
+    return this.mapChinhSachHuyVeToFrontend(res);
   }
 
   async deleteChinhSachHuyVe(id: string) {
@@ -200,7 +258,6 @@ export class ChinhSachService {
       ],
     });
 
-    return res;
+    return this.mapChinhSachHuyVeToFrontend(res);
   }
 }
-

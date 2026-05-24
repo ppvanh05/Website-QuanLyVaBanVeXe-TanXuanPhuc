@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TuKhoaCamService } from '../../../core/services/tu-khoa-cam.service';
@@ -24,6 +24,7 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
 
   constructor(
     private readonly tuKhoaCamService: TuKhoaCamService,
+    private readonly cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -117,9 +118,15 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
         this.keywords = data.map(tk => this.mapToFrontend(tk));
         this.calculateStats();
         this.applyFilters();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       },
       error: (err) => {
         this.showToast('error', 'Lỗi', 'Không thể tải danh sách từ khóa cấm từ backend!');
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -287,9 +294,15 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
           this.showToast('success', 'Cập nhật thành công', `Đã sửa từ khóa thành "${keywordText}"`);
           this.applyFilters();
           this.closeModal();
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          });
         },
         error: (err) => {
           this.showToast('error', 'Lỗi cập nhật', err.error?.message || 'Không thể cập nhật từ khóa!');
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          });
         }
       });
     } else {
@@ -308,9 +321,15 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
           this.showToast('success', 'Thêm thành công', `Đã thêm từ khóa mới "${keywordText}" vào danh sách.`);
           this.applyFilters();
           this.closeModal();
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          });
         },
         error: (err) => {
           this.showToast('error', 'Lỗi thêm mới', err.error?.message || 'Không thể thêm từ khóa mới!');
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          });
         }
       });
     }

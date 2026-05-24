@@ -390,11 +390,15 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       next: (data) => {
         this.employees = data.map(nv => this.mapToFrontend(nv));
         this.filterEmployees();
-        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       },
       error: (err) => {
         this.showNotification('error', 'Không thể tải danh sách nhân viên từ backend!', 'Lỗi kết nối');
-        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -695,9 +699,25 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = () => {
         this.formModel.anhDaiDien = reader.result as string;
+        this.cdr.detectChanges();
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  removeAvatar(event: MouseEvent) {
+    event.stopPropagation();
+    this.formModel.anhDaiDien = '';
+    this.cdr.detectChanges();
+  }
+
+  getInitials(name: string): string {
+    if (!name) return 'NV';
+    const words = name.trim().split(' ');
+    if (words.length >= 2) {
+      return (words[words.length - 2][0] + words[words.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   }
 
   // Soft delete / Status toggle
@@ -999,44 +1019,5 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
 
   closeNotification() {
     this.notification.show = false;
-  }
-
-  onExportExcel() {
-    const headers = ['Mã NV', 'Tên truy cập', 'Tên hiển thị', 'Chức vụ', 'Số điện thoại', 'Email', 'Văn phòng', 'Trạng thái'];
-    const rows = this.filteredEmployees.map(emp => [
-      emp.id,
-      emp.tenTruyCap,
-      emp.tenHienThi,
-      this.getRoleLabel(emp),
-      emp.soDienThoai,
-      emp.email,
-      emp.maVanPhong,
-      emp.trangThai === 'HoatDong' ? 'Đang hoạt động' : 'Đã khóa'
-    ]);
-    
-    let csvContent = '\uFEFF';
-    csvContent += headers.join(',') + '\n';
-    rows.forEach(row => {
-      const escapedRow = row.map(val => {
-        const strVal = String(val ?? '');
-        if (strVal.includes(',') || strVal.includes('"') || strVal.includes('\n')) {
-          return `"${strVal.replace(/"/g, '""')}"`;
-        }
-        return strVal;
-      });
-      csvContent += escapedRow.join(',') + '\n';
-    });
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `danh_sach_nhan_vien_${new Date().toISOString().slice(0, 10)}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    this.showNotification('success', 'Đã xuất báo cáo danh sách nhân sự thành công dưới dạng file CSV/Excel!', 'Xuất báo cáo');
   }
 }

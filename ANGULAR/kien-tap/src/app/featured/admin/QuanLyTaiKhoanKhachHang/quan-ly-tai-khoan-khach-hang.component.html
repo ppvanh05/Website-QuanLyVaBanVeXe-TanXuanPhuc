@@ -1,26 +1,4 @@
 <div class="page-container">
-  <!-- Premium Custom Success/Warning Alert Popup Overlay (Top-level) -->
-  <div class="custom-alert-overlay" *ngIf="notification.show" (click)="closeNotification()">
-    <div class="custom-alert-card" (click)="$event.stopPropagation()">
-      <div class="custom-alert-body">
-        <div class="custom-alert-icon-wrapper" [class]="notification.type">
-          <span class="material-icons" *ngIf="notification.type === 'success'">check</span>
-          <span class="material-icons" *ngIf="notification.type === 'warning'">priority_high</span>
-          <span class="material-icons" *ngIf="notification.type === 'error'">close</span>
-        </div>
-        <div class="custom-alert-content">
-          <h4 class="custom-alert-title">{{ notification.title }}</h4>
-          <p class="custom-alert-message" [innerHTML]="notification.message"></p>
-        </div>
-      </div>
-      <div class="custom-alert-footer">
-        <button class="btn-alert-ok" [class]="notification.type" (click)="closeNotification()">
-          Đồng ý
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Page Header -->
   <div class="page-header">
     <div class="breadcrumb">
@@ -271,6 +249,33 @@
           <h4 class="section-title">{{ isEditMode ? 'Cập nhật hồ sơ khách hàng' : 'Đăng ký tài khoản khách hàng mới' }}</h4>
           
           <div class="form-grid">
+            <!-- Avatar Photo Upload Box -->
+            <div class="form-group">
+              <label>Ảnh đại diện</label>
+              <div class="avatar-upload-container">
+                <div class="avatar-preview-box" *ngIf="editedCustomer.anhDaiDien">
+                  <img [src]="editedCustomer.anhDaiDien" alt="Avatar" />
+                  <div class="avatar-hover-overlay" (click)="triggerImageUpload(avatarInput)">
+                    <span class="material-icons">photo_camera</span>
+                    <span class="overlay-text">Thay đổi</span>
+                  </div>
+                  <button type="button" class="btn-remove-avatar" (click)="removeAvatar($event)" title="Xóa ảnh đại diện">
+                    <span class="material-icons">close</span>
+                  </button>
+                </div>
+                <div class="avatar-upload-placeholder" *ngIf="!editedCustomer.anhDaiDien" (click)="triggerImageUpload(avatarInput)">
+                  <span class="material-icons upload-icon">file_upload</span>
+                  <span class="upload-text">Tải ảnh lên</span>
+                </div>
+                <input 
+                  type="file" 
+                  #avatarInput 
+                  style="display: none" 
+                  accept="image/*" 
+                  (change)="onImageSelected($event)" />
+              </div>
+            </div>
+
             <div class="form-group">
               <label class="required-field">Mã khách hàng</label>
               <input type="text" [value]="editedCustomer.maKhachHang" class="form-control" disabled />
@@ -436,6 +441,28 @@
           <span class="material-icons">save</span> {{ isEditMode ? 'Lưu thay đổi' : 'Tạo tài khoản' }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Premium Custom Success/Warning Alert Popup Overlay (Top-level) -->
+<div class="custom-alert-overlay" *ngIf="notification.show" (click)="closeNotification()">
+  <div class="custom-alert-card" (click)="$event.stopPropagation()">
+    <div class="custom-alert-body">
+      <div class="custom-alert-icon-wrapper" [class]="notification.type">
+        <span class="material-icons" *ngIf="notification.type === 'success'">check</span>
+        <span class="material-icons" *ngIf="notification.type === 'warning'">priority_high</span>
+        <span class="material-icons" *ngIf="notification.type === 'error'">close</span>
+      </div>
+      <div class="custom-alert-content">
+        <h4 class="custom-alert-title">{{ notification.title }}</h4>
+        <p class="custom-alert-message" [innerHTML]="notification.message"></p>
+      </div>
+    </div>
+    <div class="custom-alert-footer">
+      <button class="btn-alert-ok" [class]="notification.type" (click)="closeNotification()">
+        Đồng ý
+      </button>
     </div>
   </div>
 </div>

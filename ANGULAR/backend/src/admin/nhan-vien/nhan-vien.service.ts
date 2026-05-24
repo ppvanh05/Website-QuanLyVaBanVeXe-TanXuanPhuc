@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, TrangThaiTaiKhoanEnum, LoaiTaiKhoanNhanVienEnum } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
 
 @Injectable()
@@ -10,11 +10,36 @@ export class NhanVienService {
     private nhatKyService: NhatKyHeThongService,
   ) {}
 
+  private mapToFrontend(nv: any) {
+    if (!nv) return null;
+    let loai = nv.LoaiTaiKhoan;
+    if (loai === 'NhanVienBanVe') loai = 'BanVe';
+    else if (loai === 'NhanVienDieuPhoi') loai = 'DieuPhoi';
+
+    return {
+      ...nv,
+      LoaiTaiKhoan: loai,
+      GioiTinh: nv.GioiTinh === 'Nu' ? 'Nữ' : nv.GioiTinh,
+    };
+  }
+
+  private mapToBackend(loai: string): LoaiTaiKhoanNhanVienEnum {
+    if (loai === 'BanVe') return 'NhanVienBanVe';
+    if (loai === 'DieuPhoi') return 'NhanVienDieuPhoi';
+    return loai as LoaiTaiKhoanNhanVienEnum;
+  }
+
+  private mapGenderToBackend(gender: string): string {
+    if (gender === 'Nữ') return 'Nu';
+    return gender;
+  }
+
   // ===== LẤY TOÀN BỘ NHÂN VIÊN =====
   async getAll() {
-    return this.prisma.nHAN_VIEN.findMany({
+    const list = await this.prisma.nHAN_VIEN.findMany({
       orderBy: { MaNhanVien: 'asc' },
     });
+    return list.map(item => this.mapToFrontend(item));
   }
 
   // ===== LẤY CHI TIẾT THEO ID =====
@@ -25,7 +50,7 @@ export class NhanVienService {
     if (!nv) {
       throw new NotFoundException(`Không tìm thấy nhân viên có mã ${id}`);
     }
-    return nv;
+    return this.mapToFrontend(nv);
   }
 
   // ===== TẠO MỚI TÀI KHOẢN NHÂN VIÊN =====
@@ -55,8 +80,13 @@ export class NhanVienService {
     const data: any = {
       ...dto,
       MaNhanVien: newId,
+      LoaiTaiKhoan: this.mapToBackend(dto.LoaiTaiKhoan as string),
       TrangThai: dto.TrangThai ?? 'HoatDong',
     };
+
+    if (dto.GioiTinh) {
+      data.GioiTinh = this.mapGenderToBackend(dto.GioiTinh as string);
+    }
 
     if (dto.NgaySinh) {
       data.NgaySinh = new Date(dto.NgaySinh as any);
@@ -67,13 +97,13 @@ export class NhanVienService {
     });
 
     // Automatically seed child role tables to avoid breaking foreign key relations
-    if (res.LoaiTaiKhoan === 'BanVe') {
+    if (res.LoaiTaiKhoan === 'NhanVienBanVe') {
       await this.prisma.nHAN_VIEN_BAN_VE.create({ data: { MaNVBanVe: res.MaNhanVien } });
     } else if (res.LoaiTaiKhoan === 'QuanTriVien') {
       await this.prisma.qUAN_TRI_VIEN.create({ data: { MaQuanTriVien: res.MaNhanVien } });
     } else if (res.LoaiTaiKhoan === 'BanQuanLy') {
       await this.prisma.bAN_QUAN_LY.create({ data: { MaBanQuanLy: res.MaNhanVien } });
-    } else if (res.LoaiTaiKhoan === 'DieuPhoi') {
+    } else if (res.LoaiTaiKhoan === 'NhanVienDieuPhoi') {
       await this.prisma.nHAN_VIEN_DIEU_PHOI.create({ data: { MaNVDieuPhoi: res.MaNhanVien } });
     }
 
@@ -89,14 +119,21 @@ export class NhanVienService {
       ],
     }).catch(err => console.error('Failed to write activity log:', err));
 
-    return res;
+    return this.mapToFrontend(res);
   }
 
   // ===== CẬP NHẬT TÀI KHOẢN =====
   async update(id: string, dto: Prisma.NHAN_VIENUncheckedUpdateInput) {
     const original = await this.getById(id); // Check existence
+    const originalDbRole = original?.LoaiTaiKhoan === 'BanVe' ? 'NhanVienBanVe' : (original?.LoaiTaiKhoan === 'DieuPhoi' ? 'NhanVienDieuPhoi' : original?.LoaiTaiKhoan);
 
     const data: any = { ...dto };
+    if (dto.LoaiTaiKhoan) {
+      data.LoaiTaiKhoan = this.mapToBackend(dto.LoaiTaiKhoan as string);
+    }
+    if (dto.GioiTinh) {
+      data.GioiTinh = this.mapGenderToBackend(dto.GioiTinh as string);
+    }
     if (dto.NgaySinh) {
       data.NgaySinh = new Date(dto.NgaySinh as any);
     }
@@ -107,24 +144,24 @@ export class NhanVienService {
     });
 
     // If role changed, migrate child role tables safely
-    if (dto.LoaiTaiKhoan && dto.LoaiTaiKhoan !== original?.LoaiTaiKhoan) {
-      if (original?.LoaiTaiKhoan === 'BanVe') {
+    if (data.LoaiTaiKhoan && data.LoaiTaiKhoan !== originalDbRole) {
+      if (originalDbRole === 'NhanVienBanVe') {
         await this.prisma.nHAN_VIEN_BAN_VE.deleteMany({ where: { MaNVBanVe: id } });
-      } else if (original?.LoaiTaiKhoan === 'QuanTriVien') {
+      } else if (originalDbRole === 'QuanTriVien') {
         await this.prisma.qUAN_TRI_VIEN.deleteMany({ where: { MaQuanTriVien: id } });
-      } else if (original?.LoaiTaiKhoan === 'BanQuanLy') {
+      } else if (originalDbRole === 'BanQuanLy') {
         await this.prisma.bAN_QUAN_LY.deleteMany({ where: { MaBanQuanLy: id } });
-      } else if (original?.LoaiTaiKhoan === 'DieuPhoi') {
+      } else if (originalDbRole === 'NhanVienDieuPhoi') {
         await this.prisma.nHAN_VIEN_DIEU_PHOI.deleteMany({ where: { MaNVDieuPhoi: id } });
       }
 
-      if (dto.LoaiTaiKhoan === 'BanVe') {
+      if (data.LoaiTaiKhoan === 'NhanVienBanVe') {
         await this.prisma.nHAN_VIEN_BAN_VE.create({ data: { MaNVBanVe: id } });
-      } else if (dto.LoaiTaiKhoan === 'QuanTriVien') {
+      } else if (data.LoaiTaiKhoan === 'QuanTriVien') {
         await this.prisma.qUAN_TRI_VIEN.create({ data: { MaQuanTriVien: id } });
-      } else if (dto.LoaiTaiKhoan === 'BanQuanLy') {
+      } else if (data.LoaiTaiKhoan === 'BanQuanLy') {
         await this.prisma.bAN_QUAN_LY.create({ data: { MaBanQuanLy: id } });
-      } else if (dto.LoaiTaiKhoan === 'DieuPhoi') {
+      } else if (data.LoaiTaiKhoan === 'NhanVienDieuPhoi') {
         await this.prisma.nHAN_VIEN_DIEU_PHOI.create({ data: { MaNVDieuPhoi: id } });
       }
     }
@@ -158,7 +195,7 @@ export class NhanVienService {
       DuLieuThayDoi: changes,
     }).catch(err => console.error('Failed to write activity log:', err));
 
-    return res;
+    return this.mapToFrontend(res);
   }
 
   // ===== CẬP NHẬT TRẠNG THÁI =====
@@ -169,7 +206,7 @@ export class NhanVienService {
     const original = await this.getById(id);
     const res = await this.prisma.nHAN_VIEN.update({
       where: { MaNhanVien: id },
-      data: { TrangThai: trangThai },
+      data: { TrangThai: trangThai as TrangThaiTaiKhoanEnum },
     });
 
     this.nhatKyService.ghiLog({
@@ -184,20 +221,22 @@ export class NhanVienService {
       ],
     }).catch(err => console.error('Failed to write activity log:', err));
 
-    return res;
+    return this.mapToFrontend(res);
   }
 
   // ===== XÓA NHÂN VIÊN =====
   async delete(id: string) {
-    const original = await this.getById(id);
+    const original = await this.getById(id); // mapped (original.LoaiTaiKhoan is 'BanVe' / 'DieuPhoi')
+    const originalDbRole = original?.LoaiTaiKhoan === 'BanVe' ? 'NhanVienBanVe' : (original?.LoaiTaiKhoan === 'DieuPhoi' ? 'NhanVienDieuPhoi' : original?.LoaiTaiKhoan);
+
     // Delete linked child records first to satisfy foreign key constraints
-    if (original?.LoaiTaiKhoan === 'BanVe') {
+    if (originalDbRole === 'NhanVienBanVe') {
       await this.prisma.nHAN_VIEN_BAN_VE.deleteMany({ where: { MaNVBanVe: id } });
-    } else if (original?.LoaiTaiKhoan === 'QuanTriVien') {
+    } else if (originalDbRole === 'QuanTriVien') {
       await this.prisma.qUAN_TRI_VIEN.deleteMany({ where: { MaQuanTriVien: id } });
-    } else if (original?.LoaiTaiKhoan === 'BanQuanLy') {
+    } else if (originalDbRole === 'BanQuanLy') {
       await this.prisma.bAN_QUAN_LY.deleteMany({ where: { MaBanQuanLy: id } });
-    } else if (original?.LoaiTaiKhoan === 'DieuPhoi') {
+    } else if (originalDbRole === 'NhanVienDieuPhoi') {
       await this.prisma.nHAN_VIEN_DIEU_PHOI.deleteMany({ where: { MaNVDieuPhoi: id } });
     }
 
@@ -215,7 +254,7 @@ export class NhanVienService {
       ],
     }).catch(err => console.error('Failed to write activity log:', err));
 
-    return res;
+    return this.mapToFrontend(res);
   }
 }
 
