@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TuyenXeService } from '../../QuanLyDieuHanh/tuyen-xe.service';
@@ -53,7 +53,8 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
 
   constructor(
     private tuyenXeService: TuyenXeService,
-    private baoCaoService: BaoCaoService
+    private baoCaoService: BaoCaoService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -67,9 +68,15 @@ export class BaoCaoTongHopTheoTuyenComponent implements OnInit {
       next: (data: any[]) => {
         this.filteredSummaries = data as RouteSummaryItem[];
         this.calculateTotals();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       },
       error: (err: any) => {
         console.error('Error fetching tuyen xe report:', err);
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       }
     });
   }

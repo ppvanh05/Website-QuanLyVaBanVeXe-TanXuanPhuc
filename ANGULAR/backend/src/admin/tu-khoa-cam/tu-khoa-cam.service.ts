@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, LoaiViPhamEnum, TrangThaiViPhamEnum } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
 
 @Injectable()
@@ -10,11 +10,29 @@ export class TuKhoaCamService {
     private nhatKyService: NhatKyHeThongService,
   ) {}
 
+  private mapToFrontend(tk: any) {
+    if (!tk) return null;
+    let level = tk.LoaiViPham;
+    if (level === 'Nang') level = 'Cao';
+    else if (level === 'Nhe') level = 'Thap';
+    return {
+      ...tk,
+      LoaiViPham: level,
+    };
+  }
+
+  private mapViolationToBackend(level: string): LoaiViPhamEnum {
+    if (level === 'Cao') return 'Nang';
+    if (level === 'Thap') return 'Nhe';
+    return level as LoaiViPhamEnum;
+  }
+
   // ===== LẤY TOÀN BỘ TỪ KHÓA =====
   async getAll() {
-    return this.prisma.tU_KHOA_HAN_CHE.findMany({
+    const list = await this.prisma.tU_KHOA_HAN_CHE.findMany({
       orderBy: { MaTuKhoa: 'asc' },
     });
+    return list.map(item => this.mapToFrontend(item));
   }
 
   // ===== TÌM THEO ID =====
@@ -25,7 +43,7 @@ export class TuKhoaCamService {
     if (!tk) {
       throw new NotFoundException(`Không tìm thấy từ khóa cấm với mã ${id}`);
     }
-    return tk;
+    return this.mapToFrontend(tk);
   }
 
   // ===== TẠO MỚI TỪ KHÓA CẤM =====
@@ -67,8 +85,8 @@ export class TuKhoaCamService {
       data: {
         MaTuKhoa: newId,
         NoiDungTuKhoa: exactKeyword,
-        LoaiViPham: dto.LoaiViPham,
-        TrangThai: dto.TrangThai ?? 'DangApDung',
+        LoaiViPham: this.mapViolationToBackend(dto.LoaiViPham as string),
+        TrangThai: (dto.TrangThai ?? 'DangApDung') as TrangThaiViPhamEnum,
         ThoiGianCapNhat: new Date(),
         MaQuanTriVien: dto.MaQuanTriVien ?? null,
       },
@@ -87,12 +105,13 @@ export class TuKhoaCamService {
       ],
     });
 
-    return res;
+    return this.mapToFrontend(res);
   }
 
   // ===== CẬP NHẬT TỪ KHÓA =====
   async update(id: string, dto: Prisma.TU_KHOA_HAN_CHEUncheckedUpdateInput) {
     const original = await this.getById(id);
+    const originalDbLevel = this.mapViolationToBackend(original?.LoaiViPham);
 
     if (dto.NoiDungTuKhoa) {
       const exactKeyword = (dto.NoiDungTuKhoa as string).trim();
@@ -113,10 +132,15 @@ export class TuKhoaCamService {
       dto.NoiDungTuKhoa = exactKeyword;
     }
 
+    const data: any = { ...dto };
+    if (dto.LoaiViPham) {
+      data.LoaiViPham = this.mapViolationToBackend(dto.LoaiViPham as string);
+    }
+
     const res = await this.prisma.tU_KHOA_HAN_CHE.update({
       where: { MaTuKhoa: id },
       data: {
-        ...dto,
+        ...data,
         ThoiGianCapNhat: new Date(),
       },
     });
@@ -125,8 +149,8 @@ export class TuKhoaCamService {
     if (dto.NoiDungTuKhoa && dto.NoiDungTuKhoa !== original?.NoiDungTuKhoa) {
       changes.push({ truong: 'NoiDungTuKhoa', giaTriCu: original?.NoiDungTuKhoa || '', giaTriMoi: dto.NoiDungTuKhoa as string });
     }
-    if (dto.LoaiViPham && dto.LoaiViPham !== original?.LoaiViPham) {
-      changes.push({ truong: 'LoaiViPham', giaTriCu: original?.LoaiViPham || '', giaTriMoi: dto.LoaiViPham as string });
+    if (dto.LoaiViPham && this.mapViolationToBackend(dto.LoaiViPham as string) !== originalDbLevel) {
+      changes.push({ truong: 'LoaiViPham', giaTriCu: originalDbLevel, giaTriMoi: this.mapViolationToBackend(dto.LoaiViPham as string) });
     }
     if (dto.TrangThai && dto.TrangThai !== original?.TrangThai) {
       changes.push({ truong: 'TrangThai', giaTriCu: original?.TrangThai || '', giaTriMoi: dto.TrangThai as string });
@@ -140,7 +164,7 @@ export class TuKhoaCamService {
       DuLieuThayDoi: changes,
     });
 
-    return res;
+    return this.mapToFrontend(res);
   }
 
   // ===== XÓA TỪ KHÓA CẤM =====
@@ -160,7 +184,6 @@ export class TuKhoaCamService {
       ],
     });
 
-    return res;
+    return this.mapToFrontend(res);
   }
 }
-

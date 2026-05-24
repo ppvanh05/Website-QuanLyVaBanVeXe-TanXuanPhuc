@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TuyenXeService } from '../../QuanLyDieuHanh/tuyen-xe.service';
@@ -85,7 +85,8 @@ export class BaoCaoChiTietComponent implements OnInit {
     private tuyenXeService: TuyenXeService,
     private phuongTienService: PhuongTienService,
     private taiXeService: TaiXeService, // Inject TaiXeService
-    private baoCaoService: BaoCaoService
+    private baoCaoService: BaoCaoService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -102,9 +103,15 @@ export class BaoCaoChiTietComponent implements OnInit {
         this.calculateStats();
         this.currentPage = 1;
         this.calculateTotalPages();
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       },
       error: (err: any) => {
         console.error('Error fetching chuyến xe report:', err);
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        });
       }
     });
   }

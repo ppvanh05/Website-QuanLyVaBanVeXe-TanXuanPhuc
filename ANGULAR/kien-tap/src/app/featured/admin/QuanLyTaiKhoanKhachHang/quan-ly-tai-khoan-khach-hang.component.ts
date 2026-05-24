@@ -596,4 +596,34 @@ export class QuanLyTaiKhoanKhachHangComponent implements OnInit {
     }
     return name.slice(0, 2).toUpperCase();
   }
+
+  triggerImageUpload(input: HTMLInputElement) {
+    input.click();
+  }
+
+  onImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        this.showNotification('Dung lượng ảnh quá lớn', 'Ảnh đại diện không được vượt quá <strong>2MB</strong>!', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (this.editedCustomer) {
+          this.editedCustomer.anhDaiDien = reader.result as string;
+          this.cdr.detectChanges();
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeAvatar(event: MouseEvent) {
+    event.stopPropagation();
+    if (this.editedCustomer) {
+      this.editedCustomer.anhDaiDien = '';
+      this.cdr.detectChanges();
+    }
+  }
 }

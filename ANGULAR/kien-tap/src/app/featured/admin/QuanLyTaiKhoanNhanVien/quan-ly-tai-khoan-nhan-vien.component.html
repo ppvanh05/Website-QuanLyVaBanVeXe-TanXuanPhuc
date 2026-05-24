@@ -46,13 +46,10 @@
       </button>
     </div>
 
-    <!-- Green primary add button and Export button -->
+    <!-- Green primary add button -->
     <div class="actions-header" style="display: flex; gap: 12px;">
       <button class="btn-add-account" (click)="openAddModal()">
         <span class="material-icons">add</span> Thêm tài khoản mới
-      </button>
-      <button class="btn-export-report" (click)="onExportExcel()" style="background-color: white; border: 1px solid #cbd5e0; color: #4a5568; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
-        <span class="material-icons" style="font-size: 18px;">download</span> Xuất báo cáo
       </button>
     </div>
 
@@ -64,7 +61,7 @@
           type="text" 
           [(ngModel)]="searchQuery" 
           (input)="search()"
-          placeholder="Nhập ID/Tên truy cập/tên hiể..." 
+          placeholder="Nhập ID/Tên truy cập/Tên hiển thị..." 
           class="form-control-search" />
       </div>
 
@@ -91,6 +88,7 @@
             <th>Tên hiển thị</th>
             <th>Nhóm quyền hoạt động</th>
             <th>Chức vụ mặc định</th>
+            <th>Trạng thái</th>
             <th class="text-right">Chức năng</th>
           </tr>
         </thead>
@@ -115,6 +113,12 @@
                 {{ getRoleLabel(emp) }}
               </span>
             </td>
+            <td>
+              <span class="status-badge" [class.active]="emp.trangThai === 'HoatDong'" [class.locked]="emp.trangThai === 'DaKhoa'">
+                <span class="material-icons">{{ emp.trangThai === 'HoatDong' ? 'check_circle' : 'block' }}</span>
+                {{ emp.trangThai === 'HoatDong' ? 'Đang hoạt động' : 'Đã khóa' }}
+              </span>
+            </td>
             <td class="text-right">
               <button class="btn-edit" (click)="openEditModal(emp)" title="Chỉnh sửa thông tin">
                 <span class="material-icons">edit</span>
@@ -122,7 +126,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredEmployees.length === 0">
-            <td colspan="6" class="empty-row">
+            <td colspan="7" class="empty-row">
               <div class="empty-state">
                 <span class="material-icons">no_accounts</span>
                 <p>Không tìm thấy tài khoản nhân viên nào khớp với bộ lọc.</p>
@@ -593,28 +597,11 @@
         <div class="footer-actions-right">
           <button class="btn-modal-cancel" (click)="closeModal()">Hủy</button>
           
-          <!-- Back button -->
           <button 
-            class="btn-modal-back" 
-            [disabled]="modalTab === 'basic'" 
-            (click)="setModalTab(modalTab === 'contact' ? 'permission' : 'basic')">
-            Trở lại
-          </button>
-
-          <!-- Continue / Save button -->
-          <button 
-            *ngIf="modalTab !== 'contact'"
-            class="btn-modal-continue" 
-            (click)="setModalTab(modalTab === 'basic' ? 'permission' : 'contact')">
-            Tiếp tục
-          </button>
-
-          <button 
-            *ngIf="modalTab === 'contact'"
             class="btn-modal-save" 
             [disabled]="isSaving"
             (click)="saveAccount()">
-            <span class="material-icons" [class.spinner-icon]="isSaving">{{ isSaving ? 'sync' : 'save' }}</span> {{ isSaving ? 'Đang lưu...' : 'Lưu thay đổi' }}
+            <span class="material-icons" [class.spinner-icon]="isSaving">{{ isSaving ? 'sync' : 'save' }}</span> {{ isSaving ? 'Đang lưu...' : (isEditMode ? 'Lưu thay đổi' : 'Tạo tài khoản') }}
           </button>
         </div>
       </div>
