@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+﻿import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,7 +14,7 @@ interface Order {
   gioKhoiHanh: string;
   tongGiaVe: number;
   phuongThucThanhToan: string;
-  trangThaiDonHang: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy' | 'Chưa đánh giá' | 'Đã đánh giá';
+  trangThaiDonHang: 'Chá» thanh toÃ¡n' | 'Chá» khá»Ÿi hÃ nh' | 'ÄÃ£ hoÃ n thÃ nh' | 'ÄÃ£ há»§y' | 'ChÆ°a Ä‘Ã¡nh giÃ¡' | 'ÄÃ£ Ä‘Ã¡nh giÃ¡';
   soDienThoai: string;
 }
 
@@ -60,12 +60,12 @@ export class ProfileComponent implements OnDestroy {
   redirectInterval: any;
 
   user = {
-    fullName: 'Nguyễn Văn An',
+    fullName: 'Nguyá»…n VÄƒn An',
     phone: '090 123 4567',
     gender: 'Nam',
     email: 'vanan.nguyen@email.com',
     dob: '1992-05-15',
-    address: '123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh',
+    address: '123 ÄÆ°á»ng LÃª Lá»£i, Quáº­n 1, TP. Há»“ ChÃ­ Minh',
     avatar: 'asset/images/customer/avatar_placeholder.png'
   };
 
@@ -87,7 +87,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '00:00',
       tongGiaVe: 260000,
       phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
+      trangThaiDonHang: 'ÄÃ£ hoÃ n thÃ nh',
       soDienThoai: '0901234567'
     },
     {
@@ -98,7 +98,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '17:30',
       tongGiaVe: 364000,
       phuongThucThanhToan: 'Momo',
-      trangThaiDonHang: 'Đã hoàn thành',
+      trangThaiDonHang: 'ÄÃ£ hoÃ n thÃ nh',
       soDienThoai: '0901234567'
     },
     {
@@ -109,7 +109,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '23:05',
       tongGiaVe: 364000,
       phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
+      trangThaiDonHang: 'ÄÃ£ hoÃ n thÃ nh',
       soDienThoai: '0901234567'
     },
     {
@@ -120,7 +120,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '23:05',
       tongGiaVe: 364000,
       phuongThucThanhToan: 'unknown',
-      trangThaiDonHang: 'Chờ thanh toán',
+      trangThaiDonHang: 'Chá» thanh toÃ¡n',
       soDienThoai: '0901234567'
     },
     {
@@ -131,7 +131,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '23:05',
       tongGiaVe: 364000,
       phuongThucThanhToan: 'unknown',
-      trangThaiDonHang: 'Đã hủy',
+      trangThaiDonHang: 'ÄÃ£ há»§y',
       soDienThoai: '0901234567'
     },
     {
@@ -142,18 +142,18 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '22:25',
       tongGiaVe: 260000,
       phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
+      trangThaiDonHang: 'ÄÃ£ hoÃ n thÃ nh',
       soDienThoai: '0333555412'
     },
     {
       maDonHang: 'P5CDWE88',
       soLuongVeDaDat: 2,
-      tenTuyenXe: 'Bến xe Miền Tây - Bến xe Quy Nhơn',
+      tenTuyenXe: 'Báº¿n xe Miá»n TÃ¢y - Báº¿n xe Quy NhÆ¡n',
       ngayKhoiHanh: '22-05-2026',
       gioKhoiHanh: '18:00',
       tongGiaVe: 800000,
       phuongThucThanhToan: 'VietQR / Napas',
-      trangThaiDonHang: 'Đã hoàn thành',
+      trangThaiDonHang: 'ÄÃ£ hoÃ n thÃ nh',
       soDienThoai: '0981939379'
     }
   ];
@@ -199,18 +199,18 @@ export class ProfileComponent implements OnDestroy {
 
       // 4. Check Status matching
       if (status) {
-        if (status === 'Chờ thanh toán') {
-          if (order.trangThaiDonHang !== 'Chờ thanh toán') return false;
-        } else if (status === 'Chờ khởi hành') {
-          if (order.trangThaiDonHang !== 'Chờ khởi hành') return false;
-        } else if (status === 'Đã hoàn thành') {
-          if (order.trangThaiDonHang !== 'Đã hoàn thành') return false;
-        } else if (status === 'Đã hủy') {
-          if (order.trangThaiDonHang !== 'Đã hủy') return false;
-        } else if (status === 'Chưa đánh giá') {
-          if (order.trangThaiDonHang !== 'Chưa đánh giá') return false;
-        } else if (status === 'Đã đánh giá') {
-          if (order.trangThaiDonHang !== 'Đã đánh giá') return false;
+        if (status === 'Chá» thanh toÃ¡n') {
+          if (order.trangThaiDonHang !== 'Chá» thanh toÃ¡n') return false;
+        } else if (status === 'Chá» khá»Ÿi hÃ nh') {
+          if (order.trangThaiDonHang !== 'Chá» khá»Ÿi hÃ nh') return false;
+        } else if (status === 'ÄÃ£ hoÃ n thÃ nh') {
+          if (order.trangThaiDonHang !== 'ÄÃ£ hoÃ n thÃ nh') return false;
+        } else if (status === 'ÄÃ£ há»§y') {
+          if (order.trangThaiDonHang !== 'ÄÃ£ há»§y') return false;
+        } else if (status === 'ChÆ°a Ä‘Ã¡nh giÃ¡') {
+          if (order.trangThaiDonHang !== 'ChÆ°a Ä‘Ã¡nh giÃ¡') return false;
+        } else if (status === 'ÄÃ£ Ä‘Ã¡nh giÃ¡') {
+          if (order.trangThaiDonHang !== 'ÄÃ£ Ä‘Ã¡nh giÃ¡') return false;
         }
       }
 
@@ -285,7 +285,7 @@ export class ProfileComponent implements OnDestroy {
       this.showSuccessModal = true;
       this.startRedirectTimer();
     } else {
-      console.log('Vui lòng nhập đủ 6 số OTP');
+      console.log('Vui lÃ²ng nháº­p Ä‘á»§ 6 sá»‘ OTP');
     }
   }
 
@@ -320,6 +320,11 @@ export class ProfileComponent implements OnDestroy {
     this.router.navigate(['/tim-kiem-chuyen']);
   }
 
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/home']);
+  }
+
   getStatusClasses(status: string): { [key: string]: boolean } {
     return {
       'bg-success-light': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
@@ -328,8 +333,10 @@ export class ProfileComponent implements OnDestroy {
       'text-danger-text': status === 'Đã hủy',
       'bg-info-light': status === 'Chờ thanh toán',
       'text-info-text': status === 'Chờ thanh toán',
-      'bg-warning-light': status === 'Chờ khởi hành' || status === 'Chưa đánh giá',
-      'text-warning-text': status === 'Chờ khởi hành' || status === 'Chưa đánh giá',
+      'bg-warning-light': status === 'Chờ khởi hành',
+      'text-warning-text': status === 'Chờ khởi hành',
     };
   }
 }
+
+

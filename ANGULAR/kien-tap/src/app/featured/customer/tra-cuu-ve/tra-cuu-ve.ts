@@ -1,33 +1,42 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
+import { PrintService } from '../../../core/services/print.service';
 
 interface Ticket {
   maVe: string;
   soGhe: string;
-  trangThaiVe: '�� thanh to�n' | '�� h?y' | 'Ch? thanh to�n';
+  bienSoXe: string;
+  diemDon: string;
+  diemDonThoiGian: string;
+  diemTra: string;
+  diemTraThoiGian: string;
+  giaVe: number;
+  trangThaiVe: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy' | 'Đã đánh giá';
+  maQRVe: string;
 }
 
 interface Order {
   maDonHang: string;
-  hoTenKhachHang: string;
+  hoTenNguoiDi: string;
   soDienThoai: string;
   email: string;
   thoiGianDat: string;
-  soLuongVe: number;
+  soLuongVeDaDat: number;
   tenTuyen: string;
   gioKhoiHanh: string;
+  gioTra: string;
   departureDate: string;
   diemDon: string;
   diemTra: string;
   thoiGianCoMatTruoc: string;
-  gioCanComat: string;
+  gioCanCoMat: string;
   tongGiaVe: number;
   phuongThucThanhToan: string;
-  trangThaiDonHang: string;
+  trangThaiDonHang: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy' | 'Đã đánh giá';
   bienSoXe: string;
   maDiemDon: string;
   maDiemTra: string;
@@ -39,6 +48,8 @@ interface Order {
 interface LocationOption {
   maDiem: string;
   tenDiem: string;
+  thoiGian?: string;
+  diaChi?: string;
 }
 
 interface RatingCriteriaItem {
@@ -49,66 +60,103 @@ interface RatingCriteriaItem {
 const MOCK_ORDERS: Order[] = [
   {
     maDonHang: 'P5CDWE67',
-    hoTenKhachHang: '�? Th? Phuong',
+    hoTenNguoiDi: 'Đỗ Thị Phương',
     soDienThoai: '0908123456',
     email: 'phuong@example.com',
     thoiGianDat: '2026-05-15 09:30',
-    soLuongVe: 1,
-    tenTuyen: 'H� N?i - H?i Ph�ng',
-    gioKhoiHanh: '07:30',
+    soLuongVeDaDat: 1,
+    tenTuyen: 'TP.HCM - Quy Nhơn',
+    gioKhoiHanh: '18:00',
+    gioTra: '05:00',
     departureDate: '2026-05-25',
-    diemDon: 'B?n xe M? ��nh',
-    diemTra: 'B?n xe H?i Ph�ng',
-    thoiGianCoMatTruoc: '07:00',
-    gioCanComat: '07:00',
-    tongGiaVe: 320000,
-    phuongThucThanhToan: 'Chuy?n kho?n',
-    trangThaiDonHang: '�� ho�n th�nh',
-    bienSoXe: '29A-12345',
-    maDiemDon: 'MD01',
-    maDiemTra: 'MT01',
+    diemDon: 'Bến xe Miền Tây',
+    diemTra: 'Bến xe Quy Nhơn',
+    thoiGianCoMatTruoc: '17:30',
+    gioCanCoMat: '17:30',
+    tongGiaVe: 400000,
+    phuongThucThanhToan: 'Momo',
+    trangThaiDonHang: 'Đã hoàn thành',
+    bienSoXe: '51B-299.64',
+    maDiemDon: 'MD04',
+    maDiemTra: 'MT03',
     soLanDaSua: 1,
     gioiHanChinhSua: 3,
     tickets: [
-      { maVe: 'VE-001', soGhe: 'A01', trangThaiVe: '�� thanh to�n' }
+      {
+        maVe: 'VE-001',
+        soGhe: 'A01',
+        bienSoXe: '51B-299.64',
+        diemDon: 'Bến xe Miền Tây',
+        diemDonThoiGian: '17:30 ngày 25-05-2026',
+        diemTra: 'Bến xe Quy Nhơn',
+        diemTraThoiGian: '05:00 ngày 26-05-2026',
+        giaVe: 400000,
+        trangThaiVe: 'Đã hoàn thành',
+        maQRVe: 'QR-VE-001'
+      }
     ]
   },
   {
     maDonHang: 'P5CDWE88',
-    hoTenKhachHang: 'Tr?n Ng?c B?o Nghi',
+    hoTenNguoiDi: 'Trần Ngọc Bảo Nghi',
     soDienThoai: '0912345678',
     email: 'bao.nghi@example.com',
     thoiGianDat: '2026-05-16 10:15',
-    soLuongVe: 2,
-    tenTuyen: 'H� N?i - S�i G�n',
+    soLuongVeDaDat: 2,
+    tenTuyen: 'Hà Nội - Sài Gòn',
     gioKhoiHanh: '08:00',
+    gioTra: '18:30',
     departureDate: '2026-06-02',
-    diemDon: 'B?n xe Gi�p B�t',
-    diemTra: 'B?n xe S�i G�n',
+    diemDon: 'Bến xe Giáp Bát',
+    diemTra: 'Bến xe Sài Gòn',
     thoiGianCoMatTruoc: '07:30',
-    gioCanComat: '07:30',
+    gioCanCoMat: '07:30',
     tongGiaVe: 980000,
-    phuongThucThanhToan: 'Th? ng�n h�ng',
-    trangThaiDonHang: 'Ch? kh?i h�nh',
+    phuongThucThanhToan: 'Thẻ ngân hàng',
+    trangThaiDonHang: 'Chờ khởi hành',
     bienSoXe: '29B-67890',
     maDiemDon: 'MD02',
     maDiemTra: 'MT02',
     soLanDaSua: 0,
     gioiHanChinhSua: 2,
     tickets: [
-      { maVe: 'VE-002', soGhe: 'B01', trangThaiVe: '�� thanh to�n' },
-      { maVe: 'VE-003', soGhe: 'B02', trangThaiVe: '�� thanh to�n' }
+      {
+        maVe: 'VE-002',
+        soGhe: 'B01',
+        bienSoXe: '29B-67890',
+        diemDon: 'Bến xe Giáp Bát',
+        diemDonThoiGian: '07:30 ngày 02-06-2026',
+        diemTra: 'Bến xe Sài Gòn',
+        diemTraThoiGian: '18:30 ngày 02-06-2026',
+        giaVe: 490000,
+        trangThaiVe: 'Chờ khởi hành',
+        maQRVe: 'QR-VE-002'
+      },
+      {
+        maVe: 'VE-003',
+        soGhe: 'B02',
+        bienSoXe: '29B-67890',
+        diemDon: 'Bến xe Giáp Bát',
+        diemDonThoiGian: '07:30 ngày 02-06-2026',
+        diemTra: 'Bến xe Sài Gòn',
+        diemTraThoiGian: '18:30 ngày 02-06-2026',
+        giaVe: 490000,
+        trangThaiVe: 'Chờ khởi hành',
+        maQRVe: 'QR-VE-003'
+      }
     ]
   }
 ];
 
 const LOCATION_OPTIONS: LocationOption[] = [
-  { maDiem: 'MD01', tenDiem: 'B?n xe M? ��nh' },
-  { maDiem: 'MD02', tenDiem: 'B?n xe Gi�p B�t' },
-  { maDiem: 'MD03', tenDiem: 'B?n xe Gia L�m' },
-  { maDiem: 'MT01', tenDiem: 'B?n xe H?i Ph�ng' },
-  { maDiem: 'MT02', tenDiem: 'B?n xe S�i G�n' },
-  { maDiem: 'MT03', tenDiem: 'B?n xe �� N?ng' }
+  { maDiem: 'MD01', tenDiem: 'Bến xe Miền Đông Cũ', thoiGian: '18:15', diaChi: '292 Đinh Bộ Lĩnh, P.26, Q.Bình Thạnh, TP HCM' },
+  { maDiem: 'MD02', tenDiem: 'Bến xe Giáp Bát', thoiGian: '07:30', diaChi: 'Km 4, Đường Giải Phóng, Hà Nội' },
+  { maDiem: 'MD03', tenDiem: 'Bến xe Gia Lâm', thoiGian: '08:00', diaChi: 'Số 1, Ngõ 278, Đường Nguyễn Văn Cừ, Gia Lâm' },
+  { maDiem: 'MD04', tenDiem: 'Bến xe Miền Tây', thoiGian: '17:30', diaChi: '395 Kinh Dương Vương, P.An Lạc, Q.Bình Tân, TP.HCM' },
+  { maDiem: 'MT01', tenDiem: 'Bến xe Hải Phòng', thoiGian: '13:00', diaChi: 'Đường Lê Hồng Phong, Hải Phòng' },
+  { maDiem: 'MT02', tenDiem: 'Bến xe Sài Gòn', thoiGian: '18:30', diaChi: 'Số 1, Phạm Hùng, Bình Chánh, TP.HCM' },
+  { maDiem: 'MT03', tenDiem: 'Bến xe Quy Nhơn', thoiGian: '05:00', diaChi: '71 Tây Sơn, Phường Ghềnh Ráng, Quy Nhơn, Bình Định' },
+  { maDiem: 'MT04', tenDiem: 'Bến xe Vũng Tàu', thoiGian: '05:00', diaChi: '192 Nam Kỳ Khởi Nghĩa, P.Thắng Tam, TP.Vũng Tàu' }
 ];
 
 @Component({
@@ -119,55 +167,96 @@ const LOCATION_OPTIONS: LocationOption[] = [
   styleUrl: './tra-cuu-ve.css'
 })
 export class TraCuuVeComponent {
-  phoneNumber: string = '';
-  bookingCode: string = '';
-  ticketCode: string = '';
-  isLoading: boolean = false;
-  foundOrder: Order | null = null;
+    // Đóng dropdown khi click ra ngoài
+    onEditDiemDonBlur(event: FocusEvent) {
+      setTimeout(() => { this.showDiemDonDropdown = false; }, 120);
+    }
+    onEditDiemTraBlur(event: FocusEvent) {
+      setTimeout(() => { this.showDiemTraDropdown = false; }, 120);
+    }
+
+    // Vé đã hoàn thành hoặc đã đánh giá thì không cho hủy
+    isCancelDisabled(): boolean {
+      if (!this.currentOrder) return true;
+      return ['Đã hoàn thành', 'Đã đánh giá', 'Đã hủy'].includes(this.currentOrder.trangThaiDonHang);
+    }
+
+    // Số lần chỉnh sửa tối đa là 2/2
+    getEditTimesLabel(): string {
+      if (!this.currentOrder) return '';
+      const max = this.currentOrder.gioiHanChinhSua || 2;
+      const used = this.currentOrder.soLanDaSua || 0;
+      return `${max - used}/2 lần chỉnh`;
+    }
+  phoneNumber = '';
+  bookingCode = '';
+  isLoading = false;
   currentOrder: Order | null = null;
-  errorMessage: string = '';
-  searchError: string = '';
+  searchError = '';
   currentStep: 'search' | 'results' = 'search';
 
-  toastMessage: string = '';
+  toastMessage = '';
   toastType: 'success' | 'error' = 'success';
 
-  showEditModal: boolean = false;
-  showCancelModal: boolean = false;
-  showReviewModal: boolean = false;
-  showDiemDonDropdown: boolean = false;
-  showDiemTraDropdown: boolean = false;
+  showEditModal = false;
+  showCancelModal = false;
+  showReviewModal = false;
+  showDiemDonDropdown = false;
+  showDiemTraDropdown = false;
 
-  editFullName: string = '';
-  editPhone: string = '';
-  editEmail: string = '';
-  editDiemDonSearchText: string = '';
-  editDiemTraSearchText: string = '';
-  editMaDiemDon: string = '';
-  editMaDiemTra: string = '';
+  editFullName = '';
+  editPhone = '';
+  editEmail = '';
+  editDiemDonSearchText = '';
+  editDiemTraSearchText = '';
+  editMaDiemDon = '';
+  editMaDiemTra = '';
+  selectedCancelReason = 'Tôi đổi kế hoạch';
 
   filterDiemDonOptions: LocationOption[] = [];
   filterDiemTraOptions: LocationOption[] = [];
 
-  reviewComment: string = '';
-  ratingCriteria: RatingCriteriaItem[] = [
-    { label: 'Nh�n vi�n', score: 5 },
-    { label: 'Xe s?ch s?', score: 5 },
-    { label: 'Gi? kh?i h�nh', score: 5 },
-    { label: 'Ch?t lu?ng d?ch v?', score: 5 }
+  cancelReasons = [
+    'Tôi đổi kế hoạch',
+    'Khách hàng không thể tham gia',
+    'Tôi gặp sự cố',
+    'Lý do khác'
   ];
-  quickReviewTags: string[] = ['��ng gi?', 'Xe d?p', 'Tho?i m�i', 'Nh�n vi�n nhi?t t�nh'];
+
+  reviewComment = '';
+  reviewFiles: File[] = [];
+  ratingCriteria: RatingCriteriaItem[] = [
+    { label: 'An toàn', score: 0 },
+    { label: 'Sạch sẽ', score: 0 },
+    { label: 'Thái độ Nhân viên', score: 0 },
+    { label: 'Đúng giờ', score: 0 },
+    { label: 'Thông tin đầy đủ', score: 0 },
+    { label: 'Tiện nghi', score: 0 }
+  ];
+  quickReviewTags = ['An toàn', 'Sạch sẽ', 'Đúng giờ', 'Thông tin đầy đủ', 'Tiện nghi'];
 
   constructor(
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private printService: PrintService
   ) {}
+
+  get canReview(): boolean {
+    if (!this.currentOrder) return false;
+    return this.currentOrder.trangThaiDonHang === 'Đã hoàn thành'
+      && this.currentOrder.tickets.length > 0
+      && this.currentOrder.tickets.every((ticket) => ticket.trangThaiVe === 'Đã hoàn thành');
+  }
+
+  get isReviewSubmitDisabled(): boolean {
+    // Chỉ cần có ít nhất 1 tiêu chí được đánh giá (score > 0)
+    const hasAnyScore = this.ratingCriteria.some(c => c.score > 0);
+    return !hasAnyScore;
+  }
 
   searchTickets(): void {
     this.isLoading = true;
-    this.foundOrder = null;
     this.currentOrder = null;
-    this.errorMessage = '';
     this.searchError = '';
 
     setTimeout(() => {
@@ -178,15 +267,15 @@ export class TraCuuVeComponent {
       );
 
       if (!found) {
-        this.searchError = 'Kh�ng t�m th?y don h�ng n�o v?i th�ng tin d� cung c?p.';
+        this.searchError = 'Không tìm thấy đơn hàng nào với thông tin đã cung cấp.';
         this.currentStep = 'search';
         this.isLoading = false;
         this.cdr.detectChanges();
         return;
       }
 
-      this.foundOrder = found;
-      this.currentOrder = { ...found };
+      this.currentOrder = { ...found, tickets: found.tickets.map((ticket) => ({ ...ticket })) };
+      this.syncTicketFieldsFromOrder();
       this.currentStep = 'results';
       this.isLoading = false;
       this.cdr.detectChanges();
@@ -207,9 +296,7 @@ export class TraCuuVeComponent {
 
   backToSearch(): void {
     this.currentStep = 'search';
-    this.foundOrder = null;
     this.currentOrder = null;
-    this.errorMessage = '';
     this.searchError = '';
     this.showEditModal = false;
     this.showCancelModal = false;
@@ -221,9 +308,7 @@ export class TraCuuVeComponent {
       return phone;
     }
 
-    const visibleStart = phone.slice(0, 3);
-    const visibleEnd = phone.slice(-2);
-    return `${visibleStart}****${visibleEnd}`;
+    return `${phone.slice(0, 3)}****${phone.slice(-2)}`;
   }
 
   maskEmail(email: string): string {
@@ -238,61 +323,131 @@ export class TraCuuVeComponent {
 
   getStatusClasses(status: string): { [key: string]: boolean } {
     return {
-      'bg-success-light': status === '�� ho�n th�nh' || status === '�� d�nh gi�',
-      'text-success-text': status === '�� ho�n th�nh' || status === '�� d�nh gi�',
-      'bg-danger-light': status === '�� h?y',
-      'text-danger-text': status === '�� h?y',
-      'bg-info-light': status === 'Ch? thanh to�n',
-      'text-info-text': status === 'Ch? thanh to�n',
-      'bg-warning-light': status === 'Ch? kh?i h�nh' || status === 'Chua d�nh gi�',
-      'text-warning-text': status === 'Ch? kh?i h�nh' || status === 'Chua d�nh gi�'
+      'bg-success-light': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
+      'text-success-text': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
+      'bg-danger-light': status === 'Đã hủy',
+      'text-danger-text': status === 'Đã hủy',
+      'bg-info-light': status === 'Chờ thanh toán',
+      'text-info-text': status === 'Chờ thanh toán',
+      'bg-warning-light': status === 'Chờ khởi hành',
+      'text-warning-text': status === 'Chờ khởi hành'
     };
   }
 
-  calculatePresenceTime(gioKhoiHanh: string, _departureDate?: string): string {
-    const [hour, minute] = gioKhoiHanh.split(':').map(Number);
+  getTicketStatusClasses(status: string): { [key: string]: boolean } {
+    return {
+      'bg-success-light': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
+      'text-success-text': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
+      'bg-danger-light': status === 'Đã hủy',
+      'text-danger-text': status === 'Đã hủy',
+      'bg-info-light': status === 'Chờ thanh toán',
+      'text-info-text': status === 'Chờ thanh toán',
+      'bg-warning-light': status === 'Chờ khởi hành',
+      'text-warning-text': status === 'Chờ khởi hành'
+    };
+  }
 
-    if (Number.isNaN(hour) || Number.isNaN(minute)) {
-      return '30 ph�t tru?c gi? kh?i h�nh';
+  getPresenceTimeLabel(): string {
+    if (!this.currentOrder) {
+      return '';
     }
 
-    const totalMinutes = hour * 60 + minute - 30;
-    const safeMinutes = (totalMinutes + 24 * 60) % (24 * 60);
-    const hh = Math.floor(safeMinutes / 60).toString().padStart(2, '0');
-    const mm = (safeMinutes % 60).toString().padStart(2, '0');
-
-    return `${hh}:${mm}`;
+    return `${this.currentOrder.gioCanCoMat} ngày ${this.formatDisplayDate(this.currentOrder.departureDate)}`;
   }
 
-  formatPrice(price: number): string {
-    return (price || 0).toLocaleString('vi-VN') + 'd';
+  getPickupTimeLabel(): string {
+    if (!this.currentOrder) {
+      return '';
+    }
+
+    const departure = this.buildDepartureDate(this.currentOrder.departureDate, this.currentOrder.gioKhoiHanh);
+    if (!departure) {
+      return '';
+    }
+
+    departure.setMinutes(departure.getMinutes() - 30);
+
+    const time = `${String(departure.getHours()).padStart(2, '0')}:${String(departure.getMinutes()).padStart(2, '0')}`;
+    return `Trước ${time} ${this.formatDisplayDate(this.currentOrder.departureDate)}`;
   }
 
-  getRefundPercentage(departureDate: string, gioKhoiHanh: string): number {
-    if (!departureDate || !gioKhoiHanh) {
+  getEditLimit(): number {
+    return 2;
+  }
+
+  getEditRemaining(): number {
+    if (!this.currentOrder) {
       return 0;
     }
 
-    const [year, month, day] = departureDate.split('-').map(Number);
-    const [hour, minute] = gioKhoiHanh.split(':').map(Number);
+    return Math.max(this.getEditLimit() - (this.currentOrder.soLanDaSua || 0), 0);
+  }
 
-    const departure = new Date(year, month - 1, day, hour, minute, 0, 0);
-    const now = new Date();
-    const diffHours = (departure.getTime() - now.getTime()) / (1000 * 60 * 60);
+  canEditOrder(): boolean {
+    return this.getEditRemaining() > 0;
+  }
+
+  formatPrice(price: number): string {
+    return (price || 0).toLocaleString('vi-VN') + 'đ';
+  }
+
+  formatDisplayDate(dateString: string): string {
+    if (!dateString) {
+      return '';
+    }
+
+    const [year, month, day] = dateString.split('-').map(Number);
+    if (!year || !month || !day) {
+      return dateString;
+    }
+
+    return `${String(day).padStart(2, '0')}-${String(month).padStart(2, '0')}-${year}`;
+  }
+
+  getRefundPercentage(): number {
+    if (!this.currentOrder) {
+      return 0;
+    }
+
+    const departure = this.buildDepartureDate(this.currentOrder.departureDate, this.currentOrder.gioKhoiHanh);
+    if (!departure) {
+      return 0;
+    }
+
+    const diffHours = (departure.getTime() - new Date().getTime()) / (1000 * 60 * 60);
 
     if (diffHours <= 0) {
       return 0;
     }
-
     if (diffHours >= 24) {
       return 100;
     }
-
     if (diffHours >= 12) {
       return 50;
     }
-
     return 0;
+  }
+
+  getRefundFee(): number {
+    if (!this.currentOrder) {
+      return 0;
+    }
+
+    return this.currentOrder.tongGiaVe * (1 - this.getRefundPercentage() / 100);
+  }
+
+  getRefundAmount(): number {
+    if (!this.currentOrder) {
+      return 0;
+    }
+
+    return this.currentOrder.tongGiaVe * (this.getRefundPercentage() / 100);
+  }
+
+  getQrCodeUrl(ticket: Ticket): string {
+    const orderCode = this.currentOrder?.maDonHang || 'unknown';
+    const data = `${orderCode}|${ticket.maVe}|${ticket.maQRVe}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data)}`;
   }
 
   openEditOrderModal(): void {
@@ -300,15 +455,22 @@ export class TraCuuVeComponent {
       return;
     }
 
-    this.editFullName = this.currentOrder.hoTenKhachHang;
+    if (!this.canEditOrder()) {
+      this.showToast('Bạn đã hết lượt chỉnh sửa thông tin cho vé này.', 'error');
+      return;
+    }
+
+    this.editFullName = this.currentOrder.hoTenNguoiDi;
     this.editPhone = this.currentOrder.soDienThoai;
     this.editEmail = this.currentOrder.email;
     this.editDiemDonSearchText = this.currentOrder.diemDon;
     this.editDiemTraSearchText = this.currentOrder.diemTra;
     this.editMaDiemDon = this.currentOrder.maDiemDon;
     this.editMaDiemTra = this.currentOrder.maDiemTra;
-    this.filterDiemDonOptions = LOCATION_OPTIONS;
-    this.filterDiemTraOptions = LOCATION_OPTIONS;
+    this.filterDiemDonOptions = [...LOCATION_OPTIONS];
+    this.filterDiemTraOptions = [...LOCATION_OPTIONS];
+    this.showDiemDonDropdown = false;
+    this.showDiemTraDropdown = false;
     this.showEditModal = true;
   }
 
@@ -316,12 +478,51 @@ export class TraCuuVeComponent {
     this.showEditModal = false;
   }
 
+  onEditDiemDonInput(): void {
+    const search = this.editDiemDonSearchText.toLowerCase().trim();
+    this.filterDiemDonOptions = search
+      ? LOCATION_OPTIONS.filter((item) =>
+          item.tenDiem.toLowerCase().includes(search) ||
+          (item.diaChi || '').toLowerCase().includes(search)
+        )
+      : [...LOCATION_OPTIONS];
+    this.showDiemDonDropdown = true;
+  }
+
+  onEditDiemTraInput(): void {
+    const search = this.editDiemTraSearchText.toLowerCase().trim();
+    this.filterDiemTraOptions = search
+      ? LOCATION_OPTIONS.filter((item) =>
+          item.tenDiem.toLowerCase().includes(search) ||
+          (item.diaChi || '').toLowerCase().includes(search)
+        )
+      : [...LOCATION_OPTIONS];
+    this.showDiemTraDropdown = true;
+  }
+
+  isEditSaveDisabled(): boolean {
+    if (!this.currentOrder || !this.canEditOrder()) {
+      return true;
+    }
+
+    const hasFullNameChanged = this.editFullName.trim() !== this.currentOrder.hoTenNguoiDi;
+    const hasPhoneChanged = this.editPhone.trim() !== this.currentOrder.soDienThoai;
+    const hasEmailChanged = this.editEmail.trim() !== this.currentOrder.email;
+    const hasPickupChanged = this.editMaDiemDon !== this.currentOrder.maDiemDon;
+    const hasDropoffChanged = this.editMaDiemTra !== this.currentOrder.maDiemTra;
+
+    return !(hasFullNameChanged || hasPhoneChanged || hasEmailChanged || hasPickupChanged || hasDropoffChanged);
+  }
+
   saveEditChanges(): void {
-    if (!this.currentOrder) {
+    if (!this.currentOrder || this.isEditSaveDisabled()) {
+      if (this.currentOrder) {
+        this.showToast('Không có thay đổi nào để lưu hoặc bạn đã hết lượt chỉnh sửa.', 'error');
+      }
       return;
     }
 
-    this.currentOrder.hoTenKhachHang = this.editFullName.trim() || this.currentOrder.hoTenKhachHang;
+    this.currentOrder.hoTenNguoiDi = this.editFullName.trim() || this.currentOrder.hoTenNguoiDi;
     this.currentOrder.soDienThoai = this.editPhone.trim() || this.currentOrder.soDienThoai;
     this.currentOrder.email = this.editEmail.trim() || this.currentOrder.email;
 
@@ -331,16 +532,19 @@ export class TraCuuVeComponent {
     if (selectedDon) {
       this.currentOrder.diemDon = selectedDon.tenDiem;
       this.currentOrder.maDiemDon = selectedDon.maDiem;
+      this.currentOrder.gioCanCoMat = selectedDon.thoiGian || this.currentOrder.gioCanCoMat;
     }
 
     if (selectedTra) {
       this.currentOrder.diemTra = selectedTra.tenDiem;
       this.currentOrder.maDiemTra = selectedTra.maDiem;
+      this.currentOrder.gioTra = selectedTra.thoiGian || this.currentOrder.gioTra;
     }
 
     this.currentOrder.soLanDaSua = (this.currentOrder.soLanDaSua || 0) + 1;
+    this.syncTicketFieldsFromOrder();
     this.showEditModal = false;
-    this.showToast('C?p nh?t th�ng tin v� th�nh c�ng.', 'success');
+    this.showToast('Cập nhật thông tin vé thành công.', 'success');
   }
 
   openCancelModal(): void {
@@ -356,9 +560,26 @@ export class TraCuuVeComponent {
       return;
     }
 
-    this.currentOrder.trangThaiDonHang = '�� h?y';
+    if (!this.selectedCancelReason.trim()) {
+      this.showToast('Vui lòng chọn lý do hủy vé.', 'error');
+      return;
+    }
+
+    if (this.getRefundPercentage() === 0) {
+      this.showToast('Hủy vé không được hỗ trợ trong khoảng thời gian dưới 12 giờ so với giờ khởi hành.', 'error');
+      return;
+    }
+
+    this.currentOrder.trangThaiDonHang = 'Đã hủy';
+    this.currentOrder.tickets = this.currentOrder.tickets.map((ticket) => ({
+      ...ticket,
+      trangThaiVe: 'Đã hủy'
+    }));
     this.showCancelModal = false;
-    this.showToast('Y�u c?u h?y v� d� du?c g?i.', 'success');
+    this.showToast(
+      `Hủy vé thành công, tiền sẽ được hoàn trong 48h. Số tiền thực nhận: ${this.formatPrice(this.getRefundAmount())}.`,
+      'success'
+    );
   }
 
   openReviewModal(): void {
@@ -367,6 +588,8 @@ export class TraCuuVeComponent {
 
   closeReviewModal(): void {
     this.showReviewModal = false;
+    this.reviewComment = '';
+    this.reviewFiles = [];
   }
 
   setRating(index: number, score: number): void {
@@ -382,22 +605,59 @@ export class TraCuuVeComponent {
     this.reviewComment = this.reviewComment ? `${this.reviewComment}, ${tag}` : tag;
   }
 
+  onReviewFilesSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const files = target.files ? Array.from(target.files) : [];
+
+    this.reviewFiles = [...this.reviewFiles, ...files].slice(0, 3);
+    target.value = '';
+  }
+
+  removeReviewFile(index: number): void {
+    this.reviewFiles = this.reviewFiles.filter((_, itemIndex) => itemIndex !== index);
+  }
+
   submitReview(): void {
+    if (!this.currentOrder || this.isReviewSubmitDisabled) {
+      return;
+    }
+
+    this.currentOrder.trangThaiDonHang = 'Đã đánh giá';
+    this.currentOrder.tickets = this.currentOrder.tickets.map((ticket) => ({
+      ...ticket,
+      trangThaiVe: 'Đã đánh giá'
+    }));
+    this.showReviewModal = false;
+    this.reviewComment = '';
+    this.reviewFiles = [];
+    this.showToast('Đánh giá đã được gửi thành công.', 'success');
+  }
+
+  printTicket(ticket: Ticket): void {
     if (!this.currentOrder) {
       return;
     }
 
-    this.currentOrder.trangThaiDonHang = '�� d�nh gi�';
-    this.showReviewModal = false;
-    this.showToast('C?m on b?n d� d�nh gi� d?ch v?.', 'success');
-  }
+    const departureDateLabel = this.formatDisplayDate(this.currentOrder.departureDate);
+    const departureTimeLabel = `${this.currentOrder.gioKhoiHanh} ${departureDateLabel}`;
+    const pickupTimeLabel = this.getPickupTimeLabel();
 
-  printTicket(ticket: Ticket): void {
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
+    const printData = {
+      maDonHang: this.currentOrder.maDonHang,
+      maVe: ticket.maVe,
+      maQRVe: ticket.maQRVe,
+      qrUrl: this.getQrCodeUrl(ticket),
+      tenTuyen: this.currentOrder.tenTuyen,
+      thoiGianKhoiHanh: departureTimeLabel,
+      soGhe: ticket.soGhe,
+      diemDon: this.currentOrder.diemDon,
+      thoiGianToiDiemLenXe: pickupTimeLabel,
+      diemTra: this.currentOrder.diemTra,
+      bienSoXe: ticket.bienSoXe,
+      giaVe: ticket.giaVe
+    };
 
-    this.showToast(`�ang in v� ${ticket.maVe}.`, 'success');
+    this.printService.printTicket(printData);
   }
 
   selectDiemDon(option: LocationOption): void {
@@ -412,6 +672,42 @@ export class TraCuuVeComponent {
     this.editDiemTraSearchText = option.tenDiem;
     this.showDiemTraDropdown = false;
     this.filterDiemTraOptions = [option];
+  }
+
+  private syncTicketFieldsFromOrder(): void {
+    if (!this.currentOrder) {
+      return;
+    }
+
+    const ticketPrice = this.currentOrder.soLuongVeDaDat > 0
+      ? Math.round(this.currentOrder.tongGiaVe / this.currentOrder.soLuongVeDaDat)
+      : this.currentOrder.tongGiaVe;
+
+    this.currentOrder.tickets = this.currentOrder.tickets.map((ticket) => ({
+      ...ticket,
+      bienSoXe: this.currentOrder!.bienSoXe,
+      diemDon: this.currentOrder!.diemDon,
+      diemDonThoiGian: `${this.currentOrder!.gioCanCoMat} ngày ${this.formatDisplayDate(this.currentOrder!.departureDate)}`,
+      diemTra: this.currentOrder!.diemTra,
+      diemTraThoiGian: `${this.currentOrder!.gioTra || this.currentOrder!.gioKhoiHanh} ngày ${this.formatDisplayDate(this.currentOrder!.departureDate)}`,
+      giaVe: ticket.giaVe || ticketPrice,
+      maQRVe: ticket.maQRVe || `QR-${ticket.maVe}`
+    }));
+  }
+
+  private buildDepartureDate(dateString: string, timeString: string): Date | null {
+    if (!dateString || !timeString) {
+      return null;
+    }
+
+    const [year, month, day] = dateString.split('-').map(Number);
+    const [hour, minute] = timeString.split(':').map(Number);
+
+    if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute)) {
+      return null;
+    }
+
+    return new Date(year, month - 1, day, hour, minute, 0, 0);
   }
 
   private showToast(message: string, type: 'success' | 'error'): void {
