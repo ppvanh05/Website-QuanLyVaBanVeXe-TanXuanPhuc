@@ -111,13 +111,13 @@ export class LoginComponent implements OnInit {
   openForgot(event: Event) {
     event.preventDefault();
     this.authModalService.openForgotModal();
-    this.closeModal(); // Close login modal when opening forgot password
+    // Do not call this.closeModal() here, modal switching is handled by modalMode$ in header
   }
 
   openRegister(event: Event) {
     event.preventDefault();
     this.authModalService.openRegisterModal();
-    this.closeModal(); // Close login modal when opening register
+    // Do not call this.closeModal() here, modal switching is handled by modalMode$ in header
   }
 
   closeModal() {

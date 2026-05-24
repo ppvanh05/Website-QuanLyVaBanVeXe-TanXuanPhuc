@@ -28,7 +28,6 @@ export class ForgotPasswordComponent implements OnDestroy {
   otpCountdown = 180;
   otpTimer: ReturnType<typeof setInterval> | null = null;
   generatedOtp = '';
-  showDebugOtp = true;
 
   newPassword = '';
   confirmPassword = '';
@@ -203,6 +202,10 @@ export class ForgotPasswordComponent implements OnDestroy {
     if (userIndex !== -1) {
       users[userIndex].password = this.newPassword;
       localStorage.setItem('mock_users', JSON.stringify(users));
+      localStorage.setItem('lastLoggedInUser', JSON.stringify({
+        phoneOrEmail: this.phoneNumber,
+        password: this.newPassword
+      }));
     } else {
       this.otpError = 'Có lỗi xảy ra, không tìm thấy tài khoản để cập nhật.';
       return;
@@ -215,10 +218,6 @@ export class ForgotPasswordComponent implements OnDestroy {
 
     setTimeout(() => {
       this.showToast = false;
-      // Lấy tên người dùng từ mock_users hoặc một nguồn khác
-      const user = users[userIndex];
-      this.authService.login(user.fullName); // Đăng nhập người dùng sau khi đặt lại mật khẩu
-      this.loggedIn.emit(user.fullName); // Phát ra sự kiện loggedIn
       this.authModalService.closeModal();
       this.authModalService.openLoginModal();
     }, 1500);

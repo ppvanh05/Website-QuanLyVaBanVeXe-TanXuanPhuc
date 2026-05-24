@@ -75,21 +75,21 @@
                     </div>
                     <ul class="space-y-1">
                         <li>
-                            <a routerLink="/profile" (click)="isUserDropdownOpen = false"
+                            <a routerLink="/profile" [queryParams]="{ tab: 'profile' }" (click)="isUserDropdownOpen = false"
                                 class="flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
                                 <span class="material-symbols-outlined text-xl text-outline group-hover:text-secondary">person</span>
                                 <span class="font-body-md">Thông tin cá nhân</span>
                             </a>
                         </li>
                         <li>
-                            <a routerLink="/profile" (click)="isUserDropdownOpen = false"
+                            <a routerLink="/profile" [queryParams]="{ tab: 'history' }" (click)="isUserDropdownOpen = false"
                                 class="flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
                                 <span class="material-symbols-outlined text-xl text-outline group-hover:text-secondary">history</span>
                                 <span class="font-body-md">Lịch sử mua vé</span>
                             </a>
                         </li>
                         <li>
-                            <a routerLink="/profile" (click)="isUserDropdownOpen = false"
+                            <a routerLink="/profile" [queryParams]="{ tab: 'password' }" (click)="isUserDropdownOpen = false"
                                 class="flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
                                 <span class="material-symbols-outlined text-xl text-outline group-hover:text-secondary">lock_reset</span>
                                 <span class="font-body-md">Đổi mật khẩu</span>
