@@ -14,6 +14,7 @@ import { AuthModalService } from '../auth-modal.service';
 export class RegisterComponent implements OnDestroy {
   @Output() close = new EventEmitter<void>();
   @Output() loggedIn = new EventEmitter<string>();
+  @Output() registered = new EventEmitter<string>();
 
   step: 'phone' | 'otp' | 'profile' = 'phone';
   phoneNumber = '';
@@ -22,7 +23,6 @@ export class RegisterComponent implements OnDestroy {
   otpCountdown = 180;
   otpTimer: any = null;
   generatedOtp = '';
-  showDebugOtp = true;
 
   fullName = '';
   email = '';
@@ -222,12 +222,12 @@ export class RegisterComponent implements OnDestroy {
 
     this.registrationSuccess = true;
     this.toastMessage = 'Đăng ký thành công!';
-    // this.showToast = true; // Đã có trong template
+    this.showToast = true;
     this.cdr.detectChanges();
 
     setTimeout(() => {
-      // this.showToast = false; // Đã có trong template
-      this.loggedIn.emit(this.fullName); // Emit the loggedIn event with the user's full name
+      this.showToast = false;
+      this.registered.emit(this.fullName);
       this.closeModal();
     }, 1500);
   }
@@ -312,7 +312,7 @@ export class RegisterComponent implements OnDestroy {
 
     setTimeout(() => {
       this.showToast = false;
-      this.loggedIn.emit(this.fullName.trim()); // Phát ra sự kiện loggedIn
+      this.registered.emit(this.fullName.trim());
       this.closeModal();
       this.router.navigate(['/home']);
     }, 1800);
