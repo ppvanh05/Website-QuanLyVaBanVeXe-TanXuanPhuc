@@ -22,7 +22,7 @@ export const routes: Routes = [
     loadComponent: () => import('./featured/customer/tintuc/tintuc.component').then(m => m.TintucComponent)
   },
   {
-    path: 'tin-tuc/chi-tiet',
+    path: 'tin-tuc/chi-tiet/:id',
     loadComponent: () => import('./featured/customer/tintuc/tintuc-detail/tintuc-detail.component').then(m => m.TintucDetailComponent)
   },
   {

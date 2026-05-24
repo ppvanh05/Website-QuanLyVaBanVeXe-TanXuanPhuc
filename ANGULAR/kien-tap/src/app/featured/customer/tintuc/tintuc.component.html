@@ -6,7 +6,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center border-b border-outline-variant/30 mb-8">
             <div class="flex gap-8 overflow-x-auto w-full md:w-auto no-scrollbar">
                 <button *ngFor="let cat of categories" 
-                    (click)="activeCategory = cat"
+                    (click)="onCategoryChange(cat)"
                     [class.border-primary]="activeCategory === cat"
                     [class.text-primary]="activeCategory === cat"
                     class="pb-4 px-2 font-bold text-body-md transition-all border-b-2 border-transparent whitespace-nowrap uppercase tracking-wide">
@@ -16,19 +16,20 @@
             <div class="relative w-full md:w-80 mt-4 md:mt-0 mb-4">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl">search</span>
                 <input type="text" placeholder="Tìm kiếm tin tức" 
+                    (input)="onSearch($event)"
                     class="w-full pl-10 pr-4 py-2 bg-white border border-outline-variant/50 rounded-full text-body-sm focus:outline-none focus:border-primary transition-all">
             </div>
         </div>
 
         <!-- Section 1: Featured & Latest -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-12">
+        <div *ngIf="featuredNews || latestNews.length > 0" class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-12">
             <!-- Featured News (Left) -->
-            <div class="lg:col-span-8">
+            <div *ngIf="featuredNews" class="lg:col-span-8">
                 <div class="flex items-center gap-2 mb-6">
                     <div class="w-1 h-6 bg-primary"></div>
                     <h2 class="font-bold text-headline-sm uppercase tracking-tight text-navy">TIN TỨC NỔI BẬT</h2>
                 </div>
-                <div routerLink="/tin-tuc/chi-tiet" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-outline-variant/20 group cursor-pointer">
+                <div [routerLink]="['/tin-tuc/chi-tiet', featuredNews.maTinTuc]" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-outline-variant/20 group cursor-pointer">
                     <div class="relative h-[400px] overflow-hidden">
                         <img [src]="featuredNews.image" [alt]="featuredNews.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                         <div class="absolute top-4 left-4 bg-secondary text-white text-[10px] font-bold px-3 py-1 rounded-md shadow-lg">
@@ -48,7 +49,7 @@
             </div>
 
             <!-- Latest News (Right) -->
-            <div class="lg:col-span-4">
+            <div *ngIf="latestNews.length > 0" class="lg:col-span-4">
                 <div class="flex items-center gap-2 mb-6">
                     <div class="w-1 h-6 bg-secondary"></div>
                     <h2 class="font-bold text-headline-sm uppercase tracking-tight text-navy">TIN MỚI NHẤT</h2>
@@ -56,6 +57,7 @@
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-outline-variant/20">
                     <div class="space-y-6">
                         <div *ngFor="let news of latestNews; let last = last" 
+                            [routerLink]="['/tin-tuc/chi-tiet', news.maTinTuc]"
                             class="flex gap-4 group cursor-pointer"
                             [class.border-b]="!last" [class.border-outline-variant/20]="!last" [class.pb-6]="!last">
                             <div class="w-24 h-20 rounded-xl overflow-hidden shrink-0">
@@ -72,16 +74,15 @@
                             </div>
                         </div>
                     </div>
-                    <button class="w-full mt-8 py-2.5 border border-primary text-primary font-bold rounded-xl hover:bg-primary hover:text-white transition-all text-body-sm uppercase tracking-wider">
-                        Xem thêm
-                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Section 2: Sub Featured News -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-16">
-            <div *ngFor="let news of subFeaturedNews" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-outline-variant/20 group cursor-pointer">
+        <div *ngIf="subFeaturedNews.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-16">
+            <div *ngFor="let news of subFeaturedNews" 
+                [routerLink]="['/tin-tuc/chi-tiet', news.maTinTuc]"
+                class="bg-white rounded-2xl overflow-hidden shadow-sm border border-outline-variant/20 group cursor-pointer">
                 <div class="h-60 overflow-hidden">
                     <img [src]="news.image" [alt]="news.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                 </div>
@@ -95,13 +96,15 @@
         </div>
 
         <!-- Section 3: All News -->
-        <div class="mb-12">
+        <div *ngIf="allNews.length > 0" class="mb-12">
             <div class="flex items-center gap-2 mb-8">
                 <div class="w-1 h-6 bg-navy"></div>
                 <h2 class="font-bold text-headline-sm uppercase tracking-tight text-navy">TẤT CẢ TIN TỨC</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-                <div *ngFor="let news of allNews" class="bg-white rounded-2xl p-6 shadow-sm border border-outline-variant/20 flex gap-6 group cursor-pointer">
+                <div *ngFor="let news of allNews" 
+                    [routerLink]="['/tin-tuc/chi-tiet', news.maTinTuc]"
+                    class="bg-white rounded-2xl p-6 shadow-sm border border-outline-variant/20 flex gap-6 group cursor-pointer">
                     <div class="w-1/3 aspect-square rounded-xl overflow-hidden shrink-0">
                         <img [src]="news.image" [alt]="news.title" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                     </div>
@@ -118,19 +121,33 @@
             </div>
         </div>
 
+        <!-- No Data State -->
+        <div *ngIf="!featuredNews && latestNews.length === 0 && subFeaturedNews.length === 0 && allNews.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
+            <span class="material-symbols-outlined text-6xl text-outline mb-4">newspaper</span>
+            <h3 class="text-headline-sm font-bold text-navy mb-2">Không tìm thấy tin tức</h3>
+            <p class="text-on-surface-variant text-body-md">Vui lòng thử lại với từ khóa tìm kiếm hoặc danh mục khác.</p>
+        </div>
+
         <!-- Pagination -->
-        <div class="flex justify-center items-center gap-2 mt-16">
-            <button class="w-10 h-10 rounded-lg flex items-center justify-center border border-outline-variant/50 text-navy hover:border-primary hover:text-primary transition-all">
+        <div *ngIf="totalPages > 1" class="flex justify-center items-center gap-2 mt-16">
+            <button (click)="onPageChange(currentPage - 1)" 
+                [disabled]="currentPage === 1"
+                [class.opacity-50]="currentPage === 1"
+                class="w-10 h-10 rounded-lg flex items-center justify-center border border-outline-variant/50 text-navy hover:border-primary hover:text-primary transition-all">
                 <span class="material-symbols-outlined text-xl">chevron_left</span>
             </button>
             <button *ngFor="let page of pages" 
+                (click)="onPageChange(page)"
                 [class.bg-primary]="page === currentPage"
                 [class.text-white]="page === currentPage"
                 [class.border-primary]="page === currentPage"
                 class="w-10 h-10 rounded-lg flex items-center justify-center border border-outline-variant/50 text-body-sm font-bold hover:border-primary hover:text-primary transition-all">
                 {{ page }}
             </button>
-            <button class="w-10 h-10 rounded-lg flex items-center justify-center border border-outline-variant/50 text-navy hover:border-primary hover:text-primary transition-all">
+            <button (click)="onPageChange(currentPage + 1)" 
+                [disabled]="currentPage === totalPages"
+                [class.opacity-50]="currentPage === totalPages"
+                class="w-10 h-10 rounded-lg flex items-center justify-center border border-outline-variant/50 text-navy hover:border-primary hover:text-primary transition-all">
                 <span class="material-symbols-outlined text-xl">chevron_right</span>
             </button>
         </div>
@@ -138,3 +155,4 @@
 
     <app-footer></app-footer>
 </div>
+

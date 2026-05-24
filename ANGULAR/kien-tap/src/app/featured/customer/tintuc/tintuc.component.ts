@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
+import { CustomerTinTucService } from '../../../core/services/customer-tin-tuc.service';
 
 @Component({
   selector: 'app-tintuc',
@@ -11,67 +12,137 @@ import { FooterComponent } from '../layout/footer/footer.component';
   templateUrl: './tintuc.component.html',
   styleUrl: './tintuc.component.css'
 })
-export class TintucComponent {
+export class TintucComponent implements OnInit {
   categories = ['TIN NHÀ XE', 'KHUYẾN MÃI', 'CẨM NANG DI CHUYỂN'];
   activeCategory = 'TIN NHÀ XE';
+  searchQuery = '';
 
-  featuredNews = {
-    title: 'Chào đón dòng xe Limousine THACO Mobihome 22 Phòng Premium mới nhất',
-    date: '01/05/2026',
-    description: 'Tân Xuân Phúc chính thức đưa vào vận hành dòng xe phòng nằm cao cấp với đầy đủ tiện nghi, hứa hẹn mang lại trải nghiệm hành trình tuyệt vời cho quý khách.',
-    image: '/asset/images/customer/tintuc1.png',
-    tag: 'MỚI NHẤT'
-  };
+  featuredNews: any = null;
+  latestNews: any[] = [];
+  subFeaturedNews: any[] = [];
+  allNews: any[] = [];
 
-  latestNews = [
-    {
-      title: 'Khuyến mãi đặt vé khứ hồi giảm 10%',
-      category: 'KHUYẾN MÃI',
-      date: '30/04/2026',
-      image: '/asset/images/customer/km2.jpg'
-    },
-    {
-      title: 'Hành trình xe qua Phù Cát - Đập Đá',
-      category: 'HÀNH TRÌNH',
-      date: '29/04/2026',
-      image: '/asset/images/customer/banner.jpg'
-    },
-    {
-      title: 'Tuyển dụng tài xế hạng E kinh nghiệm',
-      category: 'THÔNG BÁO',
-      date: '27/04/2026',
-      image: '/asset/images/customer/nhaxe1.png'
-    }
-  ];
-
-  subFeaturedNews = [
-    {
-      title: 'Cập nhật lịch trình 6 chuyến cố định mỗi ngày',
-      date: '28/04/2026',
-      image: '/asset/images/customer/tintuc2.jpg'
-    },
-    {
-      title: 'Tân Xuân Phúc đón trả khách tại Bến xe Bến Cát',
-      date: '25/04/2026',
-      image: '/asset/images/customer/benxebencat.jpg'
-    }
-  ];
-
-  allNews = [
-    {
-      title: 'Hướng dẫn chi tiết đặt vé online Tân Xuân Phúc',
-      date: '01/05/2026',
-      description: 'Chỉ với vài thao tác đơn giản trên website hoặc ứng dụng, bạn đã có thể sở hữu tấm vé cho hành trình của mình...',
-      image: '/asset/images/customer/tintuc3.png'
-    },
-    {
-      title: 'Quy định hành lý đi xe phòng Limousine',
-      date: '01/05/2026',
-      description: 'Mỗi hành khách được mang theo tối đa bao nhiêu kg hành lý và những vật dụng nào bị cấm mang lên xe...',
-      image: '/asset/images/customer/tintuc4.png'
-    }
-  ];
-
-  pages = [1, 2, 3, '...', 90, 91];
+  pages: any[] = [1];
   currentPage = 1;
+  totalPages = 1;
+  pageSize = 10;
+
+  constructor(private newsService: CustomerTinTucService) {}
+
+  ngOnInit() {
+    this.loadNews();
+  }
+
+  loadNews() {
+    const loai = this.mapCategory(this.activeCategory);
+    this.newsService.getPublishedNews({
+      page: this.currentPage,
+      limit: this.pageSize,
+      loai: loai,
+      search: this.searchQuery
+    }).subscribe({
+      next: (response) => {
+        const items = response.items || [];
+        const mappedItems = items.map((item: any) => this.mapNewsItem(item));
+
+        if (this.currentPage === 1) {
+          // If we are on the first page, split items into sections
+          this.featuredNews = mappedItems.length > 0 ? mappedItems[0] : null;
+          this.latestNews = mappedItems.length > 1 ? mappedItems.slice(1, 4) : [];
+          this.subFeaturedNews = mappedItems.length > 4 ? mappedItems.slice(4, 6) : [];
+          this.allNews = mappedItems.length > 6 ? mappedItems.slice(6) : [];
+        } else {
+          // If we are on page 2+, display all items in the "All News" grid
+          this.allNews = mappedItems;
+        }
+
+        this.totalPages = response.meta?.totalPages || 1;
+        this.generatePagination(this.currentPage, this.totalPages);
+      },
+      error: (err) => {
+        console.error('Error fetching news:', err);
+      }
+    });
+  }
+
+  onCategoryChange(cat: string) {
+    this.activeCategory = cat;
+    this.currentPage = 1;
+    this.loadNews();
+  }
+
+  onSearch(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.searchQuery = value;
+    this.currentPage = 1;
+    this.loadNews();
+  }
+
+  onPageChange(page: any) {
+    if (page === '...') return;
+    const targetPage = Number(page);
+    if (targetPage >= 1 && targetPage <= this.totalPages) {
+      this.currentPage = targetPage;
+      this.loadNews();
+    }
+  }
+
+  mapCategory(cat: string): string {
+    switch (cat) {
+      case 'TIN NHÀ XE': return 'TinTuc';
+      case 'KHUYẾN MÃI': return 'KhuyenMai';
+      case 'CẨM NANG DI CHUYỂN': return 'HuongDan';
+      default: return '';
+    }
+  }
+
+  mapNewsItem(item: any) {
+    return {
+      maTinTuc: item.MaTinTuc,
+      title: item.TieuDe,
+      date: this.formatDate(item.NgayDang),
+      description: item.MoTaNgan || '',
+      image: item.AnhBia || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800',
+      tag: this.getCategoryLabel(item.LoaiTinTuc) || 'MỚI NHẤT',
+      category: this.getCategoryLabel(item.LoaiTinTuc)
+    };
+  }
+
+  getCategoryLabel(type: string): string {
+    switch (type) {
+      case 'TinTuc': return 'TIN NHÀ XE';
+      case 'KhuyenMai': return 'KHUYẾN MÃI';
+      case 'HuongDan': return 'CẨM NANG DI CHUYỂN';
+      case 'ThongBao': return 'THÔNG BÁO';
+      case 'SuKien': return 'SỰ KIỆN';
+      case 'TuyenDung': return 'TUYỂN DỤNG';
+      default: return 'TIN NHÀ XE';
+    }
+  }
+
+  formatDate(dateStr: any): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  generatePagination(current: number, total: number) {
+    const pages: any[] = [];
+    if (total <= 5) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      if (current <= 3) {
+        pages.push(1, 2, 3, 4, '...', total);
+      } else if (current >= total - 2) {
+        pages.push(1, '...', total - 3, total - 2, total - 1, total);
+      } else {
+        pages.push(1, '...', current - 1, current, current + 1, '...', total);
+      }
+    }
+    this.pages = pages;
+  }
 }
+

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql"  
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -57,6 +57,7 @@ model DANH_GIA {
   TrangThaiPhanHoi String     @db.VarChar(30)
   KHACH_HANG       KHACH_HANG @relation(fields: [MaKhachHang], references: [MaKhachHang], onDelete: NoAction, onUpdate: NoAction)
   VE_DIEN_TU       VE_DIEN_TU @relation(fields: [MaVe], references: [MaVe], onDelete: NoAction, onUpdate: NoAction)
+  MEDIA_DANH_GIA   MEDIA_DANH_GIA[] // Thêm trường này
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -218,6 +219,8 @@ model MEDIA_DANH_GIA {
   LoaiMedia       String? @db.VarChar
   DinhDang        String? @db.VarChar
   DungLuong_bytes BigInt?
+  MaDanhGia       String  @db.VarChar(10) // Thêm trường này
+  DANH_GIA        DANH_GIA @relation(fields: [MaDanhGia], references: [MaDanhGia], onDelete: Cascade) // Thêm mối quan hệ
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
