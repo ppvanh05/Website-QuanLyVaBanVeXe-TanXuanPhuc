@@ -28,8 +28,9 @@
                 class="w-full bg-transparent text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none"
               />
             </div>
+            <p *ngIf="phoneNumberError" class="text-sm text-danger font-semibold mt-1">{{ phoneNumberError }}</p>
           </div>
-          <button (click)="continueFromPhone()" class="w-full rounded-xl bg-primary text-on-primary py-3 text-title-md font-bold hover:opacity-95 transition-all">
+          <button (click)="continueFromPhone()" class="w-full rounded-xl bg-secondary text-on-primary py-3 text-title-md font-bold hover:bg-secondary-hover transition-all">
             Tiếp tục
           </button>
 
@@ -41,7 +42,7 @@
         </div>
 
         <div *ngSwitchCase="'otp'" class="space-y-5">
-          <p class="text-body-md text-on-surface-variant text-center">Mã xác thực đã được gửi về số <span class="font-bold text-navy">{{ phoneNumber }}</span>.</p>
+          <p class="text-body-md text-on-surface-variant text-center">Mã xác thực đã được gửi về số <span class="font-bold text-primary">{{ phoneNumber }}</span>.</p>
           
           <div class="relative flex justify-center items-center py-2">
             <input
@@ -69,7 +70,8 @@
             <button type="button" (click)="resendOtp()" class="text-primary font-bold hover:underline">Gửi lại mã</button>
           </div>
           <p *ngIf="showDebugOtp" class="text-body-sm text-on-surface-variant text-center">Mã dùng thử: <span class="font-bold text-navy">{{ generatedOtp }}</span></p>
-          <button (click)="verifyOtp()" class="w-full rounded-xl bg-primary text-on-primary py-3 text-title-md font-bold hover:opacity-95 transition-all">
+          <p *ngIf="otpError" class="text-sm text-danger font-semibold text-center">{{ otpError }}</p>
+          <button (click)="verifyOtp()" class="w-full rounded-xl bg-secondary text-on-primary py-3 text-title-md font-bold hover:bg-secondary-hover transition-all">
             Tiếp tục
           </button>
           <p *ngIf="otpError" class="text-sm text-danger font-semibold text-center">{{ otpError }}</p>
@@ -82,6 +84,7 @@
               <label class="text-label-sm font-bold text-on-surface-variant">Họ tên <span class="text-danger">*</span></label>
               <input type="text" [(ngModel)]="fullName" placeholder="Nhập họ tên"
                 class="w-full rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-primary/10 transition-all" />
+              <p *ngIf="fullNameError" class="text-sm text-danger font-semibold mt-1">{{ fullNameError }}</p>
             </div>
             <div class="space-y-2">
               <label class="text-label-sm font-bold text-on-surface-variant">Số điện thoại <span class="text-danger">*</span></label>
@@ -92,6 +95,7 @@
               <label class="text-label-sm font-bold text-on-surface-variant">Email</label>
               <input type="email" [(ngModel)]="email" placeholder="Nhập email (không bắt buộc)"
                 class="w-full rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-primary/10 transition-all" />
+              <p *ngIf="emailError" class="text-sm text-danger font-semibold mt-1">{{ emailError }}</p>
             </div>
             <div class="space-y-2">
               <label class="text-label-sm font-bold text-on-surface-variant">Mật khẩu <span class="text-danger">*</span></label>
@@ -102,6 +106,7 @@
                   <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
+              <p *ngIf="passwordError" class="text-sm text-danger font-semibold mt-1">{{ passwordError }}</p>
             </div>
             <div class="space-y-2">
               <label class="text-label-sm font-bold text-on-surface-variant">Nhập lại mật khẩu <span class="text-danger">*</span></label>
@@ -112,9 +117,10 @@
                   <span class="material-symbols-outlined">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
+              <p *ngIf="confirmPasswordError" class="text-sm text-danger font-semibold mt-1">{{ confirmPasswordError }}</p>
             </div>
           </div>
-          <button (click)="submitProfile()" class="w-full rounded-xl bg-primary text-on-primary py-3 text-title-md font-bold hover:opacity-95 transition-all">
+          <button (click)="submitProfile()" class="w-full rounded-xl bg-secondary text-on-primary py-3 text-title-md font-bold hover:bg-secondary-hover transition-all">
             Hoàn tất
           </button>
           <p *ngIf="registrationError" class="text-sm text-danger font-semibold text-center mt-2">{{ registrationError }}</p>

@@ -1,10 +1,22 @@
-import { Component, OnDestroy } from '@angular/core';
+﻿import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 import { AuthService } from '../../../core/services/auth.service';
+
+interface Order {
+  maDonHang: string;
+  soLuongVeDaDat: number;
+  tenTuyenXe: string;
+  ngayKhoiHanh: string;
+  gioKhoiHanh: string;
+  tongGiaVe: number;
+  phuongThucThanhToan: string;
+  trangThaiDonHang: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy' | 'Chưa đánh giá' | 'Đã đánh giá';
+  soDienThoai: string;
+}
 
 @Component({
   selector: 'app-profile',
@@ -18,6 +30,7 @@ export class ProfileComponent implements OnDestroy {
   isEditing = false;
   showOtpModal = false;
   showSuccessModal = false;
+  isLogoutActive = false;
   
   // Password Visibility
   showCurrentPwd = false;
@@ -75,7 +88,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '00:00',
       tongGiaVe: 260000,
       phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Thành công',
+      trangThaiDonHang: 'Đã hoàn thành',
       soDienThoai: '0901234567'
     },
     {
@@ -86,7 +99,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '17:30',
       tongGiaVe: 364000,
       phuongThucThanhToan: 'Momo',
-      trangThaiDonHang: 'Thành công',
+      trangThaiDonHang: 'Đã hoàn thành',
       soDienThoai: '0901234567'
     },
     {
@@ -97,7 +110,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '23:05',
       tongGiaVe: 364000,
       phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Thành công',
+      trangThaiDonHang: 'Đã hoàn thành',
       soDienThoai: '0901234567'
     },
     {
@@ -108,7 +121,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '23:05',
       tongGiaVe: 364000,
       phuongThucThanhToan: 'unknown',
-      trangThaiDonHang: 'Giao dịch đang xử lý',
+      trangThaiDonHang: 'Chờ thanh toán',
       soDienThoai: '0901234567'
     },
     {
@@ -119,7 +132,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '23:05',
       tongGiaVe: 364000,
       phuongThucThanhToan: 'unknown',
-      trangThaiDonHang: 'Hết hạn',
+      trangThaiDonHang: 'Đã hủy',
       soDienThoai: '0901234567'
     },
     {
@@ -130,7 +143,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '22:25',
       tongGiaVe: 260000,
       phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Thành công',
+      trangThaiDonHang: 'Đã hoàn thành',
       soDienThoai: '0333555412'
     },
     {
@@ -141,7 +154,7 @@ export class ProfileComponent implements OnDestroy {
       gioKhoiHanh: '18:00',
       tongGiaVe: 800000,
       phuongThucThanhToan: 'VietQR / Napas',
-      trangThaiDonHang: 'Thành công',
+      trangThaiDonHang: 'Đã hoàn thành',
       soDienThoai: '0981939379'
     }
   ];
@@ -187,24 +200,31 @@ export class ProfileComponent implements OnDestroy {
 
       // 4. Check Status matching
       if (status) {
-        if (status === 'unknown') {
-          if (order.trangThaiDonHang !== 'Giao dịch đang xử lý' && order.trangThaiDonHang !== 'Hết hạn') {
-            // Include unknown scenarios matching mock database fields
-            if (order.phuongThucThanhToan !== 'unknown') return false;
-          }
-        } else if (status === 'Hủy') {
-          if (order.trangThaiDonHang !== 'Đã hủy' && order.trangThaiDonHang !== 'Hủy') return false;
-        } else if (status === 'Giao dịch đang xử lý') {
-          if (order.trangThaiDonHang !== 'Giao dịch đang xử lý') return false;
-        } else if (status === 'Thành công') {
-          if (order.trangThaiDonHang !== 'Thành công') return false;
-        } else if (status === 'Hết hạn') {
-          if (order.trangThaiDonHang !== 'Hết hạn') return false;
+        if (status === 'Chờ thanh toán') {
+          if (order.trangThaiDonHang !== 'Chờ thanh toán') return false;
+        } else if (status === 'Chờ khởi hành') {
+          if (order.trangThaiDonHang !== 'Chờ khởi hành') return false;
+        } else if (status === 'Đã hoàn thành') {
+          if (order.trangThaiDonHang !== 'Đã hoàn thành') return false;
+        } else if (status === 'Đã hủy') {
+          if (order.trangThaiDonHang !== 'Đã hủy') return false;
+        } else if (status === 'Chưa đánh giá') {
+          if (order.trangThaiDonHang !== 'Chưa đánh giá') return false;
+        } else if (status === 'Đã đánh giá') {
+          if (order.trangThaiDonHang !== 'Đã đánh giá') return false;
         }
       }
 
       return true;
     });
+  }
+
+  resetHistoryFilter(): void {
+    this.filterMaDonHang = '';
+    this.filterThoiGianDat = '';
+    this.filterTenTuyenXe = '';
+    this.filterTrangThai = '';
+    this.searchHistory();
   }
 
   // Go to ticket detail
@@ -300,4 +320,25 @@ export class ProfileComponent implements OnDestroy {
   goToBooking() {
     this.router.navigate(['/tim-kiem-chuyen']);
   }
+
+  logout() {
+    this.isLogoutActive = true;
+    this.authService.logout();
+    this.router.navigate(['/home']);
+  }
+
+  getStatusClasses(status: string): { [key: string]: boolean } {
+    return {
+      'bg-success-light': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
+      'text-success-text': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
+      'bg-danger-light': status === 'Đã hủy',
+      'text-danger-text': status === 'Đã hủy',
+      'bg-info-light': status === 'Chờ thanh toán',
+      'text-info-text': status === 'Chờ thanh toán',
+      'bg-warning-light': status === 'Chờ khởi hành',
+      'text-warning-text': status === 'Chờ khởi hành',
+    };
+  }
 }
+
+

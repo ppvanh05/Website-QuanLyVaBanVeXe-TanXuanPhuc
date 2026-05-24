@@ -19,7 +19,6 @@ export class RegisterComponent implements OnDestroy {
   phoneNumber = '';
   otpDigits = Array(6).fill('');
   otpDigitsString = '';
-  otpError = '';
   otpCountdown = 180;
   otpTimer: any = null;
   generatedOtp = '';
@@ -36,6 +35,13 @@ export class RegisterComponent implements OnDestroy {
   showConfirmPassword = false;
   registrationError = '';
   registrationSuccess = false;
+
+  phoneNumberError = '';
+  otpError = '';
+  fullNameError = '';
+  emailError = '';
+  passwordError = '';
+  confirmPasswordError = '';
 
   showToast = false;
   toastMessage = '';
@@ -122,18 +128,22 @@ export class RegisterComponent implements OnDestroy {
   }
 
   sendOtp() {
+    this.phoneNumberError = '';
+    this.otpError = '';
+    this.registrationError = '';
+
     const cleaned = this.phoneNumber.trim();
     const phoneRegex = /^(0|\+84)\d{9}$/;
 
     if (!phoneRegex.test(cleaned)) {
-      this.otpError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
+      this.phoneNumberError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
       return;
     }
 
     const users = this.getMockUsers();
     const phoneExists = users.some(u => u.phoneNumber === cleaned);
     if (phoneExists) {
-      this.otpError = 'Số điện thoại này đã được sử dụng để đăng ký tài khoản.';
+      this.phoneNumberError = 'Số điện thoại này đã được sử dụng để đăng ký tài khoản.';
       return;
     }
 
@@ -231,12 +241,15 @@ export class RegisterComponent implements OnDestroy {
   }
 
   verifyOtp() {
-    if (!this.isOtpValid) {
+    this.otpError = '';
+    this.registrationError = '';
+
+    if (!this.otpDigitsString || this.otpDigitsString.length !== 6) {
       this.otpError = 'Vui lòng nhập đủ 6 chữ số mã xác thực.';
       return;
     }
 
-    const code = this.otpDigits.join('');
+    const code = this.otpDigitsString;
     if (code !== this.generatedOtp) {
       this.otpError = 'Mã xác thực không đúng. Vui lòng thử lại.';
       return;
@@ -254,27 +267,30 @@ export class RegisterComponent implements OnDestroy {
   }
 
   submitProfile() {
+    this.fullNameError = '';
+    this.emailError = '';
+    this.passwordError = '';
+    this.confirmPasswordError = '';
     this.registrationError = '';
-    this.registrationSuccess = false;
 
     if (!this.fullName.trim()) {
-      this.registrationError = 'Vui lòng nhập họ tên.';
+      this.fullNameError = 'Vui lòng nhập họ tên.';
       return;
     }
     if (this.email.trim() && !this.email.includes('@')) {
-      this.registrationError = 'Vui lòng nhập email hợp lệ.';
+      this.emailError = 'Vui lòng nhập email hợp lệ.';
       return;
     }
     if (!this.password || this.password.length < 6) {
-      this.registrationError = 'Mật khẩu phải có ít nhất 6 ký tự.';
+      this.passwordError = 'Mật khẩu phải có ít nhất 6 ký tự.';
       return;
     }
     if (!this.confirmPassword) {
-      this.registrationError = 'Vui lòng nhập lại mật khẩu.';
+      this.confirmPasswordError = 'Vui lòng nhập lại mật khẩu.';
       return;
     }
     if (this.password !== this.confirmPassword) {
-      this.registrationError = 'Mật khẩu nhập lại không khớp.';
+      this.confirmPasswordError = 'Mật khẩu nhập lại không khớp.';
       return;
     }
 
