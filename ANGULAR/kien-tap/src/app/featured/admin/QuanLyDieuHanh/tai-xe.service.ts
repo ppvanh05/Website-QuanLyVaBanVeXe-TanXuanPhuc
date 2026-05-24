@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 export interface Driver {
-  id: number;
+  id: string | number;
   name: string;
   dob: string;
   phone: string;
@@ -21,168 +22,39 @@ export interface Driver {
   providedIn: 'root'
 })
 export class TaiXeService {
-  private drivers: Driver[] = [
-    {
-      id: 1,
-      name: 'Hoàng Anh Tú',
-      dob: '23/09/1981',
-      phone: '0357418245',
-      licenseClass: 'C',
-      licenseExpiry: '14/08/2029',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '001201004562',
-      role: 'driver'
-    },
-    {
-      id: 2,
-      name: 'Nguyễn Văn Long',
-      dob: '13/08/1974',
-      phone: '0912345678',
-      licenseClass: 'C',
-      licenseExpiry: '11/04/2028',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '002203009854',
-      role: 'driver'
-    },
-    {
-      id: 3,
-      name: 'Trần Minh Quân',
-      dob: '05/12/1985',
-      phone: '0987654321',
-      licenseClass: 'D',
-      licenseExpiry: '20/09/2030',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '003204005612',
-      role: 'driver'
-    },
-    {
-      id: 4,
-      name: 'Lê Quốc Bảo',
-      dob: '17/03/1979',
-      phone: '0908123456',
-      licenseClass: 'E',
-      licenseExpiry: '15/06/2026',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '004205007834',
-      role: 'driver'
-    },
-    {
-      id: 5,
-      name: 'Phạm Thành Đạt',
-      dob: '28/06/1998',
-      phone: '0376542198',
-      licenseClass: '',
-      licenseExpiry: '',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '005206001298',
-      role: 'assistant'
-    },
-    {
-      id: 6,
-      name: 'Đặng Hải Nam',
-      dob: '02/02/1988',
-      phone: '0945123786',
-      licenseClass: 'D',
-      licenseExpiry: '09/10/2028',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '006207003461',
-      role: 'driver'
-    },
-    {
-      id: 7,
-      name: 'Võ Minh Khang',
-      dob: '11/11/1992',
-      phone: '0934567812',
-      licenseClass: '',
-      licenseExpiry: '',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '007208009845',
-      role: 'assistant'
-    },
-    {
-      id: 8,
-      name: 'Nguyễn Quốc Huy',
-      dob: '21/07/2000',
-      phone: '0398745612',
-      licenseClass: '',
-      licenseExpiry: '',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '008209001254',
-      role: 'assistant'
-    },
-    {
-      id: 9,
-      name: 'Trần Gia Bảo',
-      dob: '09/05/1983',
-      phone: '0369852147',
-      licenseClass: 'E',
-      licenseExpiry: '17/06/2031',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'active',
-      cccdNumber: '009210008546',
-      role: 'driver'
-    },
-    {
-      id: 10,
-      name: 'Phan Quốc Thịnh',
-      dob: '30/01/1976',
-      phone: '0917788990',
-      licenseClass: 'E',
-      licenseExpiry: '25/12/2026',
-      avatar: null,
-      licenseFront: null,
-      licenseBack: null,
-      cccdFront: null,
-      cccdBack: null,
-      status: 'locked',
-      cccdNumber: '010211005698',
-      role: 'driver'
-    }
-  ];
+  private apiUrl = 'http://localhost:3000/dieu-hanh/tai-xe-phu-xe';
+  private drivers: Driver[] = [];
+
+  constructor(private http: HttpClient) {
+    this.refreshDrivers();
+  }
+
+  refreshDrivers() {
+    this.http.get<any[]>(this.apiUrl).subscribe({
+      next: (data) => {
+        this.drivers.length = 0;
+        data.forEach(d => {
+          this.drivers.push({
+            id: d.MaTaiXePhuXe,
+            name: d.HoTen,
+            dob: d.NgaySinh ? new Date(d.NgaySinh).toLocaleDateString('vi-VN') : '',
+            phone: d.SoDienThoai || '',
+            licenseClass: d.LoaiBangLai || '',
+            licenseExpiry: d.ThoiHanBangLai ? new Date(d.ThoiHanBangLai).toLocaleDateString('vi-VN') : '',
+            avatar: d.AnhChanDung || null,
+            licenseFront: d.AnhBangLai || null,
+            licenseBack: null,
+            cccdFront: d.AnhCCCD || null,
+            cccdBack: null,
+            status: d.TrangThaiLamViec || 'active',
+            cccdNumber: d.CCCD || '',
+            role: d.LoaiNhanVien || 'driver',
+          });
+        });
+      },
+      error: (err) => console.error('Lỗi khi tải danh sách tài xế/phụ xe:', err)
+    });
+  }
 
   getDrivers(): Driver[] {
     return this.drivers;
@@ -198,5 +70,52 @@ export class TaiXeService {
     return this.drivers
       .filter(d => d.role === 'assistant')
       .map(d => ({ name: d.name, status: d.status }));
+  }
+
+  addDriver(driver: Omit<Driver, 'id'>): Driver {
+    const tempId = 'TEMP_' + Math.random().toString(36).substr(2, 9);
+    const newDriver: Driver = { ...driver, id: tempId };
+    this.drivers.unshift(newDriver);
+
+    this.http.post<any>(this.apiUrl, driver).subscribe({
+      next: (res) => {
+        newDriver.id = res.MaTaiXePhuXe;
+      },
+      error: (err) => console.error('Lỗi khi thêm nhân viên:', err)
+    });
+
+    return newDriver;
+  }
+
+  updateDriver(id: string | number, updated: Partial<Driver>) {
+    const idx = this.drivers.findIndex(d => d.id === id);
+    if (idx !== -1) {
+      this.drivers[idx] = { ...this.drivers[idx], ...updated };
+    }
+
+    const payload = { ...updated } as any;
+    if (updated.dob && updated.dob.includes('/')) {
+      const parts = updated.dob.split('/');
+      payload.dob = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+    if (updated.licenseExpiry && updated.licenseExpiry.includes('/')) {
+      const parts = updated.licenseExpiry.split('/');
+      payload.licenseExpiry = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+
+    this.http.put(`${this.apiUrl}/${id}`, payload).subscribe({
+      error: (err) => console.error('Lỗi khi cập nhật nhân viên:', err)
+    });
+  }
+
+  deleteDriver(id: string | number) {
+    const idx = this.drivers.findIndex(d => d.id === id);
+    if (idx !== -1) {
+      this.drivers.splice(idx, 1);
+    }
+
+    this.http.delete(`${this.apiUrl}/${id}`).subscribe({
+      error: (err) => console.error('Lỗi khi xóa nhân viên:', err)
+    });
   }
 }

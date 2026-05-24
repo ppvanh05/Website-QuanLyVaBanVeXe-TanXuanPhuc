@@ -1,12 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TuKhoaCamService } from '../../../core/services/tu-khoa-cam.service';
 
 export interface RestrictedKeyword {
   id: string;             // Mã từ khóa
   keyword: string;        // Nội dung từ khóa
-  violationLevel: 'High' | 'Medium' | 'Low'; // Mức độ vi phạm
-  status: 'Active' | 'Inactive';             // Trạng thái áp dụng
+  violationLevel: 'Cao' | 'TrungBinh' | 'Thap'; // Mức độ vi phạm
+  status: 'DangApDung' | 'NgungApDung';             // Trạng thái áp dụng
   updatedAt: string;      // Thời gian cập nhật danh sách
   updatedBy: string;      // Người cập nhật
 }
@@ -19,11 +20,20 @@ export interface RestrictedKeyword {
   styleUrls: ['./quan-ly-tu-khoa-cam.component.css']
 })
 export class QuanLyTuKhoaCamComponent implements OnInit {
+  isBrowser: boolean = false;
+
+  constructor(
+    private readonly tuKhoaCamService: TuKhoaCamService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
   protected readonly Math = Math;
 
   // Bộ lọc & Tìm kiếm
   searchQuery: string = '';
-  filterLevel: 'all' | 'High' | 'Medium' | 'Low' = 'all';
+  filterLevel: 'all' | 'Cao' | 'TrungBinh' | 'Thap' = 'all';
 
   // Tab lọc trạng thái (Tất cả / Đang áp dụng / Ngưng áp dụng)
   activeTab: 'all' | 'active' | 'inactive' = 'all';
@@ -45,8 +55,8 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
   // Form Model
   formModel = {
     keyword: '',
-    violationLevel: 'Medium' as 'High' | 'Medium' | 'Low',
-    status: 'Active' as 'Active' | 'Inactive'
+    violationLevel: 'TrungBinh' as 'Cao' | 'TrungBinh' | 'Thap',
+    status: 'DangApDung' as 'DangApDung' | 'NgungApDung'
   };
 
   // Thống kê (KPIs) - luôn tính từ toàn bộ keywords, không phụ thuộc tab
@@ -66,30 +76,58 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
     message: ''
   };
 
-  ngOnInit() {
-    this.keywords = this.generateMockKeywords();
-    this.calculateStats();
-    this.applyFilters();
+  mapToFrontend(tk: any): RestrictedKeyword {
+    let level: 'Cao' | 'TrungBinh' | 'Thap' = 'TrungBinh';
+    if (tk.LoaiViPham === 'Cao' || tk.LoaiViPham === 'High') level = 'Cao';
+    else if (tk.LoaiViPham === 'TrungBinh' || tk.LoaiViPham === 'Medium') level = 'TrungBinh';
+    else if (tk.LoaiViPham === 'Thap' || tk.LoaiViPham === 'Low') level = 'Thap';
+
+    return {
+      id: tk.MaTuKhoa,
+      keyword: tk.NoiDungTuKhoa,
+      violationLevel: level,
+      status: (tk.TrangThai === 'DangApDung' || tk.TrangThai === 'Active') ? 'DangApDung' : 'NgungApDung',
+      updatedAt: tk.ThoiGianCapNhat ? this.formatDateTime(new Date(tk.ThoiGianCapNhat)) : '',
+      updatedBy: tk.MaQuanTriVien || 'Hệ thống'
+    };
   }
 
-  generateMockKeywords(): RestrictedKeyword[] {
-    return [
-      { id: 'TKC001', keyword: 'lừa đảo', violationLevel: 'High', status: 'Active', updatedAt: '2026-05-20 14:30', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC002', keyword: 'ăn quịt', violationLevel: 'High', status: 'Active', updatedAt: '2026-05-19 09:15', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC003', keyword: 'mất dạy', violationLevel: 'High', status: 'Active', updatedAt: '2026-05-19 11:20', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC004', keyword: 'chửi thề', violationLevel: 'High', status: 'Active', updatedAt: '2026-05-18 16:45', updatedBy: 'Nguyễn Thị Mod' },
-      { id: 'TKC005', keyword: 'đm', violationLevel: 'High', status: 'Active', updatedAt: '2026-05-18 10:10', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC006', keyword: 'chửi bậy', violationLevel: 'High', status: 'Active', updatedAt: '2026-05-17 15:30', updatedBy: 'Nguyễn Thị Mod' },
-      { id: 'TKC007', keyword: 'quảng cáo', violationLevel: 'Medium', status: 'Active', updatedAt: '2026-05-17 08:22', updatedBy: 'Nguyễn Thị Mod' },
-      { id: 'TKC008', keyword: 'http://', violationLevel: 'Medium', status: 'Active', updatedAt: '2026-05-16 11:45', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC009', keyword: 'https://', violationLevel: 'Medium', status: 'Active', updatedAt: '2026-05-15 14:12', updatedBy: 'Nguyễn Thị Mod' },
-      { id: 'TKC010', keyword: 'www.', violationLevel: 'Medium', status: 'Active', updatedAt: '2026-05-14 09:05', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC011', keyword: 'mua bán', violationLevel: 'Low', status: 'Active', updatedAt: '2026-05-13 16:50', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC012', keyword: 'giá rẻ nhất', violationLevel: 'Low', status: 'Active', updatedAt: '2026-05-13 16:50', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC013', keyword: 'liên hệ zalo', violationLevel: 'Medium', status: 'Inactive', updatedAt: '2026-05-12 10:15', updatedBy: 'Nguyễn Thị Mod' },
-      { id: 'TKC014', keyword: 'đánh cắp', violationLevel: 'High', status: 'Inactive', updatedAt: '2026-05-11 13:40', updatedBy: 'Lê Văn Admin' },
-      { id: 'TKC015', keyword: 'khuyến mãi sốc', violationLevel: 'Low', status: 'Active', updatedAt: '2026-05-10 11:30', updatedBy: 'Nguyễn Thị Mod' }
-    ];
+  mapToBackend(tk: any): any {
+    return {
+      MaTuKhoa: tk.id,
+      NoiDungTuKhoa: tk.keyword,
+      LoaiViPham: tk.violationLevel,
+      TrangThai: tk.status,
+      MaQuanTriVien: null
+    };
+  }
+
+  formatDateTime(date: Date): string {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+  }
+
+  loadKeywords() {
+    this.tuKhoaCamService.getAll().subscribe({
+      next: (data) => {
+        this.keywords = data.map(tk => this.mapToFrontend(tk));
+        this.calculateStats();
+        this.applyFilters();
+      },
+      error: (err) => {
+        this.showToast('error', 'Lỗi', 'Không thể tải danh sách từ khóa cấm từ backend!');
+      }
+    });
+  }
+
+  ngOnInit() {
+    if (this.isBrowser) {
+      this.loadKeywords();
+    }
   }
 
   // Đặt tab lọc trạng thái
@@ -102,10 +140,10 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
   calculateStats() {
     this.stats = {
       total: this.keywords.length,
-      active: this.keywords.filter(k => k.status === 'Active').length,
-      high: this.keywords.filter(k => k.violationLevel === 'High').length,
-      medium: this.keywords.filter(k => k.violationLevel === 'Medium').length,
-      low: this.keywords.filter(k => k.violationLevel === 'Low').length
+      active: this.keywords.filter(k => k.status === 'DangApDung').length,
+      high: this.keywords.filter(k => k.violationLevel === 'Cao').length,
+      medium: this.keywords.filter(k => k.violationLevel === 'TrungBinh').length,
+      low: this.keywords.filter(k => k.violationLevel === 'Thap').length
     };
   }
 
@@ -115,9 +153,9 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
 
     // 1. Lọc theo tab trạng thái
     if (this.activeTab === 'active') {
-      result = result.filter(k => k.status === 'Active');
+      result = result.filter(k => k.status === 'DangApDung');
     } else if (this.activeTab === 'inactive') {
-      result = result.filter(k => k.status === 'Inactive');
+      result = result.filter(k => k.status === 'NgungApDung');
     }
 
     // 2. Tìm kiếm theo từ khóa hoặc mã từ khóa
@@ -179,8 +217,8 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
     this.selectedKeyword = null;
     this.formModel = {
       keyword: '',
-      violationLevel: 'Medium',
-      status: 'Active'
+      violationLevel: 'TrungBinh',
+      status: 'DangApDung'
     };
     this.showModal = true;
   }
@@ -204,10 +242,10 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
 
   // Chuyển đổi trạng thái trong modal (nút Khóa / Kích hoạt)
   toggleStatusInModal() {
-    if (this.formModel.status === 'Active') {
-      this.formModel.status = 'Inactive';
+    if (this.formModel.status === 'DangApDung') {
+      this.formModel.status = 'NgungApDung';
     } else {
-      this.formModel.status = 'Active';
+      this.formModel.status = 'DangApDung';
     }
   }
 
@@ -233,41 +271,49 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
 
     if (this.isEditing && this.selectedKeyword) {
       // Cập nhật từ khóa
-      const index = this.keywords.findIndex(k => k.id === this.selectedKeyword!.id);
-      if (index !== -1) {
-        const oldKeywordName = this.keywords[index].keyword;
-        this.keywords[index] = {
-          ...this.keywords[index],
-          keyword: keywordText,
-          violationLevel: this.formModel.violationLevel,
-          status: this.formModel.status,
-          updatedAt: this.getCurrentDateTimeString(),
-          updatedBy: 'Lê Văn Admin'
-        };
-        this.showToast('success', 'Cập nhật thành công', `Đã sửa từ khóa "${oldKeywordName}" thành "${keywordText}"`);
-      }
-    } else {
-      // Thêm mới từ khóa
-      const maxIdNum = this.keywords.length > 0
-        ? Math.max(...this.keywords.map(k => parseInt(k.id.replace('TKC', ''), 10)))
-        : 0;
-      const newId = `TKC${String(maxIdNum + 1).padStart(3, '0')}`;
-
-      const newKeyword: RestrictedKeyword = {
-        id: newId,
+      const backendData = this.mapToBackend({
+        id: this.selectedKeyword.id,
         keyword: keywordText,
         violationLevel: this.formModel.violationLevel,
-        status: this.formModel.status,
-        updatedAt: this.getCurrentDateTimeString(),
-        updatedBy: 'Lê Văn Admin'
-      };
+        status: this.formModel.status
+      });
 
-      this.keywords.unshift(newKeyword);
-      this.showToast('success', 'Thêm thành công', `Đã thêm từ khóa mới "${keywordText}" vào danh sách.`);
+      this.tuKhoaCamService.update(this.selectedKeyword.id, backendData).subscribe({
+        next: (res) => {
+          const index = this.keywords.findIndex(k => k.id === this.selectedKeyword!.id);
+          if (index !== -1) {
+            this.keywords[index] = this.mapToFrontend(res);
+          }
+          this.showToast('success', 'Cập nhật thành công', `Đã sửa từ khóa thành "${keywordText}"`);
+          this.applyFilters();
+          this.closeModal();
+        },
+        error: (err) => {
+          this.showToast('error', 'Lỗi cập nhật', err.error?.message || 'Không thể cập nhật từ khóa!');
+        }
+      });
+    } else {
+      // Thêm mới từ khóa
+      const backendData = this.mapToBackend({
+        id: '',
+        keyword: keywordText,
+        violationLevel: this.formModel.violationLevel,
+        status: this.formModel.status
+      });
+
+      this.tuKhoaCamService.create(backendData).subscribe({
+        next: (res) => {
+          const newKeyword = this.mapToFrontend(res);
+          this.keywords.unshift(newKeyword);
+          this.showToast('success', 'Thêm thành công', `Đã thêm từ khóa mới "${keywordText}" vào danh sách.`);
+          this.applyFilters();
+          this.closeModal();
+        },
+        error: (err) => {
+          this.showToast('error', 'Lỗi thêm mới', err.error?.message || 'Không thể thêm từ khóa mới!');
+        }
+      });
     }
-
-    this.applyFilters();
-    this.closeModal();
   }
 
   // Tiện ích lấy thời gian hiện tại định dạng YYYY-MM-DD HH:MM

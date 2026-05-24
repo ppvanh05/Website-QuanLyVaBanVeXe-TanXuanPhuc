@@ -7,6 +7,7 @@ import { PhuongTienService } from '../phuong-tien.service';
 
 import { CustomSelectComponent } from '../custom-select.component';
 import { DiemDonTraService } from '../diem-don-tra.service';
+import { HttpClient } from '@angular/common/http';
 
 export interface SeatGroup {
   name: string;
@@ -16,7 +17,7 @@ export interface SeatGroup {
 }
 
 interface Schedule {
-  id: number;
+  id: string | number;
   routeName: string;
   vehiclePlate: string;
   vehicleName: string;
@@ -162,15 +163,39 @@ export class QuanLyLichTrinhComponent implements OnInit {
     return pt ? pt.address : '';
   }
 
-  routesList: { name: string, status: 'active' | 'locked' }[] = [];
+  get routesList(): { name: string, status: 'active' | 'locked' }[] {
+    return this.tuyenXeService.getRoutes().map(r => ({ name: r.name, status: r.status }));
+  }
 
-  routeDetailsMap: { [key: string]: { time: string, distance: string } } = {};
+  get routeDetailsMap(): { [key: string]: { time: string, distance: string } } {
+    const map: { [key: string]: { time: string, distance: string } } = {};
+    this.tuyenXeService.getRoutes().forEach(r => {
+      map[r.name] = {
+        time: `${r.estimatedHours}h ${r.estimatedMinutes}p`,
+        distance: r.distance.toString()
+      };
+    });
+    return map;
+  }
 
-  vehiclesList: { name: string, plate: string, seats: number, status: 'active' | 'locked', floors?: number, rows?: number }[] = [];
+  get vehiclesList(): { name: string, plate: string, seats: number, status: 'active' | 'locked', floors?: number, rows?: number }[] {
+    return this.phuongTienService.getVehicles().map(v => ({
+      name: v.name,
+      plate: v.licensePlate,
+      seats: v.seats,
+      status: v.status,
+      floors: v.floors,
+      rows: v.rows
+    }));
+  }
 
-  driversList: { name: string, status: 'active' | 'locked' }[] = [];
+  get driversList(): { name: string, status: 'active' | 'locked' }[] {
+    return this.taiXeService.getDriversList();
+  }
 
-  assistantsList: { name: string, status: 'active' | 'locked' }[] = [];
+  get assistantsList(): { name: string, status: 'active' | 'locked' }[] {
+    return this.taiXeService.getAssistantsList();
+  }
 
   // Seat Groups State Variables
   activeSeatGroupIndex: number | null = null;
@@ -399,32 +424,57 @@ export class QuanLyLichTrinhComponent implements OnInit {
     private tuyenXeService: TuyenXeService,
     private taiXeService: TaiXeService,
     private phuongTienService: PhuongTienService,
-    private diemDonTraService: DiemDonTraService
+    private diemDonTraService: DiemDonTraService,
+    private http: HttpClient
   ) { }
 
   ngOnInit() {
-    this.loadRoutes();
-    this.vehiclesList = this.phuongTienService.getVehicles().map(v => ({
-      name: v.name,
-      plate: v.licensePlate,
-      seats: v.seats,
-      status: v.status,
-      floors: v.floors,
-      rows: v.rows
-    }));
-    this.driversList = this.taiXeService.getDriversList();
-    this.assistantsList = this.taiXeService.getAssistantsList();
-    this.filterSchedules();
+    this.refreshSchedules();
   }
 
-  loadRoutes() {
-    const activeRoutes = this.tuyenXeService.getRoutes();
-    this.routesList = activeRoutes.map(r => ({ name: r.name, status: r.status }));
-    activeRoutes.forEach(r => {
-      this.routeDetailsMap[r.name] = {
-        time: `${r.estimatedHours}h ${r.estimatedMinutes}p`,
-        distance: r.distance.toString()
-      };
+  refreshSchedules() {
+    this.http.get<any[]>('http://localhost:3000/dieu-hanh/lich-trinh').subscribe({
+      next: (data) => {
+        this.schedules = data.map(s => {
+          const depDate = s.NgayKhoiHanh ? new Date(s.NgayKhoiHanh) : new Date();
+          const depTime = s.GioKhoiHanh ? new Date(s.GioKhoiHanh) : new Date();
+          const arrTime = s.GioDenDuKien ? new Date(s.GioDenDuKien) : new Date();
+          const durationHours = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getHours() : 0;
+          const durationMins = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getMinutes() : 0;
+
+          return {
+            id: s.MaLichTrinh,
+            routeName: s.TUYEN_XE?.TenTuyenXe || '',
+            vehiclePlate: s.PHUONG_TIEN?.BienSoXe || '',
+            vehicleName: s.PHUONG_TIEN?.TenXe || '',
+            vehicleSeats: s.PHUONG_TIEN?.SoGhe || 22,
+            driverName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Tài xế chính')?.TAI_XE_PHU_XE?.HoTen || '',
+            assistantName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Phụ xe')?.TAI_XE_PHU_XE?.HoTen || '',
+            departureDate: this.formatDate(depDate),
+            departureTime: `${depTime.getHours().toString().padStart(2, '0')}:${depTime.getMinutes().toString().padStart(2, '0')}`,
+            status: s.TrangThai === 'active' || s.TrangThai === 'scheduled' ? 'active' : 'locked',
+            createdAt: depDate,
+            autoRun: false,
+            allowSeatSelection: true,
+            totalTime: `${durationHours}h ${durationMins}p`,
+            arrivalTime: `${arrTime.getHours().toString().padStart(2, '0')}:${arrTime.getMinutes().toString().padStart(2, '0')}`,
+            frequency: 'Hàng ngày',
+            openValue: 10,
+            openUnit: 'day',
+            closeValue: 30,
+            closeUnit: 'minute',
+            holdValue: 15,
+            holdUnit: 'minute',
+            pickupType: 'Không trung chuyển đón',
+            pickupPoint: '',
+            dropoffType: 'Không trung chuyển trả',
+            dropoffPoint: '',
+            basePrice: Number(s.GiaVeCoBan || 200000)
+          };
+        });
+        this.filterSchedules();
+      },
+      error: (err) => console.error('Lỗi khi tải lịch trình:', err)
     });
   }
 
@@ -926,13 +976,25 @@ export class QuanLyLichTrinhComponent implements OnInit {
       if (index !== -1) {
         this.schedules[index] = { ...this.currentSchedule as Schedule };
       }
+      this.http.put(`http://localhost:3000/dieu-hanh/lich-trinh/${this.currentSchedule.id}`, this.currentSchedule).subscribe({
+        next: () => this.refreshSchedules(),
+        error: (err) => console.error('Lỗi khi cập nhật lịch trình:', err)
+      });
     } else {
-      const newId = Math.max(...this.schedules.map(s => s.id), 0) + 1;
+      const tempId = 'TEMP_' + Math.random().toString(36).substr(2, 9);
       const newSchedule = {
         ...this.currentSchedule,
-        id: newId
+        id: tempId
       } as Schedule;
       this.schedules.unshift(newSchedule);
+      
+      this.http.post<any>('http://localhost:3000/dieu-hanh/lich-trinh', this.currentSchedule).subscribe({
+        next: (res) => {
+          newSchedule.id = res.MaLichTrinh;
+          this.refreshSchedules();
+        },
+        error: (err) => console.error('Lỗi khi thêm lịch trình:', err)
+      });
     }
     this.filterSchedules();
     this.closeModal();
@@ -950,7 +1012,12 @@ export class QuanLyLichTrinhComponent implements OnInit {
     if (confirm('Bạn có chắc chắn muốn xóa lịch trình này không?')) {
       const index = this.schedules.findIndex(s => s.id === this.currentSchedule.id);
       if (index !== -1) {
+        const id = this.schedules[index].id;
         this.schedules.splice(index, 1);
+        this.http.delete(`http://localhost:3000/dieu-hanh/lich-trinh/${id}`).subscribe({
+          next: () => this.refreshSchedules(),
+          error: (err) => console.error('Lỗi khi xóa lịch trình:', err)
+        });
         this.filterSchedules();
         this.closeModal();
       }

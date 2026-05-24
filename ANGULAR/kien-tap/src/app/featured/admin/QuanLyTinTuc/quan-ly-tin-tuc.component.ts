@@ -1,6 +1,9 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ElementRef, ViewChild, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TinTucService } from '../../../core/services/tin-tuc.service';
+import { NhatKyService } from '../../../core/services/nhat-ky.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface TinTuc {
   maTinTuc: string;
@@ -37,6 +40,22 @@ export interface NhatKyTinTuc {
 export class QuanLyTinTucComponent implements OnInit {
   @ViewChild('editor') editorElement!: ElementRef;
   @ViewChild('imageInput') imageInputElement!: ElementRef;
+
+  isBrowser: boolean = false;
+
+  constructor(
+    private readonly tinTucService: TinTucService,
+    private readonly nhatKyService: NhatKyService,
+    private sanitizer: DomSanitizer,
+    private readonly cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
+  getSafeHtml(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html || '');
+  }
 
   // Expose Math for HTML templates
   protected readonly Math = Math;
@@ -164,104 +183,97 @@ export class QuanLyTinTucComponent implements OnInit {
   formErrors: { [key: string]: string } = {};
 
   ngOnInit() {
-    this.loadMockNews();
-    this.loadMockLogs();
-    this.filterNews();
+    if (this.isBrowser) {
+      this.loadNews();
+      this.loadLogs();
+    }
   }
 
-  loadMockNews() {
-    this.newsList = [
-      {
-        maTinTuc: 'TT001',
-        tieuDe: 'Nhà xe Tân Xuân Phúc mở thêm tuyến mới Hà Nội - SaPa giảm giá 20%',
-        anhBia: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800',
-        loaiTinTuc: 'KhuyenMai',
-        moTaNgan: 'TXP BUS chính thức khai trương chặng đường mới Hà Nội - SaPa với đội ngũ xe Limousine giường nằm VIP thế hệ mới nhất, phục vụ đầy đủ nước uống, wifi tốc độ cao miễn phí và chăn ấm.',
-        noiDungChiTiet: '<p>TXP BUS hân hạnh thông báo đến quý hành khách về việc chính thức khai trương và đưa vào vận hành <strong>tuyến xe chất lượng cao Hà Nội - SaPa</strong> từ ngày 01/06/2026.</p><p>Nhân dịp khai trương chặng mới, nhà xe triển khai chương trình tri ân đặc biệt cực sốc: <strong>Giảm ngay 20% giá vé khứ hồi</strong> cho toàn bộ hành khách đặt trực tuyến thông qua ứng dụng hoặc website chính thức của nhà xe từ nay cho đến hết ngày 15/06/2026.</p><p>Đội ngũ xe vận hành trên tuyến là xe giường nằm cao cấp 34 phòng VIP riêng tư, trang bị đầy đủ cổng sạc USB tiện lợi, màn hình giải trí cá nhân chất lượng cao và wifi băng thông lớn hoạt động liên tục.</p>',
-        ngayDang: '2026-05-15',
-        trangThai: 'DaDang',
-        nguoiDang: 'Nguyễn Hoài Nam (Admin)',
-        ngayTao: '2026-05-12',
-        ngayCapNhat: '2026-05-15'
+  loadNews() {
+    this.tinTucService.getAll().subscribe({
+      next: (data) => {
+        this.newsList = data.map(n => this.mapNewsToFrontend(n));
+        this.filterNews();
+        this.cdr.detectChanges();
       },
-      {
-        maTinTuc: 'TT002',
-        tieuDe: 'Thông báo lịch vận hành và tăng cường chuyến phục vụ Tết Đoan Ngọ 2026',
-        anhBia: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800',
-        loaiTinTuc: 'ThongBao',
-        moTaNgan: 'Nhằm đáp ứng tối đa nhu cầu đi lại thăm quê, du lịch của quý khách hàng trong kỳ nghỉ lễ Tết Đoan Ngọ (Mùng 5 tháng 5 âm lịch), TXP BUS xin gửi tới quý khách hàng lịch vận hành chi tiết.',
-        noiDungChiTiet: '<p>Để đảm bảo hành trình của quý khách diễn ra suôn sẻ, an toàn và đúng kế hoạch, Ban điều phối nhà xe Tân Xuân Phúc xin trân trọng thông báo:</p><ol><li><strong>Tăng tần suất chuyến:</strong> Các chặng Hải Phòng - Hà Nội và Hà Nội - Quảng Ninh tăng thêm 15 chuyến/ngày.</li><li><strong>Giờ xuất phát:</strong> Chuyến xe sớm nhất khởi hành lúc 04h30 sáng, chuyến muộn nhất lúc 22h30 đêm tại các bến trung chuyển chính.</li><li><strong>Cam kết giá vé:</strong> Cam kết duy trì bình ổn giá vé niêm yết theo quy định của sở giao thông vận tải, tuyệt đối không tự ý tăng giá vé, không phụ thu bất hợp pháp ngày lễ.</li></ol>',
-        ngayDang: '2026-05-17',
-        trangThai: 'DaDang',
-        nguoiDang: 'Nguyễn Hoài Nam (Admin)',
-        ngayTao: '2026-05-16',
-        ngayCapNhat: '2026-05-17'
-      },
-      {
-        maTinTuc: 'TT003',
-        tieuDe: 'Hướng dẫn cài đặt ứng dụng TXP BUS và nhận mã ưu đãi đón hè rực rỡ',
-        anhBia: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800',
-        loaiTinTuc: 'HuongDan',
-        moTaNgan: 'Chỉ với 3 bước cài đặt app đơn giản trên App Store hoặc Google Play, khách hàng sẽ nhận ngay voucher trị giá 50.000đ trừ trực tiếp vào lượt đặt vé đầu tiên trên toàn hệ thống.',
-        noiDungChiTiet: '<p>TXP BUS chính thức giới thiệu ứng dụng đặt vé xe khách tiện lợi thông minh trên hai hệ điều hành phổ biến nhất hiện nay.</p><p><strong>Hướng dẫn các bước tải app nhận thưởng:</strong></p><ul><li>Bước 1: Tìm kiếm từ khóa "TXP BUS" trên cửa hàng ứng dụng và tải app về điện thoại.</li><li>Bước 2: Đăng ký tài khoản khách hàng mới bằng số điện thoại chính chủ và xác thực mã OTP.</li><li>Bước 3: Nhập mã khuyến mãi <strong>"HELLOHE"</strong> tại bước thanh toán để được giảm trừ trực tiếp 50.000đ vào tổng giá trị đơn hàng.</li></ul>',
-        ngayDang: '',
-        trangThai: 'BanNhap',
-        nguoiDang: 'Lê Minh Anh (Content Editor)',
-        ngayTao: '2026-05-14',
-        ngayCapNhat: '2026-05-14'
-      },
-      {
-        maTinTuc: 'TT004',
-        tieuDe: 'Khuyến cáo hành khách về việc mang theo hành lý quá khổ và vật nuôi trên xe',
-        anhBia: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800',
-        loaiTinTuc: 'ThongBao',
-        moTaNgan: 'Để đảm bảo an toàn phòng chống cháy nổ và tạo không gian di chuyển thoải mái, thơm tho sạch sẽ cho toàn bộ hành khách, TXP ban hành quy định hành lý kèm theo.',
-        noiDungChiTiet: '<p>Ban quản lý chất lượng dịch vụ vận tải Tân Xuân Phúc trân trọng nhắc nhở quý khách hàng một số quy định quan trọng về hành lý ký gửi và xách tay mang theo chuyến đi:</p><ul><li><strong>Vật nuôi, thú cưng:</strong> Chỉ cho phép vận chuyển nếu vật nuôi được nhốt trong lồng vận chuyển chuyên dụng chắc chắn và để dưới hầm hàng của xe khách. Tuyệt đối không mang thú cưng lên khoang hành khách chung.</li><li><strong>Chất cấm:</strong> Nghiêm cấm vận chuyển hàng quốc cấm, vũ khí, chất dễ cháy nổ (như bình gas mini, xăng dầu, pháo hoa) hoặc các loại thực phẩm có mùi nặng như sầu riêng, hải sản tươi sống mà không được đóng thùng xốp dán kín.</li></ul>',
-        ngayDang: '2026-04-20',
-        trangThai: 'NgungHienThi',
-        nguoiDang: 'Nguyễn Hoài Nam (Admin)',
-        ngayTao: '2026-04-18',
-        ngayCapNhat: '2026-04-30'
-      },
-      {
-        maTinTuc: 'TT005',
-        tieuDe: 'Nhà xe bàn giao tài sản thất lạc trị giá hơn 30 triệu đồng cho hành khách',
-        anhBia: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
-        loaiTinTuc: 'TinTuc',
-        moTaNgan: 'Sự việc diễn ra trên chuyến xe Hải Phòng đi Hà Nội mang biển số 15B-098.22, tài xế Nguyễn Hữu Thành đã nhặt được ví chứa tiền mặt và trang sức của khách hàng để quên.',
-        noiDungChiTiet: '<p>Tân Xuân Phúc luôn đặt sự uy tín, trung thực và tận tâm phục vụ khách hàng lên vị trí hàng đầu của hoạt động kinh doanh.</p><p>Ngày 10/05/2026 vừa qua, sau khi trả khách tại bến xe Gia Lâm, tài xế Nguyễn Hữu Thành cùng phụ xe trong quá trình dọn dẹp vệ sinh khoang hành khách giường nằm đã phát hiện một chiếc ví cầm tay màu đen để quên tại vị trí giường số A12.</p><p>Ngay sau đó, tổ lái đã báo cáo nhanh về phòng điều hành tổng đài. Bằng các biện pháp nghiệp vụ rà soát vé xe, nhà xe đã nhanh chóng liên hệ với vị khách may mắn là chị Trần Thị Hoa và tiến hành thủ tục xác minh, trao trả nguyên vẹn toàn bộ tài sản tại văn phòng số 25 Nguyễn Văn Linh.</p>',
-        ngayDang: '2026-05-11',
-        trangThai: 'DaDang',
-        nguoiDang: 'Nguyễn Hoài Nam (Admin)',
-        ngayTao: '2026-05-10',
-        ngayCapNhat: '2026-05-11'
-      },
-      {
-        maTinTuc: 'TT006',
-        tieuDe: 'Chương trình tuyển dụng tài xế lái xe giường nằm cabin chất lượng cao hè 2026',
-        anhBia: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800',
-        loaiTinTuc: 'TuyenDung',
-        moTaNgan: 'TXP BUS thông báo tuyển dụng 15 tài xế lái xe cabin hạng E VIP, làm việc tại khu vực miền Bắc, lương cứng 18 triệu kèm trợ cấp ăn uống nghỉ đêm đầy đủ.',
-        noiDungChiTiet: '<p>Để mở rộng quy mô phục vụ khách du lịch đón hè 2026, TXP BUS thông báo tuyển dụng rộng rãi:</p><ul><li><strong>Số lượng:</strong> 15 tài xế chính thức.</li><li><strong>Yêu cầu bằng cấp:</strong> Giấy phép lái xe hạng E, tối thiểu 3 năm kinh nghiệm lái xe giường nằm trên 30 chỗ hoặc xe cabin VIP.</li><li><strong>Quyền lợi:</strong> Đóng bảo hiểm đầy đủ, thưởng an toàn theo tháng, cấp phát đồng phục cao cấp miễn phí.</li></ul>',
-        ngayDang: '',
-        trangThai: 'HenGio',
-        nguoiDang: 'Nguyễn Hoài Nam (Admin)',
-        ngayTao: '2026-05-17',
-        ngayCapNhat: '2026-05-17',
-        henGioDang: true,
-        ngayGioHenGio: '2026-05-25 09:00'
+      error: (err) => {
+        console.error('Error loading news from backend:', err);
+        this.newsList = [];
+        this.filterNews();
+        this.cdr.detectChanges();
       }
-    ];
+    });
   }
 
-  loadMockLogs() {
-    this.activityLogs = [
-      { maNhatKy: 'NK01', loaiThaoTac: 'Đăng tin tức', thoiGian: '2026-05-17 10:15:22', nguoiThaoTac: 'Nguyễn Hoài Nam (Admin)', diaChiIP: '192.168.1.12', noiDungChiTiet: 'Phát hành chính thức bài viết: "Thông báo lịch vận hành và tăng cường chuyến phục vụ Tết Đoan Ngọ 2026" (TT002)' },
-      { maNhatKy: 'NK02', loaiThaoTac: 'Cập nhật trạng thái', thoiGian: '2026-04-30 15:45:00', nguoiThaoTac: 'Nguyễn Hoài Nam (Admin)', diaChiIP: '192.168.1.12', noiDungChiTiet: 'Thay đổi trạng thái bài viết TT004 từ "Đang hiển thị" thành "Ngừng hiển thị" theo yêu cầu của phòng nghiệp vụ.' },
-      { maNhatKy: 'NK03', loaiThaoTac: 'Tạo bản nháp', thoiGian: '2026-05-14 09:20:10', nguoiThaoTac: 'Lê Minh Anh (Content Editor)', diaChiIP: '192.168.1.25', noiDungChiTiet: 'Khởi tạo bài viết nháp: "Hướng dẫn cài đặt ứng dụng TXP BUS và nhận mã ưu đãi đón hè rực rỡ" (TT003)' },
-      { maNhatKy: 'NK04', loaiThaoTac: 'Đăng tin tức', thoiGian: '2026-05-15 08:00:00', nguoiThaoTac: 'Nguyễn Hoài Nam (Admin)', diaChiIP: '115.79.44.18', noiDungChiTiet: 'Xác duyệt và phát hành bài viết giới thiệu chặng xe mới đi SaPa (TT001).' },
-      { maNhatKy: 'NK05', loaiThaoTac: 'Hẹn giờ đăng bài', thoiGian: '2026-05-17 14:02:11', nguoiThaoTac: 'Nguyễn Hoài Nam (Admin)', diaChiIP: '192.168.1.12', noiDungChiTiet: 'Thiết lập hẹn giờ xuất bản tự động bài viết TT006 vào lúc 2026-05-25 09:00' }
-    ];
+  loadLogs() {
+    this.nhatKyService.getAll().subscribe({
+      next: (data) => {
+        this.activityLogs = data.map(l => this.mapLogToFrontend(l));
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading logs:', err);
+        this.activityLogs = [];
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  formatDateTime(date: Date): string {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const sec = String(date.getSeconds()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
+  }
+
+  mapNewsToFrontend(n: any): TinTuc {
+    const ngayDang = n.NgayDang ? n.NgayDang.split('T')[0] : '';
+    const ngayGioHenGioStr = n.NgayGioHenGio ? this.formatDateTime(new Date(n.NgayGioHenGio)) : '';
+    return {
+      maTinTuc: n.MaTinTuc,
+      tieuDe: n.TieuDe,
+      anhBia: n.AnhBia || '',
+      loaiTinTuc: n.LoaiTinTuc || 'TinTuc',
+      moTaNgan: n.MoTaNgan || '',
+      noiDungChiTiet: n.NoiDungChiTiet || '',
+      trangThai: n.TrangThai || 'BanNhap',
+      nguoiDang: 'Nguyễn Hoài Nam (Admin)',
+      ngayDang: ngayDang,
+      ngayTao: ngayDang || this.formatCurrentDate(),
+      ngayCapNhat: ngayDang || this.formatCurrentDate(),
+      henGioDang: n.TrangThai === 'HenGio',
+      ngayGioHenGio: ngayGioHenGioStr
+    };
+  }
+
+  mapNewsToBackend(n: TinTuc): any {
+    return {
+      MaTinTuc: n.maTinTuc,
+      TieuDe: n.tieuDe,
+      AnhBia: n.anhBia || null,
+      LoaiTinTuc: n.loaiTinTuc,
+      MoTaNgan: n.moTaNgan || null,
+      NoiDungChiTiet: n.noiDungChiTiet || null,
+      NgayDang: n.trangThai === 'DaDang' ? new Date() : (n.ngayDang ? new Date(n.ngayDang) : null),
+      TrangThai: n.trangThai,
+      MaQuanTriVien: 'NVDP001',
+      NgayGioHenGio: n.trangThai === 'HenGio' && n.ngayGioHenGio ? new Date(n.ngayGioHenGio.replace(' ', 'T') + ':00') : null
+    };
+  }
+
+  mapLogToFrontend(l: any): NhatKyTinTuc {
+    const tenNhanVien = l.NHAN_VIEN?.TenHienThi || l.NHAN_VIEN?.Ten || 'Hệ thống';
+    return {
+      maNhatKy: l.MaNhatKy,
+      loaiThaoTac: l.LoaiThaoTac || 'Khác',
+      thoiGian: l.ThoiGian ? this.formatDateTime(new Date(l.ThoiGian)) : '',
+      nguoiThaoTac: tenNhanVien,
+      diaChiIP: l.DiaChiIP || '127.0.0.1',
+      noiDungChiTiet: l.NoiDungChiTiet || ''
+    };
   }
 
   // Set active filters tab
@@ -269,6 +281,10 @@ export class QuanLyTinTucComponent implements OnInit {
     this.activeTab = tab;
     this.currentPage = 1;
     this.filterNews();
+  }
+
+  getCountByStatus(status: string): number {
+    return this.newsList.filter(n => n.trangThai === status).length;
   }
 
   // Advanced Filtering
@@ -482,8 +498,20 @@ export class QuanLyTinTucComponent implements OnInit {
     this.formErrors = {};
     
     // Auto-generate code
-    const nextNum = Math.max(...this.newsList.map(n => parseInt(n.maTinTuc.replace('TT', ''), 10)), 0) + 1;
-    const newCode = 'TT' + String(nextNum).padStart(3, '0');
+    let newCode = '';
+    if (this.newsList && this.newsList.length > 0) {
+      const validNums = this.newsList
+        .map(n => {
+          const clean = n.maTinTuc.replace('TT', '').trim();
+          const parsed = parseInt(clean, 10);
+          return isNaN(parsed) ? 0 : parsed;
+        });
+      const nextNum = Math.max(...validNums, 0) + 1;
+      newCode = 'TT' + String(nextNum).padStart(3, '0');
+    } else {
+      // Fallback to a random 3-digit number to avoid clashing with pre-existing records (e.g. TT001, TT002)
+      newCode = 'TT' + String(Math.floor(Math.random() * 900) + 100);
+    }
 
     this.formModel = {
       maTinTuc: newCode,
@@ -928,7 +956,6 @@ export class QuanLyTinTucComponent implements OnInit {
 
   // Save News (Add or Update)
   saveNews() {
-    // Force synchronize the absolute latest content before validating
     this.onEditorChange();
 
     if (!this.validateForm()) {
@@ -936,77 +963,57 @@ export class QuanLyTinTucComponent implements OnInit {
       return;
     }
 
-    const today = this.formatCurrentDate();
     let computedStatus = this.formModel.trangThai;
     let scheduledDateTimeStr = '';
 
-    // If FB Scheduled Publish is checked
     if (this.formModel.henGioDang) {
       computedStatus = 'HenGio';
       scheduledDateTimeStr = `${this.formModel.ngayHenGio} ${this.formModel.gioHenGio}`;
     }
 
+    const newsData: TinTuc = {
+      ...this.formModel,
+      trangThai: computedStatus,
+      henGioDang: this.formModel.henGioDang,
+      ngayGioHenGio: scheduledDateTimeStr,
+      nguoiDang: 'Nguyễn Hoài Nam (Admin)'
+    };
+
+    const backendData = this.mapNewsToBackend(newsData);
+
     if (this.isEditing && this.selectedNews) {
-      // 1. UPDATE news
-      const idx = this.newsList.findIndex(n => n.maTinTuc === this.formModel.maTinTuc);
-      if (idx !== -1) {
-        const original = this.newsList[idx];
-        
-        // Push activity log
-        this.pushActivityLog(
-          this.formModel.henGioDang ? 'Lên lịch hẹn giờ' : 'Cập nhật tin tức',
-          this.formModel.henGioDang 
-            ? `Thiết lập lại lịch hẹn đăng bài viết ${this.formModel.maTinTuc} vào lúc ${scheduledDateTimeStr}.`
-            : `Cập nhật thành công thông tin chi tiết bài viết ${this.formModel.maTinTuc}.`
-        );
-
-        this.newsList[idx] = {
-          ...this.formModel,
-          trangThai: computedStatus,
-          henGioDang: this.formModel.henGioDang,
-          ngayGioHenGio: scheduledDateTimeStr,
-          ngayDang: computedStatus === 'DaDang' ? (original.ngayDang || today) : '',
-          ngayCapNhat: today
-        };
-
-        this.showNotification(
-          'Cập nhật thành công',
-          `Bài viết <strong>${this.formModel.tieuDe}</strong> đã được lưu trữ thành công ở trạng thái: <strong>${this.getTrangThaiLabel(computedStatus)}</strong>.`,
-          'success'
-        );
-      }
+      this.tinTucService.update(this.formModel.maTinTuc, backendData).subscribe({
+        next: (res) => {
+          this.showNotification(
+            'Cập nhật thành công',
+            `Bài viết <strong>${res.TieuDe}</strong> đã được lưu trữ thành công.`,
+            'success'
+          );
+          this.loadNews();
+          this.loadLogs();
+          this.closeModal();
+        },
+        error: (err) => {
+          this.showNotification('Lỗi cập nhật', 'Không thể lưu bài viết lên backend.', 'error');
+        }
+      });
     } else {
-      // 2. CREATE news
-      const newNews: TinTuc = {
-        ...this.formModel,
-        trangThai: computedStatus,
-        henGioDang: this.formModel.henGioDang,
-        ngayGioHenGio: scheduledDateTimeStr,
-        ngayDang: computedStatus === 'DaDang' ? today : '',
-        nguoiDang: 'Nguyễn Hoài Nam (Admin)',
-        ngayTao: today,
-        ngayCapNhat: today
-      };
-
-      this.newsList.unshift(newNews);
-
-      // Push activity log
-      this.pushActivityLog(
-        this.formModel.henGioDang ? 'Lên lịch bài viết' : 'Thêm mới tin tức',
-        this.formModel.henGioDang 
-          ? `Lên lịch hẹn giờ đăng cho bài viết mới "${newNews.tieuDe}" lúc ${scheduledDateTimeStr}.`
-          : `Tạo mới thành công tin tức: "${newNews.tieuDe}" (${newNews.maTinTuc}).`
-      );
-
-      this.showNotification(
-        this.formModel.henGioDang ? 'Lên lịch hẹn giờ thành công' : 'Đăng tin tức thành công',
-        `Bài viết đã được thiết lập thành công ở trạng thái: <strong>${this.getTrangThaiLabel(computedStatus)}</strong>.`,
-        'success'
-      );
+      this.tinTucService.create(backendData).subscribe({
+        next: (res) => {
+          this.showNotification(
+            'Đăng tin tức thành công',
+            `Bài viết <strong>${res.TieuDe}</strong> đã được tạo thành công.`,
+            'success'
+          );
+          this.loadNews();
+          this.loadLogs();
+          this.closeModal();
+        },
+        error: (err) => {
+          this.showNotification('Lỗi tạo mới', err.error?.message || 'Không thể tạo bài viết trên backend.', 'error');
+        }
+      });
     }
-
-    this.filterNews();
-    this.closeModal();
   }
 
   // Confirmation Overlays (Hide, Publish, Clear)
@@ -1032,77 +1039,35 @@ export class QuanLyTinTucComponent implements OnInit {
     }
 
     if (!this.targetNews) return;
+    const targetStatus = this.confirmType === 'hide' ? 'NgungHienThi' : 'DaDang';
 
-    const idx = this.newsList.findIndex(n => n.maTinTuc === this.targetNews?.maTinTuc);
-    if (idx !== -1) {
-      const news = this.newsList[idx];
-
-      if (this.confirmType === 'hide') {
-        // HIDE news
-        news.trangThai = 'NgungHienThi';
-        news.henGioDang = false;
-        news.ngayGioHenGio = '';
-        news.ngayCapNhat = this.formatCurrentDate();
-        
-        // Sync with form model if currently editing this news
-        if (this.formModel && this.formModel.maTinTuc === news.maTinTuc) {
-          this.formModel.trangThai = 'NgungHienThi';
-          this.formModel.henGioDang = false;
-          this.formModel.ngayGioHenGio = '';
-        }
-        if (this.selectedNews && this.selectedNews.maTinTuc === news.maTinTuc) {
-          this.selectedNews.trangThai = 'NgungHienThi';
-        }
-        
-        this.pushActivityLog(
-          'Ẩn tin tức',
-          `Ẩn bài viết khỏi cổng thông tin chính thức. Bài viết: "${news.tieuDe}" (${news.maTinTuc}).`
-        );
-
+    this.tinTucService.updateTrangThai(this.targetNews.maTinTuc, targetStatus).subscribe({
+      next: (res) => {
         this.showNotification(
-          'Đã ẩn tin tức',
-          `Bài viết <strong>${news.tieuDe}</strong> đã bị chuyển sang trạng thái <strong>Ngừng hiển thị</strong>. Khách hàng sẽ không thể thấy tin tức này trên ứng dụng.`,
+          this.confirmType === 'hide' ? 'Đã ẩn tin tức' : 'Đã đăng tin tức',
+          `Bài viết <strong>${res.TieuDe}</strong> đã được cập nhật thành công sang trạng thái <strong>${this.getTrangThaiLabel(targetStatus)}</strong>.`,
           'success'
         );
-      } else if (this.confirmType === 'publish') {
-        // PUBLISH news
-        news.trangThai = 'DaDang';
-        news.henGioDang = false;
-        news.ngayGioHenGio = '';
-        news.ngayDang = this.formatCurrentDate();
-        news.ngayCapNhat = this.formatCurrentDate();
-
-        // Sync with form model if currently editing this news
-        if (this.formModel && this.formModel.maTinTuc === news.maTinTuc) {
-          this.formModel.trangThai = 'DaDang';
-          this.formModel.henGioDang = false;
-          this.formModel.ngayGioHenGio = '';
-          this.formModel.ngayDang = news.ngayDang;
-        }
-        if (this.selectedNews && this.selectedNews.maTinTuc === news.maTinTuc) {
-          this.selectedNews.trangThai = 'DaDang';
+        
+        // Update formModel and selectedNews status if editing this news item
+        if (this.showModal && this.formModel && this.formModel.maTinTuc === res.MaTinTuc) {
+          this.formModel.trangThai = targetStatus;
+          if (this.selectedNews) {
+            this.selectedNews.trangThai = targetStatus;
+          }
         }
 
-        this.pushActivityLog(
-          'Đăng tin tức',
-          `Kích hoạt hiển thị công khai bài viết: "${news.tieuDe}" (${news.maTinTuc}).`
-        );
-
-        this.showNotification(
-          'Đã đăng tin tức',
-          `Bài viết <strong>${news.tieuDe}</strong> đã được xuất bản công khai thành công lên trang chủ hệ thống.`,
-          'success'
-        );
+        this.loadNews();
+        this.loadLogs();
+        this.closeConfirm();
+        if (this.previewNews?.maTinTuc === res.MaTinTuc) {
+          this.closePreviewModal();
+        }
+      },
+      error: (err) => {
+        this.showNotification('Lỗi cập nhật', 'Không thể cập nhật trạng thái bài viết.', 'error');
       }
-    }
-
-    this.filterNews();
-    this.closeConfirm();
-
-    // Close preview modal if currently viewing hidden news
-    if (this.previewNews?.maTinTuc === this.targetNews?.maTinTuc) {
-      this.closePreviewModal();
-    }
+    });
   }
 
   // News Details Popup Modal instead of sliding drawer

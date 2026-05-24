@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NhanVienService } from '../../../core/services/nhan-vien.service';
 
 export interface NhanVien {
   id: string; // MaNhanVien
@@ -19,7 +20,7 @@ export interface NhanVien {
   maVanPhong: string;
   anhDaiDien: string;
   ghiChu: string;
-  trangThai: 'HoatDong' | 'VoHieuHoa';
+  trangThai: 'HoatDong' | 'DaKhoa';
   vaiTro: string;
   permissions: string[]; // dynamic list of permission keys (RBAC)
 }
@@ -54,6 +55,16 @@ export interface RoleTemplate {
   styleUrls: ['./quan-ly-tai-khoan-nhan-vien.component.css']
 })
 export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
+  isBrowser: boolean = false;
+
+  constructor(
+    private readonly nhanVienService: NhanVienService,
+    private readonly cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
   // Tabs: 'all' | 'active' | 'locked'
   activeTab: 'all' | 'active' | 'locked' = 'all';
 
@@ -283,6 +294,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
   // Modal display variables
   showModal: boolean = false;
   isEditMode: boolean = false;
+  isSaving: boolean = false; // Prevent double submit
 
   // Selected Office option lists
   offices: string[] = [
@@ -308,6 +320,85 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
     title: ''
   };
 
+  formErrors: { [key: string]: string } = {};
+
+  getDefaultPermissions(loaiTaiKhoan: string): string[] {
+    let presetKey = '';
+    if (loaiTaiKhoan === 'QuanTriVien') {
+      presetKey = 'admin';
+    } else if (loaiTaiKhoan === 'BanQuanLy') {
+      presetKey = 'management';
+    } else if (loaiTaiKhoan === 'DieuPhoi') {
+      presetKey = 'dispatch';
+    } else if (loaiTaiKhoan === 'BanVe') {
+      presetKey = 'cskh';
+    }
+    const template = this.roleTemplates.find(r => r.key === presetKey);
+    return template ? [...template.permissions] : [];
+  }
+
+  mapToFrontend(nv: any): NhanVien {
+    const permissions = nv.Quyen && nv.Quyen.length > 0 ? nv.Quyen : this.getDefaultPermissions(nv.LoaiTaiKhoan);
+    return {
+      id: nv.MaNhanVien,
+      loaiTaiKhoan: nv.LoaiTaiKhoan,
+      tenTruyCap: nv.TenTruyCap || '',
+      matKhau: nv.MatKhau || '',
+      hoVaTenDem: nv.HoVaTenDem || '',
+      ten: nv.Ten || '',
+      tenHienThi: nv.TenHienThi || '',
+      gioiTinh: nv.GioiTinh || 'Nam',
+      ngaySinh: nv.NgaySinh ? nv.NgaySinh.split('T')[0] : '',
+      diaChi: nv.DiaChi || '',
+      soDienThoai: nv.SoDienThoai || '',
+      dienThoaiCoDinh: nv.DienThoaiCoDinh || '',
+      email: nv.Email || '',
+      maVanPhong: nv.MaVanPhong || '',
+      anhDaiDien: nv.AnhDaiDien || '',
+      ghiChu: nv.GhiChu || '',
+      trangThai: nv.TrangThai === 'DaKhoa' ? 'DaKhoa' : 'HoatDong',
+      vaiTro: nv.LoaiTaiKhoan === 'QuanTriVien' ? 'Quản trị viên' : nv.LoaiTaiKhoan === 'BanQuanLy' ? 'Ban quản lý' : nv.LoaiTaiKhoan === 'DieuPhoi' ? 'Nhân viên điều phối' : 'Nhân viên bán vé',
+      permissions: permissions
+    };
+  }
+
+  mapToBackend(nv: NhanVien): any {
+    return {
+      MaNhanVien: nv.id,
+      LoaiTaiKhoan: nv.loaiTaiKhoan,
+      TenTruyCap: nv.tenTruyCap,
+      MatKhau: nv.matKhau,
+      HoVaTenDem: nv.hoVaTenDem,
+      Ten: nv.ten,
+      TenHienThi: nv.tenHienThi,
+      GioiTinh: nv.gioiTinh,
+      NgaySinh: nv.ngaySinh ? new Date(nv.ngaySinh) : null,
+      DiaChi: nv.diaChi,
+      SoDienThoai: nv.soDienThoai,
+      DienThoaiCoDinh: nv.dienThoaiCoDinh || null,
+      Email: nv.email,
+      MaVanPhong: nv.maVanPhong,
+      AnhDaiDien: nv.anhDaiDien || null,
+      GhiChu: nv.ghiChu || null,
+      TrangThai: nv.trangThai,
+      Quyen: nv.permissions
+    };
+  }
+
+  loadEmployees() {
+    this.nhanVienService.getAll().subscribe({
+      next: (data) => {
+        this.employees = data.map(nv => this.mapToFrontend(nv));
+        this.filterEmployees();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.showNotification('error', 'Không thể tải danh sách nhân viên từ backend!', 'Lỗi kết nối');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   ngOnInit() {
     // Populate allPermissionKeys from static modules
     this.allPermissionKeys = [];
@@ -317,7 +408,9 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       });
     });
 
-    this.filterEmployees();
+    if (this.isBrowser) {
+      this.loadEmployees();
+    }
   }
 
   createEmptyForm(): NhanVien {
@@ -352,7 +445,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
     if (this.activeTab === 'active') {
       result = result.filter(e => e.trangThai === 'HoatDong');
     } else if (this.activeTab === 'locked') {
-      result = result.filter(e => e.trangThai === 'VoHieuHoa');
+      result = result.filter(e => e.trangThai === 'DaKhoa');
     }
 
     // Filter by Role/Chức vụ
@@ -424,6 +517,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
   // CRUD Actions
   openAddModal() {
     this.isEditMode = false;
+    this.formErrors = {};
     this.formModel = this.createEmptyForm();
     // Auto-generate ID CLxxx
     const maxIdNumber = Math.max(...this.employees.map(e => parseInt(e.id.replace(/[^\d]/g, '')) || 300));
@@ -437,6 +531,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
 
   openEditModal(employee: NhanVien) {
     this.isEditMode = true;
+    this.formErrors = {};
     this.formModel = { 
       ...employee,
       permissions: [...employee.permissions]
@@ -607,13 +702,32 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
 
   // Soft delete / Status toggle
   toggleStatus() {
-    if (this.formModel.trangThai === 'HoatDong') {
-      this.formModel.trangThai = 'VoHieuHoa';
-      this.showNotification('warning', 'Trạng thái tài khoản đã chuyển sang <strong>Vô hiệu hóa</strong>. Bấm lưu để áp dụng thay đổi.', 'Cảnh báo trạng thái');
-    } else {
-      this.formModel.trangThai = 'HoatDong';
-      this.showNotification('success', 'Trạng thái tài khoản đã chuyển sang <strong>Đang hoạt động</strong>. Bấm lưu để áp dụng thay đổi.', 'Cập nhật trạng thái');
+    if (this.formModel.id === 'QTV001' && this.formModel.trangThai === 'HoatDong') {
+      this.showNotification('error', 'Không thể thực hiện thao tác do tài khoản đang giữ vai trò quan trọng trong hệ thống', 'Không thể khóa');
+      return;
     }
+    const newStatus = this.formModel.trangThai === 'HoatDong' ? 'DaKhoa' : 'HoatDong';
+    this.nhanVienService.updateStatus(this.formModel.id, newStatus).subscribe({
+      next: () => {
+        this.formModel.trangThai = newStatus;
+        if (newStatus === 'DaKhoa') {
+          this.showNotification('warning', 'Trạng thái tài khoản đã chuyển sang <strong>Đã khóa</strong>.', 'Cập nhật trạng thái');
+        } else {
+          this.showNotification('success', 'Trạng thái tài khoản đã chuyển sang <strong>Đang hoạt động</strong>.', 'Cập nhật trạng thái');
+        }
+        const index = this.employees.findIndex(e => e.id === this.formModel.id);
+        if (index !== -1) {
+          this.employees[index].trangThai = newStatus;
+        }
+        this.filterEmployees();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        const errorMsg = err.error?.message || 'Không thể cập nhật trạng thái tài khoản nhân viên!';
+        this.showNotification('error', errorMsg, 'Lỗi cập nhật');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // Role labeling helper (Cleaned up prefix as per request)
@@ -673,37 +787,129 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
     this.formModel.permissions = this.formModel.permissions.filter(k => k !== key);
   }
 
+  validateField(field: string) {
+    if (field === 'tenTruyCap') {
+      if (!this.formModel.tenTruyCap || !this.formModel.tenTruyCap.trim()) {
+        this.formErrors['tenTruyCap'] = 'Tên truy cập không được để trống!';
+      } else {
+        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        if (!usernameRegex.test(this.formModel.tenTruyCap)) {
+          this.formErrors['tenTruyCap'] = 'Tên truy cập từ 3-20 ký tự, chỉ gồm chữ, số và dấu gạch dưới!';
+        } else {
+          delete this.formErrors['tenTruyCap'];
+        }
+      }
+    }
+
+    if (field === 'matKhau') {
+      if (!this.isEditMode || this.showPasswordText) {
+        if (!this.formModel.matKhau || !this.formModel.matKhau.trim()) {
+          this.formErrors['matKhau'] = 'Mật khẩu không được để trống!';
+        } else if (this.formModel.matKhau.length < 6) {
+          this.formErrors['matKhau'] = 'Mật khẩu phải từ 6 ký tự trở lên!';
+        } else {
+          delete this.formErrors['matKhau'];
+        }
+        if (this.confirmPassword) {
+          this.validateField('confirmPassword');
+        }
+      } else {
+        delete this.formErrors['matKhau'];
+      }
+    }
+
+    if (field === 'confirmPassword') {
+      if (!this.isEditMode) {
+        if (this.formModel.matKhau !== this.confirmPassword) {
+          this.formErrors['confirmPassword'] = 'Nhập lại mật khẩu không khớp!';
+        } else {
+          delete this.formErrors['confirmPassword'];
+        }
+      } else {
+        delete this.formErrors['confirmPassword'];
+      }
+    }
+
+    if (field === 'hoVaTenDem') {
+      if (!this.formModel.hoVaTenDem || !this.formModel.hoVaTenDem.trim()) {
+        this.formErrors['hoVaTenDem'] = 'Họ và tên đệm không được để trống!';
+      } else {
+        delete this.formErrors['hoVaTenDem'];
+      }
+    }
+
+    if (field === 'ten') {
+      if (!this.formModel.ten || !this.formModel.ten.trim()) {
+        this.formErrors['ten'] = 'Tên không được để trống!';
+      } else {
+        delete this.formErrors['ten'];
+      }
+    }
+
+    if (field === 'tenHienThi') {
+      if (!this.formModel.tenHienThi || !this.formModel.tenHienThi.trim()) {
+        this.formErrors['tenHienThi'] = 'Tên hiển thị không được để trống!';
+      } else {
+        delete this.formErrors['tenHienThi'];
+      }
+    }
+
+    if (field === 'soDienThoai') {
+      if (!this.formModel.soDienThoai || !this.formModel.soDienThoai.trim()) {
+        this.formErrors['soDienThoai'] = 'Số điện thoại không được để trống!';
+      } else {
+        const phoneRegex = /^0[0-9]{9}$/;
+        if (!phoneRegex.test(this.formModel.soDienThoai)) {
+          this.formErrors['soDienThoai'] = 'Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số!';
+        } else {
+          delete this.formErrors['soDienThoai'];
+        }
+      }
+    }
+
+    if (field === 'email') {
+      if (!this.formModel.email || !this.formModel.email.trim()) {
+        this.formErrors['email'] = 'Email không được để trống!';
+      } else {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(this.formModel.email)) {
+          this.formErrors['email'] = 'Email không đúng cú pháp (ví dụ: name@domain.com)!';
+        } else {
+          delete this.formErrors['email'];
+        }
+      }
+    }
+
+    // Force change detection immediately so that validation is completely real-time
+    this.cdr.detectChanges();
+  }
+
   // Save Account
+  validateForm(): boolean {
+    this.formErrors = {};
+    this.validateField('tenTruyCap');
+    this.validateField('matKhau');
+    this.validateField('confirmPassword');
+    this.validateField('hoVaTenDem');
+    this.validateField('ten');
+    this.validateField('tenHienThi');
+    this.validateField('soDienThoai');
+    this.validateField('email');
+
+    return Object.keys(this.formErrors).length === 0;
+  }
+
   saveAccount() {
-    // Run all validations at click save
-    if (!this.formModel.tenTruyCap.trim()) {
-      this.setModalTab('basic');
-      this.showNotification('error', 'Vui lòng nhập <strong>Tên truy cập</strong> bắt buộc!', 'Thiếu thông tin');
-      return;
-    }
-    if (!this.isEditMode && !this.formModel.matKhau.trim()) {
-      this.setModalTab('basic');
-      this.showNotification('error', 'Vui lòng nhập <strong>Mật khẩu</strong> cho tài khoản mới!', 'Thiếu thông tin');
-      return;
-    }
-    if (!this.isEditMode && this.formModel.matKhau !== this.confirmPassword) {
-      this.setModalTab('basic');
-      this.showNotification('error', '<strong>Mật khẩu xác nhận</strong> không khớp!', 'Thiếu thông tin');
-      return;
-    }
-    if (!this.formModel.hoVaTenDem.trim() || !this.formModel.ten.trim()) {
-      this.setModalTab('basic');
-      this.showNotification('error', 'Vui lòng nhập đầy đủ <strong>Họ và tên</strong>!', 'Thiếu thông tin');
-      return;
-    }
-    if (!this.formModel.soDienThoai.trim()) {
-      this.setModalTab('contact');
-      this.showNotification('error', 'Vui lòng nhập <strong>Số điện thoại</strong> liên hệ chính!', 'Thiếu thông tin');
-      return;
-    }
-    if (!this.formModel.email.trim()) {
-      this.setModalTab('contact');
-      this.showNotification('error', 'Vui lòng nhập <strong>Địa chỉ Email</strong> liên hệ chính!', 'Thiếu thông tin');
+    if (this.isSaving) return;
+
+    if (!this.validateForm()) {
+      this.showNotification('error', 'Vui lòng kiểm tra lại các thông tin lỗi màu đỏ ở các bước!', 'Lỗi nhập liệu');
+      // Set active tab based on where the error lies
+      if (this.formErrors['tenTruyCap'] || this.formErrors['matKhau'] || this.formErrors['confirmPassword'] || this.formErrors['hoVaTenDem'] || this.formErrors['ten'] || this.formErrors['tenHienThi']) {
+        this.setModalTab('basic');
+      } else if (this.formErrors['soDienThoai'] || this.formErrors['email']) {
+        this.setModalTab('contact');
+      }
       return;
     }
 
@@ -731,27 +937,56 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       this.formModel.vaiTro = `${baseRole} (Tùy chỉnh)`;
     }
 
-    if (this.isEditMode) {
-      // Update existing account
-      const index = this.employees.findIndex(e => e.id === this.formModel.id);
-      if (index !== -1) {
-        this.employees[index] = { 
-          ...this.formModel,
-          permissions: [...this.formModel.permissions]
-        };
-        this.showNotification('success', `Đã cập nhật tài khoản <strong>${this.formModel.tenHienThi}</strong> thành công!`, 'Cập nhật thành công');
-      }
-    } else {
-      // Create new account
-      this.employees.unshift({ 
-        ...this.formModel,
-        permissions: [...this.formModel.permissions]
-      });
-      this.showNotification('success', `Đã khởi tạo tài khoản <strong>${this.formModel.tenHienThi}</strong> thành công!`, 'Khởi tạo thành công');
+    let backendData: any;
+    try {
+      backendData = this.mapToBackend(this.formModel);
+    } catch (e) {
+      this.isSaving = false;
+      this.showNotification('error', 'Có lỗi xảy ra khi xử lý dữ liệu biểu mẫu!', 'Lỗi định dạng');
+      return;
     }
 
-    this.filterEmployees();
-    this.closeModal();
+    this.isSaving = true;
+    if (this.isEditMode) {
+      // Update existing account
+      this.nhanVienService.update(this.formModel.id, backendData).subscribe({
+        next: (res) => {
+          this.isSaving = false;
+          const index = this.employees.findIndex(e => e.id === this.formModel.id);
+          if (index !== -1) {
+            this.employees[index] = this.mapToFrontend(res);
+          }
+          this.showNotification('success', `Đã cập nhật tài khoản <strong>${this.formModel.tenHienThi}</strong> thành công!`, 'Cập nhật thành công');
+          this.filterEmployees();
+          this.closeModal();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          const errorMsg = err.error?.message || 'Không thể cập nhật tài khoản nhân viên!';
+          this.showNotification('error', errorMsg, 'Lỗi cập nhật');
+          this.cdr.detectChanges();
+        }
+      });
+    } else {
+      // Create new account
+      this.nhanVienService.create(backendData).subscribe({
+        next: (res) => {
+          this.isSaving = false;
+          const newEmp = this.mapToFrontend(res);
+          this.employees.unshift(newEmp);
+          this.showNotification('success', `Đã khởi tạo tài khoản <strong>${newEmp.tenHienThi}</strong> thành công!`, 'Khởi tạo thành công');
+          this.filterEmployees();
+          this.closeModal();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          this.showNotification('error', 'Không thể khởi tạo tài khoản nhân viên!', 'Lỗi khởi tạo');
+          this.cdr.detectChanges();
+        }
+      });
+    }
   }
 
   // Premium popup notification logic
@@ -764,5 +999,44 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
 
   closeNotification() {
     this.notification.show = false;
+  }
+
+  onExportExcel() {
+    const headers = ['Mã NV', 'Tên truy cập', 'Tên hiển thị', 'Chức vụ', 'Số điện thoại', 'Email', 'Văn phòng', 'Trạng thái'];
+    const rows = this.filteredEmployees.map(emp => [
+      emp.id,
+      emp.tenTruyCap,
+      emp.tenHienThi,
+      this.getRoleLabel(emp),
+      emp.soDienThoai,
+      emp.email,
+      emp.maVanPhong,
+      emp.trangThai === 'HoatDong' ? 'Đang hoạt động' : 'Đã khóa'
+    ]);
+    
+    let csvContent = '\uFEFF';
+    csvContent += headers.join(',') + '\n';
+    rows.forEach(row => {
+      const escapedRow = row.map(val => {
+        const strVal = String(val ?? '');
+        if (strVal.includes(',') || strVal.includes('"') || strVal.includes('\n')) {
+          return `"${strVal.replace(/"/g, '""')}"`;
+        }
+        return strVal;
+      });
+      csvContent += escapedRow.join(',') + '\n';
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `danh_sach_nhan_vien_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    this.showNotification('success', 'Đã xuất báo cáo danh sách nhân sự thành công dưới dạng file CSV/Excel!', 'Xuất báo cáo');
   }
 }

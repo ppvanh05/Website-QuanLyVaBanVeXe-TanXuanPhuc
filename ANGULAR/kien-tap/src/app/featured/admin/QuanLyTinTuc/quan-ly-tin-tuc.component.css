@@ -36,6 +36,30 @@
   font-weight: 500;
 }
 
+/* Fix Bullet List for Editor and Preview Panes */
+::ng-deep .preview-live-body-rendered ul,
+::ng-deep .preview-article-body-rendered ul,
+::ng-deep .editor-canvas ul {
+  list-style-type: disc !important;
+  padding-left: 24px !important;
+  margin-bottom: 16px !important;
+}
+
+::ng-deep .preview-live-body-rendered ol,
+::ng-deep .preview-article-body-rendered ol,
+::ng-deep .editor-canvas ol {
+  list-style-type: decimal !important;
+  padding-left: 24px !important;
+  margin-bottom: 16px !important;
+}
+
+::ng-deep .preview-live-body-rendered li,
+::ng-deep .preview-article-body-rendered li,
+::ng-deep .editor-canvas li {
+  margin-bottom: 6px !important;
+  display: list-item !important;
+}
+
 .header-main {
   display: flex;
   justify-content: space-between;
@@ -239,7 +263,8 @@
 .table-responsive {
   border: 1px solid #f1f5f9;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-bottom: 20px;
 }
 
@@ -261,9 +286,8 @@
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   font-family: 'Inter', sans-serif;
-  white-space: normal; /* Allow wrapping */
+  white-space: normal;
   word-wrap: break-word;
-  word-break: break-word;
   vertical-align: middle;
 }
 

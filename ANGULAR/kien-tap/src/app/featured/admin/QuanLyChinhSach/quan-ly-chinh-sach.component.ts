@@ -1,5 +1,5 @@
-import { Component, OnInit, ElementRef, ViewChild, ViewEncapsulation } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ElementRef, ViewChild, ViewEncapsulation, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChinhSachService } from '../../../core/services/chinh-sach.service';
 import { HttpClientModule } from '@angular/common/http';
@@ -110,10 +110,37 @@ export class QuanLyChinhSachComponent implements OnInit {
     message: ''
   };
 
-  constructor(private chinhSachService: ChinhSachService) {}
+  // Custom Confirmation Modal State
+  confirmModal = {
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  };
+
+  isBrowser: boolean = false;
+
+  constructor(
+    private chinhSachService: ChinhSachService,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
+  closeConfirm() {
+    this.confirmModal.show = false;
+    this.cdr.detectChanges();
+  }
+
+  executeConfirm() {
+    this.confirmModal.onConfirm();
+  }
 
   ngOnInit() {
-    this.loadPolicies();
+    if (this.isBrowser) {
+      this.loadPolicies();
+    }
   }
 
   loadPolicies() {
@@ -126,6 +153,7 @@ export class QuanLyChinhSachComponent implements OnInit {
       if (csLoaded && csvLoaded) {
         this.isLoading = false;
         this.filterPolicies();
+        this.cdr.detectChanges();
       }
     };
 
@@ -153,6 +181,7 @@ export class QuanLyChinhSachComponent implements OnInit {
         this.showNotification('error', 'Không thể tải danh sách chính sách chung!', 'Lỗi kết nối');
         csLoaded = true;
         checkAndFilter();
+        this.cdr.detectChanges();
       }
     });
 
@@ -183,6 +212,7 @@ export class QuanLyChinhSachComponent implements OnInit {
         this.showNotification('error', 'Không thể tải danh sách chính sách hủy vé!', 'Lỗi kết nối');
         csvLoaded = true;
         checkAndFilter();
+        this.cdr.detectChanges();
       }
     });
   }
@@ -452,10 +482,24 @@ export class QuanLyChinhSachComponent implements OnInit {
     this.selectedImage = null;
   }
 
-  // Toggle Policy Status (DangApDung <-> VoHieuHoa)
+  // Toggle Policy Status in the form modal with confirmation
   toggleStatus() {
-    this.formModel.status = this.formModel.status === 'DangApDung' ? 'VoHieuHoa' : 'DangApDung';
+    const isLocking = this.formModel.status === 'DangApDung';
+    this.confirmModal = {
+      show: true,
+      title: isLocking ? 'Xác nhận khóa chính sách' : 'Xác nhận kích hoạt chính sách',
+      message: isLocking 
+        ? 'Bạn có chắc chắn muốn ngừng hiển thị/áp dụng chính sách này không?' 
+        : 'Bạn có chắc chắn muốn kích hoạt hiển thị lại chính sách này không?',
+      onConfirm: () => {
+        this.formModel.status = isLocking ? 'VoHieuHoa' : 'DangApDung';
+        this.confirmModal.show = false;
+        this.cdr.detectChanges();
+      }
+    };
+    this.cdr.detectChanges();
   }
+
 
   // Add Milestone dynamic row (for cancellation policies)
   addMilestone() {
@@ -814,6 +858,20 @@ export class QuanLyChinhSachComponent implements OnInit {
       return;
     }
 
+    const isDuplicateTitle = this.policies.some(p => 
+      p.title.trim().toLowerCase() === this.formModel.title.trim().toLowerCase() && 
+      p.id !== this.formModel.id
+    );
+    if (isDuplicateTitle) {
+      this.showNotification('warning', 'Tiêu đề chính sách bị trùng, vui lòng kiểm tra lại nội dung!', 'Cảnh báo');
+      return;
+    }
+
+    if (!this.formModel.effectiveDate) {
+      this.showNotification('warning', 'Ngày áp dụng không hợp lệ!', 'Cảnh báo');
+      return;
+    }
+
     if (this.formModel.type === 'cancellation' && this.formModel.milestones.length === 0) {
       this.showNotification('warning', 'Vui lòng thêm ít nhất một mốc thời gian hủy vé!', 'Cảnh báo');
       return;
@@ -846,8 +904,19 @@ export class QuanLyChinhSachComponent implements OnInit {
           TrangThai: this.formModel.status,
           NgayApDung: this.formModel.effectiveDate,
         }).subscribe({
-          next: () => { this.isLoading = false; this.loadPolicies(); this.closeModal(); this.showNotification('success', 'Đã cập nhật chính sách hủy vé thành công!', 'Thành công'); },
-          error: (err) => { console.error(err); this.isLoading = false; this.showNotification('error', 'Lỗi cập nhật chính sách hủy vé!', 'Lỗi'); }
+          next: () => { 
+            this.isLoading = false; 
+            this.loadPolicies(); 
+            this.closeModal(); 
+            this.showNotification('success', 'Đã cập nhật chính sách hủy vé thành công!', 'Thành công');
+            this.cdr.detectChanges();
+          },
+          error: (err) => { 
+            console.error(err); 
+            this.isLoading = false; 
+            this.showNotification('error', 'Lỗi cập nhật chính sách hủy vé!', 'Lỗi');
+            this.cdr.detectChanges();
+          }
         });
       } else {
         this.chinhSachService.createChinhSachHuyVe({
@@ -859,8 +928,19 @@ export class QuanLyChinhSachComponent implements OnInit {
           TrangThai: this.formModel.status,
           NgayApDung: this.formModel.effectiveDate,
         }).subscribe({
-          next: () => { this.isLoading = false; this.loadPolicies(); this.closeModal(); this.showNotification('success', 'Đã thêm chính sách hủy vé thành công!', 'Thành công'); },
-          error: (err) => { console.error(err); this.isLoading = false; this.showNotification('error', 'Lỗi thêm chính sách hủy vé!', 'Lỗi'); }
+          next: () => { 
+            this.isLoading = false; 
+            this.loadPolicies(); 
+            this.closeModal(); 
+            this.showNotification('success', 'Đã thêm chính sách hủy vé thành công!', 'Thành công');
+            this.cdr.detectChanges();
+          },
+          error: (err) => { 
+            console.error(err); 
+            this.isLoading = false; 
+            this.showNotification('error', 'Lỗi thêm chính sách hủy vé!', 'Lỗi');
+            this.cdr.detectChanges();
+          }
         });
       }
     } else {
@@ -876,8 +956,19 @@ export class QuanLyChinhSachComponent implements OnInit {
           NgayApDung: this.formModel.effectiveDate,
           TrangThai: this.formModel.status,
         }).subscribe({
-          next: () => { this.isLoading = false; this.loadPolicies(); this.closeModal(); this.showNotification('success', 'Đã cập nhật chính sách thành công!', 'Thành công'); },
-          error: (err) => { console.error(err); this.isLoading = false; this.showNotification('error', 'Lỗi cập nhật chính sách!', 'Lỗi'); }
+          next: () => { 
+            this.isLoading = false; 
+            this.loadPolicies(); 
+            this.closeModal(); 
+            this.showNotification('success', 'Đã cập nhật chính sách thành công!', 'Thành công');
+            this.cdr.detectChanges();
+          },
+          error: (err) => { 
+            console.error(err); 
+            this.isLoading = false; 
+            this.showNotification('error', 'Lỗi cập nhật chính sách!', 'Lỗi');
+            this.cdr.detectChanges();
+          }
         });
       } else {
         this.chinhSachService.createChinhSach({
@@ -889,8 +980,19 @@ export class QuanLyChinhSachComponent implements OnInit {
           TrangThai: this.formModel.status,
           MaQuanTriVien: 'QTV001', // TODO: lấy từ auth service
         }).subscribe({
-          next: () => { this.isLoading = false; this.loadPolicies(); this.closeModal(); this.showNotification('success', 'Đã thêm chính sách thành công!', 'Thành công'); },
-          error: (err) => { console.error(err); this.isLoading = false; this.showNotification('error', 'Lỗi thêm chính sách!', 'Lỗi'); }
+          next: () => { 
+            this.isLoading = false; 
+            this.loadPolicies(); 
+            this.closeModal(); 
+            this.showNotification('success', 'Đã thêm chính sách thành công!', 'Thành công');
+            this.cdr.detectChanges();
+          },
+          error: (err) => { 
+            console.error(err); 
+            this.isLoading = false; 
+            this.showNotification('error', 'Lỗi thêm chính sách!', 'Lỗi');
+            this.cdr.detectChanges();
+          }
         });
       }
     }
