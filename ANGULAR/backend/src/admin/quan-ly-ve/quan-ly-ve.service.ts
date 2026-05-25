@@ -152,8 +152,12 @@ export class QuanLyVeService {
     const ngayKhoiHanh = new Date(ve.LICH_TRINH.NgayKhoiHanh);
     const gioKhoiHanh = ve.LICH_TRINH.GioKhoiHanh;
     const thoiGianKhoiHanh = new Date(ngayKhoiHanh);
-    const [hours, minutes] = gioKhoiHanh.split(':').map(Number);
-    thoiGianKhoiHanh.setHours(hours, minutes, 0, 0);
+    if (typeof gioKhoiHanh === 'string') {
+      const [hours, minutes] = (gioKhoiHanh as string).split(':').map(Number);
+      thoiGianKhoiHanh.setHours(hours, minutes, 0, 0);
+    } else if (gioKhoiHanh instanceof Date) {
+      thoiGianKhoiHanh.setHours(gioKhoiHanh.getHours(), gioKhoiHanh.getMinutes(), 0, 0);
+    }
 
     const thoiGianHienTai = new Date();
     const soGioConLai = (thoiGianKhoiHanh.getTime() - thoiGianHienTai.getTime()) / (1000 * 60 * 60);
