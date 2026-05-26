@@ -10,6 +10,7 @@ import { NhanVienModule } from './admin/nhan-vien/nhan-vien.module';
 import { TuKhoaCamModule } from './admin/tu-khoa-cam/tu-khoa-cam.module';
 import { NhatKyHeThongModule } from './admin/nhat-ky-he-thong/nhat-ky-he-thong.module';
 import { QuanLyVeModule } from './admin/quan-ly-ve/quan-ly-ve.module';
+import { DieuHanhModule } from './admin/dieu-hanh/dieu-hanh.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { QuanLyVeModule } from './admin/quan-ly-ve/quan-ly-ve.module';
     TuKhoaCamModule,
     NhatKyHeThongModule,
     QuanLyVeModule,
+    DieuHanhModule,
   ],
   controllers: [AppController],
   providers: [AppService],
