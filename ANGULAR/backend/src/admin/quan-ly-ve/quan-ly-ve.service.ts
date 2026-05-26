@@ -93,14 +93,28 @@ export class QuanLyVeService {
     return donHang;
   }
 
+  private mapTrangThaiVe(trangThai: string): any {
+    if (trangThai === 'DaHuy' || trangThai === 'h_y' || trangThai === 'Huy') {
+      return 'h_y';
+    }
+    if (trangThai === 'ConHieuLuc' || trangThai === 'Ch__kh_i_h_nh' || trangThai === 'ChoKhoiHanh') {
+      return 'Ch__kh_i_h_nh';
+    }
+    if (trangThai === 'HoanThanh' || trangThai === 'ho_n_th_nh') {
+      return 'ho_n_th_nh';
+    }
+    return 'Ch__thanh_to_n';
+  }
+
   // ===== CẬP NHẬT TRẠNG THÁI VÉ =====
   async updateTrangThaiVe(id: string, trangThai: string, maNhanVien?: string) {
     const ve = await this.getVeById(id);
     const oldTrangThai = ve.TrangThaiVe;
+    const mappedStatus = this.mapTrangThaiVe(trangThai);
 
     const updatedVe = await this.prisma.vE_DIEN_TU.update({
       where: { MaVe: id },
-      data: { TrangThaiVe: trangThai },
+      data: { TrangThaiVe: mappedStatus },
     });
 
     await this.prisma.lICH_SU_VE.create({
@@ -108,7 +122,7 @@ export class QuanLyVeService {
         MaLichSu: `LSV_${Date.now()}`,
         HanhDong: 'Cập nhật trạng thái vé',
         TrangThaiCu: oldTrangThai,
-        TrangThaiMoi: trangThai,
+        TrangThaiMoi: mappedStatus,
         ThoiGianThayDoi: new Date(),
         GhiChu: 'Cập nhật trạng thái vé bởi quản trị viên',
         MaVe: id,
@@ -121,12 +135,12 @@ export class QuanLyVeService {
       MaNhanVien: maNhanVien || 'NVDP001',
       MaVe: id,
       LoaiThaoTac: 'Quản lý vé',
-      NoiDungChiTiet: `Cập nhật trạng thái vé ${id} từ ${oldTrangThai} sang ${trangThai}`,
+      NoiDungChiTiet: `Cập nhật trạng thái vé ${id} từ ${oldTrangThai} sang ${mappedStatus}`,
       TrangThai: 'Thành công',
       TrangThaiCu: oldTrangThai,
-      TrangThaiMoi: trangThai,
+      TrangThaiMoi: mappedStatus,
       DuLieuThayDoi: [
-        { truong: 'TrangThaiVe', giaTriCu: oldTrangThai, giaTriMoi: trangThai },
+        { truong: 'TrangThaiVe', giaTriCu: oldTrangThai, giaTriMoi: mappedStatus },
       ],
     });
 
@@ -137,7 +151,7 @@ export class QuanLyVeService {
   async huyVe(id: string, lyDo: string, maNVBanVe?: string) {
     const ve = await this.getVeById(id);
     
-    if (ve.TrangThaiVe === 'DaHuy') {
+    if (ve.TrangThaiVe === 'h_y') {
       throw new BadRequestException('Vé này đã được huỷ trước đó!');
     }
 
@@ -174,7 +188,7 @@ export class QuanLyVeService {
 
     const updatedVe = await this.prisma.vE_DIEN_TU.update({
       where: { MaVe: id },
-      data: { TrangThaiVe: 'DaHuy' },
+      data: { TrangThaiVe: 'h_y' },
     });
 
     const maGiaoDichHoan = `GD_HOAN_${Date.now()}`;
@@ -212,7 +226,7 @@ export class QuanLyVeService {
         MaLichSu: `LSV_${Date.now()}`,
         HanhDong: 'Huỷ vé',
         TrangThaiCu: ve.TrangThaiVe,
-        TrangThaiMoi: 'DaHuy',
+        TrangThaiMoi: 'h_y',
         ThoiGianThayDoi: new Date(),
         GhiChu: lyDo,
         MaVe: id,
@@ -229,9 +243,9 @@ export class QuanLyVeService {
       NoiDungChiTiet: `Huỷ vé ${id}. Lý do: ${lyDo}. Tiền hoàn lại: ${tienHoanLai}`,
       TrangThai: 'Thành công',
       TrangThaiCu: ve.TrangThaiVe,
-      TrangThaiMoi: 'DaHuy',
+      TrangThaiMoi: 'h_y',
       DuLieuThayDoi: [
-        { truong: 'TrangThaiVe', giaTriCu: ve.TrangThaiVe, giaTriMoi: 'DaHuy' },
+        { truong: 'TrangThaiVe', giaTriCu: ve.TrangThaiVe, giaTriMoi: 'h_y' },
         { truong: 'LyDoHuy', giaTriCu: null, giaTriMoi: lyDo },
         { truong: 'TienHoanLai', giaTriCu: null, giaTriMoi: tienHoanLai },
       ],
