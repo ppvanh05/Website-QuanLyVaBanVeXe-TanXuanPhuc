@@ -6,12 +6,30 @@ export class TimKiemChuyenXeService {
   constructor(private prisma: PrismaService) {}
 
   // Helper to parse date string formatted as dd/mm/yyyy or yyyy-mm-dd
-  private parseSearchDate(dateStr: string): Date {
+  private parseSearchDate(dateStr?: string): Date | null {
+    if (!dateStr) return null;
     if (dateStr.includes('/')) {
       const parts = dateStr.split('/');
-      return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      const parsed = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
     }
-    return new Date(dateStr);
+    const parsed = new Date(dateStr);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private normalizeSearchText(value?: string | null): string {
+    return (value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase()
+      .trim();
+  }
+
+  private matchLocation(value?: string | null, keyword?: string): boolean {
+    if (!keyword?.trim()) return true;
+    return this.normalizeSearchText(value).includes(this.normalizeSearchText(keyword));
   }
 
   // Helper to ensure GHE_CHUYEN_XE records exist for a schedule. If not, auto-create them from vehicle GHE template.
@@ -109,37 +127,44 @@ export class TimKiemChuyenXeService {
   }
 
   // ===== SEARCH TRIPS =====
-  async searchTrips(dto: { departure: string; destination: string; date: string }) {
+  async searchTrips(dto: { departure?: string; destination?: string; date?: string }) {
     const searchDate = this.parseSearchDate(dto.date);
-    const startOfDay = new Date(searchDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(searchDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    const where: any = {
+      TrangThaiLichTrinh: {
+        notIn: ['DaKhoa'],
+      },
+    };
+
+    if (searchDate) {
+      const startOfDay = new Date(searchDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(searchDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      where.NgayKhoiHanh = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
+    }
+
+    const departure = dto.departure?.trim();
+    const destination = dto.destination?.trim();
 
     // Find schedules matching date and route (insensitive search)
     const schedules = await this.prisma.lICH_TRINH.findMany({
-      where: {
-        NgayKhoiHanh: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-        TrangThaiLichTrinh: {
-          notIn: ['DaKhoa'],
-        },
-        TUYEN_XE: {
-          DiemKhoiHanh: { contains: dto.departure, mode: 'insensitive' },
-          DiemDen: { contains: dto.destination, mode: 'insensitive' },
-        },
-      },
+      where,
       include: {
         TUYEN_XE: true,
         PHUONG_TIEN: true,
       },
     });
+    const filteredSchedules = schedules.filter(schedule =>
+      this.matchLocation(schedule.TUYEN_XE?.DiemKhoiHanh, departure) &&
+      this.matchLocation(schedule.TUYEN_XE?.DiemDen, destination),
+    );
 
     const results = [];
 
-    for (const schedule of schedules) {
+    for (const schedule of filteredSchedules) {
       // Auto initialize seats if empty
       const seats = await this.checkAndInitializeSeats(
         schedule.MaLichTrinh,
@@ -148,7 +173,7 @@ export class TimKiemChuyenXeService {
       );
 
       // Count available seats
-      const availableSeats = seats.filter(s => s.TrangThaiGhe === 'C_n_Tr_ng').length;
+      const availableSeats = seats.filter(s => s.TrangThaiGhe === 'Trong').length;
 
       // Only return trips that still have available seats
       if (availableSeats > 0) {

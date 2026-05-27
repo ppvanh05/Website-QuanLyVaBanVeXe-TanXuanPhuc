@@ -79,6 +79,40 @@ export class ThongTinDonHang implements OnInit {
 
   constructor(private router: Router) { }
 
+  private formatStopTime(value: any): string {
+    if (!value) return this.bookingData?.departureTime || '';
+    if (typeof value === 'string') {
+      const iso = value.match(/T(\d{2}:\d{2})/);
+      if (iso) return iso[1];
+      const plain = value.match(/^(\d{2}:\d{2})/);
+      if (plain) return plain[1];
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return this.bookingData?.departureTime || '';
+    return parsed.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  private mapTripStop(stop: any) {
+    return {
+      maDiem: stop.MaDiem,
+      time: this.formatStopTime(stop.GioDenDuKien),
+      name: stop.TenDiem || stop.name || '',
+      address: stop.DiaChi || stop.address || '',
+      city: stop.ThanhPho || '',
+      province: stop.Tinh || '',
+    };
+  }
+
+  private syncStopOptionsFromTrip() {
+    const stops = Array.isArray(this.bookingData?.stops)
+      ? this.bookingData.stops.map((stop: any) => this.mapTripStop(stop)).filter((stop: any) => stop.maDiem && stop.name)
+      : [];
+    if (stops.length === 0) return;
+
+    this.pickupOptions = stops;
+    this.dropoffOptions = stops;
+  }
+
   ngOnInit() {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('current_booking');
@@ -92,11 +126,13 @@ export class ThongTinDonHang implements OnInit {
       }
     }
 
+    this.syncStopOptionsFromTrip();
+
     // Set default pickup and dropoff based on saved data
-    this.selectedPickup = this.pickupOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.startStation || '').toLowerCase())) || this.pickupOptions[3];
+    this.selectedPickup = this.pickupOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.startStation || '').toLowerCase())) || this.pickupOptions[0];
     this.pickupSearch = this.selectedPickup.name;
 
-    this.selectedDropoff = this.dropoffOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.endStation || '').toLowerCase())) || this.dropoffOptions[0];
+    this.selectedDropoff = this.dropoffOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.endStation || '').toLowerCase())) || this.dropoffOptions[this.dropoffOptions.length - 1] || this.dropoffOptions[0];
     this.dropoffSearch = this.selectedDropoff.name;
 
     this.initSeats();

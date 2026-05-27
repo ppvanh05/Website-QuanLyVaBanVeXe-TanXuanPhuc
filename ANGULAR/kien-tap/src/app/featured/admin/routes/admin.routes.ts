@@ -12,11 +12,11 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'quan-ly-ve',
         children: [
-          { path: 'dat-ve-moi', data: { requiredPermission: 'ticket.manage' }, loadComponent: () => import('../QuanLyVe/DatVeMoi/tim-kiem-chuyen-xe1/tim-kiem-chuyen-xe').then(m => m.TimKiemChuyenXe) },
-          { path: 'dat-ve-moi/thong-tin-don-hang', data: { requiredPermission: 'ticket.manage' }, loadComponent: () => import('../QuanLyVe/DatVeMoi/thong-tin-don-hang1/thong-tin-don-hang').then(m => m.ThongTinDonHang) },
-          { path: 'dat-ve-moi/thanh-toan', data: { requiredPermission: 'ticket.manage' }, loadComponent: () => import('../QuanLyVe/DatVeMoi/thanh-toan1/thanh-toan').then(m => m.ThanhToan) },
+          { path: 'dat-ve-moi', data: { requiredPermission: 'ticket.sell' }, loadComponent: () => import('../QuanLyVe/DatVeMoi/tim-kiem-chuyen-xe1/tim-kiem-chuyen-xe').then(m => m.TimKiemChuyenXe) },
+          { path: 'dat-ve-moi/thong-tin-don-hang', data: { requiredPermission: 'ticket.sell' }, loadComponent: () => import('../QuanLyVe/DatVeMoi/thong-tin-don-hang1/thong-tin-don-hang').then(m => m.ThongTinDonHang) },
+          { path: 'dat-ve-moi/thanh-toan', data: { requiredPermission: 'ticket.sell' }, loadComponent: () => import('../QuanLyVe/DatVeMoi/thanh-toan1/thanh-toan').then(m => m.ThanhToan) },
           { path: 'danh-sach-ve', data: { requiredPermission: 'ticket.view' }, loadComponent: () => import('../QuanLyVe/DanhSachVe/danh-sach-ve.component').then(m => m.DanhSachVeComponent) },
-          { path: 'hoan-tien', data: { requiredPermission: 'ticket.manage' }, loadComponent: () => import('../trang-chu/trang-chu.component').then(m => m.TrangChuComponent) }
+          { path: 'hoan-tien', data: { requiredPermission: 'ticket.cancel' }, loadComponent: () => import('../trang-chu/trang-chu.component').then(m => m.TrangChuComponent) }
         ]
       },
       {

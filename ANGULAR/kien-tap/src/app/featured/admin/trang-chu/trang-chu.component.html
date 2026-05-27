@@ -10,7 +10,7 @@
     </div>
     <div class="date-info">
       <span class="material-icons">today</span>
-      <span>{{ 'Thứ Tư, 27/05/2026' }}</span>
+      <span>{{ todayLabel }}</span>
     </div>
   </div>
 
@@ -68,6 +68,9 @@
           <span class="material-icons" style="font-size: 16px;">arrow_forward</span>
         </button>
       </div>
+      <div *ngIf="dashboardLoadError" class="dashboard-error">
+        {{ dashboardLoadError }}
+      </div>
       <div class="table-responsive">
         <table>
           <thead>
@@ -82,6 +85,12 @@
             </tr>
           </thead>
           <tbody>
+            <tr *ngIf="dashboardLoading">
+              <td colspan="7" class="empty-table">Đang tải dữ liệu vé...</td>
+            </tr>
+            <tr *ngIf="!dashboardLoading && bookings.length === 0">
+              <td colspan="7" class="empty-table">Chưa có vé để hiển thị.</td>
+            </tr>
             <tr *ngFor="let booking of bookings">
               <td class="id-col">{{ booking.id }}</td>
               <td style="font-weight: 600;">{{ booking.customer }}</td>
@@ -100,6 +109,41 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Ticket seller route summary -->
+    <div class="card routes-card" *ngIf="showTicketSection && !showRouteSection">
+      <div class="card-header">
+        <h2>
+          <span class="material-icons" style="font-size:20px;vertical-align:middle;margin-right:6px;color:#009ba1;">route</span>
+          Tuyến bán gần đây
+        </h2>
+        <button class="view-all" routerLink="/admin/quan-ly-ve/danh-sach-ve">
+          Xem vé
+          <span class="material-icons" style="font-size: 16px;">arrow_forward</span>
+        </button>
+      </div>
+      <div class="routes-list" *ngIf="popularRoutes.length > 0; else noRouteStats">
+        <div *ngFor="let route of popularRoutes" class="route-item">
+          <div class="route-info">
+            <span class="route-name">{{ route.name }}</span>
+            <span class="route-count">
+              <span class="material-icons" style="font-size: 13px; color: #64748b; vertical-align: middle; margin-right: 3px;">local_activity</span>
+              {{ route.bookings }} vé đã bán
+            </span>
+          </div>
+          <div class="route-trend up">
+            <span class="material-icons" style="font-size: 14px;">donut_large</span>
+            {{ route.trend }}
+          </div>
+        </div>
+      </div>
+      <ng-template #noRouteStats>
+        <div class="empty-mini">
+          <span class="material-icons">route</span>
+          <p>Chưa có dữ liệu tuyến từ vé.</p>
+        </div>
+      </ng-template>
     </div>
 
     <!-- Popular Routes - show for dispatch and admins -->
@@ -160,6 +204,28 @@
       </div>
     </div>
 
+    <!-- Admin workbench - show for system administration roles -->
+    <div class="card admin-card" *ngIf="showAdminSection">
+      <div class="card-header">
+        <h2>
+          <span class="material-icons" style="font-size:20px;vertical-align:middle;margin-right:6px;color:#009ba1;">admin_panel_settings</span>
+          Công việc quản trị
+        </h2>
+      </div>
+      <div class="admin-task-list">
+        <a *ngFor="let task of adminTasks" [routerLink]="task.route" class="admin-task-row" [ngClass]="'task-' + task.color">
+          <div class="admin-task-icon">
+            <span class="material-icons">{{ task.icon }}</span>
+          </div>
+          <div class="admin-task-copy">
+            <span class="admin-task-title">{{ task.title }}</span>
+            <span class="admin-task-description">{{ task.description }}</span>
+          </div>
+          <span class="material-icons admin-task-arrow">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+
     <!-- Admin extra: route section when also showing tickets -->
     <div class="card routes-card" *ngIf="showRouteSection && showTicketSection">
       <div class="card-header">
@@ -182,6 +248,16 @@
             {{ route.trend }}
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="card empty-card" *ngIf="showEmptyState">
+      <div class="empty-icon">
+        <span class="material-icons">lock_person</span>
+      </div>
+      <div>
+        <h2>Chưa có chức năng được phân quyền</h2>
+        <p>Tài khoản này chưa được gán nhóm quyền nghiệp vụ. Vui lòng kiểm tra lại phân quyền nhân viên.</p>
       </div>
     </div>
   </div>

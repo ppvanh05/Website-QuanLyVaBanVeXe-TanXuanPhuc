@@ -1,11 +1,15 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize, switchMap, timeout } from 'rxjs/operators';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 interface Seat {
   name: string;
+  maGheChuyen?: string;
   status: 'sold' | 'available' | 'selected';
   deck: 'lower' | 'upper';
   side: 'left' | 'right';
@@ -13,7 +17,7 @@ interface Seat {
 }
 
 interface Trip {
-  id: number;
+  id: string | number;
   departureTime: string;
   arrivalTime: string;
   duration: string;
@@ -25,6 +29,7 @@ interface Trip {
   endStation: string;
   price: number;
   seats: Seat[];
+  stops?: any[];
   expanded?: boolean;
   selectedTab?: 'seat' | 'schedule' | 'shuttle' | 'utilities' | 'policy';
 }
@@ -37,6 +42,8 @@ interface Trip {
   styleUrl: './tim-kiem-chuyen-xe.css',
 })
 export class TimKiemChuyenXe implements OnInit {
+  private readonly apiBaseUrl = 'http://localhost:3000';
+
   // Alert modal
   showAlertModal: boolean = false;
   alertMessage: string = '';
@@ -44,9 +51,9 @@ export class TimKiemChuyenXe implements OnInit {
 
   // Form search inputs
   isRoundTrip: boolean = false;
-  departure: string = 'TP. Hồ Chí Minh';
-  destination: string = 'Bình Định';
-  departureDate: string = '22/05/2026';
+  departure: string = 'Hà Nội';
+  destination: string = 'Quảng Ninh';
+  departureDate: string = '30/05/2026';
   returnDate: string = '';
   passengerCount: number = 1;
 
@@ -60,12 +67,12 @@ export class TimKiemChuyenXe implements OnInit {
   showReturnCalendar: boolean = false;
   showPassengerPopover: boolean = false;
 
-  locations = ['TP. Hồ Chí Minh', 'Bình Định', 'Phú Yên', 'Khánh Hòa', 'Đà Lạt', 'Hà Nội', 'Đà Nẵng'];
+  locations = ['Hà Nội', 'Quảng Ninh', 'Hải Phòng', 'Thái Bình', 'SaPa', 'TP. Hồ Chí Minh', 'Bình Định', 'Phú Yên', 'Khánh Hòa', 'Đà Lạt', 'Đà Nẵng'];
 
   // Recent searches list
   recentSearches = [
-    { from: 'TP. Hồ Chí Minh', to: 'Bình Định', date: '22/05/2026' },
-    { from: 'TP. Hồ Chí Minh', to: 'Phú Yên', date: '25/05/2026' }
+    { from: 'Hà Nội', to: 'Quảng Ninh', date: '30/05/2026' },
+    { from: 'Hải Phòng', to: 'Quảng Ninh', date: '26/05/2026' }
   ];
 
   // Sorting state
@@ -98,6 +105,8 @@ export class TimKiemChuyenXe implements OnInit {
   // Base list of mock trips
   allTrips: Trip[] = [];
   filteredTrips: Trip[] = [];
+  isLoadingTrips = false;
+  tripLoadError = '';
 
   // Currently active selected trip
   activeTrip: Trip | null = null;
@@ -142,26 +151,29 @@ export class TimKiemChuyenXe implements OnInit {
   ];
 
   constructor(
-    private route: ActivatedRoute, 
+    private route: ActivatedRoute,
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit() {
-    this.initMockTrips();
     this.route.queryParams.subscribe(params => {
-      this.departure = params['departure'] || 'TP. Hồ Chí Minh';
-      this.destination = params['destination'] || 'Bình Định';
-      this.departureDate = params['date'] || '22/05/2026';
+      this.departure = params['departure'] || this.departure;
+      this.destination = params['destination'] || this.destination;
+      this.departureDate = params['date'] || this.departureDate;
       this.returnDate = params['returnDate'] || '';
       this.isRoundTrip = params['isRoundTrip'] === 'true';
       this.adultCount = Number(params['adults']) || 1;
       this.childCount = Number(params['children']) || 0;
       this.infantCount = Number(params['infants']) || 0;
       this.updatePassengerCount();
-      this.filterTrips();
+      this.loadTripsFromApi();
     });
-    this.setupRealtimeSubscriptions();
+    if (isPlatformBrowser(this.platformId)) {
+      this.setupRealtimeSubscriptions();
+    }
   }
 
   get departureOptions() {
@@ -521,10 +533,184 @@ export class TimKiemChuyenXe implements OnInit {
     ];
   }
 
+  private buildSearchParams(): Record<string, string> {
+    const params: Record<string, string> = {};
+    if (this.departure?.trim()) params['departure'] = this.departure.trim();
+    if (this.destination?.trim()) params['destination'] = this.destination.trim();
+    if (this.departureDate?.trim()) params['date'] = this.departureDate.trim();
+    return params;
+  }
+
+  loadTripsFromApi() {
+    if (!isPlatformBrowser(this.platformId)) {
+      this.isLoadingTrips = false;
+      return;
+    }
+
+    this.isLoadingTrips = true;
+    this.tripLoadError = '';
+
+    this.http.get<any[]>(`${this.apiBaseUrl}/customer/tim-kiem-chuyen-xe/search`, {
+      params: this.buildSearchParams(),
+    }).pipe(
+      timeout(15000),
+      switchMap(trips => {
+        const tripList = Array.isArray(trips) ? trips : [];
+        if (tripList.length === 0) return of([]);
+        return forkJoin(
+          tripList.map(trip =>
+            this.http.get<any>(`${this.apiBaseUrl}/customer/tim-kiem-chuyen-xe/detail/${trip.MaLichTrinh}`).pipe(
+              timeout(10000),
+              catchError(() => of(trip)),
+            ),
+          ),
+        );
+      }),
+      catchError(error => {
+        console.error('Không tải được chuyến xe:', error);
+        this.tripLoadError = 'Không tải được dữ liệu chuyến xe từ API. Vui lòng kiểm tra backend.';
+        return of([]);
+      }),
+      finalize(() => {
+        this.isLoadingTrips = false;
+      }),
+    ).subscribe(trips => {
+      this.allTrips = (trips as any[]).map(trip => this.mapApiTrip(trip));
+      this.syncLocationsFromTrips(this.allTrips);
+      this.activeTrip = null;
+      this.selectedSeatsList = [];
+      this.selectedRoomGuests = {};
+      this.totalPrice = 0;
+      this.filterTrips();
+    });
+  }
+
+  private mapApiTrip(data: any): Trip {
+    const seats = this.mapApiSeats(data.gheChuyenXe || [], this.toNumber(data.GiaVeCoBan));
+    const startStation = data.tuyenXe?.DiemKhoiHanh || data.TUYEN_XE?.DiemKhoiHanh || '';
+    const endStation = data.tuyenXe?.DiemDen || data.TUYEN_XE?.DiemDen || '';
+    const departureTime = this.formatApiTime(data.GioKhoiHanh);
+    const arrivalTime = this.formatApiTime(data.GioDenDuKien);
+    const price = this.toNumber(data.GiaVeCoBan);
+    const distance = this.toNumber(data.tuyenXe?.KhoangCach || data.TUYEN_XE?.KhoangCach);
+    const stops = Array.isArray(data.diemDungLichTrinh) ? data.diemDungLichTrinh : [];
+
+    return {
+      id: data.MaLichTrinh,
+      departureTime,
+      arrivalTime,
+      duration: this.calculateDuration(departureTime, arrivalTime),
+      distance: distance > 0 ? `${distance}Km` : '',
+      timezone: 'Asia/Ho_Chi_Minh',
+      type: 'Limousine',
+      availableSeats: seats.filter(seat => seat.status === 'available').length,
+      startStation,
+      endStation,
+      price,
+      seats,
+      stops,
+      expanded: false,
+      selectedTab: 'seat',
+    };
+  }
+
+  private mapApiSeats(seats: any[], fallbackPrice: number): Seat[] {
+    return seats.map(seat => {
+      const name = seat.SoGhe || this.extractSeatName(seat.MaGheChuyen) || seat.MaGheChuyen;
+      const seatNumber = parseInt(String(name).replace(/[^0-9]/g, ''), 10);
+      const deck: 'lower' | 'upper' = Number(seat.TangGhe) === 2 ? 'upper' : 'lower';
+      const side: 'left' | 'right' = Number.isFinite(seatNumber) && seatNumber % 2 === 0 ? 'right' : 'left';
+
+      return {
+        name,
+        maGheChuyen: seat.MaGheChuyen,
+        status: this.mapSeatStatus(seat.TrangThaiGhe),
+        deck,
+        side,
+        price: this.toNumber(seat.GiaVe) || fallbackPrice,
+      };
+    }).sort((a, b) => {
+      if (a.deck !== b.deck) return a.deck === 'lower' ? -1 : 1;
+      return this.getSeatNumber(a.name) - this.getSeatNumber(b.name);
+    });
+  }
+
+  private mapSeatStatus(status?: string): 'sold' | 'available' {
+    return status === 'Trong' ? 'available' : 'sold';
+  }
+
+  private extractSeatName(maGheChuyen?: string): string {
+    if (!maGheChuyen) return '';
+    const parts = maGheChuyen.split('_');
+    return parts[parts.length - 1] || '';
+  }
+
+  private getSeatNumber(name: string): number {
+    const parsed = parseInt(String(name).replace(/[^0-9]/g, ''), 10);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private formatApiTime(value: any): string {
+    if (!value) return '--:--';
+    if (typeof value === 'string') {
+      const isoTime = value.match(/T(\d{2}:\d{2})/);
+      if (isoTime) return isoTime[1];
+      const plainTime = value.match(/^(\d{2}:\d{2})/);
+      if (plainTime) return plainTime[1];
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '--:--';
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  private calculateDuration(start: string, end: string): string {
+    const startParts = start.split(':').map(Number);
+    const endParts = end.split(':').map(Number);
+    if (startParts.length < 2 || endParts.length < 2 || startParts.some(Number.isNaN) || endParts.some(Number.isNaN)) {
+      return '';
+    }
+
+    let startMinutes = startParts[0] * 60 + startParts[1];
+    let endMinutes = endParts[0] * 60 + endParts[1];
+    if (endMinutes < startMinutes) endMinutes += 24 * 60;
+    const diff = endMinutes - startMinutes;
+    return `${Math.floor(diff / 60)}:${String(diff % 60).padStart(2, '0')} h`;
+  }
+
+  private toNumber(value: any): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private normalizeLocation(value: string): string {
+    return (value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase()
+      .trim();
+  }
+
+  private matchLocation(value: string, keyword: string): boolean {
+    if (!keyword) return true;
+    return this.normalizeLocation(value).includes(this.normalizeLocation(keyword));
+  }
+
+  private syncLocationsFromTrips(trips: Trip[]) {
+    const values = new Set(this.locations);
+    trips.forEach(trip => {
+      if (trip.startStation) values.add(trip.startStation);
+      if (trip.endStation) values.add(trip.endStation);
+    });
+    this.locations = Array.from(values);
+  }
+
   // Handle Search button
   searchTrip() {
     this.showPassengerPopover = false;
-    this.filterTrips();
+    this.loadTripsFromApi();
     // Add to recent searches
     const exists = this.recentSearches.some(s => s.from === this.departure && s.to === this.destination);
     if (!exists && this.departure && this.destination) {
@@ -544,9 +730,11 @@ export class TimKiemChuyenXe implements OnInit {
     let result = [...this.allTrips];
     
     // 0. Filter by Departure and Destination (most important!)
-    result = result.filter(trip => 
-      trip.startStation === this.departure && trip.endStation === this.destination
-    );
+    result = result.filter(trip => {
+      const matchDeparture = this.matchLocation(trip.startStation, this.departure);
+      const matchDestination = this.matchLocation(trip.endStation, this.destination);
+      return matchDeparture && matchDestination;
+    });
 
     // 1. Filter by Time
     const hasTimeFilter = this.timeFilters.early || this.timeFilters.morning || this.timeFilters.afternoon || this.timeFilters.evening;
@@ -621,7 +809,7 @@ export class TimKiemChuyenXe implements OnInit {
     this.departure = search.from;
     this.destination = search.to;
     this.departureDate = search.date;
-    this.filterTrips();
+    this.loadTripsFromApi();
   }
 
   // Swap locations
@@ -783,8 +971,11 @@ export class TimKiemChuyenXe implements OnInit {
   }
 
   selectTripAndNavigate(trip: Trip, withSeats: boolean) {
+    const selectedSeats = withSeats ? trip.seats.filter(s => s.status === 'selected') : [];
+    const selectedSeatIds = selectedSeats.map(seat => seat.maGheChuyen || seat.name);
     const bookingData = {
       tripId: trip.id,
+      maLichTrinh: trip.id,
       departureTime: trip.departureTime,
       arrivalTime: trip.arrivalTime,
       duration: trip.duration,
@@ -793,6 +984,9 @@ export class TimKiemChuyenXe implements OnInit {
       endStation: trip.endStation,
       price: trip.price,
       selectedSeats: withSeats ? this.selectedSeatsList : [],
+      selectedSeatIds,
+      maGheChuyenList: selectedSeatIds,
+      stops: trip.stops || [],
       selectedRoomGuests: withSeats ? this.selectedRoomGuests : {},
       totalPrice: withSeats ? this.totalPrice : 0
     };
@@ -824,24 +1018,16 @@ export class TimKiemChuyenXe implements OnInit {
 
     // Extract seat name
     let seatName = '';
-    if (newRecord.MaGheChuyen) {
-      const parts = newRecord.MaGheChuyen.split('_');
-      seatName = parts[parts.length - 1];
-    }
+    seatName = this.extractSeatName(newRecord.MaGheChuyen);
 
     if (!seatName) return;
 
-    const seat = trip.seats.find(s => s.name === seatName);
+    const seat = trip.seats.find(s => s.maGheChuyen === newRecord.MaGheChuyen || s.name === seatName);
     if (!seat) return;
 
     // Map db status to frontend status
     const dbStatus = newRecord.TrangThaiGhe;
-    let newStatus: 'sold' | 'available' | 'selected' = 'available';
-    if (dbStatus === 'b_n' || dbStatus === 'ang_ch_n') {
-      newStatus = 'sold';
-    } else {
-      newStatus = 'available';
-    }
+    const newStatus: 'sold' | 'available' | 'selected' = this.mapSeatStatus(dbStatus);
 
     // Update if it's not the seat currently selected by this admin
     if (seat.status !== 'selected' || newStatus === 'sold') {

@@ -1,9 +1,12 @@
-import { Component, ChangeDetectorRef, NgZone, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectorRef, NgZone, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { timer } from 'rxjs';
 import { LunarCalendarService } from '../../../../core/services/lunar-calendar.service';
 import { SupabaseService } from '../../../../core/services/supabase.service';
+
+const API_BASE = 'http://localhost:3000';
 
 export interface CalendarDay {
   day: number | null;
@@ -58,7 +61,7 @@ export class DanhSachVeComponent implements OnInit {
   currentPage: number = 1;
   pageSize: number = 15;
 
-  tickets: Ticket[] = this.generateMockTickets();
+  tickets: Ticket[] = [];
 
   // Custom Date Picker
   isDatePickerOpen: boolean = false;
@@ -70,14 +73,66 @@ export class DanhSachVeComponent implements OnInit {
     private cdr: ChangeDetectorRef, 
     private zone: NgZone,
     private lunarService: LunarCalendarService,
-    private supabaseService: SupabaseService
-  ) {
-    this.displayTickets = [...this.tickets];
-  }
+    private supabaseService: SupabaseService,
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   ngOnInit() {
     this.generateCalendar();
-    this.setupRealtimeSubscriptions();
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadTickets();
+      this.setupRealtimeSubscriptions();
+    }
+  }
+
+  loadTickets() {
+    this.http.get<any[]>(`${API_BASE}/quan-ly-ve/ve`).subscribe({
+      next: data => {
+        this.tickets = data.map(item => this.mapApiTicket(item));
+        this.displayTickets = [...this.tickets];
+        this.currentPage = 1;
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        console.error('Không thể tải danh sách vé:', err);
+        const message = err?.status === 403
+          ? 'Tài khoản hiện tại chưa có quyền xem danh sách vé.'
+          : 'Không thể tải danh sách vé từ hệ thống.';
+        this.tickets = [];
+        this.displayTickets = [];
+        this.showAlert(message, 'error');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private mapApiTicket(item: any): Ticket {
+    const display = item.display || {};
+    return {
+      id: display.id || item.maVe || item.MaVe || '',
+      customer: display.customer || item.tenKhachHang || 'Chưa rõ khách',
+      phone: display.phone || item.soDienThoai || '',
+      route: display.route || item.tuyenXe || 'Chưa rõ tuyến',
+      arrivalDate: display.arrivalDate || item.ngayDi || '',
+      date: display.date || item.ngayDi || '',
+      time: display.time || item.gioDi || '',
+      total: display.total || item.giaVeText || `${Number(item.giaVe || item.GiaVe || 0).toLocaleString('vi-VN')}đ`,
+      paymentStatus: this.normalizePaymentStatus(display.paymentStatus || item.trangThaiThanhToan),
+      ticketStatus: this.normalizeTicketStatus(display.ticketStatus || item.trangThaiVeText),
+      paymentMethod: display.paymentMethod || item.phuongThucThanhToan || 'Chưa thanh toán',
+      seat: display.seat || item.soGhe || '',
+    };
+  }
+
+  private normalizePaymentStatus(value: string): Ticket['paymentStatus'] {
+    const allowed: Ticket['paymentStatus'][] = ['Chờ thanh toán', 'Đã thanh toán', 'Đã hủy', 'Chờ hoàn tiền', 'Đã hoàn tiền'];
+    return allowed.includes(value as Ticket['paymentStatus']) ? value as Ticket['paymentStatus'] : 'Chờ thanh toán';
+  }
+
+  private normalizeTicketStatus(value: string): Ticket['ticketStatus'] {
+    const allowed: Ticket['ticketStatus'][] = ['Chờ thanh toán', 'Chờ khởi hành', 'Đã hoàn thành', 'Đã hủy'];
+    return allowed.includes(value as Ticket['ticketStatus']) ? value as Ticket['ticketStatus'] : 'Chờ thanh toán';
   }
 
   toggleDatePicker() {
@@ -300,14 +355,18 @@ export class DanhSachVeComponent implements OnInit {
   // Modal Chi tiết vé
   showDetailsModal: boolean = false;
   selectedTicket: Ticket | null = null;
+  refundCalculation: { rate: number; amount: number; fee: number; text: string } | null = null;
+  isLoadingRefundCalculation: boolean = false;
 
   openDetailsModal(ticket: Ticket) {
     this.selectedTicket = ticket;
     this.showDetailsModal = true;
+    this.loadRefundCalculation(ticket);
   }
 
   closeDetailsModal() {
     this.showDetailsModal = false;
+    this.refundCalculation = null;
   }
 
   // Các thao tác trong modal chi tiết
@@ -322,7 +381,43 @@ export class DanhSachVeComponent implements OnInit {
     this.alertMessage = '';
   }
 
+  private loadRefundCalculation(ticket: Ticket) {
+    this.isLoadingRefundCalculation = true;
+    this.http.get<any>(`${API_BASE}/quan-ly-ve/ve/${ticket.id}/huy/tinh-phi`).subscribe({
+      next: data => {
+        this.refundCalculation = {
+          rate: Number(data?.tiLeHoanLai ?? 0),
+          amount: Number(data?.tienHoanLai ?? 0),
+          fee: Number(data?.phiHuy ?? 0),
+          text: data?.text || 'Tính theo chính sách hủy vé hiện hành',
+        };
+        this.isLoadingRefundCalculation = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.refundCalculation = null;
+        this.isLoadingRefundCalculation = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   onCollectMoney() {
+    if (!this.selectedTicket) return;
+    this.http.post(`${API_BASE}/quan-ly-ve/ve/${this.selectedTicket.id}/xac-nhan-thu-tien`, {}).subscribe({
+      next: () => {
+        this.showAlert('Đã xác nhận thu tiền mặt.', 'success');
+        this.closeDetailsModal();
+        this.loadTickets();
+      },
+      error: error => {
+        const message = error?.error?.message || 'Không thể xác nhận thu tiền mặt.';
+        this.showAlert(message, 'error');
+      }
+    });
+  }
+
+  private onCollectMoneyLegacy() {
     this.showAlert('Đang thực hiện thu tiền cho vé ' + this.selectedTicket?.id, 'info');
     if (this.selectedTicket) {
       this.selectedTicket.paymentStatus = 'Đã thanh toán';
@@ -353,7 +448,31 @@ export class DanhSachVeComponent implements OnInit {
     this.showOtpModal = false;
   }
 
+  private cancelSelectedTicket(lyDo: string) {
+    if (!this.selectedTicket) return;
+    this.http.post(`${API_BASE}/quan-ly-ve/ve/${this.selectedTicket.id}/huy`, { lyDo }).subscribe({
+      next: () => {
+        this.showAlert('Đã hủy vé và cập nhật dữ liệu.', 'success');
+        this.closeOtpModal();
+        this.closeDetailsModal();
+        this.loadTickets();
+      },
+      error: error => {
+        const message = error?.error?.message || 'Không thể hủy vé theo chính sách hiện hành.';
+        this.showAlert(message, 'error');
+      }
+    });
+  }
+
   confirmCancelWithOtp() {
+    if (this.otpValue.length === 6) {
+      this.cancelSelectedTicket('Nhân viên xác nhận hủy vé bằng OTP');
+    } else {
+      this.showAlert('Vui lòng nhập đúng mã OTP 6 chữ số.', 'warning');
+    }
+  }
+
+  private confirmCancelWithOtpLegacy() {
     if (this.otpValue.length === 6) {
       this.showAlert('Xác thực thành công! Hệ thống không thể hoàn tiền tự động. Vé ' + this.selectedTicket?.id + ' đã được chuyển sang trạng thái "Chờ hoàn tiền" để nhân viên xử lý thủ công.', 'success');
       if (this.selectedTicket) {
@@ -367,6 +486,18 @@ export class DanhSachVeComponent implements OnInit {
   }
 
   onCancelTicket() {
+    if (!this.selectedTicket) return;
+    if (!this.selectedTicket.paymentStatus.startsWith('Ch')) {
+      this.openOtpModal();
+      return;
+    }
+
+    if (confirm('Bạn có chắc chắn muốn hủy vé này?')) {
+      this.cancelSelectedTicket('Nhân viên hủy vé chưa thanh toán');
+    }
+  }
+
+  private onCancelTicketLegacy() {
     // Nếu vé đã thanh toán thì yêu cầu OTP
     if (this.selectedTicket?.paymentStatus === 'Đã thanh toán') {
       this.openOtpModal();
@@ -496,6 +627,9 @@ export class DanhSachVeComponent implements OnInit {
   }
 
   getRefundCalculation(ticket: Ticket | null) {
+    if (this.refundCalculation && this.selectedTicket?.id === ticket?.id) {
+      return this.refundCalculation;
+    }
     if (!ticket) return { rate: 0, amount: 0, fee: 0, text: 'Không xác định' };
     
     // Parse ticket price (e.g. "170.000đ" -> 170000)
