@@ -93,14 +93,27 @@ export class QuanLyVeService {
     return donHang;
   }
 
+  private mapTrangThaiVe(trangThai: string): any {
+    if (trangThai === 'DaHuy' || trangThai === 'h_y' || trangThai === 'Huy') {
+      return 'DaHuy';
+    }
+    if (trangThai === 'ConHieuLuc' || trangThai === 'Ch__kh_i_h_nh' || trangThai === 'ChoKhoiHanh') {
+      return 'ChoKhoiHanh';
+    }
+    if (trangThai === 'HoanThanh' || trangThai === 'ho_n_th_nh') {
+      return 'DaHoanThanh';
+    }
+    return 'ChoThanhToan';
+  }
   // ===== CẬP NHẬT TRẠNG THÁI VÉ =====
   async updateTrangThaiVe(id: string, trangThai: string, maNhanVien?: string) {
     const ve = await this.getVeById(id);
     const oldTrangThai = ve.TrangThaiVe;
+    const mappedStatus = this.mapTrangThaiVe(trangThai);
 
     const updatedVe = await this.prisma.vE_DIEN_TU.update({
       where: { MaVe: id },
-      data: { TrangThaiVe: trangThai },
+      data: { TrangThaiVe: mappedStatus },
     });
 
     await this.prisma.lICH_SU_VE.create({
@@ -108,7 +121,7 @@ export class QuanLyVeService {
         MaLichSu: `LSV_${Date.now()}`,
         HanhDong: 'Cập nhật trạng thái vé',
         TrangThaiCu: oldTrangThai,
-        TrangThaiMoi: trangThai,
+        TrangThaiMoi: mappedStatus,
         ThoiGianThayDoi: new Date(),
         GhiChu: 'Cập nhật trạng thái vé bởi quản trị viên',
         MaVe: id,
@@ -121,12 +134,12 @@ export class QuanLyVeService {
       MaNhanVien: maNhanVien || 'NVDP001',
       MaVe: id,
       LoaiThaoTac: 'Quản lý vé',
-      NoiDungChiTiet: `Cập nhật trạng thái vé ${id} từ ${oldTrangThai} sang ${trangThai}`,
+      NoiDungChiTiet: `Cập nhật trạng thái vé ${id} từ ${oldTrangThai} sang ${mappedStatus}`,
       TrangThai: 'Thành công',
       TrangThaiCu: oldTrangThai,
-      TrangThaiMoi: trangThai,
+      TrangThaiMoi: mappedStatus,
       DuLieuThayDoi: [
-        { truong: 'TrangThaiVe', giaTriCu: oldTrangThai, giaTriMoi: trangThai },
+        { truong: 'TrangThaiVe', giaTriCu: oldTrangThai, giaTriMoi: mappedStatus },
       ],
     });
 

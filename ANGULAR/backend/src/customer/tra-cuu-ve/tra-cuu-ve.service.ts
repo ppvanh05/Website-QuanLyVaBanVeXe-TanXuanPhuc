@@ -308,7 +308,7 @@ export class TraCuuVeService {
       throw new NotFoundException(`Không tìm thấy vé với mã ${maVe}`);
     }
 
-    if (ticket.TrangThaiVe === 'DaHuy' || ticket.TrangThaiVe === 'DaHuyVe') {
+    if (ticket.TrangThaiVe === 'DaHuy') {
       throw new BadRequestException('Vé này đã được huỷ bỏ trước đó!');
     }
 

@@ -124,7 +124,7 @@ export class TimKiemChuyenXeService {
           lte: endOfDay,
         },
         TrangThai: {
-          notIn: ['DaHuy', 'Cancelled'],
+          notIn: ['DaKhoa'],
         },
         TUYEN_XE: {
           DiemKhoiHanh: { contains: dto.departure, mode: 'insensitive' },

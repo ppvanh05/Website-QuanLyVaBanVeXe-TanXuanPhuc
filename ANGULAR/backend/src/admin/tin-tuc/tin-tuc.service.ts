@@ -71,6 +71,7 @@ export class TinTucService {
         NoiDungChiTiet: dto.NoiDungChiTiet ?? null,
         NgayDang: dto.NgayDang ? new Date(dto.NgayDang as any) : null,
         TrangThai: dto.TrangThai as TrangThaiTinTucEnum,
+        NoiBat: dto.NoiBat ?? false,
         MaQuanTriVien: dto.MaQuanTriVien ?? null,
       },
     });

@@ -101,7 +101,13 @@
               </div>
             </td>
             <td><strong>{{ emp.tenTruyCap }}</strong></td>
-            <td>{{ emp.tenHienThi }}</td>
+            <td>
+              <div class="employee-profile-cell">
+                <img *ngIf="emp.anhDaiDien" [src]="emp.anhDaiDien" alt="avatar" class="table-avatar" />
+                <div *ngIf="!emp.anhDaiDien" class="table-avatar-fallback">{{ getInitials(emp.tenHienThi) }}</div>
+                <span>{{ emp.tenHienThi }}</span>
+              </div>
+            </td>
             <td>
               <!-- Dynamic permissions tag string -->
               <span class="permission-tags-display">
@@ -360,17 +366,6 @@
             </div>
           </div>
 
-          <div class="form-divider"></div>
-
-          <!-- Select Office/Location (Secondary Fields moved below) -->
-          <div class="form-group">
-            <label>Tìm để chọn văn phòng <span class="required">*</span></label>
-            <div class="select-wrapper">
-              <select [(ngModel)]="formModel.maVanPhong" class="form-control">
-                <option *ngFor="let office of offices" [value]="office">{{ office }}</option>
-              </select>
-            </div>
-          </div>
 
           <!-- Avatar Photo Upload Box -->
           <div class="form-group">

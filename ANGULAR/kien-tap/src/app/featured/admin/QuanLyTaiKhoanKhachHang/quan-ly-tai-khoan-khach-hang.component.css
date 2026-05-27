@@ -564,6 +564,7 @@
 
 .textarea-reason {
   width: 100%;
+  min-height: 120px;
   padding: 10px 12px;
   font-family: inherit;
   font-size: 14px;
@@ -1340,4 +1341,8 @@
 
 .avatar-upload-placeholder:hover .upload-text {
   color: var(--primary-color);
+}
+
+.lock-modal-overlay {
+  z-index: 1500 !important;
 }
