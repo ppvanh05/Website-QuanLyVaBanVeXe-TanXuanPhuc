@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../layout/header/header.component';
 import { FooterComponent } from '../../layout/footer/footer.component';
+import { CustomerTinTucService } from '../../../../core/services/customer-tin-tuc.service';
 
 @Component({
   selector: 'app-tintuc-detail',
@@ -11,54 +12,89 @@ import { FooterComponent } from '../../layout/footer/footer.component';
   templateUrl: './tintuc-detail.component.html',
   styleUrl: './tintuc-detail.component.css'
 })
-export class TintucDetailComponent {
-  newsDetail = {
-    category: 'TIN NHÀ XE',
-    title: 'Tân Xuân Phúc Chính Thức Vận Hành Dòng Xe THACO Mobihome 22 Phòng Premium Cao Cấp',
-    date: '15/05/2026',
-    summary: 'Đánh dấu bước chuyển mình mạnh mẽ, Tân Xuân Phúc tự hào đưa vào phục vụ hành khách dàn chuyên cơ mặt đất THACO Mobihome 22 Phòng Premium thế hệ mới trên tuyến Bình Định - Phú Yên đi TP.HCM và Bình Dương.',
-    image: 'asset/images/customer/tintuc1.png'
-  };
+export class TintucDetailComponent implements OnInit {
+  newsDetail: any = null;
+  otherNews: any[] = [];
+  relatedNews: any[] = [];
 
-  otherNews = [
-    {
-      id: 1,
-      title: 'Khai trương tuyến mới Sài Gòn - Đà Lạt với dòng xe Limousine VIP',
-      date: '10 Tháng 5, 2026'
-    },
-    {
-      id: 2,
-      title: 'Hướng dẫn đặt vé và thanh toán trực tuyến qua ứng dụng TXP',
-      date: '05 Tháng 5, 2026'
-    },
-    {
-      id: 3,
-      title: 'Ưu đãi 20% cho khách hàng thân thiết trong mùa hè này',
-      date: '01 Tháng 5, 2026'
-    }
-  ];
+  constructor(
+    private route: ActivatedRoute,
+    private newsService: CustomerTinTucService
+  ) {}
 
-  relatedNews = [
-    {
-      category: 'DỊCH VỤ',
-      title: 'Nâng cấp hệ thống phòng chờ hạng thương gia tại các đầu bến chính',
-      summary: 'Nhằm mang lại sự tiện nghi tối đa, TXP chính thức đưa vào hoạt động hệ thống phòng chờ...',
-      date: '08 Tháng 5, 2026',
-      image: 'asset/images/customer/tintuc2.jpg'
-    },
-    {
-      category: 'TUYỂN DỤNG',
-      title: 'TXP tìm kiếm đồng đội: Tuyển dụng 20 nhân viên điều hành tại TP.HCM',
-      summary: 'Gia nhập đội ngũ vận tải hàng đầu và cùng chúng tôi kiến tạo những hành trình hạnh phúc...',
-      date: '03 Tháng 5, 2026',
-      image: 'asset/images/customer/benxebencat.jpg'
-    },
-    {
-      category: 'CÔNG NGHỆ',
-      title: 'Chuyển đổi số trong vận tải: Cách TXP tối ưu hóa lịch trình bằng AI',
-      summary: 'Tìm hiểu về hệ thống quản lý thông minh giúp giảm thiểu thời gian chờ và tiết kiệm nhiên liệu...',
-      date: '28 Tháng 4, 2026',
-      image: 'asset/images/customer/tintuc3.png'
+  ngOnInit() {
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.fetchNewsDetail(id);
+      }
+    });
+  }
+
+  fetchNewsDetail(id: string) {
+    this.newsService.getNewsById(id).subscribe({
+      next: (response) => {
+        if (response) {
+          const rawNews = response.news;
+          this.newsDetail = {
+            category: this.getCategoryLabel(rawNews.LoaiTinTuc),
+            title: rawNews.TieuDe,
+            date: this.formatDate(rawNews.NgayDang),
+            summary: rawNews.MoTaNgan || '',
+            content: rawNews.NoiDungChiTiet || '',
+            image: rawNews.AnhBia || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800'
+          };
+
+          this.otherNews = (response.latestNews || []).map((item: any) => ({
+            id: item.MaTinTuc,
+            title: item.TieuDe,
+            date: this.formatDateLabel(item.NgayDang)
+          }));
+
+          this.relatedNews = (response.relatedNews || []).map((item: any) => ({
+            maTinTuc: item.MaTinTuc,
+            category: this.getCategoryLabel(item.LoaiTinTuc),
+            title: item.TieuDe,
+            summary: item.MoTaNgan || '',
+            date: this.formatDateLabel(item.NgayDang),
+            image: item.AnhBia || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800'
+          }));
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching news detail:', err);
+      }
+    });
+  }
+
+  getCategoryLabel(type: string): string {
+    switch (type) {
+      case 'TinTuc': return 'TIN NHÀ XE';
+      case 'KhuyenMai': return 'KHUYẾN MÃI';
+      case 'HuongDan': return 'CẨM NANG DI CHUYỂN';
+      case 'ThongBao': return 'THÔNG BÁO';
+      case 'SuKien': return 'SỰ KIỆN';
+      case 'TuyenDung': return 'TUYỂN DỤNG';
+      default: return 'TIN NHÀ XE';
     }
-  ];
+  }
+
+  formatDate(dateStr: any): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  formatDateLabel(dateStr: any): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day} Tháng ${month}, ${year}`;
+  }
 }
+

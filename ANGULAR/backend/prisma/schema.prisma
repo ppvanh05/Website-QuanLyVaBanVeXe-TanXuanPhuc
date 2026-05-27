@@ -401,6 +401,7 @@ model TIN_TUC {
   NoiDungChiTiet String?
   NgayDang       DateTime?            @db.Timestamptz(6)
   TrangThai      TrangThaiTinTucEnum?
+  NoiBat         Boolean @default(false)
   MaQuanTriVien  String?              @db.VarChar
   NgayGioHenGio  DateTime?            @db.Timestamptz(6)
   NoiBat         Boolean?             @default(false)
@@ -517,6 +518,7 @@ enum TrangThaiTinTucEnum {
 enum TrangThaiViPhamEnum {
   DangApDung
   NgungApDung
+}
 }
 
 enum LoaiDiem {
