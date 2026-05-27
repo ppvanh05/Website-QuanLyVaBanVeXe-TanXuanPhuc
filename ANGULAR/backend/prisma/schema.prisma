@@ -529,13 +529,13 @@ enum LoaiNhanVien {
 }
 
 enum PhuongThucThanhToan {
-  Thanh_to_n_qua_VietQR @map("Thanh toán qua VietQR")
-  V__MoMo               @map("Ví MoMo")
-  V__VNPay              @map("Ví VNPay")
-  V__ZaloPay            @map("Ví ZaloPay")
-  Th__ATM_n_i___a       @map("Thẻ ATM nội địa")
-  Th__Visa_Master_JCB   @map("Thẻ Visa/Master/JCB")
-  Ti_n_m_t              @map("Tiền mặt")
+  VietQR
+  MoMo
+  VNPay
+  ZaloPay
+  ATM_noi_dia     @map("ATM nội địa")
+  Visa_Master_JCB @map("Visa/Master/JCB")
+  TienMat
 }
 
 enum TrangThaiDiem {
@@ -580,8 +580,8 @@ enum TrangThaiTuyenXe {
 }
 
 enum TrangThaiVe {
-  ChoThanhToan @map("Chờ thanh toán")
-  ChoKhoiHanh  @map("Chờ khởi hành")
-  DaHoanThanh  @map("Đã hoàn thành")
-  DaHuy        @map("Đã hủy")
+  ChoThanhToan
+  ChoKhoiHanh
+  DaHoanThanh
+  DaHuy
 }

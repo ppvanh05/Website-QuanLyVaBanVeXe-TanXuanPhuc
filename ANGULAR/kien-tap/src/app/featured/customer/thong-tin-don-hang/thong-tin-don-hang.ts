@@ -371,6 +371,40 @@ export class ThongTinDonHang implements OnInit {
       return;
     }
 
+    // Booking hold-seats payload
+    const holdSeatsPayload = {
+      MaLichTrinh: String(this.bookingData.tripId || 1),
+      DanhSachMaGheChuyen: this.bookingData.selectedSeats,
+    };
+    console.log('Booking hold-seats payload:', holdSeatsPayload);
+
+    // Stop name to ID mapper
+    const pickupMap: Record<string, string> = {
+      'Bến xe Miền Đông Cũ': 'MD01',
+      'Bến xe Giáp Bát': 'MD02',
+      'Bến xe Gia Lâm': 'MD03',
+      'Bến xe Miền Tây': 'MD04',
+      'Bến xe Hải Phòng': 'MT01',
+      'Bến xe Sài Gòn': 'MT02',
+      'Bến xe Quy Nhơn': 'MT03',
+      'Bến xe Vũng Tàu': 'MT04',
+    };
+    const getMaDiem = (name: string) => pickupMap[name] || 'MD04';
+
+    // Booking create-order payload
+    const createOrderPayload = {
+      MaKhachHang: 'KH001',
+      MaLichTrinh: String(this.bookingData.tripId || 1),
+      DanhSachMaGheChuyen: this.bookingData.selectedSeats,
+      HoTenNguoiDi: this.customerName,
+      SdtNguoiDi: this.customerPhone,
+      EmailNguoiDi: this.customerEmail,
+      MaDiemDon: getMaDiem(this.selectedPickup?.name),
+      MaDiemTra: getMaDiem(this.selectedDropoff?.name),
+      PhuongThucThanhToan: 'Ví MoMo',
+    };
+    console.log('Booking create-order payload:', createOrderPayload);
+
     // Save final details for the payment screen
     const finalData = {
       ...this.bookingData,
@@ -378,7 +412,15 @@ export class ThongTinDonHang implements OnInit {
       customerPhone: this.customerPhone,
       customerEmail: this.customerEmail,
       pickup: this.selectedPickup,
-      dropoff: this.selectedDropoff
+      dropoff: this.selectedDropoff,
+      // Add aligned fields
+      MaLichTrinh: String(this.bookingData.tripId || 1),
+      DanhSachMaGheChuyen: this.bookingData.selectedSeats,
+      HoTenNguoiDi: this.customerName,
+      SdtNguoiDi: this.customerPhone,
+      EmailNguoiDi: this.customerEmail,
+      MaDiemDon: getMaDiem(this.selectedPickup?.name),
+      MaDiemTra: getMaDiem(this.selectedDropoff?.name),
     };
     localStorage.setItem('final_booking', JSON.stringify(finalData));
     this.router.navigate(['/thanh-toan']);

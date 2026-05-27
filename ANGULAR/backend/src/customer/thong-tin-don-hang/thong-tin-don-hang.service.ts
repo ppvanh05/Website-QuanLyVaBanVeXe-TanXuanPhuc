@@ -40,6 +40,19 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
     return `VE${Date.now().toString().slice(-6)}${Math.floor(1000 + Math.random() * 9000)}`;
   }
 
+  private mapPhuongThucThanhToan(method: string): any {
+    if (!method) return 'VietQR';
+    const m = method.toLowerCase();
+    if (m.includes('vietqr') || m.includes('chuyenkhoan') || m.includes('chuyển khoản')) return 'VietQR';
+    if (m.includes('momo')) return 'MoMo';
+    if (m.includes('vnpay')) return 'VNPay';
+    if (m.includes('zalopay')) return 'ZaloPay';
+    if (m.includes('atm') || m.includes('nội địa')) return 'ATM_noi_dia';
+    if (m.includes('visa') || m.includes('master') || m.includes('jcb') || m.includes('card') || m.includes('thẻ quốc tế')) return 'Visa_Master_JCB';
+    if (m.includes('tiền mặt') || m.includes('tienmat') || m.includes('cash')) return 'TienMat';
+    return 'VietQR';
+  }
+
   // ===== AUTOMATIC SEAT RELEASE =====
   async releaseExpiredHeldSeats() {
     try {
@@ -257,7 +270,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           SoLuongVeDaDat: DanhSachMaGheChuyen.length,
           TienBaoHiem: new Prisma.Decimal(totalInsurance),
           TongGiaVe: new Prisma.Decimal(finalTotal),
-          PhuongThucThanhToan: PhuongThucThanhToan as any,
+          PhuongThucThanhToan: this.mapPhuongThucThanhToan(PhuongThucThanhToan),
           TrangThaiDonHang: 'ChoThanhToan',
         },
       });

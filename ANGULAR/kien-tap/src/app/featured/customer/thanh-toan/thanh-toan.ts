@@ -160,6 +160,20 @@ export class ThanhToan implements OnInit, OnDestroy {
   }
 
   finishPayment() {
+    const paymentMethodMap: Record<string, string> = {
+      vietqr: 'Thanh toán qua VietQR',
+      momo: 'Ví MoMo',
+      vnpay: 'Ví VNPay',
+      zalopay: 'Ví ZaloPay',
+    };
+
+    const transactionPayload = {
+      MaDonHang: this.bookingData.maDonHang || `DH_${Date.now()}`,
+      SoTien: this.bookingData.totalPrice || 800000,
+      PhuongThucThanhToan: paymentMethodMap[this.selectedPayment] || 'Ví MoMo',
+    };
+    console.log('Payment create-transaction payload:', transactionPayload);
+
     this.showSuccessModal = true;
     this.successRedirectTime = 20;
     localStorage.removeItem('current_booking');

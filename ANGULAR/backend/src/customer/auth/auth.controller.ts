@@ -1,7 +1,9 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseFilters } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { CustomerExceptionFilter } from '../customer-exception.filter';
 
 @Controller('customer/auth')
+@UseFilters(CustomerExceptionFilter)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -33,14 +35,24 @@ export class AuthController {
       otp?: string;
     },
   ) {
-    return this.authService.register(dto);
+    const result = await this.authService.register(dto);
+    return {
+      success: true,
+      message: 'Đăng ký tài khoản thành công!',
+      data: result,
+    };
   }
 
   // POST /customer/auth/login → Đăng nhập tài khoản
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: { phoneOrEmail: string; MatKhau: string }) {
-    return this.authService.login(dto);
+    const result = await this.authService.login(dto);
+    return {
+      success: true,
+      message: 'Đăng nhập thành công!',
+      data: result,
+    };
   }
 
   // POST /customer/auth/forgot-password → Gửi OTP quên mật khẩu

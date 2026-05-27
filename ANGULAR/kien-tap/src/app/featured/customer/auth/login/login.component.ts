@@ -82,6 +82,12 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    const loginPayload = {
+      phoneOrEmail: this.phoneOrEmail,
+      MatKhau: this.password,
+    };
+    console.log('Auth login payload:', loginPayload);
+
     // Mock authentication logic
     const mockUsers = this.getMockUsers();
     const user: MockUser | undefined = mockUsers.find(u => 

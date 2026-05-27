@@ -1,32 +1,59 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseFilters } from '@nestjs/common';
 import { ReviewService } from './review.service';
+import { CustomerExceptionFilter } from '../customer-exception.filter';
 
 @Controller('customer/reviews')
+@UseFilters(CustomerExceptionFilter)
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
   @Post()
-  create(@Body() createReviewDto: any) { // Thay thế DTO bằng 'any'
-    return this.reviewService.create(createReviewDto);
+  async create(@Body() createReviewDto: any) {
+    const data = await this.reviewService.create(createReviewDto);
+    return {
+      success: true,
+      message: 'Tạo đánh giá thành công!',
+      data,
+    };
   }
 
   @Get()
-  findAll() {
-    return this.reviewService.findAll();
+  async findAll() {
+    const data = await this.reviewService.findAll();
+    return {
+      success: true,
+      message: 'Lấy danh sách đánh giá thành công!',
+      data,
+    };
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reviewService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    const data = await this.reviewService.findOne(id);
+    return {
+      success: true,
+      message: 'Lấy chi tiết đánh giá thành công!',
+      data,
+    };
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReviewDto: any) { // Thay thế DTO bằng 'any'
-    return this.reviewService.update(id, updateReviewDto);
+  async update(@Param('id') id: string, @Body() updateReviewDto: any) {
+    const data = await this.reviewService.update(id, updateReviewDto);
+    return {
+      success: true,
+      message: 'Cập nhật đánh giá thành công!',
+      data,
+    };
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.reviewService.remove(id);
+  async remove(@Param('id') id: string) {
+    const data = await this.reviewService.remove(id);
+    return {
+      success: true,
+      message: 'Xóa đánh giá thành công!',
+      data,
+    };
   }
 }

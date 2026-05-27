@@ -148,6 +148,12 @@ export class RegisterComponent implements OnDestroy {
     }
 
     this.phoneNumber = cleaned;
+    const sendOtpPayload = {
+      SoDienThoai: cleaned,
+      MucDich: 'DangKy',
+    };
+    console.log('Auth send-otp payload:', sendOtpPayload);
+
     this.generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
     this.otpDigits = Array(6).fill('');
     this.otpDigitsString = '';
@@ -293,6 +299,15 @@ export class RegisterComponent implements OnDestroy {
       this.confirmPasswordError = 'Mật khẩu nhập lại không khớp.';
       return;
     }
+
+    const registerPayload = {
+      SoDienThoai: this.phoneNumber,
+      HoTenKhachHang: this.fullName.trim(),
+      Email: this.email.trim(),
+      MatKhau: this.password,
+      otp: this.otpDigitsString,
+    };
+    console.log('Auth register payload:', registerPayload);
 
     const newUser = {
       phoneNumber: this.phoneNumber,

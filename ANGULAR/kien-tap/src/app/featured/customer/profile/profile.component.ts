@@ -1,4 +1,4 @@
-﻿import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -294,6 +294,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   verifyOtp() {
     const otpCode = this.otpInputs.map(i => i.value).join('');
     if (otpCode.length === 6) {
+      const changePasswordPayload = {
+        MatKhauCu: this.passwords.current,
+        MatKhauMoi: this.passwords.new,
+        otp: otpCode,
+      };
+      console.log('Profile change-password payload:', changePasswordPayload);
+
       this.closeOtpModal();
       this.showSuccessModal = true;
       this.startRedirectTimer();

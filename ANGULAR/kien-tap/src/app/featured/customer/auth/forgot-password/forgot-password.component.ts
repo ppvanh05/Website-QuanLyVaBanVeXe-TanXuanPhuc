@@ -120,6 +120,12 @@ export class ForgotPasswordComponent implements OnDestroy {
     }
 
     this.phoneNumber = cleaned;
+    const sendOtpPayload = {
+      SoDienThoai: cleaned,
+      MucDich: 'QuenMatKhau',
+    };
+    console.log('Auth send-otp payload:', sendOtpPayload);
+
     this.generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
     this.otpDigitsString = '';
     this.otpDigits = Array(6).fill('');
@@ -196,6 +202,13 @@ export class ForgotPasswordComponent implements OnDestroy {
       this.confirmPasswordError = 'Mật khẩu nhập lại không khớp.';
       return;
     }
+
+    const resetPayload = {
+      SoDienThoai: this.phoneNumber,
+      otp: this.otpDigitsString,
+      MatKhauMoi: this.newPassword,
+    };
+    console.log('Auth reset-password payload:', resetPayload);
 
     const users = this.getMockUsers();
     const userIndex = users.findIndex(u => u.phoneNumber === this.phoneNumber);
