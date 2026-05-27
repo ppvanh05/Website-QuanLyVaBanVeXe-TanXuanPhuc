@@ -101,12 +101,6 @@
             </td>
             <td class="text-right">
               <div class="table-actions">
-                <button *ngIf="cust.trangThaiTaiKhoan === 'HoatDong'" class="btn-action-lock" (click)="openLockCustomerModal(cust)" title="Khóa tài khoản">
-                  <span class="material-icons">lock</span>
-                </button>
-                <button *ngIf="cust.trangThaiTaiKhoan === 'DaKhoa'" class="btn-action-unlock" (click)="unlockCustomer(cust)" title="Mở khóa tài khoản">
-                  <span class="material-icons">lock_open</span>
-                </button>
                 <button class="btn-action-view" (click)="openDetailModal(cust)" title="Xem chi tiết & Cập nhật">
                   <span class="material-icons">edit</span>
                 </button>
@@ -156,42 +150,6 @@
   </div>
 </div>
 
-<!-- Lock Customer Reason Prompt Modal -->
-<div class="modal-overlay lock-modal-overlay" *ngIf="showLockModal" (click)="closeLockModal()">
-  <div class="modal-content lock-reason-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <div class="title-left">
-        <span class="material-icons text-danger">warning</span>
-        <h3>Xác nhận khóa tài khoản</h3>
-      </div>
-      <button class="btn-close" (click)="closeLockModal()">
-        <span class="material-icons">close</span>
-      </button>
-    </div>
-    
-    <div class="modal-body text-left">
-      <p>Bạn đang thực hiện khóa tài khoản của khách hàng <strong>{{ lockingCustomer?.hoTenKhachHang }}</strong> (Mã: <strong>{{ lockingCustomer?.maKhachHang }}</strong>).</p>
-      <p class="text-secondary text-13">Tài khoản sau khi bị khóa sẽ không thể đăng nhập vào website đặt vé, không đặt được ghế mới và không thể chỉnh sửa vé xe.</p>
-      
-      <div class="form-group margin-top-15">
-        <label class="required-field">Lý do khóa tài khoản</label>
-        <textarea 
-          [(ngModel)]="lockReason" 
-          placeholder="Nhập chi tiết lý do khóa (Ví dụ: Spam giữ chỗ nhiều lần không thanh toán, Vi phạm nghiêm trọng điều khoản...)" 
-          class="form-control textarea-reason"
-          rows="3">
-        </textarea>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-secondary" (click)="closeLockModal()">Hủy bỏ</button>
-      <button class="btn-danger" (click)="confirmLockCustomer()">
-        <span class="material-icons">lock</span> Khóa tài khoản
-      </button>
-    </div>
-  </div>
-</div>
 
 <!-- Customer Detail & Update Modal (Tabbed Drawer) -->
 <div class="modal-overlay" *ngIf="selectedCustomer" (click)="closeDetailModal()">
@@ -302,7 +260,7 @@
             </div>
 
             <div class="form-group">
-              <label class="required-field">Địa chỉ Email</label>
+              <label>Địa chỉ Email</label>
               <input 
                 type="email" 
                 [(ngModel)]="editedCustomer.email" 
@@ -343,24 +301,7 @@
             </div>
           </div>
  
-          <!-- Account lock options -->
-          <div class="account-actions-box" *ngIf="isEditMode">
-            <h5 class="box-title">Trạng thái bảo mật tài khoản</h5>
-            <div class="box-actions-row">
-              <div *ngIf="selectedCustomer.trangThaiTaiKhoan === 'HoatDong'">
-                <p class="text-secondary text-13">Tài khoản này đang hoạt động tốt. Bạn có thể tạm thời khóa nếu phát hiện có hành vi gian lận hoặc vi phạm.</p>
-                <button class="btn-outline-danger" (click)="openLockCustomerModal(selectedCustomer)">
-                  <span class="material-icons">lock</span> Khóa tài khoản khách hàng
-                </button>
-              </div>
-              <div *ngIf="selectedCustomer.trangThaiTaiKhoan === 'DaKhoa'">
-                <p class="text-secondary text-13">Tài khoản này đã bị khóa. Khách hàng không thể giao dịch. Bạn có thể mở khóa lại nếu đã giải quyết xong khiếu nại.</p>
-                <button class="btn-outline-success" (click)="unlockCustomer(selectedCustomer)">
-                  <span class="material-icons">lock_open</span> Mở khóa tài khoản ngay
-                </button>
-              </div>
-            </div>
-          </div>
+
         </div>
 
         <!-- Sub-tab 2: Booking history -->
@@ -435,12 +376,59 @@
 
     <!-- Modal Footer Actions (only visible in account info tab for editing updates) -->
     <div class="modal-footer-sticky" *ngIf="detailTabActive === 'info'">
+      <!-- Left lock/unlock action button -->
+      <div class="footer-left" *ngIf="isEditMode">
+        <button *ngIf="selectedCustomer.trangThaiTaiKhoan === 'HoatDong'" class="btn-outline-danger" (click)="openLockCustomerModal(selectedCustomer)">
+          <span class="material-icons">lock</span> Khóa tài khoản khách hàng
+        </button>
+        <button *ngIf="selectedCustomer.trangThaiTaiKhoan === 'DaKhoa'" class="btn-outline-success" (click)="unlockCustomer(selectedCustomer)">
+          <span class="material-icons">lock_open</span> Mở khóa tài khoản ngay
+        </button>
+      </div>
+
       <div class="footer-actions-right">
         <button class="btn-secondary" (click)="closeDetailModal()">Đóng cửa sổ</button>
         <button class="btn-success" (click)="saveCustomer()">
           <span class="material-icons">save</span> {{ isEditMode ? 'Lưu thay đổi' : 'Tạo tài khoản' }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lock Customer Reason Prompt Modal -->
+<div class="modal-overlay lock-modal-overlay" *ngIf="showLockModal" (click)="closeLockModal()">
+  <div class="modal-content lock-reason-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="title-left">
+        <span class="material-icons text-danger">warning</span>
+        <h3>Xác nhận khóa tài khoản</h3>
+      </div>
+      <button class="btn-close" (click)="closeLockModal()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    
+    <div class="modal-body text-left">
+      <p>Bạn đang thực hiện khóa tài khoản của khách hàng <strong>{{ lockingCustomer?.hoTenKhachHang }}</strong> (Mã: <strong>{{ lockingCustomer?.maKhachHang }}</strong>).</p>
+      <p class="text-secondary text-13">Tài khoản sau khi bị khóa sẽ không thể đăng nhập vào website đặt vé, không đặt được ghế mới và không thể chỉnh sửa vé xe.</p>
+      
+      <div class="form-group margin-top-15">
+        <label class="required-field">Lý do khóa tài khoản</label>
+        <textarea 
+          [(ngModel)]="lockReason" 
+          placeholder="Nhập chi tiết lý do khóa (Ví dụ: Spam giữ chỗ nhiều lần không thanh toán, Vi phạm nghiêm trọng điều khoản...)" 
+          class="form-control textarea-reason"
+          rows="3">
+        </textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeLockModal()">Hủy bỏ</button>
+      <button class="btn-danger" (click)="confirmLockCustomer()">
+        <span class="material-icons">lock</span> Khóa tài khoản
+      </button>
     </div>
   </div>
 </div>

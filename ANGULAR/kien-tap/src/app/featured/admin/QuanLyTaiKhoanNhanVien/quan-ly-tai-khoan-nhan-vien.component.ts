@@ -17,7 +17,6 @@ export interface NhanVien {
   soDienThoai: string;
   dienThoaiCoDinh?: string;
   email: string;
-  maVanPhong: string;
   anhDaiDien: string;
   ghiChu: string;
   trangThai: 'HoatDong' | 'DaKhoa';
@@ -224,7 +223,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       diaChi: '32 Cầu Giấy, Hà Nội',
       soDienThoai: '0912345678',
       email: 'minhtam.boss@gmail.com',
-      maVanPhong: 'Văn Phòng Bến xe Gia Lâm',
       anhDaiDien: '',
       ghiChu: 'Theo dõi và quản trị kinh doanh chung của văn phòng.',
       trangThai: 'HoatDong',
@@ -246,7 +244,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       diaChi: '102 Mỹ Đình, Nam Từ Liêm, Hà Nội',
       soDienThoai: '0987654321',
       email: 'lylonglinh.nv@txpbus.vn',
-      maVanPhong: 'Văn Phòng 30 Mỹ Đình',
       anhDaiDien: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
       ghiChu: 'Nhân viên bán vé chuyên nghiệp, xuất sắc ca chiều.',
       trangThai: 'HoatDong',
@@ -268,7 +265,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       diaChi: 'Bến xe Gia Lâm, Long Biên, Hà Nội',
       soDienThoai: '0944445555',
       email: 'anhhuy.boss@txpbus.vn',
-      maVanPhong: 'Văn Phòng 30 Mỹ Đình',
       anhDaiDien: '',
       ghiChu: 'Quản trị viên hệ thống cấp cao, phụ trách hạ tầng kỹ thuật.',
       trangThai: 'HoatDong',
@@ -297,12 +293,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
   isSaving: boolean = false; // Prevent double submit
 
   // Selected Office option lists
-  offices: string[] = [
-    'Văn Phòng 30 Mỹ Đình',
-    'Văn Phòng Bến xe Gia Lâm',
-    'Văn Phòng Bến xe Niệm Nghĩa',
-    'Văn Phòng Trung tâm Điều hành TXP'
-  ];
+  offices: string[] = [];
 
   // Form model
   formModel: NhanVien = this.createEmptyForm();
@@ -353,7 +344,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       soDienThoai: nv.SoDienThoai || '',
       dienThoaiCoDinh: nv.DienThoaiCoDinh || '',
       email: nv.Email || '',
-      maVanPhong: nv.MaVanPhong || '',
       anhDaiDien: nv.AnhDaiDien || '',
       ghiChu: nv.GhiChu || '',
       trangThai: nv.TrangThai === 'DaKhoa' ? 'DaKhoa' : 'HoatDong',
@@ -377,7 +367,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       SoDienThoai: nv.soDienThoai,
       DienThoaiCoDinh: nv.dienThoaiCoDinh || null,
       Email: nv.email,
-      MaVanPhong: nv.maVanPhong,
       AnhDaiDien: nv.anhDaiDien || null,
       GhiChu: nv.ghiChu || null,
       TrangThai: nv.trangThai,
@@ -432,7 +421,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       soDienThoai: '',
       dienThoaiCoDinh: '',
       email: '',
-      maVanPhong: 'Văn Phòng 30 Mỹ Đình',
       anhDaiDien: '',
       ghiChu: '',
       trangThai: 'HoatDong',
