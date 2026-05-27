@@ -46,6 +46,13 @@ export class ThongTinDonHang implements OnInit {
   customerPhone: string = '0981939379';
   customerEmail: string = 'nghitnb23406@st.uel.edu.vn';
   agreeTerms: boolean = false;
+  
+  // Validation errors realtime
+  validationErrors: {
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+  } = {};
 
   // Pickup/Dropoff dropdown states
   pickupSearch: string = 'Bến xe Miền Tây';
@@ -213,6 +220,37 @@ export class ThongTinDonHang implements OnInit {
   closeAlert() {
     this.showAlertModal = false;
     this.alertMessage = '';
+  }
+
+  // ===== VALIDATION REALTIME =====
+  validateCustomerName() {
+    if (!this.customerName.trim()) {
+      this.validationErrors.customerName = 'Vui lòng nhập Họ và tên';
+    } else if (this.customerName.trim().length < 2) {
+      this.validationErrors.customerName = 'Họ và tên phải có ít nhất 2 ký tự';
+    } else {
+      delete this.validationErrors.customerName;
+    }
+  }
+
+  validateCustomerPhone() {
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})\b$/;
+    if (!this.customerPhone.trim()) {
+      this.validationErrors.customerPhone = 'Vui lòng nhập Số điện thoại';
+    } else if (!phoneRegex.test(this.customerPhone.trim())) {
+      this.validationErrors.customerPhone = 'Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và có 10 số)';
+    } else {
+      delete this.validationErrors.customerPhone;
+    }
+  }
+
+  validateCustomerEmail() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (this.customerEmail.trim() && !emailRegex.test(this.customerEmail.trim())) {
+      this.validationErrors.customerEmail = 'Email không hợp lệ';
+    } else {
+      delete this.validationErrors.customerEmail;
+    }
   }
 
   getPickupArrivalTime(): string {

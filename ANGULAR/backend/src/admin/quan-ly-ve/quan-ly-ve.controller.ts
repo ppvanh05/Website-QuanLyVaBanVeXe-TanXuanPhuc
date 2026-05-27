@@ -122,4 +122,35 @@ export class QuanLyVeController {
       );
     }
   }
+
+  // POST /quan-ly-ve/tao-don-hang → Tạo đơn hàng và vé mới
+  @Post('tao-don-hang')
+  async taoDonHangVaVe(
+    @Body() dto: {
+      maKhachHang: string;
+      maNVBanVe?: string;
+      hoTenNguoiDi?: string;
+      sdtNguoiDi?: string;
+      emailNguoiDi?: string;
+      maLichTrinh: string;
+      maGheChuyenList: string[];
+      maDiemDon: string;
+      maDiemTra: string;
+      phuongThucThanhToan: string;
+      ghiChu?: string;
+    },
+  ) {
+    try {
+      return await this.quanLyVeService.taoDonHangVaVe(dto);
+    } catch (error) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: error.message || 'Lỗi khi tạo đơn hàng',
+          error: error,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 }
