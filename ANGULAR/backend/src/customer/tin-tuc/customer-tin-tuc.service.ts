@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, LoaiTinTucEnum, TrangThaiTinTucEnum } from '@prisma/client';
 
 @Injectable()
 export class CustomerTinTucService {
+  private readonly logger = new Logger(CustomerTinTucService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async getPublishedNews(params: {
@@ -17,15 +19,29 @@ export class CustomerTinTucService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.TIN_TUCWhereInput = {
-      TrangThai: 'DaDang',
+      TrangThai: TrangThaiTinTucEnum.DaDang,
     };
 
-    // Filter by type if provided
     if (params.loai && params.loai.trim() !== '') {
-      where.LoaiTinTuc = params.loai;
+      const loaiSearch = params.loai.trim().toLowerCase();
+      
+      // Map case-insensitive input to exact Prisma Enum values
+      const enumMap: Record<string, LoaiTinTucEnum> = {
+        'thongbao': LoaiTinTucEnum.ThongBao,
+        'sukien': LoaiTinTucEnum.SuKien,
+        'khuyenmai': LoaiTinTucEnum.KhuyenMai,
+        'tintucchung': LoaiTinTucEnum.TinTucChung,
+        'tuyendung': LoaiTinTucEnum.TuyenDung,
+        'huongdan': LoaiTinTucEnum.HuongDan,
+        // Fallback for 'tintuc' if frontend sends it
+        'tintuc': LoaiTinTucEnum.TinTucChung
+      };
+
+      if (enumMap[loaiSearch]) {
+        where.LoaiTinTuc = enumMap[loaiSearch];
+      }
     }
 
-    // Filter by search keyword in Title or Short Description
     if (params.search && params.search.trim() !== '') {
       const searchKeyword = params.search.trim();
       where.OR = [
@@ -34,11 +50,17 @@ export class CustomerTinTucService {
       ];
     }
 
-    // Get total count for pagination metadata
+    const featuredNews = await this.prisma.tIN_TUC.findFirst({
+      where: {
+        ...where,
+        NoiBat: true,
+      },
+      orderBy: { NgayDang: 'desc' },
+    });
+
     const totalItems = await this.prisma.tIN_TUC.count({ where });
     const totalPages = Math.ceil(totalItems / limit);
 
-    // Get the news items
     const items = await this.prisma.tIN_TUC.findMany({
       where,
       orderBy: { NgayDang: 'desc' },
@@ -46,8 +68,28 @@ export class CustomerTinTucService {
       take: limit,
     });
 
+    // Map PascalCase for Frontend compatibility
+    const mappedItems = items.map(item => ({
+      MaTinTuc: item.MaTinTuc,
+      TieuDe: item.TieuDe,
+      AnhBia: item.AnhBia,
+      LoaiTinTuc: item.LoaiTinTuc,
+      MoTaNgan: item.MoTaNgan,
+      NgayDang: item.NgayDang
+    }));
+
+    const mappedFeatured = featuredNews ? {
+      MaTinTuc: featuredNews.MaTinTuc,
+      TieuDe: featuredNews.TieuDe,
+      AnhBia: featuredNews.AnhBia,
+      LoaiTinTuc: featuredNews.LoaiTinTuc,
+      MoTaNgan: featuredNews.MoTaNgan,
+      NgayDang: featuredNews.NgayDang
+    } : null;
+
     return {
-      items,
+      featuredNews: mappedFeatured,
+      items: mappedItems,
       meta: {
         totalItems,
         totalPages,
@@ -58,11 +100,10 @@ export class CustomerTinTucService {
   }
 
   async getNewsById(id: string) {
-    // Find the news item
     const news = await this.prisma.tIN_TUC.findFirst({
       where: {
         MaTinTuc: id,
-        TrangThai: 'DaDang',
+        TrangThai: TrangThaiTinTucEnum.DaDang,
       },
     });
 
@@ -70,10 +111,9 @@ export class CustomerTinTucService {
       return null;
     }
 
-    // Find 3 other related news in the same category
     const relatedNews = await this.prisma.tIN_TUC.findMany({
       where: {
-        TrangThai: 'DaDang',
+        TrangThai: TrangThaiTinTucEnum.DaDang,
         LoaiTinTuc: news.LoaiTinTuc,
         NOT: { MaTinTuc: id },
       },
@@ -81,10 +121,9 @@ export class CustomerTinTucService {
       take: 3,
     });
 
-    // Find 3 latest news overall
     const latestNews = await this.prisma.tIN_TUC.findMany({
       where: {
-        TrangThai: 'DaDang',
+        TrangThai: TrangThaiTinTucEnum.DaDang,
         NOT: { MaTinTuc: id },
       },
       orderBy: { NgayDang: 'desc' },

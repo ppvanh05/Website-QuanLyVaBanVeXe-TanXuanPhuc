@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"  
+  provider = "postgresql"
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -52,14 +52,6 @@ model DANH_GIA {
   MaVe              String              @db.VarChar
   MaKhachHang       String              @db.VarChar
   SoSao             Int
-<<<<<<< HEAD
-  NoiDungDanhGia   String?    @db.VarChar(1000)
-  ThoiGianDanhGia  DateTime   @db.Timestamp(6)
-  TrangThaiPhanHoi String     @db.VarChar(30)
-  KHACH_HANG       KHACH_HANG @relation(fields: [MaKhachHang], references: [MaKhachHang], onDelete: NoAction, onUpdate: NoAction)
-  VE_DIEN_TU       VE_DIEN_TU @relation(fields: [MaVe], references: [MaVe], onDelete: NoAction, onUpdate: NoAction)
-  MEDIA_DANH_GIA   MEDIA_DANH_GIA[] // Thêm trường này
-=======
   NoiDungDanhGia    String?             @db.VarChar(1000)
   ThoiGianDanhGia   DateTime            @db.Timestamp(6)
   TrangThaiPhanHoi  String              @db.VarChar(30)
@@ -67,7 +59,6 @@ model DANH_GIA {
   VE_DIEN_TU        VE_DIEN_TU          @relation(fields: [MaVe], references: [MaVe], onDelete: NoAction, onUpdate: NoAction)
   MEDIA_DANH_GIA    MEDIA_DANH_GIA[]
   PHAN_HOI_DANH_GIA PHAN_HOI_DANH_GIA[]
->>>>>>> dev_tong
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -234,13 +225,8 @@ model MEDIA_DANH_GIA {
   LoaiMedia       String?   @db.VarChar
   DinhDang        String?   @db.VarChar
   DungLuong_bytes BigInt?
-<<<<<<< HEAD
-  MaDanhGia       String  @db.VarChar(10) // Thêm trường này
-  DANH_GIA        DANH_GIA @relation(fields: [MaDanhGia], references: [MaDanhGia], onDelete: Cascade) // Thêm mối quan hệ
-=======
   MaDanhGia       String?   @db.VarChar
   DANH_GIA        DANH_GIA? @relation(fields: [MaDanhGia], references: [MaDanhGia], onDelete: Cascade, onUpdate: NoAction)
->>>>>>> dev_tong
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -414,6 +400,7 @@ model TIN_TUC {
   NoiDungChiTiet String?
   NgayDang       DateTime?            @db.Timestamptz(6)
   TrangThai      TrangThaiTinTucEnum?
+  NoiBat         Boolean @default(false)
   MaQuanTriVien  String?              @db.VarChar
   NgayGioHenGio  DateTime?            @db.Timestamptz(6)
   QUAN_TRI_VIEN  QUAN_TRI_VIEN?       @relation(fields: [MaQuanTriVien], references: [MaQuanTriVien], onDelete: NoAction, onUpdate: NoAction)

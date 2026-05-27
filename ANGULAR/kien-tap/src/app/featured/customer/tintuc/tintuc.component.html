@@ -4,18 +4,19 @@
     <main class="pt-28 pb-12 max-w-container-max mx-auto px-margin-desktop">
         <!-- News Header: Tabs & Search -->
         <div class="flex flex-col md:flex-row justify-between items-center border-b border-outline-variant/30 mb-8">
-            <div class="flex gap-8 overflow-x-auto w-full md:w-auto no-scrollbar">
+            <div class="flex gap-4 overflow-x-auto w-full md:w-auto no-scrollbar">
                 <button *ngFor="let cat of categories" 
-                    (click)="onCategoryChange(cat)"
+                    (click)="onCategoryChange(cat, searchInput)"
+                    type="button"
                     [class.border-primary]="activeCategory === cat"
                     [class.text-primary]="activeCategory === cat"
-                    class="pb-4 px-2 font-bold text-body-md transition-all border-b-2 border-transparent whitespace-nowrap uppercase tracking-wide">
-                    {{ cat }}
+                    class="relative pb-4 px-2 font-bold text-[13px] transition-all border-b-2 border-transparent whitespace-nowrap uppercase tracking-tight hover:text-primary">
+                    <span class="pointer-events-none">{{ cat }}</span>
                 </button>
             </div>
             <div class="relative w-full md:w-80 mt-4 md:mt-0 mb-4">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl">search</span>
-                <input type="text" placeholder="Tìm kiếm tin tức" 
+                <input #searchInput type="text" placeholder="Tìm kiếm tin tức" 
                     (input)="onSearch($event)"
                     class="w-full pl-10 pr-4 py-2 bg-white border border-outline-variant/50 rounded-full text-body-sm focus:outline-none focus:border-primary transition-all">
             </div>
@@ -97,7 +98,7 @@
 
         <!-- Section 3: All News -->
         <div *ngIf="allNews.length > 0" class="mb-12">
-            <div class="flex items-center gap-2 mb-8">
+            <div *ngIf="!activeCategory && !searchQuery" class="flex items-center gap-2 mb-8">
                 <div class="w-1 h-6 bg-navy"></div>
                 <h2 class="font-bold text-headline-sm uppercase tracking-tight text-navy">TẤT CẢ TIN TỨC</h2>
             </div>

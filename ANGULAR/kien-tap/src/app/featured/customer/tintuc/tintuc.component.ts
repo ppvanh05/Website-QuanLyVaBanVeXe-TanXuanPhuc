@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
@@ -13,8 +13,8 @@ import { CustomerTinTucService } from '../../../core/services/customer-tin-tuc.s
   styleUrl: './tintuc.component.css'
 })
 export class TintucComponent implements OnInit {
-  categories = ['TIN NHÀ XE', 'KHUYẾN MÃI', 'CẨM NANG DI CHUYỂN'];
-  activeCategory = 'TIN NHÀ XE';
+  categories = ['THÔNG BÁO', 'SỰ KIỆN', 'KHUYẾN MÃI', 'TIN NHÀ XE', 'CẨM NANG DI CHUYỂN', 'TUYỂN DỤNG'];
+  activeCategory = '';
   searchQuery = '';
 
   featuredNews: any = null;
@@ -27,14 +27,25 @@ export class TintucComponent implements OnInit {
   totalPages = 1;
   pageSize = 10;
 
-  constructor(private newsService: CustomerTinTucService) {}
+  constructor(
+    private newsService: CustomerTinTucService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.loadNews();
   }
 
   loadNews() {
-    const loai = this.mapCategory(this.activeCategory);
+    // Reset data before fetching to avoid stale data
+    if (this.currentPage === 1) {
+      this.featuredNews = null;
+      this.latestNews = [];
+      this.subFeaturedNews = [];
+      this.allNews = [];
+    }
+
+    const loai = this.activeCategory ? this.mapCategory(this.activeCategory) : '';
     this.newsService.getPublishedNews({
       page: this.currentPage,
       limit: this.pageSize,
@@ -46,27 +57,56 @@ export class TintucComponent implements OnInit {
         const mappedItems = items.map((item: any) => this.mapNewsItem(item));
 
         if (this.currentPage === 1) {
-          // If we are on the first page, split items into sections
-          this.featuredNews = mappedItems.length > 0 ? mappedItems[0] : null;
-          this.latestNews = mappedItems.length > 1 ? mappedItems.slice(1, 4) : [];
-          this.subFeaturedNews = mappedItems.length > 4 ? mappedItems.slice(4, 6) : [];
-          this.allNews = mappedItems.length > 6 ? mappedItems.slice(6) : [];
+          if (!this.activeCategory && !this.searchQuery) {
+            // TRANG TỔNG: Chia layout Featured, Latest, Sub, All
+            this.featuredNews = response.featuredNews ? this.mapNewsItem(response.featuredNews) : null;
+            this.latestNews = mappedItems.slice(0, 3);
+            this.subFeaturedNews = mappedItems.slice(3, 5);
+            
+            // Hiện toàn bộ vào mục "Tất cả tin tức" để section này không bị trống khi có ít bài viết
+            this.allNews = mappedItems;
+          } else {
+            // TRANG FILTER (Theo loại hoặc Search): Hiện tất cả vào grid All News, ẩn các mục đặc biệt
+            this.featuredNews = null;
+            this.latestNews = [];
+            this.subFeaturedNews = [];
+            this.allNews = mappedItems;
+          }
         } else {
-          // If we are on page 2+, display all items in the "All News" grid
+          // Trang 2 trở đi: Luôn hiện vào grid All News
           this.allNews = mappedItems;
         }
 
         this.totalPages = response.meta?.totalPages || 1;
         this.generatePagination(this.currentPage, this.totalPages);
+        
+        // Cần detectChanges để đảm bảo UI cập nhật ngay lập tức sau khi có dữ liệu
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error fetching news:', err);
+        this.cdr.detectChanges();
       }
     });
   }
 
-  onCategoryChange(cat: string) {
-    this.activeCategory = cat;
+  onCategoryChange(cat: string, searchInput?: HTMLInputElement) {
+    // Trim để đảm bảo không bị lệch ký tự trắng
+    const selectedCat = cat.trim();
+    
+    // Nếu click vào tab đang chọn thì reset về trang tổng (Toggle)
+    if (this.activeCategory === selectedCat) {
+      this.activeCategory = '';
+    } else {
+      this.activeCategory = selectedCat;
+    }
+
+    // Luôn reset search khi đổi tab để tránh việc search cũ làm lọc mất kết quả của tab mới
+    this.searchQuery = '';
+    if (searchInput) {
+      searchInput.value = '';
+    }
+
     this.currentPage = 1;
     this.loadNews();
   }
@@ -89,14 +129,18 @@ export class TintucComponent implements OnInit {
 
   mapCategory(cat: string): string {
     switch (cat) {
-      case 'TIN NHÀ XE': return 'TinTuc';
+      case 'THÔNG BÁO': return 'ThongBao';
+      case 'SỰ KIỆN': return 'SuKien';
       case 'KHUYẾN MÃI': return 'KhuyenMai';
+      case 'TIN NHÀ XE': return 'TinTucChung';
       case 'CẨM NANG DI CHUYỂN': return 'HuongDan';
+      case 'TUYỂN DỤNG': return 'TuyenDung';
       default: return '';
     }
   }
 
   mapNewsItem(item: any) {
+    if (!item) return null;
     return {
       maTinTuc: item.MaTinTuc,
       title: item.TieuDe,
@@ -110,11 +154,11 @@ export class TintucComponent implements OnInit {
 
   getCategoryLabel(type: string): string {
     switch (type) {
-      case 'TinTuc': return 'TIN NHÀ XE';
-      case 'KhuyenMai': return 'KHUYẾN MÃI';
-      case 'HuongDan': return 'CẨM NANG DI CHUYỂN';
       case 'ThongBao': return 'THÔNG BÁO';
       case 'SuKien': return 'SỰ KIỆN';
+      case 'KhuyenMai': return 'KHUYẾN MÃI';
+      case 'TinTucChung': return 'TIN NHÀ XE';
+      case 'HuongDan': return 'CẨM NANG DI CHUYỂN';
       case 'TuyenDung': return 'TUYỂN DỤNG';
       default: return 'TIN NHÀ XE';
     }
