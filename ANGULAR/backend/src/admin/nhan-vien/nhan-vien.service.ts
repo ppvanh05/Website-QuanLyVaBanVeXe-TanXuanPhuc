@@ -253,8 +253,6 @@ export class NhanVienService {
         { truong: 'MaNhanVien', giaTriCu: id, giaTriMoi: '' },
       ],
     }).catch(err => console.error('Failed to write activity log:', err));
-
     return this.mapToFrontend(res);
   }
 }
-

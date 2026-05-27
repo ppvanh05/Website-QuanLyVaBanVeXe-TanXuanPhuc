@@ -392,11 +392,11 @@ export class QuanLyTaiKhoanKhachHangComponent implements OnInit {
     if (field === 'email') {
       const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       if (!this.editedCustomer.email || !this.editedCustomer.email.trim()) {
-        this.formErrors['email'] = 'Email không được để trống!';
+        delete this.formErrors['email'];
       } else if (!emailPattern.test(this.editedCustomer.email)) {
         this.formErrors['email'] = 'Email không đúng định dạng!';
       } else {
-        const dup = this.customers.find(c => c.email.toLowerCase() === this.editedCustomer?.email.toLowerCase() && c.maKhachHang !== this.editedCustomer?.maKhachHang);
+        const dup = this.customers.find(c => c.email && c.email.toLowerCase() === this.editedCustomer?.email?.toLowerCase() && c.maKhachHang !== this.editedCustomer?.maKhachHang);
         if (dup) {
           this.formErrors['email'] = 'Địa chỉ email này đã được sử dụng bởi một tài khoản khác!';
         } else {
@@ -523,6 +523,19 @@ export class QuanLyTaiKhoanKhachHangComponent implements OnInit {
             `Tài khoản khách hàng <strong>${res.HoTenKhachHang}</strong> đã bị chuyển sang trạng thái <strong>Đã khóa</strong>.`,
             'success'
           );
+          
+          // Update local objects to reflect locked status immediately
+          if (this.selectedCustomer && this.selectedCustomer.maKhachHang === this.lockingCustomer?.maKhachHang) {
+            this.selectedCustomer.trangThaiTaiKhoan = 'DaKhoa';
+            this.selectedCustomer.lyDoKhoa = this.lockReason.trim();
+            this.selectedCustomer.ngayKhoa = this.formatCurrentDate();
+          }
+          if (this.editedCustomer && this.editedCustomer.maKhachHang === this.lockingCustomer?.maKhachHang) {
+            this.editedCustomer.trangThaiTaiKhoan = 'DaKhoa';
+            this.editedCustomer.lyDoKhoa = this.lockReason.trim();
+            this.editedCustomer.ngayKhoa = this.formatCurrentDate();
+          }
+
           this.loadCustomers();
           this.closeLockModal();
           this.cdr.detectChanges();
@@ -544,6 +557,19 @@ export class QuanLyTaiKhoanKhachHangComponent implements OnInit {
           `Tài khoản khách hàng <strong>${res.HoTenKhachHang}</strong> đã được mở khóa thành công.`,
           'success'
         );
+
+        // Update local objects to reflect unlocked status immediately
+        if (this.selectedCustomer && this.selectedCustomer.maKhachHang === customer.maKhachHang) {
+          this.selectedCustomer.trangThaiTaiKhoan = 'HoatDong';
+          this.selectedCustomer.lyDoKhoa = undefined;
+          this.selectedCustomer.ngayKhoa = undefined;
+        }
+        if (this.editedCustomer && this.editedCustomer.maKhachHang === customer.maKhachHang) {
+          this.editedCustomer.trangThaiTaiKhoan = 'HoatDong';
+          this.editedCustomer.lyDoKhoa = undefined;
+          this.editedCustomer.ngayKhoa = undefined;
+        }
+
         this.loadCustomers();
         this.cdr.detectChanges();
       },
