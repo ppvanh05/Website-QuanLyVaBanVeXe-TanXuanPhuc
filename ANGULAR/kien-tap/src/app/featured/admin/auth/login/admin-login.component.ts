@@ -30,7 +30,7 @@ export class AdminLoginComponent {
     }
 
     this.loginForm = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', Validators.required],
       matKhau: ['', Validators.required]
     });
 

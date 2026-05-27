@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, TrangThaiTaiKhoanEnum, LoaiTaiKhoanNhanVienEnum } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
+import { DEFAULT_ROLE_PERMISSIONS } from '../auth/default-permissions';
 
 @Injectable()
 export class NhanVienService {
@@ -27,6 +28,10 @@ export class NhanVienService {
     if (loai === 'BanVe') return 'NhanVienBanVe';
     if (loai === 'DieuPhoi') return 'NhanVienDieuPhoi';
     return loai as LoaiTaiKhoanNhanVienEnum;
+  }
+
+  private getDefaultPermissions(loai: LoaiTaiKhoanNhanVienEnum): string[] {
+    return [...(DEFAULT_ROLE_PERMISSIONS[loai] ?? [])];
   }
 
   private mapGenderToBackend(gender: string): string {
@@ -77,12 +82,17 @@ export class NhanVienService {
     });
     const newId = `CL${maxIdNumber + 1}`;
 
+    const loaiTaiKhoan = this.mapToBackend(dto.LoaiTaiKhoan as string);
     const data: any = {
       ...dto,
       MaNhanVien: newId,
-      LoaiTaiKhoan: this.mapToBackend(dto.LoaiTaiKhoan as string),
+      LoaiTaiKhoan: loaiTaiKhoan,
       TrangThai: dto.TrangThai ?? 'HoatDong',
     };
+
+    if (!data.Quyen || (Array.isArray(data.Quyen) && data.Quyen.length === 0)) {
+      data.Quyen = this.getDefaultPermissions(loaiTaiKhoan);
+    }
 
     if (dto.GioiTinh) {
       data.GioiTinh = this.mapGenderToBackend(dto.GioiTinh as string);
@@ -108,7 +118,7 @@ export class NhanVienService {
     }
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tài khoản',
       NoiDungChiTiet: `Tạo tài khoản nhân viên mới: ${res.TenHienThi || res.Ten || ''} (Mã: ${res.MaNhanVien})`,
       TrangThai: 'Thành công',
@@ -130,6 +140,9 @@ export class NhanVienService {
     const data: any = { ...dto };
     if (dto.LoaiTaiKhoan) {
       data.LoaiTaiKhoan = this.mapToBackend(dto.LoaiTaiKhoan as string);
+      if (!dto.Quyen) {
+        data.Quyen = this.getDefaultPermissions(data.LoaiTaiKhoan);
+      }
     }
     if (dto.GioiTinh) {
       data.GioiTinh = this.mapGenderToBackend(dto.GioiTinh as string);
@@ -188,7 +201,7 @@ export class NhanVienService {
     }
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tài khoản',
       NoiDungChiTiet: `Cập nhật tài khoản nhân viên: ${res.TenHienThi || res.Ten || ''} (Mã: ${id}). Chi tiết: ${changes.map(c => `${c.truong}: ${c.giaTriCu} -> ${c.giaTriMoi}`).join(', ') || 'Không thay đổi trường cốt lõi'}`,
       TrangThai: 'Thành công',
@@ -210,7 +223,7 @@ export class NhanVienService {
     });
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tài khoản',
       NoiDungChiTiet: `Thay đổi trạng thái tài khoản nhân viên ${res.TenHienThi || res.Ten || ''} (Mã: ${id}) sang ${trangThai === 'HoatDong' ? 'Đang hoạt động' : 'Đã khóa'}`,
       TrangThai: 'Thành công',
@@ -245,7 +258,7 @@ export class NhanVienService {
     });
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tài khoản',
       NoiDungChiTiet: `Xóa tài khoản nhân viên: ${original?.TenHienThi || original?.Ten || ''} (Mã: ${id})`,
       TrangThai: 'Thành công',
@@ -256,3 +269,4 @@ export class NhanVienService {
     return this.mapToFrontend(res);
   }
 }
+

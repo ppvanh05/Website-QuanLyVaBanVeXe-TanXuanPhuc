@@ -94,7 +94,7 @@ export class PhuongTienService {
             rows: v.SoDay,
             registrationExpiry: v.HanDangKiem ? new Date(v.HanDangKiem).toLocaleDateString('vi-VN') : '',
             insuranceExpiry: v.HanBaoHiem ? new Date(v.HanBaoHiem).toLocaleDateString('vi-VN') : '',
-            amenities: v.TienIch ? parsePgArray(v.TienIch).map((x: string) => dbToFrontendMap[x] || x) : [],
+            amenities: v.TienIch ? (Array.isArray(v.TienIch) ? v.TienIch : parsePgArray(v.TienIch)).map((x: string) => dbToFrontendMap[x] || x) : [],
             status: v.TrangThaiPhuongTien === 'DaKhoa' ? 'locked' : 'active',
             vehicleImage: v.AnhXe || undefined,
             selectedSeats: [],

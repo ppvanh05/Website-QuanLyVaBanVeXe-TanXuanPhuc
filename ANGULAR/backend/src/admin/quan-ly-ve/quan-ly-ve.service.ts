@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
@@ -95,15 +95,15 @@ export class QuanLyVeService {
 
   private mapTrangThaiVe(trangThai: string): any {
     if (trangThai === 'DaHuy' || trangThai === 'h_y' || trangThai === 'Huy') {
-      return 'h_y';
+      return 'DaHuy';
     }
     if (trangThai === 'ConHieuLuc' || trangThai === 'Ch__kh_i_h_nh' || trangThai === 'ChoKhoiHanh') {
-      return 'Ch__kh_i_h_nh';
+      return 'ChoKhoiHanh';
     }
     if (trangThai === 'HoanThanh' || trangThai === 'ho_n_th_nh') {
-      return 'ho_n_th_nh';
+      return 'DaHoanThanh';
     }
-    return 'Ch__thanh_to_n';
+    return 'ChoThanhToan';
   }
 
   // ===== CẬP NHẬT TRẠNG THÁI VÉ =====
@@ -132,7 +132,7 @@ export class QuanLyVeService {
     });
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: maNhanVien || 'NVDP001',
+      MaNhanVien: maNhanVien || 'NVDP100001',
       MaVe: id,
       LoaiThaoTac: 'Quản lý vé',
       NoiDungChiTiet: `Cập nhật trạng thái vé ${id} từ ${oldTrangThai} sang ${mappedStatus}`,
@@ -193,7 +193,7 @@ export class QuanLyVeService {
         SoLuongVeDaDat: data.maGheChuyenList.length,
         TongGiaVe: new Prisma.Decimal(tongGiaVe),
         PhuongThucThanhToan: data.phuongThucThanhToan as any,
-        TrangThaiDonHang: 'Ch__kh_i_h_nh',
+        TrangThaiDonHang: 'ChoKhoiHanh',
       },
     });
 
@@ -205,7 +205,7 @@ export class QuanLyVeService {
         data: {
           MaVe: maVe,
           GiaVe: ghe.GiaVe,
-          TrangThaiVe: 'Ch__kh_i_h_nh',
+          TrangThaiVe: 'ChoKhoiHanh',
           SoLanDaSua: 0,
           ThoiGianXuatVe: new Date(),
           MaQRVe: maVe,
@@ -223,7 +223,7 @@ export class QuanLyVeService {
       await this.prisma.gHE_CHUYEN_XE.update({
         where: { MaGheChuyen: ghe.MaGheChuyen },
         data: { 
-          TrangThaiGhe: 'b_n',
+          TrangThaiGhe: 'DaBan',
           ThoiGianCapNhatTrangThai: new Date()
         },
       });
@@ -247,7 +247,7 @@ export class QuanLyVeService {
 
     // Ghi nhật ký hệ thống
     this.nhatKyService.ghiLog({
-      MaNhanVien: data.maNVBanVe || 'NVDP001',
+      MaNhanVien: data.maNVBanVe || 'NVDP100001',
       LoaiThaoTac: 'Quản lý vé',
       NoiDungChiTiet: `Tạo đơn hàng ${maDonHang} với ${data.maGheChuyenList.length} vé`,
       TrangThai: 'Thành công',
@@ -265,7 +265,7 @@ export class QuanLyVeService {
   async huyVe(id: string, lyDo: string, maNVBanVe?: string) {
     const ve = await this.getVeById(id);
     
-    if (ve.TrangThaiVe === 'h_y') {
+    if (ve.TrangThaiVe === 'DaHuy') {
       throw new BadRequestException('Vé này đã được huỷ trước đó!');
     }
 
@@ -302,7 +302,7 @@ export class QuanLyVeService {
 
     const updatedVe = await this.prisma.vE_DIEN_TU.update({
       where: { MaVe: id },
-      data: { TrangThaiVe: 'h_y' },
+      data: { TrangThaiVe: 'DaHuy' },
     });
 
     const maGiaoDichHoan = `GD_HOAN_${Date.now()}`;
@@ -340,7 +340,7 @@ export class QuanLyVeService {
         MaLichSu: `LSV_${Date.now()}`,
         HanhDong: 'Huỷ vé',
         TrangThaiCu: ve.TrangThaiVe,
-        TrangThaiMoi: 'h_y',
+        TrangThaiMoi: 'DaHuy',
         ThoiGianThayDoi: new Date(),
         GhiChu: lyDo,
         MaVe: id,
@@ -350,16 +350,16 @@ export class QuanLyVeService {
     });
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: maNVBanVe || 'NVDP001',
+      MaNhanVien: maNVBanVe || 'NVDP100001',
       MaVe: id,
       MaKhachHang: ve.DON_HANG?.MaKhachHang,
       LoaiThaoTac: 'Quản lý vé',
       NoiDungChiTiet: `Huỷ vé ${id}. Lý do: ${lyDo}. Tiền hoàn lại: ${tienHoanLai}`,
       TrangThai: 'Thành công',
       TrangThaiCu: ve.TrangThaiVe,
-      TrangThaiMoi: 'h_y',
+      TrangThaiMoi: 'DaHuy',
       DuLieuThayDoi: [
-        { truong: 'TrangThaiVe', giaTriCu: ve.TrangThaiVe, giaTriMoi: 'h_y' },
+        { truong: 'TrangThaiVe', giaTriCu: ve.TrangThaiVe, giaTriMoi: 'DaHuy' },
         { truong: 'LyDoHuy', giaTriCu: null, giaTriMoi: lyDo },
         { truong: 'TienHoanLai', giaTriCu: null, giaTriMoi: tienHoanLai },
       ],
@@ -368,3 +368,4 @@ export class QuanLyVeService {
     return updatedVe;
   }
 }
+

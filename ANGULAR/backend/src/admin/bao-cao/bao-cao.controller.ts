@@ -1,11 +1,15 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { BaoCaoService } from './bao-cao.service';
+import { AdminPermissionsGuard } from '../auth/admin-permissions.guard';
+import { RequirePermissions } from '../auth/permissions.decorator';
 
 @Controller('bao-cao')
+@UseGuards(AdminPermissionsGuard)
 export class BaoCaoController {
   constructor(private readonly baoCaoService: BaoCaoService) {}
 
   @Get('chuyen-xe')
+  @RequirePermissions('report.view')
   getBaoCaoChuyenXe(
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
@@ -23,6 +27,7 @@ export class BaoCaoController {
   }
 
   @Get('hoan-huy')
+  @RequirePermissions('report.view')
   getBaoCaoHoanHuy(
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
@@ -36,6 +41,7 @@ export class BaoCaoController {
   }
 
   @Get('khach-hang')
+  @RequirePermissions('report.view')
   getBaoCaoKhachHang(
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
@@ -51,6 +57,7 @@ export class BaoCaoController {
   }
 
   @Get('tai-xe-phu-xe')
+  @RequirePermissions('report.view')
   getBaoCaoTaiXePhuXe(
     @Query('role') role?: string,
     @Query('status') status?: string,
@@ -64,6 +71,7 @@ export class BaoCaoController {
   }
 
   @Get('tuyen-xe')
+  @RequirePermissions('report.view')
   getBaoCaoTuyenXe(
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,

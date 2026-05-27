@@ -1,6 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+
+type LogStatusInput = 'ThanhCong' | 'ThatBai' | 'Thành công' | 'Thất bại' | 'Thanh cong' | 'That bai';
+
+type CreateLogInput = {
+  MaKhachHang?: string;
+  MaNhanVien?: string;
+  LoaiThaoTac: string;
+  NoiDungChiTiet: string;
+  DiaChiIP?: string;
+  MaVe?: string;
+  TuyenXe?: string;
+  TrangThai?: LogStatusInput;
+  ThietBiTrinhDuyet?: string;
+  TrangThaiCu?: string;
+  TrangThaiMoi?: string;
+  DuLieuThayDoi?: any;
+};
 
 @Injectable()
 export class NhatKyHeThongService {
@@ -29,65 +46,62 @@ export class NhatKyHeThongService {
 
     return list.map(item => ({
       ...item,
-      TrangThai: item.TrangThai === 'ThatBai' ? 'Thất bại' : 'Thành công',
+      TrangThai: this.mapStatusToDisplay(item.TrangThai),
     }));
   }
 
   // ===== TỰ ĐỘNG GHI NHẬT KÝ =====
-  async ghiLog(dto: {
-    MaKhachHang?: string;
-    MaNhanVien?: string;
-    LoaiThaoTac: string;
-    NoiDungChiTiet: string;
-    DiaChiIP?: string;
-    MaVe?: string;
-    TuyenXe?: string;
-    TrangThai?: 'Thành công' | 'Thất bại';
-    ThietBiTrinhDuyet?: string;
-    TrangThaiCu?: string;
-    TrangThaiMoi?: string;
-    DuLieuThayDoi?: any;
-  }) {
-    // Tự động phát sinh mã nhật ký dạng TXP_LOGxxxx
-    const listLog = await this.prisma.nHAT_KY_HE_THONG.findMany({
-      select: { MaNhatKy: true },
-    });
+  async ghiLog(dto: CreateLogInput) {
+    const loaiThaoTac = dto.LoaiThaoTac?.trim();
+    const noiDungChiTiet = dto.NoiDungChiTiet?.trim();
 
-    let maxIdNumber = 100000;
-    listLog.forEach(log => {
-      const match = log.MaNhatKy.match(/\d+/);
-      if (match) {
-        const num = parseInt(match[0], 10);
-        if (num > maxIdNumber) {
-          maxIdNumber = num;
-        }
-      }
-    });
-
-    const newId = `TXP_LOG${maxIdNumber + 1}`;
+    if (!loaiThaoTac || !noiDungChiTiet) {
+      throw new BadRequestException('LoaiThaoTac va NoiDungChiTiet la bat buoc khi ghi nhat ky.');
+    }
 
     const res = await this.prisma.nHAT_KY_HE_THONG.create({
       data: {
-        MaNhatKy: newId,
+        MaNhatKy: this.generateLogId(),
         MaKhachHang: dto.MaKhachHang || null,
         MaNhanVien: dto.MaNhanVien || null,
-        LoaiThaoTac: dto.LoaiThaoTac,
+        LoaiThaoTac: loaiThaoTac,
         ThoiGian: new Date(),
         DiaChiIP: dto.DiaChiIP || '127.0.0.1',
-        NoiDungChiTiet: dto.NoiDungChiTiet,
+        NoiDungChiTiet: noiDungChiTiet,
         MaVe: dto.MaVe || null,
         TuyenXe: dto.TuyenXe || null,
-        TrangThai: dto.TrangThai === 'Thất bại' ? 'ThatBai' : 'ThanhCong',
+        TrangThai: this.normalizeStatus(dto.TrangThai),
         ThietBiTrinhDuyet: dto.ThietBiTrinhDuyet || 'Web Client',
         TrangThaiCu: dto.TrangThaiCu || null,
         TrangThaiMoi: dto.TrangThaiMoi || null,
-        DuLieuThayDoi: dto.DuLieuThayDoi ? (dto.DuLieuThayDoi as Prisma.InputJsonValue) : Prisma.DbNull,
+        DuLieuThayDoi: dto.DuLieuThayDoi === undefined || dto.DuLieuThayDoi === null
+          ? Prisma.JsonNull
+          : (dto.DuLieuThayDoi as Prisma.InputJsonValue),
       },
     });
 
     return {
       ...res,
-      TrangThai: res.TrangThai === 'ThatBai' ? 'Thất bại' : 'Thành công',
+      TrangThai: this.mapStatusToDisplay(res.TrangThai),
     };
+  }
+
+  private generateLogId(): string {
+    const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+    return `TXP_LOG_${Date.now()}_${random}`;
+  }
+
+  private normalizeStatus(status?: LogStatusInput): 'ThanhCong' | 'ThatBai' {
+    const value = String(status || 'ThanhCong')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '')
+      .toLowerCase();
+
+    return value === 'thatbai' ? 'ThatBai' : 'ThanhCong';
+  }
+
+  private mapStatusToDisplay(status?: string | null): 'Thành công' | 'Thất bại' {
+    return status === 'ThatBai' ? 'Thất bại' : 'Thành công';
   }
 }

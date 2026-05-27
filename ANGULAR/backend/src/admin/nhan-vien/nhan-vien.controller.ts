@@ -9,15 +9,20 @@ import {
   Param,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { NhanVienService } from './nhan-vien.service';
 import { Prisma } from '@prisma/client';
+import { AdminPermissionsGuard } from '../auth/admin-permissions.guard';
+import { RequirePermissions } from '../auth/permissions.decorator';
 
 @Controller('nhan-vien')
+@UseGuards(AdminPermissionsGuard)
 export class NhanVienController {
   constructor(private readonly nhanVienService: NhanVienService) {}
 
   @Get()
+  @RequirePermissions('staff.view')
   async getAll() {
     try {
       return await this.nhanVienService.getAll();
@@ -34,6 +39,7 @@ export class NhanVienController {
   }
 
   @Get(':id')
+  @RequirePermissions('staff.view')
   async getById(@Param('id') id: string) {
     try {
       return await this.nhanVienService.getById(id);
@@ -50,6 +56,7 @@ export class NhanVienController {
   }
 
   @Post()
+  @RequirePermissions('staff.manage')
   async create(@Body() dto: Prisma.NHAN_VIENUncheckedCreateInput) {
     try {
       return await this.nhanVienService.create(dto);
@@ -66,6 +73,7 @@ export class NhanVienController {
   }
 
   @Put(':id')
+  @RequirePermissions('staff.manage')
   async update(
     @Param('id') id: string,
     @Body() dto: Prisma.NHAN_VIENUncheckedUpdateInput,
@@ -85,6 +93,7 @@ export class NhanVienController {
   }
 
   @Patch(':id/status')
+  @RequirePermissions('staff.manage')
   async updateStatus(
     @Param('id') id: string,
     @Body() body: { TrangThai: string },
@@ -104,6 +113,7 @@ export class NhanVienController {
   }
 
   @Delete(':id')
+  @RequirePermissions('staff.manage')
   async delete(@Param('id') id: string) {
     try {
       return await this.nhanVienService.delete(id);

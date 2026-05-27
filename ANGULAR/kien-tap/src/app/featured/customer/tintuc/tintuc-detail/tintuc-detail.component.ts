@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../layout/header/header.component';
 import { FooterComponent } from '../../layout/footer/footer.component';
@@ -16,13 +16,21 @@ export class TintucDetailComponent implements OnInit {
   newsDetail: any = null;
   otherNews: any[] = [];
   relatedNews: any[] = [];
+  private isBrowser: boolean;
 
   constructor(
     private route: ActivatedRoute,
-    private newsService: CustomerTinTucService
-  ) {}
+    private newsService: CustomerTinTucService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   ngOnInit() {
+    if (!this.isBrowser) {
+      return;
+    }
+
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {

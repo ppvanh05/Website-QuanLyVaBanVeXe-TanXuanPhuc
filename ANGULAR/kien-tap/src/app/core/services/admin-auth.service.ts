@@ -5,11 +5,32 @@ import { isPlatformBrowser } from '@angular/common';
 
 export interface AdminUser {
   MaNhanVien: string;
+  TenTruyCap?: string;
+  HoVaTenDem?: string;
+  Ten?: string;
   Email: string;
   TenHienThi: string;
+  GioiTinh?: string;
+  NgaySinh?: string;
+  DiaChi?: string;
+  SoDienThoai?: string;
+  GhiChu?: string;
   LoaiTaiKhoan: string;
   AnhDaiDien?: string;
   Quyen?: string[];
+}
+
+export interface AdminProfileUpdate {
+  HoVaTenDem?: string;
+  Ten?: string;
+  TenHienThi?: string;
+  GioiTinh?: string;
+  NgaySinh?: string | null;
+  DiaChi?: string | null;
+  SoDienThoai?: string;
+  Email?: string;
+  AnhDaiDien?: string | null;
+  GhiChu?: string | null;
 }
 
 @Injectable({
@@ -44,15 +65,43 @@ export class AdminAuthService {
   login(email: string, matKhau: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/login`, { email, matKhau }).pipe(
       tap(res => {
-        if (res && res.token && res.admin) {
-          if (isPlatformBrowser(this.platformId)) {
-            localStorage.setItem('admin_token', res.token);
-            localStorage.setItem('admin_user', JSON.stringify(res.admin));
-          }
-          this.currentUserSubject.next(res.admin);
+        this.persistSession(res);
+      })
+    );
+  }
+
+  getProfile(): Observable<AdminUser> {
+    return this.http.get<AdminUser>(`${this.apiUrl}/me`).pipe(
+      tap(admin => {
+        if (admin) {
+          this.persistUser(admin);
         }
       })
     );
+  }
+
+  updateProfile(payload: AdminProfileUpdate): Observable<{ token: string; admin: AdminUser }> {
+    return this.http.put<{ token: string; admin: AdminUser }>(`${this.apiUrl}/me`, payload).pipe(
+      tap(res => {
+        this.persistSession(res);
+      })
+    );
+  }
+
+  private persistSession(res: any) {
+    if (res && res.token && res.admin) {
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.setItem('admin_token', res.token);
+      }
+      this.persistUser(res.admin);
+    }
+  }
+
+  private persistUser(admin: AdminUser) {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('admin_user', JSON.stringify(admin));
+    }
+    this.currentUserSubject.next(admin);
   }
 
   logout() {

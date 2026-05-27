@@ -8,15 +8,20 @@ import {
   Param,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { QuanLyVeService } from './quan-ly-ve.service';
+import { AdminPermissionsGuard } from '../auth/admin-permissions.guard';
+import { RequirePermissions } from '../auth/permissions.decorator';
 
 @Controller('quan-ly-ve')
+@UseGuards(AdminPermissionsGuard)
 export class QuanLyVeController {
   constructor(private readonly quanLyVeService: QuanLyVeService) {}
 
   // GET /quan-ly-ve/ve → Lấy tất cả vé
   @Get('ve')
+  @RequirePermissions('ticket.view')
   async getAllVe() {
     try {
       return await this.quanLyVeService.getAllVe();
@@ -34,6 +39,7 @@ export class QuanLyVeController {
 
   // GET /quan-ly-ve/ve/:id → Lấy vé theo mã
   @Get('ve/:id')
+  @RequirePermissions('ticket.view')
   async getVeById(@Param('id') id: string) {
     try {
       return await this.quanLyVeService.getVeById(id);
@@ -51,6 +57,7 @@ export class QuanLyVeController {
 
   // GET /quan-ly-ve/don-hang → Lấy tất cả đơn hàng
   @Get('don-hang')
+  @RequirePermissions('ticket.view')
   async getAllDonHang() {
     try {
       return await this.quanLyVeService.getAllDonHang();
@@ -68,6 +75,7 @@ export class QuanLyVeController {
 
   // GET /quan-ly-ve/don-hang/:id → Lấy đơn hàng theo mã
   @Get('don-hang/:id')
+  @RequirePermissions('ticket.view')
   async getDonHangById(@Param('id') id: string) {
     try {
       return await this.quanLyVeService.getDonHangById(id);
@@ -85,6 +93,7 @@ export class QuanLyVeController {
 
   // PATCH /quan-ly-ve/ve/:id/trang-thai → Cập nhật trạng thái vé
   @Patch('ve/:id/trang-thai')
+  @RequirePermissions('ticket.manage')
   async updateTrangThaiVe(
     @Param('id') id: string,
     @Body() dto: { trangThai: string; maNhanVien?: string },
@@ -105,6 +114,7 @@ export class QuanLyVeController {
 
   // POST /quan-ly-ve/ve/:id/huy → Huỷ vé
   @Post('ve/:id/huy')
+  @RequirePermissions('ticket.manage')
   async huyVe(
     @Param('id') id: string,
     @Body() dto: { lyDo: string; maNVBanVe?: string },
@@ -125,6 +135,7 @@ export class QuanLyVeController {
 
   // POST /quan-ly-ve/tao-don-hang → Tạo đơn hàng và vé mới
   @Post('tao-don-hang')
+  @RequirePermissions('ticket.manage')
   async taoDonHangVaVe(
     @Body() dto: {
       maKhachHang: string;

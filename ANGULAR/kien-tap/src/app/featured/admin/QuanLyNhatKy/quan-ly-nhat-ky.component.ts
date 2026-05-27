@@ -146,8 +146,8 @@ export class QuanLyNhatKyComponent implements OnInit {
       loaiTaiKhoan = 'Khách hàng';
     } else if (l.NHAN_VIEN) {
       const role = l.NHAN_VIEN.LoaiTaiKhoan;
-      if (role === 'BanVe') loaiTaiKhoan = 'Bán vé';
-      else if (role === 'DieuPhoi') loaiTaiKhoan = 'Điều phối';
+      if (role === 'BanVe' || role === 'NhanVienBanVe') loaiTaiKhoan = 'Bán vé';
+      else if (role === 'DieuPhoi' || role === 'NhanVienDieuPhoi') loaiTaiKhoan = 'Điều phối';
       else if (role === 'BanQuanLy') loaiTaiKhoan = 'Ban quản lý';
       else loaiTaiKhoan = 'Quản trị viên';
     }

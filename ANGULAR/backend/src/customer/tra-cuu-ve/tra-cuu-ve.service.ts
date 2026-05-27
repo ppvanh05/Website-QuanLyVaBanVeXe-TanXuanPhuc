@@ -308,7 +308,7 @@ export class TraCuuVeService {
       throw new NotFoundException(`Không tìm thấy vé với mã ${maVe}`);
     }
 
-    if (ticket.TrangThaiVe === 'h_y') {
+    if (ticket.TrangThaiVe === 'DaHuy') {
       throw new BadRequestException('Vé này đã được huỷ bỏ trước đó!');
     }
 
@@ -357,14 +357,14 @@ export class TraCuuVeService {
       // A. Update ticket status to DaHuy
       await tx.vE_DIEN_TU.update({
         where: { MaVe: maVe },
-        data: { TrangThaiVe: 'h_y' },
+        data: { TrangThaiVe: 'DaHuy' },
       });
 
       // B. Release seat back to 'Trong'
       await tx.gHE_CHUYEN_XE.update({
         where: { MaGheChuyen: ticket.MaGheChuyen },
         data: {
-          TrangThaiGhe: 'C_n_Tr_ng',
+          TrangThaiGhe: 'Trong',
           ThoiGianCapNhatTrangThai: new Date(),
         },
       });
@@ -406,7 +406,7 @@ export class TraCuuVeService {
           MaLichSu: `LSV_${Date.now()}`,
           HanhDong: 'Huỷ vé',
           TrangThaiCu: ticket.TrangThaiVe,
-          TrangThaiMoi: 'h_y',
+          TrangThaiMoi: 'DaHuy',
           ThoiGianThayDoi: new Date(),
           GhiChu: `Khách hàng yêu cầu hủy vé. Lý do: ${lyDo || 'Đổi kế hoạch'}`,
           MaVe: maVe,
@@ -423,11 +423,11 @@ export class TraCuuVeService {
         },
       });
 
-      const allCancelled = otherTickets.every(t => t.TrangThaiVe === 'h_y');
+      const allCancelled = otherTickets.every(t => t.TrangThaiVe === 'DaHuy');
       if (allCancelled) {
         await tx.dON_HANG.update({
           where: { MaDonHang: ticket.MaDonHang },
-          data: { TrangThaiDonHang: 'h_y' },
+          data: { TrangThaiDonHang: 'DaHuy' },
         });
       }
     });

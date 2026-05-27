@@ -8,21 +8,20 @@
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
-        <label for="email">Email truy cập</label>
+        <label for="email">Tài khoản hoặc Email</label>
         <div class="input-wrapper">
-          <span class="material-icons">email</span>
+          <span class="material-icons">person</span>
           <input 
-            type="email" 
+            type="text" 
             id="email" 
             formControlName="email" 
             class="form-control" 
             [ngClass]="{ 'is-invalid': submitted && f['email'].errors }" 
-            placeholder="Nhập email do doanh nghiệp cấp"
+            placeholder="Nhập tên đăng nhập hoặc email"
           />
         </div>
         <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
-          <div *ngIf="f['email'].errors['required']">Vui lòng nhập email</div>
-          <div *ngIf="f['email'].errors['email']">Email không hợp lệ</div>
+          <div *ngIf="f['email'].errors['required']">Vui lòng nhập tài khoản hoặc email</div>
         </div>
       </div>
 

@@ -158,6 +158,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       permissions: [
         { key: 'finance.view', name: 'Xem doanh thu & giao dịch', description: 'Theo dõi log giao dịch thanh toán, hoàn tiền và đối soát doanh thu vé.' },
         { key: 'finance.cost', name: 'Quản lý chi phí chuyến xe', description: 'Cập nhật các khoản chi thực tế phát sinh (xăng dầu, cầu đường, rửa xe, bến bãi) theo chuyến.' },
+        { key: 'report.view', name: 'Xem báo cáo thống kê', description: 'Xem các báo cáo chi tiết chuyến xe, tuyến xe, khách hàng, tài xế phụ xe và hoàn hủy.' },
         { key: 'report.export', name: 'Xuất báo cáo thống kê', description: 'Truy xuất và tải biểu đồ doanh số, lượng khách dưới dạng Excel/PDF.' }
       ]
     },
@@ -183,28 +184,34 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       name: 'Quản trị viên',
       icon: 'admin_panel_settings',
       description: 'Quản trị tài khoản nhân sự nội bộ, phân quyền, xem nhật ký hệ thống, quản lý và phản hồi đánh giá.',
-      permissions: ['employee.view', 'employee.manage', 'role.manage', 'system.log', 'review.moderate', 'review.view', 'review.reply']
+      permissions: [
+        'news.view', 'news.manage', 'news.create', 'news.update', 'news.delete',
+        'policy.view', 'policy.manage', 'policy.update',
+        'blacklist.view', 'blacklist.manage',
+        'customer.view', 'customer.manage', 'review.view', 'review.reply', 'review.moderate',
+        'staff.view', 'staff.manage', 'employee.view', 'employee.manage', 'role.manage', 'log.view', 'system.log'
+      ]
     },
     {
       key: 'management',
       name: 'Ban Quản lý',
       icon: 'insights',
       description: 'Theo dõi doanh thu giao dịch và xuất báo cáo thống kê hoạt động của nhà xe.',
-      permissions: ['finance.view', 'report.export']
+      permissions: ['finance.view', 'report.view', 'report.export']
     },
     {
       key: 'dispatch',
       name: 'Nhân viên Điều phối',
       icon: 'engineering',
       description: 'Quản lý tuyến đường, điểm dừng, phương tiện, tài xế và trực tiếp gán lịch trình, phân ca chạy chuyến.',
-      permissions: ['route.view', 'route.manage', 'vehicle.manage', 'driver.manage', 'trip.create', 'trip.assign', 'trip.update']
+      permissions: ['route.view', 'route.manage', 'vehicle.view', 'vehicle.manage', 'driver.view', 'driver.manage', 'stop.view', 'stop.manage', 'trip.view', 'trip.create', 'trip.assign', 'trip.update']
     },
     {
       key: 'cskh',
       name: 'Nhân viên bán vé',
       icon: 'confirmation_number',
       description: 'Tư vấn, đặt giữ ghế hotline, bán vé trực tiếp, hỗ trợ đổi trả vé và tra cứu thông tin khách hàng.',
-      permissions: ['ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'customer.view']
+      permissions: ['ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'ticket.manage', 'customer.view']
     }
   ];
 
@@ -228,7 +235,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       trangThai: 'HoatDong',
       vaiTro: 'Ban quản lý',
       permissions: [
-        'finance.view', 'report.export'
+        'finance.view', 'report.view', 'report.export'
       ]
     },
     {
@@ -249,7 +256,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       trangThai: 'HoatDong',
       vaiTro: 'Nhân viên bán vé',
       permissions: [
-        'ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'customer.view'
+        'ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'ticket.manage', 'customer.view'
       ]
     },
     {
@@ -270,12 +277,10 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       trangThai: 'HoatDong',
       vaiTro: 'Quản trị viên',
       permissions: [
-        'news.view', 'news.create', 'news.update', 'news.delete', 'policy.view', 'policy.update',
-        'ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update',
-        'route.view', 'route.manage', 'vehicle.manage', 'driver.manage', 'trip.create', 'trip.assign', 'trip.update',
-        'customer.view', 'review.view', 'review.reply', 'review.moderate',
-        'finance.view', 'finance.cost', 'report.export',
-        'employee.view', 'employee.manage', 'role.manage', 'system.log'
+        'news.view', 'news.manage', 'news.create', 'news.update', 'news.delete', 'policy.view', 'policy.manage', 'policy.update',
+        'blacklist.view', 'blacklist.manage',
+        'customer.view', 'customer.manage', 'review.view', 'review.reply', 'review.moderate',
+        'staff.view', 'staff.manage', 'employee.view', 'employee.manage', 'role.manage', 'log.view', 'system.log'
       ]
     }
   ];

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, LoaiViPhamEnum, TrangThaiViPhamEnum } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
@@ -93,7 +93,7 @@ export class TuKhoaCamService {
     });
 
     await this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tài khoản',
       NoiDungChiTiet: `Thêm từ khóa cấm mới: "${res.NoiDungTuKhoa}" (Mức độ: ${res.LoaiViPham}, Trạng thái: ${res.TrangThai})`,
       TrangThai: 'Thành công',
@@ -157,7 +157,7 @@ export class TuKhoaCamService {
     }
 
     await this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tài khoản',
       NoiDungChiTiet: `Cập nhật từ khóa cấm: "${res.NoiDungTuKhoa}" (Mã: ${id}). Chi tiết: ${changes.map(c => `${c.truong}: ${c.giaTriCu} -> ${c.giaTriMoi}`).join(', ') || 'Không thay đổi trường cốt lõi'}`,
       TrangThai: 'Thành công',
@@ -175,7 +175,7 @@ export class TuKhoaCamService {
     });
 
     await this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tài khoản',
       NoiDungChiTiet: `Xóa từ khóa cấm: "${original?.NoiDungTuKhoa || ''}" (Mã: ${id})`,
       TrangThai: 'Thành công',
@@ -187,3 +187,4 @@ export class TuKhoaCamService {
     return this.mapToFrontend(res);
   }
 }
+

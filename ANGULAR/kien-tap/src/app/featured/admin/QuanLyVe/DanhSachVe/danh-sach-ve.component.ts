@@ -571,10 +571,10 @@ export class DanhSachVeComponent implements OnInit {
       this.tickets = this.tickets.filter(t => t.id !== oldRecord.MaVe);
     } else if (payload.eventType === 'INSERT' && newRecord) {
       const ticketStatusMap: Record<string, string> = {
-        'Ch__thanh_to_n': 'Chờ thanh toán',
-        'Ch__kh_i_h_nh': 'Chờ khởi hành',
-        'ho_n_th_nh': 'Đã hoàn thành',
-        'h_y': 'Đã hủy'
+        'ChoThanhToan': 'Chờ thanh toán',
+        'ChoKhoiHanh': 'Chờ khởi hành',
+        'DaHoanThanh': 'Đã hoàn thành',
+        'DaHuy': 'Đã hủy'
       };
 
       const newTicket: Ticket = {
@@ -599,10 +599,10 @@ export class DanhSachVeComponent implements OnInit {
       const ticket = this.tickets.find(t => t.id === newRecord.MaVe);
       if (ticket) {
         const ticketStatusMap: Record<string, string> = {
-          'Ch__thanh_to_n': 'Chờ thanh toán',
-          'Ch__kh_i_h_nh': 'Chờ khởi hành',
-          'ho_n_th_nh': 'Đã hoàn thành',
-          'h_y': 'Đã hủy'
+          'ChoThanhToan': 'Chờ thanh toán',
+          'ChoKhoiHanh': 'Chờ khởi hành',
+          'DaHoanThanh': 'Đã hoàn thành',
+          'DaHuy': 'Đã hủy'
         };
         const mappedStatus = ticketStatusMap[newRecord.TrangThaiVe] || ticket.ticketStatus;
         ticket.ticketStatus = mappedStatus as any;
@@ -618,10 +618,10 @@ export class DanhSachVeComponent implements OnInit {
     const newRecord = payload.new;
     if (payload.eventType === 'UPDATE' && newRecord) {
       const ticketStatusMap: Record<string, string> = {
-        'Ch__thanh_to_n': 'Chờ thanh toán',
-        'Ch__kh_i_h_nh': 'Chờ khởi hành',
-        'ho_n_th_nh': 'Đã hoàn thành',
-        'h_y': 'Đã hủy'
+        'ChoThanhToan': 'Chờ thanh toán',
+        'ChoKhoiHanh': 'Chờ khởi hành',
+        'DaHoanThanh': 'Đã hoàn thành',
+        'DaHuy': 'Đã hủy'
       };
 
       const mappedStatus = ticketStatusMap[newRecord.TrangThaiDonHang] || 'Chờ thanh toán';

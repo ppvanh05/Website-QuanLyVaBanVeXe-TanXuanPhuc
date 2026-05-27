@@ -1,9 +1,10 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TienIch } from '@prisma/client';
 
 @Injectable()
 export class DieuHanhService implements OnModuleInit {
-  private defaultCoordinatorId = 'NVDP001';
+  private defaultCoordinatorId = 'NVDP100001';
 
   constructor(private prisma: PrismaService) {}
 
@@ -30,8 +31,12 @@ export class DieuHanhService implements OnModuleInit {
               MaNhanVien: this.defaultCoordinatorId,
               LoaiTaiKhoan: 'NhanVienDieuPhoi',
               TenTruyCap: 'dieuphoi1',
+              MatKhau: 'Dieuphoi@123',
               HoVaTenDem: 'Nguyễn Văn',
               Ten: 'Điều Phối',
+              TenHienThi: 'Nguyễn Văn Điều Phối',
+              SoDienThoai: '0913000111',
+              Email: 'dp1@txpbus.vn',
               TrangThai: 'HoatDong',
             },
           });
@@ -141,7 +146,7 @@ export class DieuHanhService implements OnModuleInit {
         SoTang: data.floors ? parseInt(data.floors) : 1,
         SoDay: data.rows ? parseInt(data.rows) : 2,
         SoGhe: data.seats ? parseInt(data.seats) : 22,
-        TienIch: data.amenities ? this.formatTienIch(data.amenities) : '{}',
+        TienIch: data.amenities ? this.formatTienIch(data.amenities) : [],
         HanDangKiem: data.registrationExpiry ? this.parseDateString(data.registrationExpiry) : new Date(),
         HanBaoHiem: data.insuranceExpiry ? this.parseDateString(data.insuranceExpiry) : new Date(),
         AnhXe: data.vehicleImage || null,
@@ -536,22 +541,18 @@ export class DieuHanhService implements OnModuleInit {
     return d;
   }
 
-  private formatTienIch(amenities: string[]): string {
-    if (!amenities || !Array.isArray(amenities)) return '{}';
-    const AMENITY_MAP: { [key: string]: string } = {
-      tivi: 'Tivi',
-      usb: 'Ổ sạc, USB',
-      wifi: 'Wifi',
-      water: 'Nước, khăn ướt',
-      gps: 'GPS',
-      ac: 'Điều hòa',
+  private formatTienIch(amenities: string[]): TienIch[] {
+    if (!amenities || !Array.isArray(amenities)) return [];
+    const AMENITY_MAP: { [key: string]: TienIch } = {
+      tivi: TienIch.Tivi,
+      usb: TienIch.SacUSB,
+      wifi: TienIch.Wifi,
+      water: TienIch.NuocKhanUot,
+      gps: TienIch.GPS,
+      ac: TienIch.DieuHoa,
     };
-    const mapped = amenities
-      .map(a => AMENITY_MAP[a] || a)
-      .map(item => {
-        const escaped = item.replace(/"/g, '\\"');
-        return `"${escaped}"`;
-      });
-    return `{${mapped.join(',')}}`;
+    return amenities
+      .map(a => AMENITY_MAP[a.toLowerCase()])
+      .filter((a): a is TienIch => !!a);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, LoaiChinhSachEnum, TrangThaiChinhSachEnum } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
@@ -81,7 +81,7 @@ export class ChinhSachService {
     });
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý chính sách',
       NoiDungChiTiet: `Thêm mới chính sách chung: ${res.TieuDe} (Mã: ${res.MaChinhSach_ND})`,
       TrangThai: 'Thành công',
@@ -127,7 +127,7 @@ export class ChinhSachService {
     }
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý chính sách',
       NoiDungChiTiet: `Cập nhật chính sách chung: ${res.TieuDe} (Mã: ${id}). Chi tiết: ${changes.map(c => `${c.truong}: ${c.giaTriCu} -> ${c.giaTriMoi}`).join(', ') || 'Không thay đổi trường cốt lõi'}`,
       TrangThai: 'Thành công',
@@ -144,7 +144,7 @@ export class ChinhSachService {
     });
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý chính sách',
       NoiDungChiTiet: `Xóa chính sách chung: ${original?.TieuDe || ''} (Mã: ${id})`,
       TrangThai: 'Thành công',
@@ -186,7 +186,7 @@ export class ChinhSachService {
     });
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý chính sách',
       NoiDungChiTiet: `Thêm mới chính sách hủy vé: ${res.TenChinhSach} (Mã: ${res.MaChinhSach})`,
       TrangThai: 'Thành công',
@@ -232,7 +232,7 @@ export class ChinhSachService {
     }
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý chính sách',
       NoiDungChiTiet: `Cập nhật chính sách hủy vé: ${res.TenChinhSach} (Mã: ${id}). Chi tiết: ${changes.map(c => `${c.truong}: ${c.giaTriCu} -> ${c.giaTriMoi}`).join(', ') || 'Không thay đổi trường cốt lõi'}`,
       TrangThai: 'Thành công',
@@ -249,7 +249,7 @@ export class ChinhSachService {
     });
 
     this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý chính sách',
       NoiDungChiTiet: `Xóa chính sách hủy vé: ${original?.TenChinhSach || ''} (Mã: ${id})`,
       TrangThai: 'Thành công',
@@ -261,3 +261,4 @@ export class ChinhSachService {
     return this.mapChinhSachHuyVeToFrontend(res);
   }
 }
+
