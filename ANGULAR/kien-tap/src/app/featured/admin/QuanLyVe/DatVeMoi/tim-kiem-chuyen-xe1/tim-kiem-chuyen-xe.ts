@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 interface Seat {
   name: string;
@@ -140,7 +141,11 @@ export class TimKiemChuyenXe implements OnInit {
     { day: 31, label: '15', dateStr: '31/05/2026' }
   ];
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  constructor(
+    private route: ActivatedRoute, 
+    private router: Router,
+    private supabaseService: SupabaseService
+  ) {}
 
   ngOnInit() {
     this.initMockTrips();
@@ -156,6 +161,7 @@ export class TimKiemChuyenXe implements OnInit {
       this.updatePassengerCount();
       this.filterTrips();
     });
+    this.setupRealtimeSubscriptions();
   }
 
   get departureOptions() {
@@ -792,5 +798,96 @@ export class TimKiemChuyenXe implements OnInit {
     };
     localStorage.setItem('current_booking', JSON.stringify(bookingData));
     this.router.navigate(['/admin/quan-ly-ve/dat-ve-moi/thong-tin-don-hang']);
+  }
+
+  setupRealtimeSubscriptions() {
+    // Subscribe to GHE_CHUYEN_XE changes
+    this.supabaseService.subscribeTableChanges('GHE_CHUYEN_XE', (payload: any) => {
+      console.log('Realtime seat change payload:', payload);
+      this.handleSeatStatusChange(payload);
+    });
+
+    // Subscribe to LICH_TRINH changes
+    this.supabaseService.subscribeTableChanges('LICH_TRINH', (payload: any) => {
+      console.log('Realtime schedule change payload:', payload);
+      this.handleScheduleChange(payload);
+    });
+  }
+
+  handleSeatStatusChange(payload: any) {
+    const newRecord = payload.new;
+    if (!newRecord) return;
+
+    // Find the trip
+    const trip = this.allTrips.find(t => String(t.id) === String(newRecord.MaLichTrinh));
+    if (!trip) return;
+
+    // Extract seat name
+    let seatName = '';
+    if (newRecord.MaGheChuyen) {
+      const parts = newRecord.MaGheChuyen.split('_');
+      seatName = parts[parts.length - 1];
+    }
+
+    if (!seatName) return;
+
+    const seat = trip.seats.find(s => s.name === seatName);
+    if (!seat) return;
+
+    // Map db status to frontend status
+    const dbStatus = newRecord.TrangThaiGhe;
+    let newStatus: 'sold' | 'available' | 'selected' = 'available';
+    if (dbStatus === 'b_n' || dbStatus === 'ang_ch_n') {
+      newStatus = 'sold';
+    } else {
+      newStatus = 'available';
+    }
+
+    // Update if it's not the seat currently selected by this admin
+    if (seat.status !== 'selected' || newStatus === 'sold') {
+      seat.status = newStatus;
+      this.updateSelectedSeats(trip);
+      this.filterTrips();
+    }
+  }
+
+  handleScheduleChange(payload: any) {
+    const newRecord = payload.new;
+    const oldRecord = payload.old;
+
+    if (payload.eventType === 'DELETE' && oldRecord) {
+      this.allTrips = this.allTrips.filter(t => String(t.id) !== String(oldRecord.MaLichTrinh));
+    } else if (payload.eventType === 'INSERT' && newRecord) {
+      // Check if already exists
+      const exists = this.allTrips.some(t => String(t.id) === String(newRecord.MaLichTrinh));
+      if (!exists) {
+        // Create LIMOUSINE rooms for it
+        const basePrice = Number(newRecord.GiaVeCoBan) || 400000;
+        this.allTrips.push({
+          id: newRecord.MaLichTrinh,
+          departureTime: newRecord.GioKhoiHanh ? new Date(newRecord.GioKhoiHanh).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '18:00',
+          arrivalTime: newRecord.GioDenDuKien ? new Date(newRecord.GioDenDuKien).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '05:00',
+          duration: '11:00 h',
+          distance: '550Km',
+          timezone: 'Asian/Ho Chi Minh',
+          type: 'Limousine',
+          availableSeats: 22,
+          startStation: 'TP. Hồ Chí Minh',
+          endStation: 'Bình Định',
+          price: basePrice,
+          seats: this.generateLimousineRooms(basePrice),
+          expanded: false,
+          selectedTab: 'seat'
+        });
+      }
+    } else if (payload.eventType === 'UPDATE' && newRecord) {
+      const trip = this.allTrips.find(t => String(t.id) === String(newRecord.MaLichTrinh));
+      if (trip) {
+        trip.price = Number(newRecord.GiaVeCoBan) || trip.price;
+        trip.departureTime = newRecord.GioKhoiHanh ? new Date(newRecord.GioKhoiHanh).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) : trip.departureTime;
+        trip.arrivalTime = newRecord.GioDenDuKien ? new Date(newRecord.GioDenDuKien).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) : trip.arrivalTime;
+      }
+    }
+    this.filterTrips();
   }
 }

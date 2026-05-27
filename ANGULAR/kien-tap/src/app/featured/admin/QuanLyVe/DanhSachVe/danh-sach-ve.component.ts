@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { timer } from 'rxjs';
 import { LunarCalendarService } from '../../../../core/services/lunar-calendar.service';
+import { SupabaseService } from '../../../../core/services/supabase.service';
 
 export interface CalendarDay {
   day: number | null;
@@ -68,13 +69,15 @@ export class DanhSachVeComponent implements OnInit {
   constructor(
     private cdr: ChangeDetectorRef, 
     private zone: NgZone,
-    private lunarService: LunarCalendarService
+    private lunarService: LunarCalendarService,
+    private supabaseService: SupabaseService
   ) {
     this.displayTickets = [...this.tickets];
   }
 
   ngOnInit() {
     this.generateCalendar();
+    this.setupRealtimeSubscriptions();
   }
 
   toggleDatePicker() {
@@ -544,5 +547,93 @@ export class DanhSachVeComponent implements OnInit {
   getSeatColorClass(seat: string): string {
     if (!seat) return '';
     return seat.startsWith('A') ? 'seat-a' : 'seat-b';
+  }
+
+  setupRealtimeSubscriptions() {
+    // Listen to VE_DIEN_TU changes
+    this.supabaseService.subscribeTableChanges('VE_DIEN_TU', (payload) => {
+      console.log('Realtime VE_DIEN_TU payload received:', payload);
+      this.handleTicketRealtimeUpdate(payload);
+    });
+
+    // Listen to DON_HANG changes
+    this.supabaseService.subscribeTableChanges('DON_HANG', (payload) => {
+      console.log('Realtime DON_HANG payload received:', payload);
+      this.handleOrderRealtimeUpdate(payload);
+    });
+  }
+
+  handleTicketRealtimeUpdate(payload: any) {
+    const newRecord = payload.new;
+    const oldRecord = payload.old;
+
+    if (payload.eventType === 'DELETE' && oldRecord) {
+      this.tickets = this.tickets.filter(t => t.id !== oldRecord.MaVe);
+    } else if (payload.eventType === 'INSERT' && newRecord) {
+      const ticketStatusMap: Record<string, string> = {
+        'Ch__thanh_to_n': 'Chờ thanh toán',
+        'Ch__kh_i_h_nh': 'Chờ khởi hành',
+        'ho_n_th_nh': 'Đã hoàn thành',
+        'h_y': 'Đã hủy'
+      };
+
+      const newTicket: Ticket = {
+        id: newRecord.MaVe,
+        customer: 'Khách hàng Realtime',
+        phone: '09xxxxxxxx',
+        route: 'Tuyến Realtime',
+        date: newRecord.ThoiGianXuatVe ? newRecord.ThoiGianXuatVe.split('T')[0] : '2026-05-20',
+        arrivalDate: newRecord.ThoiGianXuatVe ? newRecord.ThoiGianXuatVe.split('T')[0] : '2026-05-20',
+        time: newRecord.ThoiGianXuatVe ? newRecord.ThoiGianXuatVe.split('T')[1]?.slice(0, 5) : '18:00',
+        total: `${Number(newRecord.GiaVe || 150000).toLocaleString('vi-VN')}đ`,
+        paymentStatus: (ticketStatusMap[newRecord.TrangThaiVe] || 'Chờ khởi hành') === 'Chờ thanh toán' ? 'Chờ thanh toán' : 'Đã thanh toán',
+        ticketStatus: (ticketStatusMap[newRecord.TrangThaiVe] || 'Chờ khởi hành') as any,
+        paymentMethod: 'VietQR',
+        seat: newRecord.MaGheChuyen ? newRecord.MaGheChuyen.split('_').pop() || 'A1' : 'A1'
+      };
+
+      if (!this.tickets.some(t => t.id === newTicket.id)) {
+        this.tickets.unshift(newTicket);
+      }
+    } else if (payload.eventType === 'UPDATE' && newRecord) {
+      const ticket = this.tickets.find(t => t.id === newRecord.MaVe);
+      if (ticket) {
+        const ticketStatusMap: Record<string, string> = {
+          'Ch__thanh_to_n': 'Chờ thanh toán',
+          'Ch__kh_i_h_nh': 'Chờ khởi hành',
+          'ho_n_th_nh': 'Đã hoàn thành',
+          'h_y': 'Đã hủy'
+        };
+        const mappedStatus = ticketStatusMap[newRecord.TrangThaiVe] || ticket.ticketStatus;
+        ticket.ticketStatus = mappedStatus as any;
+        ticket.paymentStatus = mappedStatus === 'Chờ thanh toán' ? 'Chờ thanh toán' : (mappedStatus === 'Đã hủy' ? 'Đã hủy' : 'Đã thanh toán');
+      }
+    }
+
+    this.onSearch();
+    this.cdr.detectChanges();
+  }
+
+  handleOrderRealtimeUpdate(payload: any) {
+    const newRecord = payload.new;
+    if (payload.eventType === 'UPDATE' && newRecord) {
+      const ticketStatusMap: Record<string, string> = {
+        'Ch__thanh_to_n': 'Chờ thanh toán',
+        'Ch__kh_i_h_nh': 'Chờ khởi hành',
+        'ho_n_th_nh': 'Đã hoàn thành',
+        'h_y': 'Đã hủy'
+      };
+
+      const mappedStatus = ticketStatusMap[newRecord.TrangThaiDonHang] || 'Chờ thanh toán';
+      this.tickets.forEach(ticket => {
+        if (ticket.customer === newRecord.HoTenNguoiDi || ticket.phone === newRecord.SdtNguoiDi) {
+          ticket.ticketStatus = mappedStatus as any;
+          ticket.paymentStatus = mappedStatus === 'Chờ thanh toán' ? 'Chờ thanh toán' : (mappedStatus === 'Đã hủy' ? 'Đã hủy' : 'Đã thanh toán');
+        }
+      });
+    }
+
+    this.onSearch();
+    this.cdr.detectChanges();
   }
 }

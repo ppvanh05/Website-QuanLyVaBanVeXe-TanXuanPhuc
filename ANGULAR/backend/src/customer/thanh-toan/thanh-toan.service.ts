@@ -27,7 +27,7 @@ export class ThanhToanService {
       throw new NotFoundException(`Không tìm thấy đơn hàng với mã ${MaDonHang}`);
     }
 
-    if (order.TrangThaiDonHang !== 'ChoThanhToan') {
+    if (order.TrangThaiDonHang !== 'Ch__thanh_to_n') {
       throw new BadRequestException(`Đơn hàng đã ở trạng thái ${order.TrangThaiDonHang}, không thể thực hiện thanh toán!`);
     }
 
@@ -87,13 +87,13 @@ export class ThanhToanService {
       // 2. Update Order status
       await tx.dON_HANG.update({
         where: { MaDonHang },
-        data: { TrangThaiDonHang: 'ChoKhoiHanh' },
+        data: { TrangThaiDonHang: 'Ch__kh_i_h_nh' },
       });
 
       // 3. Update E-Tickets status
       await tx.vE_DIEN_TU.updateMany({
         where: { MaDonHang },
-        data: { TrangThaiVe: 'ConHieuLuc' },
+        data: { TrangThaiVe: 'Ch__kh_i_h_nh' },
       });
 
       // 4. Lock seats permanently (status DaBan)
@@ -103,7 +103,7 @@ export class ThanhToanService {
           MaGheChuyen: { in: seatIds },
         },
         data: {
-          TrangThaiGhe: 'DaBan',
+          TrangThaiGhe: 'b_n',
           ThoiGianCapNhatTrangThai: new Date(),
         },
       });
@@ -157,13 +157,13 @@ export class ThanhToanService {
       // 2. Update Order status
       await tx.dON_HANG.update({
         where: { MaDonHang },
-        data: { TrangThaiDonHang: 'DaHuy' },
+        data: { TrangThaiDonHang: 'h_y' },
       });
 
       // 3. Update E-Tickets status
       await tx.vE_DIEN_TU.updateMany({
         where: { MaDonHang },
-        data: { TrangThaiVe: 'DaHuy' },
+        data: { TrangThaiVe: 'h_y' },
       });
 
       // 4. Release seats back to 'Trong'
@@ -173,7 +173,7 @@ export class ThanhToanService {
           MaGheChuyen: { in: seatIds },
         },
         data: {
-          TrangThaiGhe: 'Trong',
+          TrangThaiGhe: 'C_n_Tr_ng',
           ThoiGianCapNhatTrangThai: new Date(),
         },
       });

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AdminAuthService, AdminUser } from '../../../core/services/admin-auth.service';
 
 interface MenuItem {
   label: string;
@@ -9,6 +10,7 @@ interface MenuItem {
   route?: string;
   children?: MenuItem[];
   isOpen?: boolean;
+  disabled?: boolean;
 }
 
 @Component({
@@ -21,8 +23,10 @@ interface MenuItem {
 export class AdminLayoutComponent {
   isSidebarCollapsed = false;
   currentDate = new Date();
+  currentUser: AdminUser | null = null;
+  isAvatarMenuOpen = false;
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private authService: AdminAuthService) {
     // Tự động xử lý trạng thái menu khi chuyển trang
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -45,6 +49,11 @@ export class AdminLayoutComponent {
           }
         }
       });
+    });
+
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.applyRBAC();
     });
   }
 
@@ -91,11 +100,50 @@ export class AdminLayoutComponent {
     { label: 'Quản lý nhật ký', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky' }
   ];
 
+  applyRBAC() {
+    if (!this.currentUser) return;
+    const role = this.currentUser.LoaiTaiKhoan;
+
+    this.menuItems.forEach(item => {
+      item.disabled = false; // reset
+      if (item.label === 'Trang chủ') return; // Always accessible
+
+      if (role === 'QuanTriVien') {
+        // Admin has all access
+      } else if (role === 'BanQuanLy') {
+        if (!['Quản lý vé', 'Quản lý điều hành', 'Báo cáo'].includes(item.label)) {
+          item.disabled = true;
+        }
+      } else if (role === 'BanVe') {
+        if (!['Quản lý vé'].includes(item.label)) {
+          item.disabled = true;
+        }
+      } else if (role === 'DieuPhoi') {
+        if (!['Quản lý điều hành'].includes(item.label)) {
+          item.disabled = true;
+        }
+      } else {
+        item.disabled = true;
+      }
+    });
+  }
+
+  toggleAvatarMenu() {
+    this.isAvatarMenuOpen = !this.isAvatarMenuOpen;
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/home']);
+  }
+
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
   toggleSubmenu(item: MenuItem) {
+    if (item.disabled) return;
+    
     if (item.children) {
       // Nếu sidebar đang thu gọn và có menu con, thì mở rộng sidebar ra trước
       if (this.isSidebarCollapsed) {

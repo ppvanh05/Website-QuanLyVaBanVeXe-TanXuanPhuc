@@ -192,8 +192,8 @@ export class QuanLyVeService {
         ThoiGianDat: new Date(),
         SoLuongVeDaDat: data.maGheChuyenList.length,
         TongGiaVe: new Prisma.Decimal(tongGiaVe),
-        PhuongThucThanhToan: data.phuongThucThanhToan,
-        TrangThaiDonHang: 'DaDat',
+        PhuongThucThanhToan: data.phuongThucThanhToan as any,
+        TrangThaiDonHang: 'Ch__kh_i_h_nh',
       },
     });
 
@@ -205,7 +205,7 @@ export class QuanLyVeService {
         data: {
           MaVe: maVe,
           GiaVe: ghe.GiaVe,
-          TrangThaiVe: 'DaDat',
+          TrangThaiVe: 'Ch__kh_i_h_nh',
           SoLanDaSua: 0,
           ThoiGianXuatVe: new Date(),
           MaQRVe: maVe,
@@ -223,7 +223,7 @@ export class QuanLyVeService {
       await this.prisma.gHE_CHUYEN_XE.update({
         where: { MaGheChuyen: ghe.MaGheChuyen },
         data: { 
-          TrangThaiGhe: 'DaDat',
+          TrangThaiGhe: 'b_n',
           ThoiGianCapNhatTrangThai: new Date()
         },
       });
@@ -236,7 +236,7 @@ export class QuanLyVeService {
           MaGiaoDich: `GD${Date.now()}`,
           MaDonHang: maDonHang,
           LoaiGiaoDich: 'ThanhToan',
-          PhuongThucThanhToan: data.phuongThucThanhToan,
+          PhuongThucThanhToan: data.phuongThucThanhToan as any,
           SoTien: new Prisma.Decimal(tongGiaVe),
           ThoiGianGiaoDich: new Date(),
           TrangThaiGiaoDich: 'ThanhCong',
@@ -280,19 +280,12 @@ export class QuanLyVeService {
     const ngayKhoiHanh = new Date(ve.LICH_TRINH.NgayKhoiHanh);
     const gioKhoiHanhDate = ve.LICH_TRINH.GioKhoiHanh;
     const thoiGianKhoiHanh = new Date(ngayKhoiHanh);
-<<<<<<< Updated upstream
-    if (typeof gioKhoiHanh === 'string') {
-      const [hours, minutes] = (gioKhoiHanh as string).split(':').map(Number);
-      thoiGianKhoiHanh.setHours(hours, minutes, 0, 0);
-    } else if (gioKhoiHanh instanceof Date) {
-      thoiGianKhoiHanh.setHours(gioKhoiHanh.getHours(), gioKhoiHanh.getMinutes(), 0, 0);
-=======
     if (gioKhoiHanhDate) {
       thoiGianKhoiHanh.setHours(gioKhoiHanhDate.getHours(), gioKhoiHanhDate.getMinutes(), 0, 0);
     } else {
       thoiGianKhoiHanh.setHours(0, 0, 0, 0);
->>>>>>> Stashed changes
     }
+    
 
     const thoiGianHienTai = new Date();
     const soGioConLai = (thoiGianKhoiHanh.getTime() - thoiGianHienTai.getTime()) / (1000 * 60 * 60);

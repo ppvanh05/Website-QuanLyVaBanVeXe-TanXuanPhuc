@@ -45,11 +45,7 @@ export class HomeService {
   async getActiveRoutes() {
     return this.prisma.tUYEN_XE.findMany({
       where: {
-        OR: [
-          { TrangThai: 'active' },
-          { TrangThai: 'HoatDong' },
-          { TrangThai: 'Hoạt động' },
-        ],
+        TrangThaiTuyenXe: 'DangHoatDong',
       },
       orderBy: { TenTuyenXe: 'asc' },
     });

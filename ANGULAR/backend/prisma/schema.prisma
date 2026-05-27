@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -404,7 +403,6 @@ model TIN_TUC {
   NoiBat         Boolean @default(false)
   MaQuanTriVien  String?              @db.VarChar
   NgayGioHenGio  DateTime?            @db.Timestamptz(6)
-  NoiBat         Boolean?             @default(false)
   QUAN_TRI_VIEN  QUAN_TRI_VIEN?       @relation(fields: [MaQuanTriVien], references: [MaQuanTriVien], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -518,7 +516,6 @@ enum TrangThaiTinTucEnum {
 enum TrangThaiViPhamEnum {
   DangApDung
   NgungApDung
-}
 }
 
 enum LoaiDiem {

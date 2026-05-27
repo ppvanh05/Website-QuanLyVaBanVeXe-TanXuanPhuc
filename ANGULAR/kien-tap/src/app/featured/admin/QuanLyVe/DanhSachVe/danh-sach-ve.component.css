@@ -1080,4 +1080,121 @@ tr:hover td {
     gap: 15px;
   }
 }
+}/* Ticket Print Preview Modal - New Layout */
+.ticket-modal {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 95%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+.ticket-preview {
+  display: flex;
+  flex-direction: column;
+}
+
+.full-ticket {
+  background: white;
+  padding: 20px 40px;
+  color: #333;
+  font-family: 'Inter', Arial, sans-serif;
+  border: 1px solid #000;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.ticket-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.company-name {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 5px 0;
+  color: #000;
+}
+
+.company-address, .company-tax {
+  font-size: 13px;
+  margin: 2px 0;
+  color: #333;
+}
+
+.ticket-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 15px 0 5px 0;
+  color: #000;
+  letter-spacing: 1px;
+}
+
+.ticket-subtitle {
+  font-size: 13px;
+  margin: 0;
+  color: #333;
+}
+
+.ticket-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.ticket-info-col {
+  flex: 1;
+  padding-right: 20px;
+}
+
+.t-row {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.t-label {
+  color: #555;
+  display: inline-block;
+  min-width: 150px;
+}
+
+.t-val {
+  font-weight: 700;
+  color: #000;
+}
+
+.ticket-qr-col {
+  width: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-placeholder {
+  width: 120px;
+  height: 120px;
+  border: 2px solid #000;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+}
+
+.qr-placeholder .material-icons {
+  font-size: 100px;
+  color: #000;
+}
+
+.ticket-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #333;
+  margin-top: 10px;
+  border-top: 1px solid #ddd;
+  padding-top: 15px;
 }

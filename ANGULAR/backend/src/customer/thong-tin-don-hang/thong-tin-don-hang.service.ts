@@ -52,13 +52,13 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
       
       const expiredHeldSeats = await this.prisma.gHE_CHUYEN_XE.findMany({
         where: {
-          TrangThaiGhe: 'GiuCho',
+          TrangThaiGhe: 'ang_ch_n',
           ThoiGianCapNhatTrangThai: { lt: fifteenMinsAgo },
           // Ensure it's not bound to a paid/confirmed order
           VE_DIEN_TU: {
             none: {
               DON_HANG: {
-                TrangThaiDonHang: { in: ['ChoKhoiHanh', 'DaThanhToan', 'DaHoanThanh'] }
+                TrangThaiDonHang: { in: ['Ch__kh_i_h_nh', 'ho_n_th_nh'] }
               }
             }
           }
@@ -73,7 +73,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
             MaGheChuyen: { in: ids }
           },
           data: {
-            TrangThaiGhe: 'Trong',
+            TrangThaiGhe: 'C_n_Tr_ng',
             ThoiGianCapNhatTrangThai: new Date(),
           }
         });
@@ -81,7 +81,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         // Also cancel the orders associated with these seats if they are still unpaid
         const ordersToCancel = await this.prisma.dON_HANG.findMany({
           where: {
-            TrangThaiDonHang: 'ChoThanhToan',
+            TrangThaiDonHang: 'Ch__thanh_to_n',
             VE_DIEN_TU: {
               some: {
                 MaGheChuyen: { in: ids }
@@ -93,12 +93,12 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         for (const order of ordersToCancel) {
           await this.prisma.dON_HANG.update({
             where: { MaDonHang: order.MaDonHang },
-            data: { TrangThaiDonHang: 'DaHuy' }
+            data: { TrangThaiDonHang: 'h_y' }
           });
 
           await this.prisma.vE_DIEN_TU.updateMany({
             where: { MaDonHang: order.MaDonHang },
-            data: { TrangThaiVe: 'DaHuy' }
+            data: { TrangThaiVe: 'h_y' }
           });
 
           await this.nhatKyService.ghiLog({
@@ -135,8 +135,8 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
 
     // Check if any seat is already booked or active held
     for (const seat of seats) {
-      const isHeld = seat.TrangThaiGhe === 'GiuCho' && seat.ThoiGianCapNhatTrangThai >= fifteenMinsAgo;
-      const isSold = seat.TrangThaiGhe === 'DaBan';
+      const isHeld = seat.TrangThaiGhe === 'ang_ch_n' && seat.ThoiGianCapNhatTrangThai >= fifteenMinsAgo;
+      const isSold = seat.TrangThaiGhe === 'b_n';
 
       if (isHeld || isSold) {
         throw new BadRequestException(`Ghế ${seat.MaGheChuyen.split('_').pop() || seat.MaGheChuyen} đã có người giữ hoặc đã được bán!`);
@@ -149,7 +149,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         MaGheChuyen: { in: DanhSachMaGheChuyen },
       },
       data: {
-        TrangThaiGhe: 'GiuCho',
+        TrangThaiGhe: 'ang_ch_n',
         ThoiGianCapNhatTrangThai: new Date(),
       },
     });
@@ -226,7 +226,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
 
     // Check if any seat is sold (status DaBan)
     for (const seat of seats) {
-      if (seat.TrangThaiGhe === 'DaBan') {
+      if (seat.TrangThaiGhe === 'b_n') {
         throw new BadRequestException(`Ghế đã được đặt bởi người khác!`);
       }
     }
@@ -257,8 +257,8 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           SoLuongVeDaDat: DanhSachMaGheChuyen.length,
           TienBaoHiem: new Prisma.Decimal(totalInsurance),
           TongGiaVe: new Prisma.Decimal(finalTotal),
-          PhuongThucThanhToan,
-          TrangThaiDonHang: 'ChoThanhToan',
+          PhuongThucThanhToan: PhuongThucThanhToan as any,
+          TrangThaiDonHang: 'Ch__thanh_to_n',
         },
       });
 
@@ -270,7 +270,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           data: {
             MaVe: maVe,
             GiaVe: seat.GiaVe,
-            TrangThaiVe: 'ChoThanhToan',
+            TrangThaiVe: 'Ch__thanh_to_n',
             SoLanDaSua: 0,
             ThoiGianXuatVe: new Date(),
             MaQRVe: `QR-${maVe}`,
@@ -288,7 +288,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         await tx.gHE_CHUYEN_XE.update({
           where: { MaGheChuyen: seat.MaGheChuyen },
           data: {
-            TrangThaiGhe: 'GiuCho',
+            TrangThaiGhe: 'ang_ch_n',
             ThoiGianCapNhatTrangThai: new Date(),
           },
         });

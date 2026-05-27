@@ -11,9 +11,10 @@
     <nav class="sidebar-nav">
       <div *ngFor="let item of menuItems" class="menu-item-container" routerLinkActive="parent-active"
         #rla="routerLinkActive">
-        <div class="menu-item" [routerLink]="item.route"
+        <div class="menu-item" [routerLink]="item.disabled ? null : item.route"
           [class.active]="item.isOpen || (rla.isActive && !isAnyMenuOpen)" (click)="toggleSubmenu(item)"
-          [class.has-children]="item.children">
+          [class.has-children]="item.children"
+          [class.disabled]="item.disabled">
           <span class="material-icons">{{ item.icon }}</span>
           <span class="label">{{ item.label }}</span>
           <span *ngIf="item.children" class="material-icons arrow" [class.open]="item.isOpen">
@@ -32,16 +33,28 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="user-info">
-        <div class="avatar"></div>
+      <div class="user-info" (click)="toggleAvatarMenu()">
+        <div class="avatar">
+          <img *ngIf="currentUser?.AnhDaiDien" [src]="currentUser?.AnhDaiDien" alt="Avatar">
+          <span *ngIf="!currentUser?.AnhDaiDien" class="material-icons">account_circle</span>
+        </div>
         <div class="details">
-          <span class="name">Nguyễn Văn A</span>
-          <span class="role">Quản trị viên</span>
+          <span class="name">{{ currentUser?.TenHienThi || 'Người dùng' }}</span>
+          <span class="role">
+            {{ currentUser?.LoaiTaiKhoan === 'QuanTriVien' ? 'Quản trị viên' : 
+               (currentUser?.LoaiTaiKhoan === 'BanQuanLy' ? 'Ban quản lý' : 
+               (currentUser?.LoaiTaiKhoan === 'BanVe' ? 'Nhân viên bán vé' : 
+               (currentUser?.LoaiTaiKhoan === 'DieuPhoi' ? 'Nhân viên điều phối' : 'Nhân viên'))) 
+            }}
+          </span>
+        </div>
+        <div class="avatar-menu" [class.show]="isAvatarMenuOpen">
+          <div class="menu-item" (click)="$event.stopPropagation(); logout()">
+            <span class="material-icons">logout</span>
+            Đăng xuất
+          </div>
         </div>
       </div>
-      <button class="logout-btn">
-        Đăng xuất
-      </button>
     </div>
   </aside>
 
