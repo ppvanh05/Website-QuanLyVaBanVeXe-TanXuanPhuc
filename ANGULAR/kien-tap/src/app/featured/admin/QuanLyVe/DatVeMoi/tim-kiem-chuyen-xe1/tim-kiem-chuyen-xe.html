@@ -837,70 +837,65 @@
                         <p class="text-label-xs text-on-surface-variant">Theo dõi hành trình liên tục</p>
                       </div>
                     </div>
+                  </div>
 
-                    <!-- Loading state -->
-                    <div *ngIf="isPoliciesLoading" class="text-on-surface-variant py-4">
-                      <span class="text-body-md font-medium">Đang tải chính sách từ hệ thống...</span>
-                    </div>
+                  <!-- 5. Chính sách Tab Content -->
+                  <div *ngIf="trip.selectedTab === 'policy'" class="space-y-6">
 
-                    <!-- Chính sách hủy vé từ API -->
-                    <div *ngIf="!isPoliciesLoading" class="space-y-3">
+                    <!-- 1. Chính sách hủy vé -->
+                    <div class="space-y-3">
                       <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">
                         1. CHÍNH SÁCH HỦY VÉ VÀ HOÀN TIỀN
                       </h4>
-
-                      <!-- Dữ liệu từ API -->
-                      <div *ngIf="cancelPolicies.length > 0" class="space-y-2">
-                        <ul class="space-y-2 text-body-md text-on-surface-variant leading-relaxed">
-                           <li *ngFor="let cp of cancelPolicies"
-                            class="p-3 rounded-lg border border-outline-variant/20 bg-surface-container-low">
-                            <span>
-                              Hủy vé trước
-                              <span class="font-bold text-navy">{{ cp.GioiHanGioTruocKhoiHanh }} giờ</span>
-                              so với giờ khởi hành:
-                              <span *ngIf="cp.TyLePhiHuy === 0" class="font-bold text-success">Hoàn 100% giá vé.</span>
-                              <span *ngIf="cp.TyLePhiHuy > 0 && cp.TyLePhiHuy < 1" class="font-bold text-secondary">
-                                Hoàn {{ (1 - cp.TyLePhiHuy) * 100 | number:'1.0-0' }}% giá vé
-                                (phí hủy {{ cp.TyLePhiHuy * 100 | number:'1.0-0' }}%).
-                              </span>
-                              <span *ngIf="cp.TyLePhiHuy === 1" class="font-bold text-danger">Không hoàn tiền.</span>
-                              <span *ngIf="cp.TenChinhSach" class="text-label-sm text-outline ml-1">({{ cp.TenChinhSach }})</span>
-                            </span>
+                      <div class="p-4 bg-surface-container rounded-lg border border-outline-variant/20 text-body-sm text-on-surface-variant">
+                        <ul class="space-y-2">
+                          <li class="p-3 rounded-lg border border-outline-variant/20 bg-surface-container-low">
+                            Hủy vé trước <span class="font-bold text-navy">24 giờ</span> so với giờ khởi hành:
+                            <span class="font-bold text-success">Hoàn 100% giá vé.</span>
+                          </li>
+                          <li class="p-3 rounded-lg border border-outline-variant/20 bg-surface-container-low">
+                            Hủy vé trước <span class="font-bold text-navy">12–24 giờ</span> so với giờ khởi hành:
+                            <span class="font-bold text-secondary">Hoàn 50% giá vé (phí hủy 50%).</span>
+                          </li>
+                          <li class="p-3 rounded-lg border border-outline-variant/20 bg-surface-container-low">
+                            Hủy vé dưới <span class="font-bold text-navy">12 giờ</span> so với giờ khởi hành:
+                            <span class="font-bold text-danger">Không hoàn tiền.</span>
                           </li>
                         </ul>
                       </div>
+                    </div>
 
-                      <!-- Fallback khi API không có dữ liệu -->
-                      <div *ngIf="cancelPolicies.length === 0"
-                        class="p-4 bg-surface-container rounded-lg border border-outline-variant/20 text-body-sm text-on-surface-variant">
-                        <p class="font-semibold text-navy mb-2">Chính sách hủy vé mặc định:</p>
-                        <ul class="list-disc list-inside space-y-1">
-                          <li>Hủy trước <strong>24 giờ</strong>: Hoàn <span class="text-success font-bold">100%</span></li>
-                          <li>Hủy từ <strong>12–24 giờ</strong>: Hoàn <span class="text-secondary font-bold">50%</span></li>
-                          <li>Hủy dưới <strong>12 giờ</strong>: <span class="text-danger font-bold">Không hoàn tiền</span></li>
+                    <!-- 2. Trẻ em dưới 6 tuổi và phụ nữ có thai (CS100012) -->
+                    <div class="space-y-3">
+                      <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">
+                        2. TRẺ EM DƯỚI 6 TUỔI VÀ PHỤ NỮ CÓ THAI
+                      </h4>
+                      <div class="p-4 bg-surface-container rounded-lg border border-outline-variant/20 text-body-sm text-on-surface-variant leading-relaxed">
+                        <ul class="space-y-2 list-disc list-inside">
+                          <li><strong>Trẻ dưới 6 tuổi</strong> đi cùng người lớn: <span class="text-success font-bold">Miễn phí vé</span>, không có ghế riêng.</li>
+                          <li><strong>Trẻ từ 6 tuổi trở lên</strong>: Mua vé như người lớn, có ghế riêng.</li>
+                          <li><strong>Phụ nữ có thai</strong> từ tháng thứ 7 trở lên: Vui lòng thông báo trước khi đặt vé để nhà xe hỗ trợ tốt nhất.</li>
+                          <li>Nhà xe có quyền từ chối phục vụ nếu ảnh hưởng đến an toàn hành trình.</li>
                         </ul>
                       </div>
                     </div>
 
-                    <!-- Trẻ em dưới 6 tuổi và phụ nữ có thai -->
-                    <div *ngIf="!isPoliciesLoading && childrenPregnancyPolicy" class="space-y-3 pt-2">
-                      <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">
-                        2. TRẺ EM DƯỚI 6 TUỔI VÀ PHỤ NỮ CÓ THAI
-                      </h4>
-                      <div class="policy-rich-content text-body-md text-on-surface-variant leading-relaxed"
-                        [innerHTML]="childrenPregnancyPolicy.NoiDung">
-                      </div>
-                    </div>
-
-                    <!-- Yêu cầu khi lên xe -->
-                    <div *ngIf="!isPoliciesLoading && boardingRequirementPolicy" class="space-y-3 pt-2">
+                    <!-- 3. Yêu cầu khi lên xe (CS100013) -->
+                    <div class="space-y-3">
                       <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">
                         3. YÊU CẦU KHI LÊN XE
                       </h4>
-                      <div class="policy-rich-content text-body-md text-on-surface-variant leading-relaxed"
-                        [innerHTML]="boardingRequirementPolicy.NoiDung">
+                      <div class="p-4 bg-surface-container rounded-lg border border-outline-variant/20 text-body-sm text-on-surface-variant leading-relaxed">
+                        <ul class="space-y-2 list-disc list-inside">
+                          <li><strong>Thời gian có mặt:</strong> Khách vui lòng có mặt tại điểm đón trước <span class="font-bold text-navy">15 phút</span> so với giờ xuất phát.</li>
+                          <li><strong>Giấy tờ tùy thân:</strong> Mang theo CMND/CCCD hoặc hộ chiếu khi lên xe.</li>
+                          <li><strong>Hành lý:</strong> Tối đa <span class="font-bold text-navy">20 kg</span>. Không mang đồ có mùi, dễ cháy nổ, động vật/thú cưng.</li>
+                          <li><strong>Không hút thuốc</strong> trên xe trong suốt hành trình.</li>
+                          <li>Giữ gìn vệ sinh chung, tôn trọng hành khách khác.</li>
+                        </ul>
                       </div>
                     </div>
+
                   </div>
 
 

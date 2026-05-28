@@ -3,9 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { ChinhSachService } from '../../../../../core/services/chinh-sach.service';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+
 
 @Component({
   selector: 'app-thanh-toan',
@@ -63,12 +61,7 @@ export class ThanhToan implements OnInit, OnDestroy {
   // Hold seat state
   isHoldingSeat: boolean = false;
 
-  // Policies states
-  isPoliciesLoading: boolean = false;
-  cancelPolicies: any[] = [];
-  childrenPregnancyPolicy: any = null;
-  boardingRequirementPolicy: any = null;
-  generalPolicies: any[] = [];
+
 
   paymentMethods = [
     { id: 'vietqr', name: 'Thanh toán qua VietQR', icon: '/asset/images/customer/VietQR_Logo.png', badge: '' },
@@ -84,7 +77,6 @@ export class ThanhToan implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
-    private chinhSachService: ChinhSachService,
   ) {}
 
   // Selected date from booking context
@@ -92,7 +84,7 @@ export class ThanhToan implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('ThanhToan ngOnInit called. window type:', typeof window);
-    this.loadPolicies();
+
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('final_booking');
       console.log('ThanhToan final_booking in localStorage:', saved);
@@ -474,45 +466,5 @@ export class ThanhToan implements OnInit, OnDestroy {
     });
   }
 
-  loadPolicies() {
-    this.isPoliciesLoading = true;
-    forkJoin({
-      general: this.chinhSachService.getAllChinhSach().pipe(catchError(() => of([]))),
-      cancel: this.chinhSachService.getAllChinhSachHuyVe().pipe(catchError(() => of([])))
-    }).subscribe(({ general, cancel }) => {
-      this.generalPolicies = (general as any[]).filter((p: any) => p.TrangThai === 'DangApDung');
-      this.childrenPregnancyPolicy = this.findGeneralPolicy(
-        this.generalPolicies,
-        ['CS100012'],
-        ['tre em', 'phu nu co thai']
-      );
-      this.boardingRequirementPolicy = this.findGeneralPolicy(
-        this.generalPolicies,
-        ['CS100013'],
-        ['yeu cau khi len xe', 'boarding']
-      );
-      this.cancelPolicies = (cancel as any[])
-        .filter((cp: any) => cp.TrangThai === 'DangApDung')
-        .sort((a: any, b: any) => b.GioiHanGioTruocKhoiHanh - a.GioiHanGioTruocKhoiHanh);
-      this.isPoliciesLoading = false;
-      this.cdr.detectChanges();
-    });
-  }
 
-  private findGeneralPolicy(policies: any[], ids: string[], keywords: string[]): any | null {
-    const byId = policies.find((policy: any) => ids.includes(policy.MaChinhSach_ND));
-    if (byId) return byId;
-
-    return policies.find((policy: any) => {
-      const title = this.normalizePolicyText(policy.TieuDe ?? '');
-      return keywords.every(keyword => title.includes(this.normalizePolicyText(keyword)));
-    }) ?? null;
-  }
-
-  private normalizePolicyText(value: string): string {
-    return value
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-  }
 }

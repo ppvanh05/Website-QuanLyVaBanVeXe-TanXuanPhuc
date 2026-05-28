@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, switchMap, timeout } from 'rxjs/operators';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
-import { ChinhSachService } from '../../../../../core/services/chinh-sach.service';
+
 
 interface Seat {
   name: string;
@@ -110,13 +110,7 @@ export class TimKiemChuyenXe implements OnInit {
   filteredTrips: Trip[] = [];
   isLoadingTrips = false;
   tripLoadError = '';
-  // Policy data loaded from API
-  policies: any[] = [];
-  cancelPolicies: any[] = [];
-  generalPolicies: any[] = [];    // CHINH_SACH (bảo hiểm, thanh toán, khác)
-  childrenPregnancyPolicy: any | null = null;
-  boardingRequirementPolicy: any | null = null;
-  isPoliciesLoading = false;
+
 
   // Currently active selected trip
   activeTrip: Trip | null = null;
@@ -165,7 +159,6 @@ export class TimKiemChuyenXe implements OnInit {
     private router: Router,
     private supabaseService: SupabaseService,
     private http: HttpClient,
-    private chinhSachService: ChinhSachService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -188,51 +181,10 @@ export class TimKiemChuyenXe implements OnInit {
       } catch (error) {
         console.error('Lỗi khởi tạo Supabase Realtime:', error);
       }
-      this.loadPolicies();
     }
-    this.loadPolicies();
   }
 
-  // Load chính sách từ API để hiển thị trong tab Chính sách
-  loadPolicies() {
-    this.isPoliciesLoading = true;
-    forkJoin({
-      general: this.chinhSachService.getAllChinhSach().pipe(catchError(() => of([]))),
-      cancel: this.chinhSachService.getAllChinhSachHuyVe().pipe(catchError(() => of([])))
-    }).subscribe(({ general, cancel }) => {
-      this.generalPolicies = (general as any[]).filter((p: any) => p.TrangThai === 'DangApDung');
-      this.childrenPregnancyPolicy = this.findGeneralPolicy(
-        this.generalPolicies,
-        ['CS100012'],
-        ['tre em', 'phu nu co thai']
-      );
-      this.boardingRequirementPolicy = this.findGeneralPolicy(
-        this.generalPolicies,
-        ['CS100013'],
-        ['yeu cau', 'len xe']
-      );
-      this.cancelPolicies = (cancel as any[]).filter((p: any) => p.TrangThai === 'DangApDung')
-        .sort((a: any, b: any) => b.GioiHanGioTruocKhoiHanh - a.GioiHanGioTruocKhoiHanh);
-      this.isPoliciesLoading = false;
-    });
-  }
 
-  private findGeneralPolicy(policies: any[], ids: string[], keywords: string[]): any | null {
-    const byId = policies.find((policy: any) => ids.includes(policy.MaChinhSach_ND));
-    if (byId) return byId;
-
-    return policies.find((policy: any) => {
-      const title = this.normalizePolicyText(policy.TieuDe ?? '');
-      return keywords.every(keyword => title.includes(this.normalizePolicyText(keyword)));
-    }) ?? null;
-  }
-
-  private normalizePolicyText(value: string): string {
-    return value
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-  }
 
 
   getEarlyArrivalTime(trip: Trip): number {

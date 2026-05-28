@@ -48,7 +48,6 @@ import { AdminAuthModule } from './admin/auth/admin-auth.module';
     ThanhToanModule,
     TraCuuVeModule,
     CustomerHoSoModule,
-    ProfileModule,
   ],
   controllers: [AppController],
   providers: [AppService],

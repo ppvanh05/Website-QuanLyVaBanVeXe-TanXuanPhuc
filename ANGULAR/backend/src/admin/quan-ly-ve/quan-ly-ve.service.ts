@@ -614,7 +614,7 @@ export class QuanLyVeService {
         SoLuongVeDaDat: data.maGheChuyenList.length,
         TongGiaVe: new Prisma.Decimal(tongGiaVe),
         PhuongThucThanhToan: data.phuongThucThanhToan as any,
-        TrangThaiDonHang: initialStatus,
+        TrangThaiDonHang: initialStatus as any,
       },
     });
 
@@ -626,7 +626,7 @@ export class QuanLyVeService {
         data: {
           MaVe: maVe,
           GiaVe: ghe.GiaVe,
-          TrangThaiVe: initialStatus,
+          TrangThaiVe: initialStatus as any,
           SoLanDaSua: 0,
           ThoiGianXuatVe: new Date(),
           MaQRVe: maVe,
