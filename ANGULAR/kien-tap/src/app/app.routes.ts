@@ -53,6 +53,7 @@ export const routes: Routes = [
     path: 'danh-gia',
     loadComponent: () => import('./featured/customer/review/review.component').then(m => m.ReviewComponent)
   },
+  
   {
     path: '',
     redirectTo: 'admin',

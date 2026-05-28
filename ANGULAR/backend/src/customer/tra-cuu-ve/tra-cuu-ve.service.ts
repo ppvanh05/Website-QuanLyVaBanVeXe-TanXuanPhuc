@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NhatKyHeThongService } from '../../admin/nhat-ky-he-thong/nhat-ky-he-thong.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, TrangThaiVe, TrangThaiGhe, TrangThaiChinhSachEnum } from '@prisma/client';
 
 @Injectable()
 export class TraCuuVeService {
@@ -18,25 +18,23 @@ export class TraCuuVeService {
     const route = schedule?.TUYEN_XE;
     const vehicle = firstTicket?.PHUONG_TIEN;
 
-    // DB TrangThaiDonHang: 'ChoThanhToan', 'ChoKhoiHanh', 'DaHoanThanh', 'DaHuy', 'DaDanhGia'
+    // DB TrangThaiDonHang: Ch__thanh_to_n, Ch__kh_i_h_nh, ho_n_th_nh, h_y
     // Frontend expects: 'Chờ thanh toán', 'Chờ khởi hành', 'Đã hoàn thành', 'Đã hủy', 'Đã đánh giá'
     const statusMap: Record<string, string> = {
-      ChoThanhToan: 'Chờ thanh toán',
-      ChoKhoiHanh: 'Chờ khởi hành',
-      DaHoanThanh: 'Đã hoàn thành',
-      DaHuy: 'Đã hủy',
-      DaDanhGia: 'Đã đánh giá',
+      [TrangThaiVe.Ch__thanh_to_n]: 'Chờ thanh toán',
+      [TrangThaiVe.Ch__kh_i_h_nh]: 'Chờ khởi hành',
+      [TrangThaiVe.ho_n_th_nh]: 'Đã hoàn thành',
+      [TrangThaiVe.h_y]: 'Đã hủy',
     };
     const trangThaiDonHang = statusMap[order.TrangThaiDonHang] || order.TrangThaiDonHang || 'Chờ thanh toán';
 
     // Map tickets list
     const tickets = (order.VE_DIEN_TU || []).map((ticket: any) => {
       const ticketStatusMap: Record<string, string> = {
-        ChoThanhToan: 'Chờ thanh toán',
-        ConHieuLuc: 'Chờ khởi hành',
-        DaSuDung: 'Đã hoàn thành',
-        DaHuy: 'Đã hủy',
-        DaDanhGia: 'Đã đánh giá',
+        [TrangThaiVe.Ch__thanh_to_n]: 'Chờ thanh toán',
+        [TrangThaiVe.Ch__kh_i_h_nh]: 'Chờ khởi hành',
+        [TrangThaiVe.ho_n_th_nh]: 'Đã hoàn thành',
+        [TrangThaiVe.h_y]: 'Đã hủy',
       };
       
       const departureDateStr = schedule?.NgayKhoiHanh
@@ -308,13 +306,13 @@ export class TraCuuVeService {
       throw new NotFoundException(`Không tìm thấy vé với mã ${maVe}`);
     }
 
-    if (ticket.TrangThaiVe === 'DaHuy' || ticket.TrangThaiVe === 'DaHuyVe') {
+    if (ticket.TrangThaiVe === TrangThaiVe.h_y) {
       throw new BadRequestException('Vé này đã được huỷ bỏ trước đó!');
     }
 
     // 1. Fetch active cancellation policy
     const policy = await this.prisma.cHINH_SACH_HUY_VE.findFirst({
-      where: { TrangThai: 'DangApDung' },
+      where: { TrangThai: TrangThaiChinhSachEnum.DangApDung },
     });
 
     // 2. Compute remaining time before departure
@@ -354,17 +352,17 @@ export class TraCuuVeService {
 
     // Execute cancellation database transaction
     await this.prisma.$transaction(async (tx) => {
-      // A. Update ticket status to DaHuy
+      // A. Update ticket status to h_y
       await tx.vE_DIEN_TU.update({
         where: { MaVe: maVe },
-        data: { TrangThaiVe: 'DaHuy' },
+        data: { TrangThaiVe: TrangThaiVe.h_y },
       });
 
-      // B. Release seat back to 'Trong'
+      // B. Release seat back to 'C_n_Tr_ng'
       await tx.gHE_CHUYEN_XE.update({
         where: { MaGheChuyen: ticket.MaGheChuyen },
         data: {
-          TrangThaiGhe: 'Trong',
+          TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
           ThoiGianCapNhatTrangThai: new Date(),
         },
       });
@@ -406,7 +404,7 @@ export class TraCuuVeService {
           MaLichSu: `LSV_${Date.now()}`,
           HanhDong: 'Huỷ vé',
           TrangThaiCu: ticket.TrangThaiVe,
-          TrangThaiMoi: 'DaHuy',
+          TrangThaiMoi: TrangThaiVe.h_y,
           ThoiGianThayDoi: new Date(),
           GhiChu: `Khách hàng yêu cầu hủy vé. Lý do: ${lyDo || 'Đổi kế hoạch'}`,
           MaVe: maVe,
@@ -415,7 +413,7 @@ export class TraCuuVeService {
         },
       });
 
-      // F. Check if all other tickets in the same order are also DaHuy. If yes, cancel the whole DON_HANG.
+      // F. Check if all other tickets in the same order are also h_y. If yes, cancel the whole DON_HANG.
       const otherTickets = await tx.vE_DIEN_TU.findMany({
         where: {
           MaDonHang: ticket.MaDonHang,
@@ -423,11 +421,11 @@ export class TraCuuVeService {
         },
       });
 
-      const allCancelled = otherTickets.every(t => t.TrangThaiVe === 'DaHuy');
+      const allCancelled = otherTickets.every(t => t.TrangThaiVe === TrangThaiVe.h_y);
       if (allCancelled) {
         await tx.dON_HANG.update({
           where: { MaDonHang: ticket.MaDonHang },
-          data: { TrangThaiDonHang: 'DaHuy' },
+          data: { TrangThaiDonHang: TrangThaiVe.h_y },
         });
       }
     });

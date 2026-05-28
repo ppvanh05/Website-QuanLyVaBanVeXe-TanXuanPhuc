@@ -1,14 +1,14 @@
 import { Controller, Get, Patch, Param, Body } from '@nestjs/common';
-import { ProfileService } from './profile.service';
+import { CustomerHoSoService } from './customer-ho-so.service';
 
 @Controller('customer/ho-so')
-export class ProfileController {
-  constructor(private readonly profileService: ProfileService) {}
+export class CustomerHoSoController {
+  constructor(private readonly customerHoSoService: CustomerHoSoService) {}
 
   // 1. GET /customer/ho-so/:id
   @Get(':id')
   async getProfile(@Param('id') id: string) {
-    return this.profileService.getProfile(id);
+    return this.customerHoSoService.getProfile(id);
   }
 
   // 2. PATCH /customer/ho-so/:id
@@ -17,6 +17,6 @@ export class ProfileController {
     @Param('id') id: string,
     @Body() data: any,
   ) {
-    return this.profileService.updateProfile(id, data);
+    return this.customerHoSoService.updateProfile(id, data);
   }
 }

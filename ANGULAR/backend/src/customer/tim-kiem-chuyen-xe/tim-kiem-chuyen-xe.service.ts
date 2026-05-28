@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TrangThaiGhe, TrangThaiLichTrinh } from '@prisma/client';
 
 @Injectable()
 export class TimKiemChuyenXeService {
@@ -77,7 +78,7 @@ export class TimKiemChuyenXeService {
             MaGheChuyen: gheChuyenId,
             NhomGhe: 'Limousine',
             GiaVe: basePrice,
-            TrangThaiGhe: 'Trong',
+            TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
             ThoiGianCapNhatTrangThai: new Date(),
             MaLichTrinh: scheduleId,
             MaGhe: ghe.MaGhe,
@@ -97,7 +98,7 @@ export class TimKiemChuyenXeService {
           MaGheChuyen: gheChuyenId,
           NhomGhe: 'Limousine',
           GiaVe: basePrice,
-          TrangThaiGhe: 'Trong',
+          TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
           ThoiGianCapNhatTrangThai: new Date(),
           MaLichTrinh: scheduleId,
           MaGhe: seat.MaGhe,
@@ -123,8 +124,8 @@ export class TimKiemChuyenXeService {
           gte: startOfDay,
           lte: endOfDay,
         },
-        TrangThai: {
-          notIn: ['DaHuy', 'Cancelled'],
+        TrangThaiLichTrinh: {
+          notIn: [TrangThaiLichTrinh.DaKhoa],
         },
         TUYEN_XE: {
           DiemKhoiHanh: { contains: dto.departure, mode: 'insensitive' },
@@ -148,7 +149,7 @@ export class TimKiemChuyenXeService {
       );
 
       // Count available seats
-      const availableSeats = seats.filter(s => s.TrangThaiGhe === 'Trong').length;
+      const availableSeats = seats.filter(s => s.TrangThaiGhe === TrangThaiGhe.C_n_Tr_ng).length;
 
       // Only return trips that still have available seats
       if (availableSeats > 0) {
@@ -159,7 +160,7 @@ export class TimKiemChuyenXeService {
           GioGoiYCoMat: schedule.GioGoiYCoMat,
           GioDenDuKien: schedule.GioDenDuKien,
           GiaVeCoBan: schedule.GiaVeCoBan,
-          TrangThai: schedule.TrangThai,
+          TrangThai: schedule.TrangThaiLichTrinh,
           availableSeats,
           tuyenXe: schedule.TUYEN_XE,
           phuongTien: schedule.PHUONG_TIEN,
@@ -220,7 +221,7 @@ export class TimKiemChuyenXeService {
       GioGoiYCoMat: schedule.GioGoiYCoMat,
       GioDenDuKien: schedule.GioDenDuKien,
       GiaVeCoBan: schedule.GiaVeCoBan,
-      TrangThai: schedule.TrangThai,
+      TrangThai: schedule.TrangThaiLichTrinh,
       tuyenXe: schedule.TUYEN_XE,
       phuongTien: schedule.PHUONG_TIEN,
       gheChuyenXe: seats.map(s => ({

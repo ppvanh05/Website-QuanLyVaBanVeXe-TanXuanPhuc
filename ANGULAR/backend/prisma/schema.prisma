@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -53,6 +52,12 @@ model DANH_GIA {
   MaVe              String              @db.VarChar
   MaKhachHang       String              @db.VarChar
   SoSao             Int
+  DiemAnToan        Int?                @db.SmallInt
+  DiemSachSe        Int?                @db.SmallInt
+  DiemThaiDo        Int?                @db.SmallInt
+  DiemDungGio       Int?                @db.SmallInt
+  DiemThongTin      Int?                @db.SmallInt
+  DiemTienNghi      Int?                @db.SmallInt
   NoiDungDanhGia    String?             @db.VarChar(1000)
   ThoiGianDanhGia   DateTime            @db.Timestamp(6)
   TrangThaiPhanHoi  String              @db.VarChar(30)
@@ -401,7 +406,6 @@ model TIN_TUC {
   NoiDungChiTiet String?
   NgayDang       DateTime?            @db.Timestamptz(6)
   TrangThai      TrangThaiTinTucEnum?
-  NoiBat         Boolean @default(false)
   MaQuanTriVien  String?              @db.VarChar
   NgayGioHenGio  DateTime?            @db.Timestamptz(6)
   NoiBat         Boolean?             @default(false)
@@ -519,7 +523,7 @@ enum TrangThaiViPhamEnum {
   DangApDung
   NgungApDung
 }
-}
+
 
 enum LoaiDiem {
   DiemDonTra

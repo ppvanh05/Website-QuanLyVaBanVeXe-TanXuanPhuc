@@ -1,43 +1,73 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
+export interface UserProfile {
+  MaKhachHang?: string;
+  HoTenKhachHang: string;
+  SoDienThoai?: string;
+  Email?: string;
+  AnhDaiDien?: string;
+  GioiTinh?: string;
+  NgaySinh?: string;
+  TrangThaiTaiKhoan?: string;
+  NgayDangKy?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private _userName = new BehaviorSubject<string>('Guest'); // Giá trị mặc định là 'Guest'
-  userName$: Observable<string> = this._userName.asObservable();
+  private _currentUser = new BehaviorSubject<UserProfile | null>(null);
+  currentUser$: Observable<UserProfile | null> = this._currentUser.asObservable();
 
-  private _isLoggedIn = new BehaviorSubject<boolean>(false); // Thêm BehaviorSubject cho trạng thái đăng nhập
-  isLoggedIn$: Observable<boolean> = this._isLoggedIn.asObservable(); // Expose nó dưới dạng Observable
+  private _isLoggedIn = new BehaviorSubject<boolean>(false);
+  isLoggedIn$: Observable<boolean> = this._isLoggedIn.asObservable();
 
   constructor() {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const storedUserName = localStorage.getItem('currentUserName');
-      if (storedUserName && storedUserName !== 'Guest') {
-        this._userName.next(storedUserName);
-        this._isLoggedIn.next(true); // Nếu có tên người dùng (không phải Guest), coi như đã đăng nhập
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        const user: UserProfile = JSON.parse(storedUser);
+        this._currentUser.next(user);
+        this._isLoggedIn.next(true);
       }
     }
   }
 
-  setUserName(name: string) {
-    this._userName.next(name);
+  setCurrentUser(user: UserProfile) {
+    this._currentUser.next(user);
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('currentUserName', name);
+      localStorage.setItem('currentUser', JSON.stringify(user));
     }
-  }
-
-  login(userName: string) {
-    this.setUserName(userName);
     this._isLoggedIn.next(true);
   }
 
+  getCurrentUser(): UserProfile | null {
+    return this._currentUser.getValue();
+  }
+
+  login(MaKhachHang: string, HoTenKhachHang: string, SoDienThoai: string, Email: string, AnhDaiDien: string, GioiTinh: string, NgaySinh: string, TrangThaiTaiKhoan: string, NgayDangKy: string) {
+    const user: UserProfile = {
+      MaKhachHang,
+      HoTenKhachHang,
+      SoDienThoai,
+      Email,
+      AnhDaiDien,
+      GioiTinh,
+      NgaySinh,
+      TrangThaiTaiKhoan,
+      NgayDangKy
+    };
+    this.setCurrentUser(user);
+  }
+
   logout() {
-    this._userName.next('Guest');
+    this._currentUser.next(null);
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem('currentUserName'); // Xóa tên người dùng khỏi localStorage
+      localStorage.removeItem('currentUser');
     }
     this._isLoggedIn.next(false);
   }
 }
+
+  
