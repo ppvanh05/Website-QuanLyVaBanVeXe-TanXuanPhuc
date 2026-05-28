@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TuyenXeService, Route } from '../tuyen-xe.service';
@@ -70,7 +70,7 @@ export class QuanLyTuyenXeComponent implements OnInit {
     this.activeDropdown = null;
   }
 
-  constructor(private tuyenXeService: TuyenXeService) { }
+  constructor(private tuyenXeService: TuyenXeService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
     this.routes = this.tuyenXeService.getRoutes();
@@ -79,6 +79,7 @@ export class QuanLyTuyenXeComponent implements OnInit {
     this.tuyenXeService.routesUpdated$.subscribe(() => {
       this.routes = this.tuyenXeService.getRoutes();
       this.filterRoutes();
+      this.cdr.detectChanges();
     });
   }
 

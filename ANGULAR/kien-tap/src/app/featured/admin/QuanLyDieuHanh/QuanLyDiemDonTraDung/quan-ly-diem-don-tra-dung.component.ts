@@ -98,6 +98,7 @@ export class QuanLyDiemDonTraDungComponent implements OnInit {
 
     this.diemDonTraService.pointsUpdated$.subscribe(() => {
       this.filterPoints();
+      this.cdr.detectChanges();
     });
   }
 

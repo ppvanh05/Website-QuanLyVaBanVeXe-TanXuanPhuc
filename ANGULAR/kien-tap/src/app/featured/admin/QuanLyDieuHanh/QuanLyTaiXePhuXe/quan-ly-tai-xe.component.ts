@@ -92,6 +92,7 @@ export class QuanLyTaiXeComponent implements OnInit {
     this.taiXeService.driversUpdated$.subscribe(() => {
       this.drivers = this.taiXeService.getDrivers();
       this.filterDrivers();
+      this.cdr.detectChanges();
     });
   }
 
