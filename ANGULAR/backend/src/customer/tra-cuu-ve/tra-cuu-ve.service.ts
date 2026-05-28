@@ -176,6 +176,7 @@ export class TraCuuVeService {
             },
             DIEM_DON: true,
             DIEM_TRA: true,
+            LICH_SU_VE: true,
           },
         },
         THANH_TOAN: true,

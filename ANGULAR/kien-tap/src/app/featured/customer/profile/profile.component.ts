@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { ProfileApiService } from '../../../core/services/profile-api.service';
 
 interface Order {
   maDonHang: string;
@@ -16,6 +17,8 @@ interface Order {
   phuongThucThanhToan: string;
   trangThaiDonHang: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy' | 'Chưa đánh giá' | 'Đã đánh giá';
   soDienThoai: string;
+  departureDate?: string;
+  tenTuyen?: string;
 }
 
 @Component({
@@ -61,16 +64,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
   redirectInterval: any;
 
   user = {
-    fullName: 'Nguyễn Văn An',
-    phone: '090 123 4567',
-    gender: 'Nam',
-    email: 'vanan.nguyen@email.com',
-    dob: '1992-05-15',
-    address: '123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh',
-    avatar: 'asset/images/customer/avatar_placeholder.png'
+    fullName: '',
+    phone: '',
+    gender: '',
+    email: '',
+    dob: '',
+    address: '',
+    avatar: 'asset/images/customer/avatar_placeholder.png',
   };
 
   editUser = { ...this.user };
+  isProfileLoading = false;
 
   // Filters state variables
   filterMaDonHang = '';
@@ -78,106 +82,34 @@ export class ProfileComponent implements OnInit, OnDestroy {
   filterTenTuyenXe = '';
   filterTrangThai = '';
 
-  // Mock booking history records
-  historyOrders = [
-    {
-      maDonHang: 'P5UOLWB8',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Tay',
-      ngayKhoiHanh: '21-05-2026',
-      gioKhoiHanh: '00:00',
-      tongGiaVe: 260000,
-      phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5ULATI1',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Tay',
-      ngayKhoiHanh: '03-05-2026',
-      gioKhoiHanh: '17:30',
-      tongGiaVe: 364000,
-      phuongThucThanhToan: 'Momo',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5IMBT0V',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Dong moi',
-      ngayKhoiHanh: '03-05-2026',
-      gioKhoiHanh: '23:05',
-      tongGiaVe: 364000,
-      phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5IOCBZB',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Dong moi',
-      ngayKhoiHanh: '03-05-2026',
-      gioKhoiHanh: '23:05',
-      tongGiaVe: 364000,
-      phuongThucThanhToan: 'unknown',
-      trangThaiDonHang: 'Chờ thanh toán',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5ITF2W9',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Dong moi',
-      ngayKhoiHanh: '03-05-2026',
-      gioKhoiHanh: '23:05',
-      tongGiaVe: 364000,
-      phuongThucThanhToan: 'unknown',
-      trangThaiDonHang: 'Đã hủy',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5CDWE67',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Mien Dong moi - Da Lat',
-      ngayKhoiHanh: '24-04-2026',
-      gioKhoiHanh: '22:25',
-      tongGiaVe: 260000,
-      phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0333555412'
-    },
-    {
-      maDonHang: 'P5CDWE88',
-      soLuongVeDaDat: 2,
-      tenTuyenXe: 'Bến xe Miền Tây - Bến xe Quy Nhơn',
-      ngayKhoiHanh: '22-05-2026',
-      gioKhoiHanh: '18:00',
-      tongGiaVe: 800000,
-      phuongThucThanhToan: 'VietQR / Napas',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0981939379'
-    }
-  ];
-
-  filteredHistoryOrders = [...this.historyOrders];
+  historyOrders: Order[] = [];
+  filteredHistoryOrders: Order[] = [];
+  isHistoryLoading = false;
 
   
 
   constructor(
     private router: Router,
     private authService: AuthService,
+    private profileApiService: ProfileApiService,
     private route: ActivatedRoute
   ) {
     this.authService.userName$.subscribe((name: string) => this.user.fullName = name);
   }
 
   ngOnInit(): void {
+    this.loadProfile();
+
     this.route.queryParamMap.subscribe(params => {
       const tab = params.get('tab');
       if (tab === 'history' || tab === 'password' || tab === 'profile') {
         this.activeTab = tab;
       } else {
         this.activeTab = 'profile';
+      }
+
+      if (this.activeTab === 'history') {
+        this.loadHistory();
       }
     });
   }
@@ -239,6 +171,56 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.searchHistory();
   }
 
+  loadProfile(): void {
+    this.isProfileLoading = true;
+    this.profileApiService.getProfile().subscribe({
+      next: (response: any) => {
+        const profile = response?.data || {};
+        this.user = {
+          fullName: profile.HoTenKhachHang || profile.hoTenKhachHang || '',
+          phone: profile.SoDienThoai || profile.soDienThoai || '',
+          gender: profile.GioiTinh || profile.gioiTinh || '',
+          email: profile.Email || profile.email || '',
+          dob: profile.NgaySinh ? new Date(profile.NgaySinh).toISOString().slice(0, 10) : '',
+          address: profile.DiaChi || profile.diaChi || '',
+          avatar: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/avatar_placeholder.png',
+        };
+        this.editUser = { ...this.user };
+        this.authService.setUserName(this.user.fullName || 'Khách hàng');
+        this.isProfileLoading = false;
+      },
+      error: (err: any) => {
+        console.error('Load profile error:', err);
+        this.isProfileLoading = false;
+      }
+    });
+  }
+
+  loadHistory(): void {
+    this.isHistoryLoading = true;
+    this.historyOrders = [];
+    this.filteredHistoryOrders = [];
+
+    this.profileApiService.getHistory().subscribe({
+      next: (response: any) => {
+        const data = Array.isArray(response?.data) ? response.data : [];
+        this.historyOrders = data.map((order: any) => ({
+          ...order,
+          tenTuyenXe: order.tenTuyen || order.tenTuyenXe || '',
+          ngayKhoiHanh: order.departureDate || order.ngayKhoiHanh || '',
+        }));
+        this.filteredHistoryOrders = [...this.historyOrders];
+        this.isHistoryLoading = false;
+      },
+      error: (err: any) => {
+        console.error('Load history error:', err);
+        this.historyOrders = [];
+        this.filteredHistoryOrders = [];
+        this.isHistoryLoading = false;
+      }
+    });
+  }
+
   // Go to ticket detail
   viewTicketDetail(order: any): void {
     this.router.navigate(['/tra-cuu-ve'], {
@@ -259,8 +241,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   saveProfile() {
-    this.user = { ...this.editUser };
-    this.isEditing = false;
+    this.profileApiService.updateProfile({
+      HoTenKhachHang: this.editUser.fullName,
+      Email: this.editUser.email,
+      GioiTinh: this.editUser.gender,
+      NgaySinh: this.editUser.dob,
+    }).subscribe({
+      next: (response: any) => {
+        this.user = { ...this.editUser };
+        this.authService.setUserName(this.user.fullName || 'Khách hàng');
+        this.isEditing = false;
+      },
+      error: (err: any) => {
+        console.error('Save profile error:', err);
+        this.isEditing = false;
+      }
+    });
   }
 
   confirmChangePassword() {
@@ -344,6 +340,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.isLogoutActive = true;
     this.authService.logout();
     this.router.navigate(['/home']);
+  }
+
+  selectTab(tab: string) {
+    this.activeTab = tab;
+    this.router.navigate([], {
+      queryParams: { tab },
+      queryParamsHandling: 'merge',
+    });
+
+    if (tab === 'history') {
+      this.loadHistory();
+    }
   }
 
   getStatusClasses(status: string): { [key: string]: boolean } {

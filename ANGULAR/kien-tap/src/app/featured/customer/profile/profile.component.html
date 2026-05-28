@@ -7,7 +7,7 @@
             <div class="lg:col-span-3">
                 <div class="bg-white rounded-2xl shadow-sm border border-outline-variant/20 overflow-hidden p-4">
                     <div class="space-y-2">
-                        <button (click)="activeTab = 'profile'"
+                        <button (click)="selectTab('profile')"
                             [class.bg-secondary-light]="activeTab === 'profile'"
                             [class.text-secondary]="activeTab === 'profile'"
                             class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-left transition-all hover:bg-surface-container-low group">
@@ -15,7 +15,7 @@
                             <span class="font-bold text-body-md">Thông tin cá nhân</span>
                         </button>
                         
-                        <button (click)="activeTab = 'history'"
+                        <button (click)="selectTab('history')"
                             [class.bg-secondary-light]="activeTab === 'history'"
                             [class.text-secondary]="activeTab === 'history'"
                             class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-left transition-all hover:bg-surface-container-low group text-on-surface-variant">
@@ -23,7 +23,7 @@
                             <span class="font-bold text-body-md">Lịch sử mua vé</span>
                         </button>
 
-                        <button (click)="activeTab = 'password'"
+                        <button (click)="selectTab('password')"
                             [class.bg-secondary-light]="activeTab === 'password'"
                             [class.text-secondary]="activeTab === 'password'"
                             class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-left transition-all hover:bg-surface-container-low group text-on-surface-variant">
