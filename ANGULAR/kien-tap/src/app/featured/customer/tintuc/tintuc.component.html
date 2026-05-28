@@ -23,7 +23,7 @@
         </div>
 
         <!-- Section 1: Featured & Latest -->
-        <div *ngIf="featuredNews || latestNews.length > 0" class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-12">
+        <div *ngIf="featuredNews || latestNews.length > 0" class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-12 min-h-[500px]">
             <!-- Featured News (Left) -->
             <div *ngIf="featuredNews" class="lg:col-span-8">
                 <div class="flex items-center gap-2 mb-6">
@@ -80,7 +80,7 @@
         </div>
 
         <!-- Section 2: Sub Featured News -->
-        <div *ngIf="subFeaturedNews.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-16">
+        <div *ngIf="subFeaturedNews.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-16 min-h-[300px]">
             <div *ngFor="let news of subFeaturedNews" 
                 [routerLink]="['/tin-tuc/chi-tiet', news.maTinTuc]"
                 class="bg-white rounded-2xl overflow-hidden shadow-sm border border-outline-variant/20 group cursor-pointer">
@@ -97,7 +97,7 @@
         </div>
 
         <!-- Section 3: All News -->
-        <div *ngIf="allNews.length > 0" class="mb-12">
+        <div *ngIf="allNews.length > 0" class="mb-12 min-h-[400px]">
             <div *ngIf="!activeCategory && !searchQuery" class="flex items-center gap-2 mb-8">
                 <div class="w-1 h-6 bg-navy"></div>
                 <h2 class="font-bold text-headline-sm uppercase tracking-tight text-navy">TẤT CẢ TIN TỨC</h2>

@@ -94,7 +94,6 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    // Mock authentication logic
     const mockUsers = this.getMockUsers();
     const user: MockUser | undefined = mockUsers.find(u => 
       (u.phoneNumber === this.phoneOrEmail || u.email === this.phoneOrEmail) && u.password === this.password
