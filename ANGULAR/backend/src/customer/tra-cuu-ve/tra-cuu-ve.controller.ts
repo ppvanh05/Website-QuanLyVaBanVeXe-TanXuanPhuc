@@ -12,10 +12,10 @@ export class TraCuuVeController {
   // GET /customer/tra-cuu-ve/lookup → Tra cứu vé không cần đăng nhập (bằng mã vé/đơn + SĐT)
   @Get('lookup')
   async lookup(
-    @Query('maDonHang') maDonHang: string,
-    @Query('soDienThoai') soDienThoai: string,
+    @Query('maDonHang') code: string,
+    @Query('soDienThoai') phone: string,
   ) {
-    const data = await this.lookupService.lookup(maDonHang, soDienThoai);
+    const data = await this.lookupService.lookup(code, phone);
     return {
       success: true,
       message: 'Tra cứu thông tin vé thành công!',
@@ -28,11 +28,7 @@ export class TraCuuVeController {
   @UseGuards(JwtAuthGuard)
   async getHistory(@CurrentUser() user: JwtPayload) {
     const data = await this.lookupService.getHistory(user.maKhachHang);
-    return {
-      success: true,
-      message: 'Lấy lịch sử đặt vé thành công!',
-      data,
-    };
+    return { success: true, data };
   }
 
   // PUT /customer/tra-cuu-ve/update-info/:maDonHang → Sửa thông tin vé (tối đa 2 lần, trước khởi hành 2 tiếng)

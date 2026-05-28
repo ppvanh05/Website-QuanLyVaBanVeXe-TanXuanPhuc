@@ -31,6 +31,14 @@ export class LoginComponent implements OnInit {
   passwordError = '';
   loginError = '';
 
+  customerAuthApiService = {
+    setToken: (token: string) => {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('auth_token', token);
+      }
+    }
+  };
+
   constructor(
     private router: Router,
     private authService: AuthService,
@@ -94,17 +102,20 @@ export class LoginComponent implements OnInit {
       next: (response: any) => {
         const data = response?.data || response;
         const token = data?.token || data?.access_token;
+        const customer = data?.customer || data?.user || {};
         if (data && token) {
           if (typeof localStorage !== 'undefined') {
             localStorage.setItem('access_token', token);
-            localStorage.setItem('customer_info', JSON.stringify(data.customer || data.user || {}));
+            localStorage.setItem('customer_info', JSON.stringify(customer));
             localStorage.setItem('lastLoggedInUser', JSON.stringify({
               phoneOrEmail: this.phoneOrEmail,
               password: this.password
             }));
+            localStorage.setItem('currentUserId', customer.MaKhachHang || '');
           }
 
-          const userName = data.customer?.HoTenKhachHang || 'Người dùng';
+          this.customerAuthApiService.setToken(token);
+          const userName = customer.HoTenKhachHang || 'Người dùng';
           this.authService.login(userName);
           this.loggedIn.emit(userName);
 

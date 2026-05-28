@@ -6,6 +6,9 @@ import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileApiService } from '../../../core/services/profile-api.service';
+import { SupabaseService } from '../../../core/services/supabase.service';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 interface Order {
   maDonHang: string;
@@ -14,12 +17,16 @@ interface Order {
   ngayKhoiHanh: string;
   gioKhoiHanh: string;
   tongGiaVe: number;
-  phuongThucThanhToan: string;
-  trangThaiDonHang: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy' | 'Chưa đánh giá' | 'Đã đánh giá';
+  phuongThucThanhToan?: string;
+  trangThaiDonHang: 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã xác nhận' | 'Đã hoàn thành' | 'Đã hủy' | 'Chưa đánh giá' | 'Đã đánh giá';
+
   soDienThoai: string;
   departureDate?: string;
   tenTuyen?: string;
+  maVe?: string;
+  formattedNgayDi?: string;
 }
+
 
 @Component({
   selector: 'app-profile',
@@ -86,19 +93,45 @@ export class ProfileComponent implements OnInit, OnDestroy {
   filteredHistoryOrders: Order[] = [];
   isHistoryLoading = false;
 
-  
+  // Supabase pagination and debouncing variables
+  currentUserId = '';
+  totalItems = 0;
+  currentPage = 1;
+  pageSize = 10;
+  maVeSubject = new Subject<string>();
+  tuyenXeSubject = new Subject<string>();
 
   constructor(
     private router: Router,
     private authService: AuthService,
     private profileApiService: ProfileApiService,
+    private supabaseService: SupabaseService,
     private route: ActivatedRoute
   ) {
     this.authService.userName$.subscribe((name: string) => this.user.fullName = name);
   }
 
+
   ngOnInit(): void {
     this.loadProfile();
+
+    this.maVeSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(value => {
+      this.filterMaDonHang = value;
+      this.currentPage = 1;
+      this.loadHistoryFromSupabase();
+    });
+
+    this.tuyenXeSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(value => {
+      this.filterTenTuyenXe = value;
+      this.currentPage = 1;
+      this.loadHistoryFromSupabase();
+    });
 
     this.route.queryParamMap.subscribe(params => {
       const tab = params.get('tab');
@@ -114,6 +147,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+
   ngOnDestroy() {
     if (this.timerInterval) clearInterval(this.timerInterval);
     if (this.redirectInterval) clearInterval(this.redirectInterval);
@@ -121,46 +155,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   // Filter history logic
   searchHistory(): void {
-    const code = this.filterMaDonHang.trim().toUpperCase();
-    const date = this.filterThoiGianDat; // Format YYYY-MM-DD
-    const route = this.filterTenTuyenXe.trim().toLowerCase();
-    const status = this.filterTrangThai;
-
-    this.filteredHistoryOrders = this.historyOrders.filter(order => {
-      // 1. Check Code matching
-      if (code && !order.maDonHang.toUpperCase().includes(code)) return false;
-
-      // 2. Check Date matching (convert order date DD-MM-YYYY to YYYY-MM-DD)
-      if (date) {
-        const parts = order.ngayKhoiHanh.split('-');
-        if (parts.length === 3) {
-          const orderDateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
-          if (orderDateStr !== date) return false;
-        }
-      }
-
-      // 3. Check Route matching
-      if (route && !order.tenTuyenXe.toLowerCase().includes(route)) return false;
-
-      // 4. Check Status matching
-      if (status) {
-        if (status === 'Chờ thanh toán') {
-          if (order.trangThaiDonHang !== 'Chờ thanh toán') return false;
-        } else if (status === 'Chờ khởi hành') {
-          if (order.trangThaiDonHang !== 'Chờ khởi hành') return false;
-        } else if (status === 'Đã hoàn thành') {
-          if (order.trangThaiDonHang !== 'Đã hoàn thành') return false;
-        } else if (status === 'Đã hủy') {
-          if (order.trangThaiDonHang !== 'Đã hủy') return false;
-        } else if (status === 'Chưa đánh giá') {
-          if (order.trangThaiDonHang !== 'Chưa đánh giá') return false;
-        } else if (status === 'Đã đánh giá') {
-          if (order.trangThaiDonHang !== 'Đã đánh giá') return false;
-        }
-      }
-
-      return true;
-    });
+    this.currentPage = 1;
+    this.loadHistoryFromSupabase();
   }
 
   resetHistoryFilter(): void {
@@ -168,14 +164,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.filterThoiGianDat = '';
     this.filterTenTuyenXe = '';
     this.filterTrangThai = '';
-    this.searchHistory();
+    this.currentPage = 1;
+    this.loadHistoryFromSupabase();
   }
+
 
   loadProfile(): void {
     this.isProfileLoading = true;
     this.profileApiService.getProfile().subscribe({
       next: (response: any) => {
         const profile = response?.data || {};
+        this.currentUserId = profile.MaKhachHang || profile.maKhachHang || '';
         this.user = {
           fullName: profile.HoTenKhachHang || profile.hoTenKhachHang || '',
           phone: profile.SoDienThoai || profile.soDienThoai || '',
@@ -188,6 +187,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.editUser = { ...this.user };
         this.authService.setUserName(this.user.fullName || 'Khách hàng');
         this.isProfileLoading = false;
+
+        // If on history tab, reload history now that currentUserId is available
+        if (this.activeTab === 'history') {
+          this.loadHistory();
+        }
       },
       error: (err: any) => {
         console.error('Load profile error:', err);
@@ -196,30 +200,314 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+
   loadHistory(): void {
+    this.currentPage = 1;
+    this.loadHistoryFromSupabase();
+  }
+
+  onMaVeChange(val: string): void {
+    this.maVeSubject.next(val);
+  }
+
+  onTuyenXeChange(val: string): void {
+    this.tuyenXeSubject.next(val);
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.loadHistoryFromSupabase();
+  }
+
+  changePage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.loadHistoryFromSupabase();
+    }
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalItems / this.pageSize) || 1;
+  }
+
+  get pages(): number[] {
+    const arr = [];
+    for (let i = 1; i <= this.totalPages; i++) {
+      arr.push(i);
+    }
+    return arr;
+  }
+
+
+  loadHistoryFromSupabase(): void {
+    if (!this.currentUserId) {
+      // If profile is not yet loaded, wait for it
+      this.profileApiService.getProfile().subscribe({
+        next: (response: any) => {
+          const profile = response?.data || {};
+          this.currentUserId = profile.MaKhachHang || profile.maKhachHang || '';
+          this.fetchSupabaseData();
+        },
+        error: () => {
+          this.isHistoryLoading = false;
+        }
+      });
+    } else {
+      this.fetchSupabaseData();
+    }
+  }
+
+  async fetchSupabaseData() {
     this.isHistoryLoading = true;
-    this.historyOrders = [];
     this.filteredHistoryOrders = [];
 
-    this.profileApiService.getHistory().subscribe({
-      next: (response: any) => {
-        const data = Array.isArray(response?.data) ? response.data : [];
-        this.historyOrders = data.map((order: any) => ({
-          ...order,
-          tenTuyenXe: order.tenTuyen || order.tenTuyenXe || '',
-          ngayKhoiHanh: order.departureDate || order.ngayKhoiHanh || '',
-        }));
-        this.filteredHistoryOrders = [...this.historyOrders];
+    try {
+      if (!this.currentUserId) {
         this.isHistoryLoading = false;
-      },
-      error: (err: any) => {
-        console.error('Load history error:', err);
-        this.historyOrders = [];
-        this.filteredHistoryOrders = [];
-        this.isHistoryLoading = false;
+        return;
       }
+
+      const from = (this.currentPage - 1) * this.pageSize;
+      const to = from + this.pageSize - 1;
+
+      // Bước 1: lấy tất cả MaDonHang thuộc currentUserId
+      const { data: donHangData, error: donHangError } =
+        await this.supabaseService.supabase
+          .from('DON_HANG')
+          .select('MaDonHang')
+          .eq('MaKhachHang', this.currentUserId);
+
+      if (donHangError) throw donHangError;
+      if (!donHangData || donHangData.length === 0) {
+        this.totalItems = 0;
+        this.isHistoryLoading = false;
+        return;
+      }
+
+      const maDonHangList = donHangData.map((d: any) => d.MaDonHang);
+
+      // Bước 2: query VE_DIEN_TU với danh sách MaDonHang
+      let query = this.supabaseService.supabase
+        .from('VE_DIEN_TU')
+        .select(`
+          MaVe, MaDonHang, MaLichTrinh, GiaVe, TrangThaiVe,
+          LICH_TRINH (
+            MaLichTrinh, NgayKhoiHanh, GioKhoiHanh, GioDenDuKien,
+            TUYEN_XE ( MaTuyenXe, TenTuyenXe, DiemKhoiHanh, DiemDen )
+          )
+        `, { count: 'exact' })
+        .in('MaDonHang', maDonHangList);
+
+      // Lọc Mã vé
+      if (this.filterMaDonHang.trim()) {
+        query = query.ilike('MaVe', `%${this.filterMaDonHang.trim()}%`);
+      }
+
+      // Lọc Trạng thái
+      if (this.filterTrangThai) {
+        let dbStatuses: string[] = [];
+        if (this.filterTrangThai === 'Chờ thanh toán')
+          dbStatuses = ['ChoThanhToan', 'CHO_THANH_TOAN'];
+        else if (this.filterTrangThai === 'Đã xác nhận')
+          dbStatuses = ['ChoKhoiHanh', 'DA_XAC_NHAN'];
+        else if (this.filterTrangThai === 'Đã hoàn thành')
+          dbStatuses = ['DaHoanThanh', 'DaDanhGia', 'DA_SU_DUNG'];
+        else if (this.filterTrangThai === 'Đã hủy')
+          dbStatuses = ['DaHuy', 'DA_HUY'];
+        if (dbStatuses.length > 0)
+          query = query.in('TrangThaiVe', dbStatuses);
+      }
+
+      // Đếm số vé mỗi đơn
+      const ticketCounts: Record<string, number> = {};
+      for (const id of maDonHangList) ticketCounts[id] = 0;
+
+      query = query.order('MaVe', { ascending: false }).range(from, to);
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+
+      this.totalItems = count || 0;
+
+      if (data && data.length > 0) {
+        // Đếm số vé thực tế trong trang hiện tại
+        for (const t of data) {
+          if (t.MaDonHang) {
+            ticketCounts[t.MaDonHang] = (ticketCounts[t.MaDonHang] || 0) + 1;
+          }
+        }
+
+        this.filteredHistoryOrders = data.map((ticket: any) => {
+          const schedule = ticket.LICH_TRINH;
+          const route = schedule?.TUYEN_XE;
+
+          const tenTuyenXe = route
+            ? `${route.DiemKhoiHanh} - ${route.DiemDen}`
+            : '';
+
+          // Format ngày giờ từ NgayKhoiHanh (YYYY-MM-DD) + GioKhoiHanh (HH:mm:ss)
+          let formattedNgayDi = '';
+          if (schedule?.NgayKhoiHanh && schedule?.GioKhoiHanh) {
+            const gio = String(schedule.GioKhoiHanh).substring(0, 5);
+            const parts = String(schedule.NgayKhoiHanh).split('-');
+            if (parts.length === 3) {
+              formattedNgayDi = `${gio} ${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+          }
+
+          const dbStatus = ticket.TrangThaiVe;
+          let displayStatus = 'Chờ thanh toán';
+          if (dbStatus === 'ChoThanhToan' || dbStatus === 'CHO_THANH_TOAN')
+            displayStatus = 'Chờ thanh toán';
+          else if (dbStatus === 'ChoKhoiHanh' || dbStatus === 'DA_XAC_NHAN')
+            displayStatus = 'Đã xác nhận';
+          else if (['DaHoanThanh','DaDanhGia','DA_SU_DUNG'].includes(dbStatus))
+            displayStatus = 'Đã hoàn thành';
+          else if (dbStatus === 'DaHuy' || dbStatus === 'DA_HUY')
+            displayStatus = 'Đã hủy';
+
+          return {
+            maVe: ticket.MaVe,
+            maDonHang: ticket.MaDonHang || '',
+            soLuongVeDaDat: ticketCounts[ticket.MaDonHang] || 1,
+            tenTuyenXe,
+            gioKhoiHanh: '',
+            ngayKhoiHanh: '',
+            formattedNgayDi,
+            tongGiaVe: Number(ticket.GiaVe) || 0,
+            trangThaiDonHang: displayStatus as any,
+            soDienThoai: this.user.phone
+          };
+        });
+      }
+    } catch (err) {
+      console.warn('Supabase error, dùng fallback API:', err);
+      await this.fetchFallbackData();
+    } finally {
+      this.isHistoryLoading = false;
+    }
+  }
+
+  fetchFallbackData(): Promise<void> {
+    return new Promise((resolve) => {
+      this.profileApiService.getHistory().subscribe({
+        next: (response: any) => {
+          const orders = Array.isArray(response?.data) ? response.data : [];
+          
+          let allTickets: any[] = [];
+          const ticketCounts: Record<string, number> = {};
+          
+          for (const order of orders) {
+            const orderId = order.maDonHang;
+            const tickets = order.tickets || [];
+            ticketCounts[orderId] = tickets.length;
+            
+            for (const ticket of tickets) {
+              allTickets.push({
+                ticket,
+                order
+              });
+            }
+          }
+          
+          // Apply in-memory filters
+          if (this.filterMaDonHang.trim()) {
+            const queryVal = this.filterMaDonHang.trim().toLowerCase();
+            allTickets = allTickets.filter(item => 
+              (item.ticket.maVe || '').toLowerCase().includes(queryVal)
+            );
+          }
+          
+          if (this.filterTenTuyenXe.trim()) {
+            const queryVal = this.filterTenTuyenXe.trim().toLowerCase();
+            allTickets = allTickets.filter(item => 
+              (item.order.tenTuyen || '').toLowerCase().includes(queryVal)
+            );
+          }
+          
+          if (this.filterThoiGianDat) {
+            allTickets = allTickets.filter(item => 
+              item.order.departureDate === this.filterThoiGianDat
+            );
+          }
+          
+          if (this.filterTrangThai) {
+            allTickets = allTickets.filter(item => {
+              if (this.filterTrangThai === 'Chờ thanh toán') {
+                return item.ticket.trangThaiVe === 'Chờ thanh toán' || item.ticket.trangThaiVe === 'ChoThanhToan' || item.ticket.trangThaiVe === 'CHO_THANH_TOAN';
+              }
+              if (this.filterTrangThai === 'Đã xác nhận') {
+                return item.ticket.trangThaiVe === 'Đã xác nhận' || item.ticket.trangThaiVe === 'Chờ khởi hành' || item.ticket.trangThaiVe === 'ChoKhoiHanh' || item.ticket.trangThaiVe === 'DA_XAC_NHAN';
+              }
+              if (this.filterTrangThai === 'Đã hoàn thành') {
+                return item.ticket.trangThaiVe === 'Đã hoàn thành' || item.ticket.trangThaiVe === 'Đã đánh giá' || item.ticket.trangThaiVe === 'DaHoanThanh' || item.ticket.trangThaiVe === 'DaDanhGia' || item.ticket.trangThaiVe === 'DA_SU_DUNG';
+              }
+              if (this.filterTrangThai === 'Đã hủy') {
+                return item.ticket.trangThaiVe === 'Đã hủy' || item.ticket.trangThaiVe === 'DaHuy' || item.ticket.trangThaiVe === 'DA_HUY';
+              }
+              return true;
+            });
+          }
+          
+          // Sort by MaVe desc
+          allTickets.sort((a, b) => (b.ticket.maVe || '').localeCompare(a.ticket.maVe || ''));
+          
+          this.totalItems = allTickets.length;
+          
+          const from = (this.currentPage - 1) * this.pageSize;
+          const to = from + this.pageSize;
+          const paginatedTickets = allTickets.slice(from, to);
+          
+          this.filteredHistoryOrders = paginatedTickets.map(item => {
+            const t = item.ticket;
+            const o = item.order;
+            
+            let formattedNgayDi = '';
+            if (o.gioKhoiHanh && o.departureDate) {
+              const [y, m, d] = o.departureDate.split('-');
+              formattedNgayDi = `${o.gioKhoiHanh} ${d}-${m}-${y}`;
+            } else {
+              formattedNgayDi = `${o.gioKhoiHanh || ''} ${o.ngayKhoiHanh || ''}`.trim();
+            }
+            
+            // Normalize status to standard format for classes/display
+            let displayStatus = t.trangThaiVe;
+            if (displayStatus === 'Chờ khởi hành' || displayStatus === 'ChoKhoiHanh' || displayStatus === 'DA_XAC_NHAN') {
+              displayStatus = 'Đã xác nhận';
+            } else if (displayStatus === 'DaHoanThanh' || displayStatus === 'DaDanhGia' || displayStatus === 'Đã đánh giá' || displayStatus === 'DA_SU_DUNG') {
+              displayStatus = 'Đã hoàn thành';
+            } else if (displayStatus === 'ChoThanhToan' || displayStatus === 'CHO_THANH_TOAN') {
+              displayStatus = 'Chờ thanh toán';
+            } else if (displayStatus === 'DaHuy' || displayStatus === 'DA_HUY') {
+              displayStatus = 'Đã hủy';
+            }
+            
+            return {
+              maVe: t.maVe,
+              maDonHang: o.maDonHang,
+              soLuongVeDaDat: ticketCounts[o.maDonHang] || 1,
+              tenTuyenXe: o.tenTuyen || '',
+              gioKhoiHanh: '',
+              ngayKhoiHanh: '',
+              formattedNgayDi: formattedNgayDi,
+              tongGiaVe: t.giaVe || 0,
+              trangThaiDonHang: displayStatus,
+              soDienThoai: o.soDienThoai
+            };
+          });
+          
+          resolve();
+        },
+        error: (err: any) => {
+          console.error('Fallback failed:', err);
+          this.filteredHistoryOrders = [];
+          this.totalItems = 0;
+          resolve();
+        }
+      });
     });
   }
+
 
   // Go to ticket detail
   viewTicketDetail(order: any): void {
@@ -360,10 +648,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       'text-success-text': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
       'bg-danger-light': status === 'Đã hủy',
       'text-danger-text': status === 'Đã hủy',
-      'bg-info-light': status === 'Chờ thanh toán',
-      'text-info-text': status === 'Chờ thanh toán',
-      'bg-warning-light': status === 'Chờ khởi hành',
-      'text-warning-text': status === 'Chờ khởi hành',
+      'bg-info-light': status === 'Đã xác nhận',
+      'text-info-text': status === 'Đã xác nhận',
+      'bg-warning-light': status === 'Chờ thanh toán',
+      'text-warning-text': status === 'Chờ thanh toán',
     };
   }
 }

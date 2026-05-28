@@ -2,15 +2,16 @@ import { HttpInterceptorFn } from '@angular/common/http';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
-    
-    // Attach token if access_token exists and the request URL targets the profile endpoints
-    const url = req.url;
-    if (token && (url.includes('/customer/profile') || url.includes('/customer/profile/history'))) {
+    const token = localStorage.getItem('access_token')
+               || localStorage.getItem('auth_token');
+
+    const needsAuth =
+      req.url.includes('/customer/profile') ||
+      req.url.includes('/customer/tra-cuu-ve/history');
+
+    if (token && needsAuth) {
       const clonedReq = req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
+        setHeaders: { Authorization: `Bearer ${token}` }
       });
       return next(clonedReq);
     }
