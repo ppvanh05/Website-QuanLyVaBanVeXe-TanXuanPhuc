@@ -6,6 +6,7 @@ import {
   Patch,
   Body,
   Param,
+  Query,
   HttpException,
   HttpStatus,
   UseGuards,
@@ -19,19 +20,38 @@ import { RequirePermissions } from '../auth/permissions.decorator';
 export class QuanLyVeController {
   constructor(private readonly quanLyVeService: QuanLyVeService) {}
 
+  // GET /quan-ly-ve/stats → Thống kê vé nhanh cho dashboard
+  @Get('stats')
+  @RequirePermissions('ticket.view')
+  async getStats() {
+    try {
+      return await this.quanLyVeService.getStats();
+    } catch (error) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'Lỗi khi lấy thống kê vé',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // GET /quan-ly-ve → Alias lấy tất cả vé cho frontend gọi ngắn gọn
   @Get()
   @RequirePermissions('ticket.view')
-  async getAllVeRoot() {
-    return this.getAllVe();
+  async getAllVeRoot(@Query('limit') limit?: string) {
+    return this.getAllVe(limit);
   }
 
   // GET /quan-ly-ve/ve → Lấy tất cả vé
   @Get('ve')
   @RequirePermissions('ticket.view')
-  async getAllVe() {
+  async getAllVe(@Query('limit') limit?: string) {
     try {
-      return await this.quanLyVeService.getAllVe();
+      const take = limit ? parseInt(limit, 10) : undefined;
+      return await this.quanLyVeService.getAllVe(take);
     } catch (error) {
       throw new HttpException(
         {

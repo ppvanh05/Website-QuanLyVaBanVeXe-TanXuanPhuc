@@ -42,9 +42,9 @@ export class ThongTinDonHang implements OnInit {
   selectedRoomGuests: { [seatName: string]: number } = {};
 
   // Customer Form Fields
-  customerName: string = 'Nghi Trần Ngọc Bảo';
-  customerPhone: string = '0981939379';
-  customerEmail: string = 'nghitnb23406@st.uel.edu.vn';
+  customerName: string = '';
+  customerPhone: string = '';
+  customerEmail: string = '';
   agreeTerms: boolean = false;
   
   // Validation errors realtime

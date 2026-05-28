@@ -175,6 +175,17 @@ export class TimKiemChuyenXeService {
       // Count available seats
       const availableSeats = seats.filter(s => s.TrangThaiGhe === 'Trong').length;
 
+      // Fetch stops
+      const stops = await this.prisma.lICH_TRINH_DIEM_DUNG.findMany({
+        where: { MaLichTrinh: schedule.MaLichTrinh },
+        include: {
+          DIEM_DON_TRA_DUNG: true,
+        },
+        orderBy: {
+          ThuTuDung: 'asc',
+        },
+      });
+
       // Only return trips that still have available seats
       if (availableSeats > 0) {
         results.push({
@@ -188,6 +199,27 @@ export class TimKiemChuyenXeService {
           availableSeats,
           tuyenXe: schedule.TUYEN_XE,
           phuongTien: schedule.PHUONG_TIEN,
+          gheChuyenXe: seats.map(s => ({
+            MaGheChuyen: s.MaGheChuyen,
+            NhomGhe: s.NhomGhe,
+            GiaVe: s.GiaVe,
+            TrangThaiGhe: s.TrangThaiGhe,
+            ThoiGianCapNhatTrangThai: s.ThoiGianCapNhatTrangThai,
+          })),
+          diemDungLichTrinh: stops.map(stop => ({
+            MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
+            ThuTuDung: stop.ThuTuDung,
+            GioDenDuKien: stop.GioDenDuKien,
+            GhiChu: stop.GhiChu,
+            MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
+            TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
+            DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
+            ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
+            Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
+            LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
+            ThoiGianCoMatTruoc: stop.DIEM_DON_TRA_DUNG?.ThoiGianCoMatTruoc,
+            GioCanCoMat: stop.DIEM_DON_TRA_DUNG?.GioCanCoMat,
+          })),
         });
       }
     }
@@ -269,6 +301,8 @@ export class TimKiemChuyenXeService {
         ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
         Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
         LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
+        ThoiGianCoMatTruoc: stop.DIEM_DON_TRA_DUNG?.ThoiGianCoMatTruoc,
+        GioCanCoMat: stop.DIEM_DON_TRA_DUNG?.GioCanCoMat,
       })),
     };
   }

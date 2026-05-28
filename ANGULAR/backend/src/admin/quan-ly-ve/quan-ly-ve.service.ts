@@ -1,4 +1,4 @@
-﻿import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
@@ -409,12 +409,51 @@ export class QuanLyVeService {
   }
 
   // ===== LẤY TẤT CẢ VÉ =====
-  async getAllVe() {
+  async getAllVe(limit?: number) {
     const veList = await this.prisma.vE_DIEN_TU.findMany({
       orderBy: { ThoiGianXuatVe: 'desc' },
+      take: limit,
     });
 
     return this.hydrateVeList(veList);
+  }
+
+  async getStats() {
+    const total = await this.prisma.vE_DIEN_TU.count();
+    const pendingCount = await this.prisma.vE_DIEN_TU.count({
+      where: {
+        OR: [
+          { TrangThaiVe: 'ChoThanhToan' },
+          { DON_HANG: { TrangThaiDonHang: 'ChoThanhToan' } }
+        ]
+      }
+    });
+    const canceledCount = await this.prisma.vE_DIEN_TU.count({
+      where: {
+        OR: [
+          { TrangThaiVe: 'DaHuy' },
+          { DON_HANG: { TrangThaiDonHang: 'DaHuy' } }
+        ]
+      }
+    });
+
+    const successfulPayments = await this.prisma.tHANH_TOAN.findMany({
+      where: {
+        LoaiGiaoDich: 'ThanhToan',
+        TrangThaiGiaoDich: 'ThanhCong',
+      },
+      select: {
+        SoTien: true,
+      }
+    });
+    const revenue = successfulPayments.reduce((sum, item) => sum + this.toNumber(item.SoTien), 0);
+
+    return {
+      total,
+      pendingCount,
+      canceledCount,
+      revenue,
+    };
   }
 
   // ===== LẤY VÉ THEO MÃ =====
@@ -557,7 +596,7 @@ export class QuanLyVeService {
     });
 
     const isCashPayment = data.phuongThucThanhToan === 'TienMat';
-    const initialStatus = isCashPayment ? 'ChoKhoiHanh' : 'ChoThanhToan';
+    const initialStatus = isCashPayment ? 'ChoThanhToan' : 'ChoKhoiHanh';
 
     const donHang = await this.prisma.dON_HANG.create({
       data: {

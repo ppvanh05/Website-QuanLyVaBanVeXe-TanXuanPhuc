@@ -82,6 +82,7 @@ export class TimKiemChuyenXe implements OnInit {
   timeFilters = {
     early: false,     // 00:00 - 06:00
     morning: false,   // 06:00 - 12:00
+
     afternoon: false, // 12:00 - 18:00
     evening: false    // 18:00 - 24:00
   };
@@ -107,6 +108,8 @@ export class TimKiemChuyenXe implements OnInit {
   filteredTrips: Trip[] = [];
   isLoadingTrips = false;
   tripLoadError = '';
+  policies: any[] = [];
+  cancelPolicies: any[] = [];
 
   // Currently active selected trip
   activeTrip: Trip | null = null;
@@ -172,8 +175,47 @@ export class TimKiemChuyenXe implements OnInit {
       this.loadTripsFromApi();
     });
     if (isPlatformBrowser(this.platformId)) {
-      this.setupRealtimeSubscriptions();
+      try {
+        this.setupRealtimeSubscriptions();
+      } catch (error) {
+        console.error('Lỗi khởi tạo Supabase Realtime:', error);
+      }
+      this.loadPolicies();
     }
+  }
+
+  loadPolicies() {
+    if (!isPlatformBrowser(this.platformId)) return;
+    
+    // Fetch cancellation policies
+    this.http.get<any[]>(`${this.apiBaseUrl}/chinh-sach/huy-ve/all`).pipe(
+      catchError(error => {
+        console.error('Không tải được chính sách hủy vé:', error);
+        return of([]);
+      })
+    ).subscribe(data => {
+      this.cancelPolicies = data || [];
+    });
+
+    // Fetch general policies
+    this.http.get<any[]>(`${this.apiBaseUrl}/chinh-sach`).pipe(
+      catchError(error => {
+        console.error('Không tải được chính sách chung:', error);
+        return of([]);
+      })
+    ).subscribe(data => {
+      this.policies = data || [];
+    });
+  }
+
+  getEarlyArrivalTime(trip: Trip): number {
+    if (trip.stops && trip.stops.length > 0) {
+      const firstStopWithArrival = trip.stops.find(s => s.ThoiGianCoMatTruoc != null);
+      if (firstStopWithArrival) {
+        return firstStopWithArrival.ThoiGianCoMatTruoc;
+      }
+    }
+    return 30; // Default fallback if not found
   }
 
   get departureOptions() {
@@ -541,6 +583,22 @@ export class TimKiemChuyenXe implements OnInit {
     return params;
   }
 
+  isPastDate(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return false;
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    const targetDate = new Date(year, month, day);
+    targetDate.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return targetDate.getTime() < today.getTime();
+  }
+
   loadTripsFromApi() {
     if (!isPlatformBrowser(this.platformId)) {
       this.isLoadingTrips = false;
@@ -549,23 +607,13 @@ export class TimKiemChuyenXe implements OnInit {
 
     this.isLoadingTrips = true;
     this.tripLoadError = '';
+    this.allTrips = [];
+    this.filteredTrips = [];
 
     this.http.get<any[]>(`${this.apiBaseUrl}/customer/tim-kiem-chuyen-xe/search`, {
       params: this.buildSearchParams(),
     }).pipe(
       timeout(15000),
-      switchMap(trips => {
-        const tripList = Array.isArray(trips) ? trips : [];
-        if (tripList.length === 0) return of([]);
-        return forkJoin(
-          tripList.map(trip =>
-            this.http.get<any>(`${this.apiBaseUrl}/customer/tim-kiem-chuyen-xe/detail/${trip.MaLichTrinh}`).pipe(
-              timeout(10000),
-              catchError(() => of(trip)),
-            ),
-          ),
-        );
-      }),
       catchError(error => {
         console.error('Không tải được chuyến xe:', error);
         this.tripLoadError = 'Không tải được dữ liệu chuyến xe từ API. Vui lòng kiểm tra backend.';

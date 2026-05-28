@@ -103,14 +103,15 @@
                 <div class="w-8 h-8"></div>
                 <div class="w-8 h-8"></div>
                 <div class="w-8 h-8"></div>
-                <div *ngFor="let d of calendarDays" (click)="selectDepartureDate(d.dateStr)"
-                  [class]="d.dateStr === departureDate
+                <div *ngFor="let d of calendarDays" (click)="!isPastDate(d.dateStr) && selectDepartureDate(d.dateStr)"
+                  [class]="isPastDate(d.dateStr)
+                    ? 'w-8 h-8 flex flex-col items-center justify-center rounded-lg opacity-30 cursor-not-allowed pointer-events-none relative text-gray-400'
+                    : d.dateStr === departureDate
                     ? 'w-8 h-8 flex flex-col items-center justify-center rounded-lg bg-orange-50 border border-orange-500 text-orange-600 font-bold cursor-pointer relative shadow-sm'
                     : 'w-8 h-8 flex flex-col items-center justify-center rounded-lg hover:bg-surface-container cursor-pointer relative'">
-                  <span class="text-[8px] text-on-surface-variant font-normal absolute top-0.5 leading-none">{{ d.label
-                    }}</span>
+                  <span class="text-[8px] text-on-surface-variant font-normal absolute top-0.5 leading-none" [class.text-gray-400]="isPastDate(d.dateStr)">{{ d.label }}</span>
                   <span class="text-body-sm font-semibold absolute bottom-1 leading-none"
-                    [class.text-red-500]="d.highlighted">{{ d.day }}</span>
+                    [class.text-red-500]="d.highlighted && !isPastDate(d.dateStr)" [class.text-gray-400]="isPastDate(d.dateStr)">{{ d.day }}</span>
                 </div>
               </div>
             </div>
@@ -148,14 +149,15 @@
                 <div class="w-8 h-8"></div>
                 <div class="w-8 h-8"></div>
                 <div class="w-8 h-8"></div>
-                <div *ngFor="let d of calendarDays" (click)="selectReturnDate(d.dateStr)"
-                  [class]="d.dateStr === returnDate
+                <div *ngFor="let d of calendarDays" (click)="!isPastDate(d.dateStr) && selectReturnDate(d.dateStr)"
+                  [class]="isPastDate(d.dateStr)
+                    ? 'w-8 h-8 flex flex-col items-center justify-center rounded-lg opacity-30 cursor-not-allowed pointer-events-none relative text-gray-400'
+                    : d.dateStr === returnDate
                     ? 'w-8 h-8 flex flex-col items-center justify-center rounded-lg bg-orange-50 border border-orange-500 text-orange-600 font-bold cursor-pointer relative shadow-sm'
                     : 'w-8 h-8 flex flex-col items-center justify-center rounded-lg hover:bg-surface-container cursor-pointer relative'">
-                  <span class="text-[8px] text-on-surface-variant font-normal absolute top-0.5 leading-none">{{ d.label
-                    }}</span>
+                  <span class="text-[8px] text-on-surface-variant font-normal absolute top-0.5 leading-none" [class.text-gray-400]="isPastDate(d.dateStr)">{{ d.label }}</span>
                   <span class="text-body-sm font-semibold absolute bottom-1 leading-none"
-                    [class.text-red-500]="d.highlighted">{{ d.day }}</span>
+                    [class.text-red-500]="d.highlighted && !isPastDate(d.dateStr)" [class.text-gray-400]="isPastDate(d.dateStr)">{{ d.day }}</span>
                 </div>
               </div>
             </div>
@@ -201,7 +203,7 @@
       </section>
 
       <!-- Trip Count Header -->
-      <div class="card" style="margin-bottom: 20px;">
+      <div class="card" style="margin-bottom: 20px;" *ngIf="!isLoadingTrips">
         <div class="trip-count-header" style="display: flex; align-items: center; gap: 8px;">
           <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0;">
             {{ departure }} - {{ destination }}
@@ -399,7 +401,7 @@
           </div>
 
           <!-- List of Trips -->
-          <div class="space-y-4">
+          <div *ngIf="!isLoadingTrips" class="space-y-4">
             <ng-container *ngFor="let trip of filteredTrips; let i = index">
 
               <!-- Trip Card (Layout updated to match Figure 2) -->
@@ -850,8 +852,20 @@
 
                   <!-- 5. Policy / Chính sách Tab Content -->
                   <div *ngIf="trip.selectedTab === 'policy'" class="space-y-6">
-                    <!-- 1. Cancel policy -->
-                    <div class="space-y-3">
+                    <!-- 1. Cancel policy (Dynamic from DB if available, else Fallback) -->
+                    <div class="space-y-3" *ngIf="cancelPolicies && cancelPolicies.length > 0">
+                      <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">1. CHÍNH
+                        SÁCH HỦY VÉ VÀ HOÀN TIỀN</h4>
+                      <ul class="list-disc list-inside space-y-2 text-body-md text-on-surface-variant leading-relaxed">
+                        <li *ngFor="let cp of cancelPolicies">
+                          <span class="font-bold text-navy">{{ cp.TenChinhSach }}</span>: 
+                          <span *ngIf="cp.MoTa">{{ cp.MoTa }}</span>
+                          <span *ngIf="!cp.MoTa">Cho phép hủy vé trước giờ khởi hành tối thiểu {{ cp.GioiHanGioTruocKhoiHanh }} giờ, tỷ lệ phí hủy {{ cp.TyLePhiHuy * 100 }}%.</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div class="space-y-3" *ngIf="!cancelPolicies || cancelPolicies.length === 0">
                       <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">1. CHÍNH
                         SÁCH HỦY VÉ VÀ HOÀN TIỀN</h4>
                       <ul class="list-disc list-inside space-y-2 text-body-md text-on-surface-variant leading-relaxed">
@@ -889,8 +903,8 @@
                         KHI LÊN XE</h4>
                       <ul class="list-disc list-inside space-y-2 text-body-md text-on-surface-variant leading-relaxed">
                         <li>Thời gian có mặt: Quý khách vui lòng có mặt tại điểm đón trước giờ khởi hành <span
-                            class="font-bold text-navy">30 phút</span> để làm thủ tục (ngày Lễ/Tết cần ra trước <span
-                            class="font-bold text-navy">60 phút</span>).</li>
+                            class="font-bold text-navy">{{ getEarlyArrivalTime(trip) }} phút</span> để làm thủ tục (ngày Lễ/Tết cần ra trước <span
+                            class="font-bold text-navy">{{ getEarlyArrivalTime(trip) * 2 }} phút</span>).</li>
                         <li>Thủ tục lên xe: Xuất trình thông tin vé được gửi qua SMS/Zalo/Email/Website hoặc liên hệ
                           quầy vé để nhận thông tin vé trước khi lên xe.</li>
                         <li>Hành lý xách tay: Trọng lượng tối đa <span class="font-bold text-navy">20kg/khách</span>.
@@ -904,6 +918,14 @@
                           </ul>
                         </li>
                       </ul>
+                    </div>
+
+                    <!-- 4. General Policies from backend (Dynamic) -->
+                    <div class="space-y-3 pt-2" *ngFor="let p of policies">
+                      <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">{{ p.TieuDe }}</h4>
+                      <div class="text-body-md text-on-surface-variant leading-relaxed whitespace-pre-line">
+                        {{ p.NoiDung }}
+                      </div>
                     </div>
                   </div>
 

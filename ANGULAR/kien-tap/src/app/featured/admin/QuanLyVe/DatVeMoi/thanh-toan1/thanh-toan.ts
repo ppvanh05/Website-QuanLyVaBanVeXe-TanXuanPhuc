@@ -204,7 +204,21 @@ export class ThanhToan implements OnInit, OnDestroy {
     this.confirmCallback = null;
   }
 
+  private mapPaymentMethodToBackend(id: string): string {
+    const map: Record<string, string> = {
+      vietqr: 'VietQR',
+      momo: 'MoMo',
+      vnpay: 'VNPay',
+      zalopay: 'ZaloPay',
+      atm: 'ATM',
+      card: 'VisaMaster',
+      cash: 'TienMat'
+    };
+    return map[id] || 'TienMat';
+  }
+
   private buildCreateOrderPayload() {
+    const method = this.mapPaymentMethodToBackend(this.selectedPayment);
     return {
       hoTenNguoiDi: this.bookingData.customerName,
       sdtNguoiDi: this.bookingData.customerPhone,
@@ -213,8 +227,8 @@ export class ThanhToan implements OnInit, OnDestroy {
       maGheChuyenList: this.bookingData.maGheChuyenList || this.bookingData.selectedSeatIds || [],
       maDiemDon: this.bookingData.pickup?.maDiem || this.bookingData.pickup?.MaDiem,
       maDiemTra: this.bookingData.dropoff?.maDiem || this.bookingData.dropoff?.MaDiem,
-      phuongThucThanhToan: 'TienMat',
-      ghiChu: 'Nhan vien xac nhan thu tien mat',
+      phuongThucThanhToan: method,
+      ghiChu: method === 'TienMat' ? 'Nhân viên xác nhận thu tiền mặt' : 'Đặt vé giữ chỗ qua Hotline / Đại lý',
     };
   }
 
@@ -232,8 +246,8 @@ export class ThanhToan implements OnInit, OnDestroy {
       gioKhoiHanh: firstTicket.gioDi || this.bookingData.departureTime,
       departureDate: firstTicket.ngayDi || this.selectedDate,
       tongGiaVe: donHang.tongGiaVe || this.bookingData.totalPrice,
-      phuongThucThanhToan: 'Tiền mặt',
-      trangThaiDonHang: 'Thành công',
+      phuongThucThanhToan: donHang.phuongThucThanhToan ? this.mapPaymentMethod(donHang.phuongThucThanhToan) : 'Tiền mặt',
+      trangThaiDonHang: donHang.TrangThaiDonHang === 'ChoThanhToan' ? 'Chờ thanh toán' : 'Thành công',
       diemDon: `${this.bookingData.pickup?.name || ''} - ${this.bookingData.pickup?.address || ''}`,
       diemTra: `${this.bookingData.dropoff?.name || ''} - ${this.bookingData.dropoff?.address || ''}`,
       bienSoXe: firstTicket.bienSoXe || '',
@@ -245,7 +259,7 @@ export class ThanhToan implements OnInit, OnDestroy {
   }
 
   confirmCashPayment() {
-    this.showConfirm('Xác nhận đã nhận tiền mặt từ khách hàng?', () => {
+    this.showConfirm('Xác nhận đã nhận tiền chuyển khoản từ khách hàng và phát hành vé?', () => {
       const payload = this.buildCreateOrderPayload();
       if (!payload.maLichTrinh || !payload.maGheChuyenList.length) {
         this.showAlert('Thiếu thông tin lịch trình hoặc ghế. Vui lòng chọn lại chuyến xe.', 'warning');
@@ -259,7 +273,30 @@ export class ThanhToan implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         },
         error: error => {
-          const message = error?.error?.message || 'Không thể tạo đơn hàng và xác nhận thu tiền mặt.';
+          const message = error?.error?.message || 'Không thể xác nhận thanh toán chuyển khoản.';
+          this.showAlert(message, 'error');
+          this.cdr.detectChanges();
+        },
+      });
+    });
+  }
+
+  confirmReservation() {
+    this.showConfirm('Xác nhận đặt giữ chỗ bằng tiền mặt? (Trạng thái vé sẽ là Chờ thanh toán)', () => {
+      const payload = this.buildCreateOrderPayload();
+      if (!payload.maLichTrinh || !payload.maGheChuyenList.length) {
+        this.showAlert('Thiếu thông tin lịch trình hoặc ghế. Vui lòng chọn lại chuyến xe.', 'warning');
+        return;
+      }
+
+      this.http.post<any>(`${this.apiBaseUrl}/quan-ly-ve/tao-don-hang`, payload).subscribe({
+        next: result => {
+          this.successOrder = this.mapSuccessOrderFromApi(result);
+          this.showSuccessModal = true;
+          this.cdr.detectChanges();
+        },
+        error: error => {
+          const message = error?.error?.message || 'Không thể tạo đơn hàng giữ chỗ bằng tiền mặt.';
           this.showAlert(message, 'error');
           this.cdr.detectChanges();
         },
@@ -313,6 +350,18 @@ export class ThanhToan implements OnInit, OnDestroy {
     const date = new Date(year, month, day);
     const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
     return dayNames[date.getDay()];
+  }
+
+  mapPaymentMethod(method: string): string {
+    if (!method) return 'Tiền mặt';
+    const normalized = String(method).toLowerCase();
+    
+    let pmId = normalized;
+    if (normalized === 'tienmat') pmId = 'cash';
+    if (normalized === 'visamaster') pmId = 'card';
+
+    const found = this.paymentMethods.find(pm => pm.id.toLowerCase() === pmId);
+    return found ? found.name : method;
   }
 
   getPaymentQR(): string {

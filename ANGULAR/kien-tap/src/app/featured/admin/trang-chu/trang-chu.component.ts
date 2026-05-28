@@ -214,12 +214,29 @@ export class TrangChuComponent implements OnInit {
     this.dashboardLoading = true;
     this.dashboardLoadError = '';
 
-    this.http.get<any[]>(`${this.apiBaseUrl}/quan-ly-ve/ve`).subscribe({
+    // Load statistics card data quickly
+    this.http.get<any>(`${this.apiBaseUrl}/quan-ly-ve/stats`).subscribe({
+      next: stats => {
+        if (stats) {
+          this.stats = [
+            { title: 'Vé đang quản lý', value: stats.total, trend: 'Tổng số vé trong hệ thống', trendType: 'up', icon: 'local_activity', theme: 'blue' },
+            { title: 'Vé chờ thanh toán', value: stats.pendingCount, trend: stats.pendingCount > 0 ? 'Cần xử lý thanh toán' : 'Không có vé đang chờ', trendType: stats.pendingCount > 0 ? 'down' : 'up', icon: 'pending_actions', theme: 'orange' },
+            { title: 'Doanh thu đã thanh toán', value: stats.revenue, isCurrency: true, trend: 'Doanh thu thực tế', trendType: 'up', icon: 'payments', theme: 'teal' },
+            { title: 'Vé đã hủy', value: stats.canceledCount, trend: stats.canceledCount > 0 ? 'Có vé đã hủy' : 'Chưa có vé hủy', trendType: stats.canceledCount > 0 ? 'down' : 'up', icon: 'cancel', theme: 'purple' },
+          ];
+        }
+      },
+      error: error => {
+        console.error('Không tải được thống kê dashboard:', error);
+      }
+    });
+
+    // Load recent 20 tickets for list and route trends
+    this.http.get<any[]>(`${this.apiBaseUrl}/quan-ly-ve/ve?limit=20`).subscribe({
       next: data => {
         const tickets = Array.isArray(data) ? data : [];
         this.bookings = tickets.slice(0, 5).map(ticket => this.mapTicketToBooking(ticket));
         this.popularRoutes = this.buildPopularRoutes(tickets);
-        this.applyTicketStats(tickets);
         this.dashboardLoading = false;
       },
       error: error => {
