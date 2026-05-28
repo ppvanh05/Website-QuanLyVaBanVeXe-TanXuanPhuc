@@ -16,7 +16,7 @@ export class ReviewService {
         SoSao,
         NoiDungDanhGia,
         ThoiGianDanhGia: new Date(),
-        TrangThaiPhanHoi: 'Pending',
+        TrangThaiPhanHoi: 'ChuaPhanHoi', // Trạng thái mặc định
         KHACH_HANG: {
           connect: { MaKhachHang: MaKhachHang },
         },

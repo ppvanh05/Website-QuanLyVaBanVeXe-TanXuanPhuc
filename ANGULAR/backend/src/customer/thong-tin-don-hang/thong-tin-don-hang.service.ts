@@ -52,7 +52,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           VE_DIEN_TU: {
             none: {
               DON_HANG: {
-                TrangThaiDonHang: { in: [TrangThaiVe.Ch__kh_i_h_nh, TrangThaiVe.ho_n_th_nh] }
+                TrangThaiDonHang: { in: ['ChoKhoiHanh', 'DaHoanThanh'] }
               }
             }
           }
@@ -242,6 +242,8 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           TongGiaVe: new Prisma.Decimal(finalTotal),
           PhuongThucThanhToan: PhuongThucThanhToan as PhuongThucThanhToan,
           TrangThaiDonHang: TrangThaiVe.Ch__thanh_to_n,
+          PhuongThucThanhToan: PhuongThucThanhToan as any,
+          TrangThaiDonHang: 'ChoThanhToan',
         },
       });
 

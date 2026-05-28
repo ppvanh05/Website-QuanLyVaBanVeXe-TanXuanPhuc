@@ -46,6 +46,13 @@ export class ThongTinDonHang implements OnInit {
   customerPhone: string = '0981939379';
   customerEmail: string = 'nghitnb23406@st.uel.edu.vn';
   agreeTerms: boolean = false;
+  
+  // Validation errors realtime
+  validationErrors: {
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+  } = {};
 
   // Pickup/Dropoff dropdown states
   pickupSearch: string = 'Bến xe Miền Tây';
@@ -72,6 +79,40 @@ export class ThongTinDonHang implements OnInit {
 
   constructor(private router: Router) { }
 
+  private formatStopTime(value: any): string {
+    if (!value) return this.bookingData?.departureTime || '';
+    if (typeof value === 'string') {
+      const iso = value.match(/T(\d{2}:\d{2})/);
+      if (iso) return iso[1];
+      const plain = value.match(/^(\d{2}:\d{2})/);
+      if (plain) return plain[1];
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return this.bookingData?.departureTime || '';
+    return parsed.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  private mapTripStop(stop: any) {
+    return {
+      maDiem: stop.MaDiem,
+      time: this.formatStopTime(stop.GioDenDuKien),
+      name: stop.TenDiem || stop.name || '',
+      address: stop.DiaChi || stop.address || '',
+      city: stop.ThanhPho || '',
+      province: stop.Tinh || '',
+    };
+  }
+
+  private syncStopOptionsFromTrip() {
+    const stops = Array.isArray(this.bookingData?.stops)
+      ? this.bookingData.stops.map((stop: any) => this.mapTripStop(stop)).filter((stop: any) => stop.maDiem && stop.name)
+      : [];
+    if (stops.length === 0) return;
+
+    this.pickupOptions = stops;
+    this.dropoffOptions = stops;
+  }
+
   ngOnInit() {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('current_booking');
@@ -85,11 +126,13 @@ export class ThongTinDonHang implements OnInit {
       }
     }
 
+    this.syncStopOptionsFromTrip();
+
     // Set default pickup and dropoff based on saved data
-    this.selectedPickup = this.pickupOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.startStation || '').toLowerCase())) || this.pickupOptions[3];
+    this.selectedPickup = this.pickupOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.startStation || '').toLowerCase())) || this.pickupOptions[0];
     this.pickupSearch = this.selectedPickup.name;
 
-    this.selectedDropoff = this.dropoffOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.endStation || '').toLowerCase())) || this.dropoffOptions[0];
+    this.selectedDropoff = this.dropoffOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.endStation || '').toLowerCase())) || this.dropoffOptions[this.dropoffOptions.length - 1] || this.dropoffOptions[0];
     this.dropoffSearch = this.selectedDropoff.name;
 
     this.initSeats();
@@ -213,6 +256,37 @@ export class ThongTinDonHang implements OnInit {
   closeAlert() {
     this.showAlertModal = false;
     this.alertMessage = '';
+  }
+
+  // ===== VALIDATION REALTIME =====
+  validateCustomerName() {
+    if (!this.customerName.trim()) {
+      this.validationErrors.customerName = 'Vui lòng nhập Họ và tên';
+    } else if (this.customerName.trim().length < 2) {
+      this.validationErrors.customerName = 'Họ và tên phải có ít nhất 2 ký tự';
+    } else {
+      delete this.validationErrors.customerName;
+    }
+  }
+
+  validateCustomerPhone() {
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})\b$/;
+    if (!this.customerPhone.trim()) {
+      this.validationErrors.customerPhone = 'Vui lòng nhập Số điện thoại';
+    } else if (!phoneRegex.test(this.customerPhone.trim())) {
+      this.validationErrors.customerPhone = 'Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và có 10 số)';
+    } else {
+      delete this.validationErrors.customerPhone;
+    }
+  }
+
+  validateCustomerEmail() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (this.customerEmail.trim() && !emailRegex.test(this.customerEmail.trim())) {
+      this.validationErrors.customerEmail = 'Email không hợp lệ';
+    } else {
+      delete this.validationErrors.customerEmail;
+    }
   }
 
   getPickupArrivalTime(): string {

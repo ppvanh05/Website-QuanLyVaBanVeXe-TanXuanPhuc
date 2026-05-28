@@ -17,7 +17,6 @@ export interface NhanVien {
   soDienThoai: string;
   dienThoaiCoDinh?: string;
   email: string;
-  maVanPhong: string;
   anhDaiDien: string;
   ghiChu: string;
   trangThai: 'HoatDong' | 'DaKhoa';
@@ -159,6 +158,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       permissions: [
         { key: 'finance.view', name: 'Xem doanh thu & giao dịch', description: 'Theo dõi log giao dịch thanh toán, hoàn tiền và đối soát doanh thu vé.' },
         { key: 'finance.cost', name: 'Quản lý chi phí chuyến xe', description: 'Cập nhật các khoản chi thực tế phát sinh (xăng dầu, cầu đường, rửa xe, bến bãi) theo chuyến.' },
+        { key: 'report.view', name: 'Xem báo cáo thống kê', description: 'Xem các báo cáo chi tiết chuyến xe, tuyến xe, khách hàng, tài xế phụ xe và hoàn hủy.' },
         { key: 'report.export', name: 'Xuất báo cáo thống kê', description: 'Truy xuất và tải biểu đồ doanh số, lượng khách dưới dạng Excel/PDF.' }
       ]
     },
@@ -184,28 +184,34 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       name: 'Quản trị viên',
       icon: 'admin_panel_settings',
       description: 'Quản trị tài khoản nhân sự nội bộ, phân quyền, xem nhật ký hệ thống, quản lý và phản hồi đánh giá.',
-      permissions: ['employee.view', 'employee.manage', 'role.manage', 'system.log', 'review.moderate', 'review.view', 'review.reply']
+      permissions: [
+        'news.view', 'news.manage', 'news.create', 'news.update', 'news.delete',
+        'policy.view', 'policy.manage', 'policy.update',
+        'blacklist.view', 'blacklist.manage',
+        'customer.view', 'customer.manage', 'review.view', 'review.reply', 'review.moderate',
+        'staff.view', 'staff.manage', 'employee.view', 'employee.manage', 'role.manage', 'log.view', 'system.log'
+      ]
     },
     {
       key: 'management',
       name: 'Ban Quản lý',
       icon: 'insights',
       description: 'Theo dõi doanh thu giao dịch và xuất báo cáo thống kê hoạt động của nhà xe.',
-      permissions: ['finance.view', 'report.export']
+      permissions: ['finance.view', 'report.view', 'report.export']
     },
     {
       key: 'dispatch',
       name: 'Nhân viên Điều phối',
       icon: 'engineering',
       description: 'Quản lý tuyến đường, điểm dừng, phương tiện, tài xế và trực tiếp gán lịch trình, phân ca chạy chuyến.',
-      permissions: ['route.view', 'route.manage', 'vehicle.manage', 'driver.manage', 'trip.create', 'trip.assign', 'trip.update']
+      permissions: ['route.view', 'route.manage', 'vehicle.view', 'vehicle.manage', 'driver.view', 'driver.manage', 'stop.view', 'stop.manage', 'trip.view', 'trip.create', 'trip.assign', 'trip.update']
     },
     {
       key: 'cskh',
       name: 'Nhân viên bán vé',
       icon: 'confirmation_number',
       description: 'Tư vấn, đặt giữ ghế hotline, bán vé trực tiếp, hỗ trợ đổi trả vé và tra cứu thông tin khách hàng.',
-      permissions: ['ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'customer.view']
+      permissions: ['ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'ticket.manage', 'customer.view']
     }
   ];
 
@@ -224,13 +230,12 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       diaChi: '32 Cầu Giấy, Hà Nội',
       soDienThoai: '0912345678',
       email: 'minhtam.boss@gmail.com',
-      maVanPhong: 'Văn Phòng Bến xe Gia Lâm',
       anhDaiDien: '',
       ghiChu: 'Theo dõi và quản trị kinh doanh chung của văn phòng.',
       trangThai: 'HoatDong',
       vaiTro: 'Ban quản lý',
       permissions: [
-        'finance.view', 'report.export'
+        'finance.view', 'report.view', 'report.export'
       ]
     },
     {
@@ -246,13 +251,12 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       diaChi: '102 Mỹ Đình, Nam Từ Liêm, Hà Nội',
       soDienThoai: '0987654321',
       email: 'lylonglinh.nv@txpbus.vn',
-      maVanPhong: 'Văn Phòng 30 Mỹ Đình',
       anhDaiDien: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
       ghiChu: 'Nhân viên bán vé chuyên nghiệp, xuất sắc ca chiều.',
       trangThai: 'HoatDong',
       vaiTro: 'Nhân viên bán vé',
       permissions: [
-        'ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'customer.view'
+        'ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'ticket.manage', 'customer.view'
       ]
     },
     {
@@ -268,18 +272,15 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       diaChi: 'Bến xe Gia Lâm, Long Biên, Hà Nội',
       soDienThoai: '0944445555',
       email: 'anhhuy.boss@txpbus.vn',
-      maVanPhong: 'Văn Phòng 30 Mỹ Đình',
       anhDaiDien: '',
       ghiChu: 'Quản trị viên hệ thống cấp cao, phụ trách hạ tầng kỹ thuật.',
       trangThai: 'HoatDong',
       vaiTro: 'Quản trị viên',
       permissions: [
-        'news.view', 'news.create', 'news.update', 'news.delete', 'policy.view', 'policy.update',
-        'ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update',
-        'route.view', 'route.manage', 'vehicle.manage', 'driver.manage', 'trip.create', 'trip.assign', 'trip.update',
-        'customer.view', 'review.view', 'review.reply', 'review.moderate',
-        'finance.view', 'finance.cost', 'report.export',
-        'employee.view', 'employee.manage', 'role.manage', 'system.log'
+        'news.view', 'news.manage', 'news.create', 'news.update', 'news.delete', 'policy.view', 'policy.manage', 'policy.update',
+        'blacklist.view', 'blacklist.manage',
+        'customer.view', 'customer.manage', 'review.view', 'review.reply', 'review.moderate',
+        'staff.view', 'staff.manage', 'employee.view', 'employee.manage', 'role.manage', 'log.view', 'system.log'
       ]
     }
   ];
@@ -297,12 +298,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
   isSaving: boolean = false; // Prevent double submit
 
   // Selected Office option lists
-  offices: string[] = [
-    'Văn Phòng 30 Mỹ Đình',
-    'Văn Phòng Bến xe Gia Lâm',
-    'Văn Phòng Bến xe Niệm Nghĩa',
-    'Văn Phòng Trung tâm Điều hành TXP'
-  ];
+  offices: string[] = [];
 
   // Form model
   formModel: NhanVien = this.createEmptyForm();
@@ -353,7 +349,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       soDienThoai: nv.SoDienThoai || '',
       dienThoaiCoDinh: nv.DienThoaiCoDinh || '',
       email: nv.Email || '',
-      maVanPhong: nv.MaVanPhong || '',
       anhDaiDien: nv.AnhDaiDien || '',
       ghiChu: nv.GhiChu || '',
       trangThai: nv.TrangThai === 'DaKhoa' ? 'DaKhoa' : 'HoatDong',
@@ -377,7 +372,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       SoDienThoai: nv.soDienThoai,
       DienThoaiCoDinh: nv.dienThoaiCoDinh || null,
       Email: nv.email,
-      MaVanPhong: nv.maVanPhong,
       AnhDaiDien: nv.anhDaiDien || null,
       GhiChu: nv.ghiChu || null,
       TrangThai: nv.trangThai,
@@ -432,7 +426,6 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       soDienThoai: '',
       dienThoaiCoDinh: '',
       email: '',
-      maVanPhong: 'Văn Phòng 30 Mỹ Đình',
       anhDaiDien: '',
       ghiChu: '',
       trangThai: 'HoatDong',

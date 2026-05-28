@@ -170,7 +170,7 @@ export class KhachHangService {
         DON_HANG: {
           MaKhachHang: id,
         },
-        TrangThaiVe: 'Ch__kh_i_h_nh',
+        TrangThaiVe: 'ChoKhoiHanh',
       },
     });
 

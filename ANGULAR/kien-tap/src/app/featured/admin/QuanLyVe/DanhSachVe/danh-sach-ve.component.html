@@ -396,77 +396,96 @@
   <div class="modal-overlay print-overlay" *ngIf="showPrintModal" (click)="closePrintModal()">
     <div class="ticket-modal" (click)="$event.stopPropagation()">
       <div class="ticket-preview">
-      <div class="mini-ticket">
-        <!-- Header -->
-        <div class="mini-header">
-          <img src="/asset/images/TXP_logo2.png" alt="TXP Logo" class="mini-logo">
-          <div class="mini-company">TÂN XUÂN PHÚC</div>
-        </div>
-
-        <div class="mini-divider"></div>
-
-        <!-- Main QR -->
-        <div class="mini-qr-section">
-          <div class="mini-qr">
-            <span class="material-icons">qr_code_2</span>
-          </div>
-          <div class="mini-id">Mã vé: {{ selectedTicket?.id?.substring(7) }}</div>
-        </div>
-
-        <!-- Content Body -->
-        <div class="mini-body">
-          <div class="mini-info-row">
-            <span class="m-label">Tuyến xe:</span>
-            <span class="m-val">{{ selectedTicket?.route }}</span>
-          </div>
-          <div class="mini-info-row">
-            <span class="m-label">Giờ đi:</span>
-            <span class="m-val">{{ selectedTicket?.time }} - {{ selectedTicket?.date | date:'dd/MM' }}</span>
-          </div>
-          <div class="mini-info-row">
-            <span class="m-label">Số ghế:</span>
-            <span class="m-val highlight">A0{{ selectedTicket?.id?.substring(13, 14) || '1' }}</span>
+        <div class="full-ticket">
+          <!-- Header -->
+          <div class="ticket-header">
+            <h2 class="company-name">CÔNG TY TNHH VẬN TẢI TÂN XUÂN PHÚC</h2>
+            <p class="company-address">Tiên Hội - Phường An Nhơn Bắc - Tỉnh Gia Lai</p>
+            <p class="company-tax">MST: 4101453652</p>
+            <h1 class="ticket-title">VÉ XE KHÁCH</h1>
+            <p class="ticket-subtitle">Liên: Giao cho hành khách</p>
           </div>
 
-          <div class="mini-address-box">
-            <div class="m-label">Điểm lên xe:</div>
-            <div class="m-addr">Bến xe Miền Đông Mới, TP. Thủ Đức</div>
+          <!-- Body -->
+          <div class="ticket-body">
+            <div class="ticket-info-col">
+              <div class="t-row"><span class="t-label">Mã đơn hàng:</span> <span class="t-val">P5CDWE88</span></div>
+              <div class="t-row"><span class="t-label">Mã vé:</span> <span class="t-val">{{ selectedTicket?.id }}</span></div>
+              <div class="t-row"><span class="t-label">Tuyến xe:</span> <span class="t-val">{{ selectedTicket?.route }}</span></div>
+              <div class="t-row"><span class="t-label">Thời gian khởi hành:</span> <span class="t-val">{{ selectedTicket?.time }} {{ selectedTicket?.date | date:'dd-MM-yyyy' }}</span></div>
+              <div class="t-row"><span class="t-label">Số ghế:</span> <span class="t-val">{{ selectedTicket?.seat }}</span></div>
+              <div class="t-row"><span class="t-label">Điểm đón:</span> <span class="t-val">Bến xe Giáp Bát</span></div>
+              <div class="t-row"><span class="t-label">Thời gian tới điểm lên xe:</span> <span class="t-val">Trước {{ getReportTime(selectedTicket?.time) }} {{ selectedTicket?.date | date:'dd-MM-yyyy' }}</span></div>
+              <div class="t-row"><span class="t-label">Điểm trả:</span> <span class="t-val">Bến xe Sài Gòn</span></div>
+              <div class="t-row"><span class="t-label">Biển số xe:</span> <span class="t-val">29B-67890</span></div>
+              <div class="t-row"><span class="t-label">Giá vé:</span> <span class="t-val">{{ selectedTicket?.total }}</span></div>
+            </div>
+            <div class="ticket-qr-col">
+              <div class="qr-placeholder">
+                <span class="material-icons">qr_code_2</span>
+              </div>
+            </div>
           </div>
 
-          <div class="mini-note">
-            * Có mặt trước {{ getReportTime(selectedTicket?.time) }} để trung chuyển hoặc kiểm tra thông tin trước khi lên xe.
-          </div>
-
-          <div class="mini-price-row">
-            <span class="m-label">Tổng tiền:</span>
-            <span class="m-price">{{ selectedTicket?.total }}</span>
+          <!-- Footer -->
+          <div class="ticket-footer">
+            <p>(Đã bao gồm thuế GTGT và BH hành khách)</p>
+            <p>Tổng đài bán vé: 1900989867</p>
           </div>
         </div>
 
-        <div class="mini-footer">
-          <p>Hotline: 1900 98 98 67</p>
-          <p class="mini-web">www.txpbus.vn</p>
+        <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
+          <button class="btn-print" (click)="printTicket()" style="padding: 10px 20px; background-color: #009ba1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            In vé
+          </button>
+          <button class="btn-pdf" (click)="exportPDF()" style="padding: 10px 20px; background-color: #475569; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            Xuất PDF
+          </button>
+          <button class="btn-close" (click)="closePrintModal()" style="padding: 10px 20px; background-color: #e2e8f0; color: #334155; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            Thoát
+          </button>
         </div>
       </div>
+    </div>
+</div>
 
-      <div class="modal-actions">
-        <button class="btn-pdf" (click)="exportPDF()">
-          <span class="material-icons">picture_as_pdf</span>
-          PDF
-        </button>
-        <button class="btn-print" (click)="printTicket()">
-          <span class="material-icons">print</span>
-          In
-        </button>
-        <button class="btn-close" (click)="closePrintModal()">Thoát</button>
-      </div>
+<!-- Alert Modal - Thông báo trung tâm -->
+<div *ngIf="showAlertModal"
+  class="fixed inset-0 z-[25000] flex items-center justify-center bg-navy/60 backdrop-blur-xs p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl border border-outline-variant/10 animate-scale-up">
+    <div class="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
+      <h3 class="font-bold text-primary text-title-md uppercase tracking-wider flex items-center gap-2">
+        <span class="material-icons" [ngClass]="{
+          'text-success': alertType === 'success',
+          'text-danger': alertType === 'error',
+          'text-warning': alertType === 'warning'
+        }">
+          {{ alertType === 'success' ? 'check_circle' : alertType === 'error' ? 'error' : 'warning' }}
+        </span>
+        {{ alertType === 'success' ? 'THÀNH CÔNG' : alertType === 'error' ? 'LỖI' : 'CẢNH BÁO' }}
+      </h3>
+      <span class="material-icons text-outline-variant hover:text-navy cursor-pointer select-none text-2xl"
+        (click)="closeAlert()">close</span>
+    </div>
+
+    <div class="p-6">
+      <p class="text-body-md text-on-surface font-semibold leading-relaxed text-center">
+        {{ alertMessage }}
+      </p>
+    </div>
+
+    <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant/10 flex justify-center">
+      <button (click)="closeAlert()"
+        class="px-8 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover shadow-md transition-all">
+        ĐÓNG
+      </button>
     </div>
   </div>
 </div>
 
 <!-- Alert Modal - Thông báo trung tâm -->
 <div *ngIf="showAlertModal"
-  class="fixed inset-0 z-[250] flex items-center justify-center bg-navy/60 backdrop-blur-xs p-4">
+  class="fixed inset-0 z-[25000] flex items-center justify-center bg-navy/60 backdrop-blur-xs p-4">
   <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl border border-outline-variant/10 animate-scale-up">
     <div class="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
       <h3 class="font-bold text-primary text-title-md uppercase tracking-wider flex items-center gap-2">

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-thanh-toan',
@@ -11,6 +12,7 @@ import { Router, RouterModule } from '@angular/router';
   styleUrl: './thanh-toan.css',
 })
 export class ThanhToan implements OnInit, OnDestroy {
+  private readonly apiBaseUrl = 'http://localhost:3000';
   bookingData: any = {
     tripId: 1,
     departureTime: '18:00',
@@ -65,7 +67,11 @@ export class ThanhToan implements OnInit, OnDestroy {
     { id: 'cash', name: 'Tiền mặt', icon: 'https://img.icons8.com/ios-filled/50/money--v1.png', badge: 'Nhân viên xác nhận nhận tiền mặt từ khách hàng' }
   ];
 
-  constructor(private router: Router, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient,
+  ) {}
 
   // Selected date from booking context
   selectedDate: string = '22/05/2026';
@@ -198,11 +204,74 @@ export class ThanhToan implements OnInit, OnDestroy {
     this.confirmCallback = null;
   }
 
+  private buildCreateOrderPayload() {
+    return {
+      hoTenNguoiDi: this.bookingData.customerName,
+      sdtNguoiDi: this.bookingData.customerPhone,
+      emailNguoiDi: this.bookingData.customerEmail || '',
+      maLichTrinh: this.bookingData.maLichTrinh || this.bookingData.tripId,
+      maGheChuyenList: this.bookingData.maGheChuyenList || this.bookingData.selectedSeatIds || [],
+      maDiemDon: this.bookingData.pickup?.maDiem || this.bookingData.pickup?.MaDiem,
+      maDiemTra: this.bookingData.dropoff?.maDiem || this.bookingData.dropoff?.MaDiem,
+      phuongThucThanhToan: 'TienMat',
+      ghiChu: 'Nhan vien xac nhan thu tien mat',
+    };
+  }
+
+  private mapSuccessOrderFromApi(result: any) {
+    const donHang = result?.donHang || result?.DON_HANG || {};
+    const veList = result?.veList || donHang?.VE_DIEN_TU || [];
+    const firstTicket = veList[0] || {};
+
+    return {
+      maDonHang: donHang.maDonHang || donHang.MaDonHang || firstTicket.MaDonHang || '',
+      hoTenKhachHang: donHang.tenKhachHang || donHang.HoTenNguoiDi || this.bookingData.customerName,
+      soDienThoai: donHang.soDienThoai || donHang.SdtNguoiDi || this.bookingData.customerPhone,
+      email: donHang.EmailNguoiDi || this.bookingData.customerEmail || '',
+      tenTuyen: firstTicket.tuyenXe || `${this.bookingData.startStation} - ${this.bookingData.endStation}`,
+      gioKhoiHanh: firstTicket.gioDi || this.bookingData.departureTime,
+      departureDate: firstTicket.ngayDi || this.selectedDate,
+      tongGiaVe: donHang.tongGiaVe || this.bookingData.totalPrice,
+      phuongThucThanhToan: 'Tiền mặt',
+      trangThaiDonHang: 'Thành công',
+      diemDon: `${this.bookingData.pickup?.name || ''} - ${this.bookingData.pickup?.address || ''}`,
+      diemTra: `${this.bookingData.dropoff?.name || ''} - ${this.bookingData.dropoff?.address || ''}`,
+      bienSoXe: firstTicket.bienSoXe || '',
+      tickets: veList.map((ticket: any, index: number) => ({
+        soGhe: ticket.soGhe || this.bookingData.selectedSeats?.[index] || '',
+        maVe: ticket.maVe || ticket.MaVe || '',
+      })),
+    };
+  }
+
   confirmCashPayment() {
+    this.showConfirm('Xác nhận đã nhận tiền mặt từ khách hàng?', () => {
+      const payload = this.buildCreateOrderPayload();
+      if (!payload.maLichTrinh || !payload.maGheChuyenList.length) {
+        this.showAlert('Thiếu thông tin lịch trình hoặc ghế. Vui lòng chọn lại chuyến xe.', 'warning');
+        return;
+      }
+
+      this.http.post<any>(`${this.apiBaseUrl}/quan-ly-ve/tao-don-hang`, payload).subscribe({
+        next: result => {
+          this.successOrder = this.mapSuccessOrderFromApi(result);
+          this.showSuccessModal = true;
+          this.cdr.detectChanges();
+        },
+        error: error => {
+          const message = error?.error?.message || 'Không thể tạo đơn hàng và xác nhận thu tiền mặt.';
+          this.showAlert(message, 'error');
+          this.cdr.detectChanges();
+        },
+      });
+    });
+  }
+
+  private confirmCashPaymentLegacy() {
     this.showConfirm('Xác nhận đã nhận tiền mặt từ khách hàng?', () => {
       // Tạo data đơn hàng giả để hiển thị vé
       this.successOrder = {
-        maDonHang: 'TXPC' + Math.floor(Math.random() * 100000),
+        maDonHang: 'DH10000000',
         hoTenKhachHang: this.bookingData.customerName,
         soDienThoai: this.bookingData.customerPhone,
         email: this.bookingData.customerEmail || '',
@@ -217,7 +286,7 @@ export class ThanhToan implements OnInit, OnDestroy {
         bienSoXe: '51A-123.45',
         tickets: this.bookingData.selectedSeats.map((seat: string, index: number) => ({
           soGhe: seat,
-          maVe: 'TX' + (index + 1) + Math.floor(Math.random() * 10000)
+          maVe: 'VE100000'
         }))
       };
       this.showSuccessModal = true;

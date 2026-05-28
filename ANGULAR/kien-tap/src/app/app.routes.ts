@@ -1,8 +1,11 @@
 import { Routes } from '@angular/router';
+import { AdminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
     path: 'admin',
+    canActivate: [AdminGuard],
+    canActivateChild: [AdminGuard],
     loadChildren: () => import('./featured/admin/routes/admin.routes').then(m => m.ADMIN_ROUTES)
   },
   {
@@ -16,6 +19,10 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./featured/customer/auth/login/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'admin-login',
+    loadComponent: () => import('./featured/admin/auth/login/admin-login.component').then(m => m.AdminLoginComponent)
   },
   {
     path: 'tin-tuc',
@@ -56,7 +63,7 @@ export const routes: Routes = [
   
   {
     path: '',
-    redirectTo: 'admin',
+    redirectTo: 'home',
     pathMatch: 'full'
   }
 ];

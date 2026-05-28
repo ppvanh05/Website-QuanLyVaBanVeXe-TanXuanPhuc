@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, TrangThaiTinTucEnum, LoaiTinTucEnum } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
@@ -71,12 +71,13 @@ export class TinTucService {
         NoiDungChiTiet: dto.NoiDungChiTiet ?? null,
         NgayDang: dto.NgayDang ? new Date(dto.NgayDang as any) : null,
         TrangThai: dto.TrangThai as TrangThaiTinTucEnum,
+        NoiBat: dto.NoiBat ?? false,
         MaQuanTriVien: dto.MaQuanTriVien ?? null,
       },
     });
 
     await this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tin tức',
       NoiDungChiTiet: `Đăng bài viết tin tức mới: ${res.TieuDe} (Mã: ${res.MaTinTuc})`,
       TrangThai: 'Thành công',
@@ -120,7 +121,7 @@ export class TinTucService {
     }
 
     await this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tin tức',
       NoiDungChiTiet: `Cập nhật bài viết tin tức: ${res.TieuDe} (Mã: ${id}). Chi tiết: ${changes.map(c => `${c.truong}: ${c.giaTriCu} -> ${c.giaTriMoi}`).join(', ') || 'Không thay đổi trường cốt lõi'}`,
       TrangThai: 'Thành công',
@@ -143,7 +144,7 @@ export class TinTucService {
     });
 
     await this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tin tức',
       NoiDungChiTiet: `Thay đổi trạng thái bài viết tin tức: ${res.TieuDe} (Mã: ${id}) sang ${trangThai}`,
       TrangThai: 'Thành công',
@@ -165,7 +166,7 @@ export class TinTucService {
     });
 
     await this.nhatKyService.ghiLog({
-      MaNhanVien: 'NVDP001',
+      MaNhanVien: 'NVDP100001',
       LoaiThaoTac: 'Quản lý tin tức',
       NoiDungChiTiet: `Xóa bài viết tin tức: ${original?.TieuDe || ''} (Mã: ${id})`,
       TrangThai: 'Thành công',
@@ -177,4 +178,5 @@ export class TinTucService {
     return this.mapToFrontend(res);
   }
 }
+
 

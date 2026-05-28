@@ -93,7 +93,7 @@ export class ThanhToanService {
       // 3. Update E-Tickets status
       await tx.vE_DIEN_TU.updateMany({
         where: { MaDonHang },
-        data: { TrangThaiVe: TrangThaiVe.Ch__kh_i_h_nh },
+        data: { TrangThaiVe: 'ChoKhoiHanh' },
       });
 
       // 4. Lock seats permanently (status DaBan)

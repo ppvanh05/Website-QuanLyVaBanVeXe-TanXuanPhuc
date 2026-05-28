@@ -19,6 +19,7 @@ export interface TinTuc {
   ngayCapNhat: string;
   henGioDang?: boolean;
   ngayGioHenGio?: string;
+  noiBat: boolean;
 }
 
 export interface NhatKyTinTuc {
@@ -85,6 +86,7 @@ export class QuanLyTinTucComponent implements OnInit {
     moTaNgan: '',
     noiDungChiTiet: '',
     trangThai: 'BanNhap',
+    noiBat: false,
     henGioDang: false,
     ngayHenGio: '',
     gioHenGio: ''
@@ -245,7 +247,8 @@ export class QuanLyTinTucComponent implements OnInit {
       ngayTao: ngayDang || this.formatCurrentDate(),
       ngayCapNhat: ngayDang || this.formatCurrentDate(),
       henGioDang: n.TrangThai === 'HenGio',
-      ngayGioHenGio: ngayGioHenGioStr
+      ngayGioHenGio: ngayGioHenGioStr,
+      noiBat: n.NoiBat || false
     };
   }
 
@@ -260,7 +263,8 @@ export class QuanLyTinTucComponent implements OnInit {
       NgayDang: n.trangThai === 'DaDang' ? new Date() : (n.ngayDang ? new Date(n.ngayDang) : null),
       TrangThai: n.trangThai,
       MaQuanTriVien: 'NVDP001',
-      NgayGioHenGio: n.trangThai === 'HenGio' && n.ngayGioHenGio ? new Date(n.ngayGioHenGio.replace(' ', 'T') + ':00') : null
+      NgayGioHenGio: n.trangThai === 'HenGio' && n.ngayGioHenGio ? new Date(n.ngayGioHenGio.replace(' ', 'T') + ':00') : null,
+      NoiBat: n.noiBat
     };
   }
 
@@ -521,6 +525,7 @@ export class QuanLyTinTucComponent implements OnInit {
       moTaNgan: '',
       noiDungChiTiet: '', // Start completely clean without technical tag templates
       trangThai: 'BanNhap',
+      noiBat: false,
       henGioDang: false,
       ngayHenGio: '',
       gioHenGio: ''

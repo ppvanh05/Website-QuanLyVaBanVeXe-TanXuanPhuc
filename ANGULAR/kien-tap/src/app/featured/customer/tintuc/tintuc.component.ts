@@ -1,6 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 import { CustomerTinTucService } from '../../../core/services/customer-tin-tuc.service';
@@ -28,15 +31,22 @@ export class TintucComponent implements OnInit, AfterViewInit {
   currentPage = 1;
   totalPages = 1;
   pageSize = 10;
+  private isBrowser: boolean;
 
   constructor(
     private newsService: CustomerTinTucService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute
   ) {}
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   ngOnInit() {
-    this.loadNews();
+    if (this.isBrowser) {
+      this.loadNews();
+    }
   }
 
   ngAfterViewInit() {
