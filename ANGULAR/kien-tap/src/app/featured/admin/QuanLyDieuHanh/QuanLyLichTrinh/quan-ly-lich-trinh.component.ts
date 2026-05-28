@@ -431,10 +431,22 @@ export class QuanLyLichTrinhComponent implements OnInit {
   pickerViewMode: 'day' | 'month' | 'year' = 'day';
   yearRangeStart: number = 2020;
 
+  // Transit Date Pickers State
+  activePickupDatePickerIndex: number | null = null;
+  activeDropoffDatePickerIndex: number | null = null;
+  transitViewDate: Date = new Date();
+  transitCalendarDays: (number | null)[] = [];
+  transitPickerViewMode: 'day' | 'month' | 'year' = 'day';
+  transitYearRangeStart: number = 2026;
+
   floorLayouts: any[] = [];
 
   get yearsList(): number[] {
     return Array.from({ length: 12 }, (_, i) => this.yearRangeStart + i);
+  }
+
+  get transitYearsList(): number[] {
+    return Array.from({ length: 12 }, (_, i) => this.transitYearRangeStart + i);
   }
 
   constructor(
@@ -500,6 +512,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
   @HostListener('document:click')
   onDocumentClick() {
     this.isDatePickerOpen = false;
+    this.activePickupDatePickerIndex = null;
+    this.activeDropoffDatePickerIndex = null;
     this.openedColorMenuIndex = null;
     this.showOpenUnitDropdown = false;
     this.showCloseUnitDropdown = false;
@@ -774,6 +788,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
   closeModal() {
     this.isModalOpen = false;
     this.isDatePickerOpen = false;
+    this.activePickupDatePickerIndex = null;
+    this.activeDropoffDatePickerIndex = null;
     this.errors = {};
   }
 
@@ -1134,6 +1150,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
   toggleDatePicker() {
     this.isDatePickerOpen = !this.isDatePickerOpen;
     if (this.isDatePickerOpen) {
+      this.activePickupDatePickerIndex = null;
+      this.activeDropoffDatePickerIndex = null;
       this.viewDate = new Date();
       this.viewDate.setDate(1);
       this.pickerViewMode = 'day';
@@ -1254,5 +1272,129 @@ export class QuanLyLichTrinhComponent implements OnInit {
     if (unit === 'hour') return 'Giờ';
     if (unit === 'minute') return 'Phút';
     return 'Phút';
+  }
+
+  // Transit Custom Date Picker Logic
+  toggleTransitDatePicker(type: 'pickup' | 'dropoff', index: number, event: Event) {
+    event.stopPropagation();
+    this.isDatePickerOpen = false;
+    if (type === 'pickup') {
+      if (this.activePickupDatePickerIndex === index) {
+        this.activePickupDatePickerIndex = null;
+      } else {
+        this.activePickupDatePickerIndex = index;
+        this.activeDropoffDatePickerIndex = null;
+        const currentDateStr = this.currentSchedule.pickupPoints?.[index]?.date;
+        this.initTransitCalendar(currentDateStr);
+      }
+    } else {
+      if (this.activeDropoffDatePickerIndex === index) {
+        this.activeDropoffDatePickerIndex = null;
+      } else {
+        this.activeDropoffDatePickerIndex = index;
+        this.activePickupDatePickerIndex = null;
+        const currentDateStr = this.currentSchedule.dropoffPoints?.[index]?.date;
+        this.initTransitCalendar(currentDateStr);
+      }
+    }
+  }
+
+  initTransitCalendar(dateStr: string | undefined) {
+    if (dateStr) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const d = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const y = parseInt(parts[2], 10);
+        if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+          this.transitViewDate = new Date(y, m, 1);
+        } else {
+          this.transitViewDate = new Date();
+          this.transitViewDate.setDate(1);
+        }
+      } else {
+        this.transitViewDate = new Date();
+        this.transitViewDate.setDate(1);
+      }
+    } else {
+      this.transitViewDate = new Date();
+      this.transitViewDate.setDate(1);
+    }
+    this.transitPickerViewMode = 'day';
+    this.generateTransitCalendar();
+  }
+
+  setTransitPickerView(mode: 'day' | 'month' | 'year') {
+    this.transitPickerViewMode = mode;
+    if (mode === 'year') {
+      this.transitYearRangeStart = this.transitViewDate.getFullYear() - (this.transitViewDate.getFullYear() % 12);
+    }
+  }
+
+  selectTransitMonth(monthIndex: number) {
+    this.transitViewDate.setMonth(monthIndex);
+    this.transitPickerViewMode = 'day';
+    this.generateTransitCalendar();
+  }
+
+  selectTransitYear(year: number) {
+    this.transitViewDate.setFullYear(year);
+    this.transitPickerViewMode = 'month';
+  }
+
+  generateTransitCalendar() {
+    const year = this.transitViewDate.getFullYear();
+    const month = this.transitViewDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let startDay = firstDay === 0 ? 6 : firstDay - 1;
+
+    this.transitCalendarDays = [];
+    for (let i = 0; i < startDay; i++) {
+      this.transitCalendarDays.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      this.transitCalendarDays.push(i);
+    }
+  }
+
+  prevTransit() {
+    if (this.transitPickerViewMode === 'day') {
+      this.transitViewDate = new Date(this.transitViewDate.getFullYear(), this.transitViewDate.getMonth() - 1, 1);
+      this.generateTransitCalendar();
+    } else if (this.transitPickerViewMode === 'month') {
+      this.transitViewDate = new Date(this.transitViewDate.getFullYear() - 1, this.transitViewDate.getMonth(), 1);
+    } else if (this.transitPickerViewMode === 'year') {
+      this.transitYearRangeStart -= 12;
+    }
+  }
+
+  nextTransit() {
+    if (this.transitPickerViewMode === 'day') {
+      this.transitViewDate = new Date(this.transitViewDate.getFullYear(), this.transitViewDate.getMonth() + 1, 1);
+      this.generateTransitCalendar();
+    } else if (this.transitPickerViewMode === 'month') {
+      this.transitViewDate = new Date(this.transitViewDate.getFullYear() + 1, this.transitViewDate.getMonth(), 1);
+    } else if (this.transitPickerViewMode === 'year') {
+      this.transitYearRangeStart += 12;
+    }
+  }
+
+  selectTransitDate(day: number | null, type: 'pickup' | 'dropoff', index: number) {
+    if (!day) return;
+    const date = new Date(this.transitViewDate.getFullYear(), this.transitViewDate.getMonth(), day);
+    const dateStr = this.formatDate(date);
+    if (type === 'pickup') {
+      if (this.currentSchedule.pickupPoints?.[index]) {
+        this.currentSchedule.pickupPoints[index].date = dateStr;
+      }
+      this.activePickupDatePickerIndex = null;
+    } else {
+      if (this.currentSchedule.dropoffPoints?.[index]) {
+        this.currentSchedule.dropoffPoints[index].date = dateStr;
+      }
+      this.activeDropoffDatePickerIndex = null;
+    }
   }
 }

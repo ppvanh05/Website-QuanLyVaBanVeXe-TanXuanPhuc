@@ -584,7 +584,55 @@
                     </div>
                   </div>
                   <div class="transit-col col-date">
-                    <input type="text" [(ngModel)]="item.date" placeholder="dd/mm/yyyy" class="transit-date-input">
+                    <div class="date-input-container" (click)="$event.stopPropagation()">
+                      <input type="text" [(ngModel)]="item.date" placeholder="dd/mm/yyyy"
+                        class="transit-date-input" (click)="toggleTransitDatePicker('pickup', idx, $event)">
+                      <span class="material-icons date-icon-inside" (click)="toggleTransitDatePicker('pickup', idx, $event)" style="pointer-events: auto; cursor: pointer;">calendar_today</span>
+
+                      <!-- Date Picker Popup -->
+                      <div class="calendar-popup" *ngIf="activePickupDatePickerIndex === idx" style="width: 280px; right: 0; left: auto;">
+                        <div class="calendar-header">
+                          <button type="button" (click)="prevTransit()">
+                            <span class="material-icons">chevron_left</span>
+                          </button>
+                          <div class="month-year-labels">
+                            <span class="month-label" (click)="setTransitPickerView('month')">
+                              {{ months[transitViewDate.getMonth()] }}
+                            </span>
+                            <span class="year-label" (click)="setTransitPickerView('year')">
+                              {{ transitViewDate.getFullYear() }}
+                            </span>
+                          </div>
+                          <button type="button" (click)="nextTransit()">
+                            <span class="material-icons">chevron_right</span>
+                          </button>
+                        </div>
+
+                        <!-- Day View -->
+                        <div class="calendar-days-wrapper" *ngIf="transitPickerViewMode === 'day'">
+                          <div class="calendar-grid">
+                            <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+                            <div class="day" *ngFor="let day of transitCalendarDays" [class.empty]="!day" (click)="selectTransitDate(day, 'pickup', idx)">
+                              {{ day }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Month View -->
+                        <div class="month-grid" *ngIf="transitPickerViewMode === 'month'">
+                          <div class="month-item" *ngFor="let m of months; let i = index" (click)="selectTransitMonth(i)">
+                            {{ m }}
+                          </div>
+                        </div>
+
+                        <!-- Year View -->
+                        <div class="year-grid" *ngIf="transitPickerViewMode === 'year'">
+                          <div class="year-item" *ngFor="let y of transitYearsList" (click)="selectTransitYear(y)">
+                            {{ y }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -628,7 +676,55 @@
                     </div>
                   </div>
                   <div class="transit-col col-date">
-                    <input type="text" [(ngModel)]="item.date" placeholder="dd/mm/yyyy" class="transit-date-input">
+                    <div class="date-input-container" (click)="$event.stopPropagation()">
+                      <input type="text" [(ngModel)]="item.date" placeholder="dd/mm/yyyy"
+                        class="transit-date-input" (click)="toggleTransitDatePicker('dropoff', idx, $event)">
+                      <span class="material-icons date-icon-inside" (click)="toggleTransitDatePicker('dropoff', idx, $event)" style="pointer-events: auto; cursor: pointer;">calendar_today</span>
+
+                      <!-- Date Picker Popup -->
+                      <div class="calendar-popup" *ngIf="activeDropoffDatePickerIndex === idx" style="width: 280px; right: 0; left: auto;">
+                        <div class="calendar-header">
+                          <button type="button" (click)="prevTransit()">
+                            <span class="material-icons">chevron_left</span>
+                          </button>
+                          <div class="month-year-labels">
+                            <span class="month-label" (click)="setTransitPickerView('month')">
+                              {{ months[transitViewDate.getMonth()] }}
+                            </span>
+                            <span class="year-label" (click)="setTransitPickerView('year')">
+                              {{ transitViewDate.getFullYear() }}
+                            </span>
+                          </div>
+                          <button type="button" (click)="nextTransit()">
+                            <span class="material-icons">chevron_right</span>
+                          </button>
+                        </div>
+
+                        <!-- Day View -->
+                        <div class="calendar-days-wrapper" *ngIf="transitPickerViewMode === 'day'">
+                          <div class="calendar-grid">
+                            <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+                            <div class="day" *ngFor="let day of transitCalendarDays" [class.empty]="!day" (click)="selectTransitDate(day, 'dropoff', idx)">
+                              {{ day }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Month View -->
+                        <div class="month-grid" *ngIf="transitPickerViewMode === 'month'">
+                          <div class="month-item" *ngFor="let m of months; let i = index" (click)="selectTransitMonth(i)">
+                            {{ m }}
+                          </div>
+                        </div>
+
+                        <!-- Year View -->
+                        <div class="year-grid" *ngIf="transitPickerViewMode === 'year'">
+                          <div class="year-item" *ngFor="let y of transitYearsList" (click)="selectTransitYear(y)">
+                            {{ y }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
