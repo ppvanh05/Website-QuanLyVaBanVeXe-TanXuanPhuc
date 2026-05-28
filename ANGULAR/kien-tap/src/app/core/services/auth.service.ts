@@ -37,6 +37,7 @@ export class AuthService {
     this._userName.next('Guest');
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.removeItem('currentUserName'); // Xóa tên người dùng khỏi localStorage
+      localStorage.removeItem('access_token'); // Xóa JWT Token
     }
     this._isLoggedIn.next(false);
   }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthModalService } from '../auth-modal.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AuthApiService } from '../../../../core/services/auth-api.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -40,7 +41,8 @@ export class ForgotPasswordComponent implements OnDestroy {
   constructor(
     private authModalService: AuthModalService,
     private cdr: ChangeDetectorRef,
-    private authService: AuthService
+    private authService: AuthService,
+    private authApiService: AuthApiService
   ) {}
 
   ngOnDestroy() {
@@ -112,26 +114,26 @@ export class ForgotPasswordComponent implements OnDestroy {
       return;
     }
 
-    const users = this.getMockUsers();
-    const userExists = users.some(u => u.phoneNumber === cleaned);
-    if (!userExists) {
-      this.phoneNumberError = 'Số điện thoại này chưa được đăng ký.';
-      return;
-    }
-
     this.phoneNumber = cleaned;
-    const sendOtpPayload = {
-      SoDienThoai: cleaned,
-      MucDich: 'QuenMatKhau',
-    };
-    console.log('Auth send-otp payload:', sendOtpPayload);
+    console.log('Auth forgot-password (send-otp) payload:', { SoDienThoai: cleaned });
 
-    this.generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
-    this.otpDigitsString = '';
-    this.otpDigits = Array(6).fill('');
-    this.otpError = '';
-    this.step = 'otp';
-    this.startOtpTimer();
+    this.authApiService.forgotPassword({ SoDienThoai: cleaned }).subscribe({
+      next: (response: any) => {
+        this.generatedOtp = response.otp || '';
+        this.otpDigitsString = '';
+        this.otpDigits = Array(6).fill('');
+        this.otpError = '';
+        this.step = 'otp';
+        this.startOtpTimer();
+        console.log('OTP đã gửi:', this.generatedOtp);
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Forgot password error:', err);
+        this.phoneNumberError = err.error?.message || 'Số điện thoại này chưa được đăng ký.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   onOtpChange(val: string) {
@@ -154,13 +156,27 @@ export class ForgotPasswordComponent implements OnDestroy {
       this.otpError = 'Vui lòng nhập đủ 6 chữ số mã xác thực.';
       return;
     }
-    if (this.otpDigitsString !== this.generatedOtp) {
-      this.otpError = 'Mã xác thực không đúng. Vui lòng thử lại.';
-      return;
-    }
-    this.clearOtpTimer();
-    this.otpError = '';
-    this.step = 'reset';
+
+    const code = this.otpDigitsString;
+    const verifyPayload = {
+      SoDienThoai: this.phoneNumber,
+      otp: code,
+      MucDich: 'QuenMatKhau'
+    };
+
+    this.authApiService.verifyOtp(verifyPayload).subscribe({
+      next: (response: any) => {
+        this.clearOtpTimer();
+        this.otpError = '';
+        this.step = 'reset';
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Verify OTP error:', err);
+        this.otpError = err.error?.message || 'Mã xác thực không đúng. Vui lòng thử lại.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   resendOtp() {
@@ -210,29 +226,24 @@ export class ForgotPasswordComponent implements OnDestroy {
     };
     console.log('Auth reset-password payload:', resetPayload);
 
-    const users = this.getMockUsers();
-    const userIndex = users.findIndex(u => u.phoneNumber === this.phoneNumber);
-    if (userIndex !== -1) {
-      users[userIndex].password = this.newPassword;
-      localStorage.setItem('mock_users', JSON.stringify(users));
-      localStorage.setItem('lastLoggedInUser', JSON.stringify({
-        phoneOrEmail: this.phoneNumber,
-        password: this.newPassword
-      }));
-    } else {
-      this.otpError = 'Có lỗi xảy ra, không tìm thấy tài khoản để cập nhật.';
-      return;
-    }
+    this.authApiService.resetPassword(resetPayload).subscribe({
+      next: (response: any) => {
+        this.otpError = '';
+        this.toastMessage = 'Đặt lại mật khẩu thành công!';
+        this.showToast = true;
+        this.cdr.detectChanges();
 
-    this.otpError = '';
-    this.toastMessage = 'Đặt lại mật khẩu thành công!';
-    this.showToast = true;
-    this.cdr.detectChanges();
-
-    setTimeout(() => {
-      this.showToast = false;
-      this.authModalService.closeModal();
-      this.authModalService.openLoginModal();
-    }, 1500);
+        setTimeout(() => {
+          this.showToast = false;
+          this.authModalService.closeModal();
+          this.authModalService.openLoginModal();
+        }, 1500);
+      },
+      error: (err: any) => {
+        console.error('Reset password error:', err);
+        this.resetError = err.error?.message || 'Đặt lại mật khẩu không thành công. Vui lòng thử lại.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

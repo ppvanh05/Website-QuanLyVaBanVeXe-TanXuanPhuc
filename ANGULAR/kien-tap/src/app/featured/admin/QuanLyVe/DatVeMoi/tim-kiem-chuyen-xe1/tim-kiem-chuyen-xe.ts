@@ -14,6 +14,7 @@ interface Seat {
 interface Trip {
   id: number;
   departureTime: string;
+  suggestedPresenceTime?: string;
   arrivalTime: string;
   duration: string;
   distance: string;
@@ -513,6 +514,26 @@ export class TimKiemChuyenXe implements OnInit {
         selectedTab: 'seat'
       }
     ];
+
+    // Compute suggested presence time dynamically (30 minutes before departure)
+    this.allTrips.forEach(trip => {
+      const parts = trip.departureTime.split(':');
+      if (parts.length === 2) {
+        let hrs = parseInt(parts[0], 10);
+        let mins = parseInt(parts[1], 10);
+        mins -= 30;
+        if (mins < 0) {
+          mins += 60;
+          hrs -= 1;
+        }
+        if (hrs < 0) {
+          hrs += 24;
+        }
+        trip.suggestedPresenceTime = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+      } else {
+        trip.suggestedPresenceTime = trip.departureTime;
+      }
+    });
   }
 
   // Handle Search button
@@ -779,7 +800,9 @@ export class TimKiemChuyenXe implements OnInit {
   selectTripAndNavigate(trip: Trip, withSeats: boolean) {
     const bookingData = {
       tripId: trip.id,
+      selectedDate: this.departureDate,
       departureTime: trip.departureTime,
+      suggestedPresenceTime: trip.suggestedPresenceTime,
       arrivalTime: trip.arrivalTime,
       duration: trip.duration,
       distance: trip.distance,
@@ -788,7 +811,16 @@ export class TimKiemChuyenXe implements OnInit {
       price: trip.price,
       selectedSeats: withSeats ? this.selectedSeatsList : [],
       selectedRoomGuests: withSeats ? this.selectedRoomGuests : {},
-      totalPrice: withSeats ? this.totalPrice : 0
+      totalPrice: withSeats ? this.totalPrice : 0,
+      searchDeparture: this.departure,
+      searchDestination: this.destination,
+      searchDate: this.departureDate,
+      adults: this.adultCount,
+      children: this.childCount,
+      infants: this.infantCount,
+      isRoundTrip: this.isRoundTrip,
+      ngayVe: this.returnDate,
+      passengers: this.passengerCount
     };
     localStorage.setItem('current_booking', JSON.stringify(bookingData));
     this.router.navigate(['/admin/quan-ly-ve/dat-ve-moi/thong-tin-don-hang']);

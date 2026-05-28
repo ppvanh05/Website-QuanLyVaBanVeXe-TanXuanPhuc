@@ -108,6 +108,10 @@ export class TimKiemChuyenXeService {
     return created;
   }
 
+  private removeAccents(str: string): string {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  }
+
   // ===== SEARCH TRIPS =====
   async searchTrips(dto: { departure: string; destination: string; date: string }) {
     const searchDate = this.parseSearchDate(dto.date);
@@ -116,7 +120,7 @@ export class TimKiemChuyenXeService {
     const endOfDay = new Date(searchDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Find schedules matching date and route (insensitive search)
+    // Find schedules matching date
     const schedules = await this.prisma.lICH_TRINH.findMany({
       where: {
         NgayKhoiHanh: {
@@ -126,10 +130,6 @@ export class TimKiemChuyenXeService {
         TrangThai: {
           notIn: ['DaKhoa'],
         },
-        TUYEN_XE: {
-          DiemKhoiHanh: { contains: dto.departure, mode: 'insensitive' },
-          DiemDen: { contains: dto.destination, mode: 'insensitive' },
-        },
       },
       include: {
         TUYEN_XE: true,
@@ -137,15 +137,48 @@ export class TimKiemChuyenXeService {
       },
     });
 
+    const cleanDeparture = this.removeAccents(dto.departure || '').toLowerCase().trim();
+    const cleanDestination = this.removeAccents(dto.destination || '').toLowerCase().trim();
+
+    // Filter in-memory for 100% case- and accent-insensitive matching
+    const matchedSchedules = schedules.filter(schedule => {
+      const dbDep = this.removeAccents(schedule.TUYEN_XE?.DiemKhoiHanh || '').toLowerCase().trim();
+      const dbDest = this.removeAccents(schedule.TUYEN_XE?.DiemDen || '').toLowerCase().trim();
+      return dbDep.includes(cleanDeparture) && dbDest.includes(cleanDestination);
+    });
+
     const results = [];
 
-    for (const schedule of schedules) {
+    for (const schedule of matchedSchedules) {
       // Auto initialize seats if empty
-      const seats = await this.checkAndInitializeSeats(
+      await this.checkAndInitializeSeats(
         schedule.MaLichTrinh,
         schedule.MaXe,
         schedule.GiaVeCoBan.toNumber(),
       );
+
+      // Fetch seats details with their layout templates from DB
+      const seats = await this.prisma.gHE_CHUYEN_XE.findMany({
+        where: { MaLichTrinh: schedule.MaLichTrinh },
+        include: {
+          GHE: true,
+        },
+        orderBy: {
+          GHE: { SoGhe: 'asc' },
+        },
+      });
+
+      // Sort seats numerically by deck and name to match odds-left/evens-right layout
+      seats.sort((a, b) => {
+        const deckA = a.GHE?.TangGhe || 1;
+        const deckB = b.GHE?.TangGhe || 1;
+        if (deckA !== deckB) {
+          return deckA - deckB;
+        }
+        const numA = parseInt(a.GHE?.SoGhe?.replace(/[^0-9]/g, '') || '0', 10);
+        const numB = parseInt(b.GHE?.SoGhe?.replace(/[^0-9]/g, '') || '0', 10);
+        return numA - numB;
+      });
 
       // Count available seats
       const availableSeats = seats.filter(s => s.TrangThaiGhe === 'Trong').length;
@@ -163,6 +196,16 @@ export class TimKiemChuyenXeService {
           availableSeats,
           tuyenXe: schedule.TUYEN_XE,
           phuongTien: schedule.PHUONG_TIEN,
+          gheChuyenXe: seats.map(s => ({
+            MaGheChuyen: s.MaGheChuyen,
+            NhomGhe: s.NhomGhe,
+            GiaVe: s.GiaVe,
+            TrangThaiGhe: s.TrangThaiGhe,
+            ThoiGianCapNhatTrangThai: s.ThoiGianCapNhatTrangThai,
+            SoGhe: s.GHE?.SoGhe,
+            TangGhe: s.GHE?.TangGhe,
+            DayGhe: s.GHE?.DayGhe,
+          })),
         });
       }
     }
@@ -202,6 +245,19 @@ export class TimKiemChuyenXeService {
       },
     });
 
+
+    // Sort seats numerically by deck and name to match odds-left/evens-right layout
+    seats.sort((a, b) => {
+      const deckA = a.GHE?.TangGhe || 1;
+      const deckB = b.GHE?.TangGhe || 1;
+      if (deckA !== deckB) {
+        return deckA - deckB;
+      }
+      const numA = parseInt(a.GHE?.SoGhe?.replace(/[^0-9]/g, '') || '0', 10);
+      const numB = parseInt(b.GHE?.SoGhe?.replace(/[^0-9]/g, '') || '0', 10);
+      return numA - numB;
+    });
+
     // Fetch station timetable stops
     const stops = await this.prisma.lICH_TRINH_DIEM_DUNG.findMany({
       where: { MaLichTrinh: id },
@@ -212,6 +268,43 @@ export class TimKiemChuyenXeService {
         ThuTuDung: 'asc',
       },
     });
+
+    // Also fetch all route stops from DIEM_DON_TRA_DUNG
+    const routeStops = await this.prisma.dIEM_DON_TRA_DUNG.findMany({
+      where: { MaTuyenXe: schedule.MaTuyenXe },
+    });
+
+    const mappedStops = stops.map(stop => ({
+      MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
+      ThuTuDung: stop.ThuTuDung,
+      GioDenDuKien: stop.GioDenDuKien,
+      GhiChu: stop.GhiChu,
+      MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
+      TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
+      DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
+      ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
+      Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
+      LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
+    }));
+
+    // Find any routeStops that are not in mappedStops and merge them
+    const existingMaDiems = new Set(mappedStops.map(s => s.MaDiem));
+    const extraStops = routeStops
+      .filter(rs => !existingMaDiems.has(rs.MaDiem))
+      .map((rs, index) => ({
+        MaLichTrinhDiemDung: `EXTRA_${rs.MaDiem}`,
+        ThuTuDung: mappedStops.length + index + 1,
+        GioDenDuKien: schedule.GioKhoiHanh, // Fallback to departure time
+        GhiChu: rs.LoaiDiem === 'DiemDonTra' ? 'Diem don/tra' : 'Diem dung',
+        MaDiem: rs.MaDiem,
+        TenDiem: rs.TenDiem,
+        DiaChi: rs.DiaChi,
+        ThanhPho: rs.ThanhPho,
+        Tinh: rs.Tinh,
+        LoaiDiem: rs.LoaiDiem,
+      }));
+
+    const finalStops = [...mappedStops, ...extraStops];
 
     return {
       MaLichTrinh: schedule.MaLichTrinh,
@@ -233,18 +326,7 @@ export class TimKiemChuyenXeService {
         TangGhe: s.GHE?.TangGhe,
         DayGhe: s.GHE?.DayGhe,
       })),
-      diemDungLichTrinh: stops.map(stop => ({
-        MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
-        ThuTuDung: stop.ThuTuDung,
-        GioDenDuKien: stop.GioDenDuKien,
-        GhiChu: stop.GhiChu,
-        MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
-        TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
-        DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
-        ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
-        Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
-        LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
-      })),
+      diemDungLichTrinh: finalStops,
     };
   }
 }

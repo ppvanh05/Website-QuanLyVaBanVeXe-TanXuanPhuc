@@ -126,7 +126,7 @@ export class QuanLyVeService {
         GhiChu: 'Cập nhật trạng thái vé bởi quản trị viên',
         MaVe: id,
         MaKhachHang: ve.DON_HANG?.MaKhachHang || '',
-        MaNVBanVe: maNhanVien || ve.DON_HANG?.MaNVBanVe || '',
+        MaNVBanVe: maNhanVien || ve.DON_HANG?.MaNVBanVe || null,
       },
     });
 
@@ -230,7 +230,7 @@ export class QuanLyVeService {
         GhiChu: lyDo,
         MaVe: id,
         MaKhachHang: ve.DON_HANG?.MaKhachHang || '',
-        MaNVBanVe: maNVBanVe || '',
+        MaNVBanVe: maNVBanVe || null,
       },
     });
 

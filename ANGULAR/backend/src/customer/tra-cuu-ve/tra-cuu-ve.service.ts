@@ -33,8 +33,8 @@ export class TraCuuVeService {
     const tickets = (order.VE_DIEN_TU || []).map((ticket: any) => {
       const ticketStatusMap: Record<string, string> = {
         ChoThanhToan: 'Chờ thanh toán',
-        ConHieuLuc: 'Chờ khởi hành',
-        DaSuDung: 'Đã hoàn thành',
+        ChoKhoiHanh: 'Chờ khởi hành',
+        DaHoanThanh: 'Đã hoàn thành',
         DaHuy: 'Đã hủy',
         DaDanhGia: 'Đã đánh giá',
       };
@@ -77,8 +77,20 @@ export class TraCuuVeService {
       ? new Date(firstTicket.DIEM_TRA.GioCanCoMat).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) 
       : '';
 
+    // PhuongThucThanhToan mapping
+    const pttMap: Record<string, string> = {
+      VietQR: 'VietQR',
+      MoMo: 'Ví MoMo',
+      VNPay: 'VNPay',
+      ZaloPay: 'ZaloPay',
+      'ATM nội địa': 'ATM nội địa',
+      'Visa/Master/JCB': 'Thẻ Quốc Tế',
+      TienMat: 'Tiền mặt',
+    };
+
     return {
       maDonHang: order.MaDonHang,
+      maKhachHang: order.MaKhachHang,
       hoTenNguoiDi: order.HoTenNguoiDi,
       soDienThoai: order.SdtNguoiDi,
       email: order.EmailNguoiDi,
@@ -93,11 +105,13 @@ export class TraCuuVeService {
       thoiGianCoMatTruoc: firstTicket?.DIEM_DON?.ThoiGianCoMatTruoc ? `${firstTicket.DIEM_DON.ThoiGianCoMatTruoc} phút` : '30 phút',
       gioCanCoMat: pickupTimeStr || 'Chưa xếp',
       tongGiaVe: order.TongGiaVe.toNumber(),
-      phuongThucThanhToan: order.PhuongThucThanhToan,
+      phuongThucThanhToan: order.PhuongThucThanhToan ? (pttMap[order.PhuongThucThanhToan] || order.PhuongThucThanhToan) : '',
       trangThaiDonHang,
       bienSoXe: vehicle?.BienSoXe || '',
       maDiemDon: firstTicket?.MaDiemDon || '',
       maDiemTra: firstTicket?.MaDiemTra || '',
+      maLichTrinh: schedule?.MaLichTrinh || '',
+      gioGoiYCoMat: schedule?.GioGoiYCoMat ? new Date(schedule.GioGoiYCoMat).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '',
       soLanDaSua: firstTicket?.SoLanDaSua || 0,
       gioiHanChinhSua: 2,
       tickets,
@@ -106,6 +120,9 @@ export class TraCuuVeService {
 
   // ===== LOOKUP TICKET (NO LOGIN) =====
   async lookup(code: string, phone: string) {
+    if (!code || !phone) {
+      throw new BadRequestException('Vui lòng cung cấp đầy đủ mã vé/mã đơn hàng và số điện thoại!');
+    }
     const trimmedCode = code.trim().toLowerCase();
     const trimmedPhone = phone.trim();
 
@@ -253,7 +270,7 @@ export class TraCuuVeService {
             GhiChu: `Khách hàng tự cập nhật thông tin: Người đi (${dto.HoTenNguoiDi}), Trạm đón (${dto.MaDiemDon}), Trạm trả (${dto.MaDiemTra})`,
             MaVe: ticket.MaVe,
             MaKhachHang: order.MaKhachHang,
-            MaNVBanVe: '', // Emptied because customer updated online
+            MaNVBanVe: null, // Emptied because customer updated online
           },
         });
       }
@@ -375,7 +392,7 @@ export class TraCuuVeService {
           MaGiaoDich: maGiaoDichHoan,
           MaDonHang: ticket.MaDonHang,
           LoaiGiaoDich: 'HoanTien',
-          PhuongThucThanhToan: 'ChuyenKhoan',
+          PhuongThucThanhToan: ticket.DON_HANG.PhuongThucThanhToan || 'ChuyenKhoan',
           SoTien: new Prisma.Decimal(refund),
           ThoiGianGiaoDich: new Date(),
           TrangThaiGiaoDich: 'ThanhCong',
@@ -411,7 +428,7 @@ export class TraCuuVeService {
           GhiChu: `Khách hàng yêu cầu hủy vé. Lý do: ${lyDo || 'Đổi kế hoạch'}`,
           MaVe: maVe,
           MaKhachHang: ticket.DON_HANG.MaKhachHang,
-          MaNVBanVe: '',
+          MaNVBanVe: null,
         },
       });
 

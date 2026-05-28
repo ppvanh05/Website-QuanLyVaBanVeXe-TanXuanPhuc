@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthModalService } from '../auth-modal.service';
+import { AuthApiService } from '../../../../core/services/auth-api.service';
 
 @Component({
   selector: 'app-register-modal',
@@ -49,7 +50,8 @@ export class RegisterComponent implements OnDestroy {
   constructor(
     private router: Router,
     private authModalService: AuthModalService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authApiService: AuthApiService
   ) {}
 
   getMockUsers(): any[] {
@@ -140,13 +142,6 @@ export class RegisterComponent implements OnDestroy {
       return;
     }
 
-    const users = this.getMockUsers();
-    const phoneExists = users.some(u => u.phoneNumber === cleaned);
-    if (phoneExists) {
-      this.phoneNumberError = 'Số điện thoại này đã được sử dụng để đăng ký tài khoản.';
-      return;
-    }
-
     this.phoneNumber = cleaned;
     const sendOtpPayload = {
       SoDienThoai: cleaned,
@@ -154,18 +149,51 @@ export class RegisterComponent implements OnDestroy {
     };
     console.log('Auth send-otp payload:', sendOtpPayload);
 
-    this.generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
-    this.otpDigits = Array(6).fill('');
-    this.otpDigitsString = '';
-    this.otpError = '';
-    this.registrationError = '';
-    this.step = 'otp';
-    this.startOtpTimer();
-    console.log('OTP đã gửi:', this.generatedOtp);
+    this.authApiService.sendOtp(sendOtpPayload).subscribe({
+      next: (response: any) => {
+        this.generatedOtp = response.otp || '';
+        this.otpDigits = Array(6).fill('');
+        this.otpDigitsString = '';
+        this.otpError = '';
+        this.registrationError = '';
+        this.step = 'otp';
+        this.startOtpTimer();
+        console.log('OTP đã gửi:', this.generatedOtp);
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Send OTP error:', err);
+        this.phoneNumberError = err.error?.message || 'Số điện thoại này đã được đăng ký!';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   continueFromPhone() {
-    this.sendOtp();
+    this.phoneNumberError = '';
+    const cleaned = this.phoneNumber.trim();
+    const phoneRegex = /^(0|\+84)\d{9}$/;
+
+    if (!phoneRegex.test(cleaned)) {
+      this.phoneNumberError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
+      return;
+    }
+
+    this.authApiService.checkPhone(cleaned).subscribe({
+      next: (res: any) => {
+        if (res.exists) {
+          this.phoneNumberError = 'Số điện thoại này đã được đăng ký!';
+          this.cdr.detectChanges();
+        } else {
+          this.sendOtp();
+        }
+      },
+      error: (err: any) => {
+        console.error('Check phone error:', err);
+        this.phoneNumberError = err.error?.message || 'Không thể kiểm tra số điện thoại. Vui lòng thử lại sau.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   onOtpInput(index: number, event: Event) {
@@ -250,22 +278,35 @@ export class RegisterComponent implements OnDestroy {
     this.otpError = '';
     this.registrationError = '';
 
+    this.otpDigitsString = this.otpDigits.join('');
+
     if (!this.otpDigitsString || this.otpDigitsString.length !== 6) {
       this.otpError = 'Vui lòng nhập đủ 6 chữ số mã xác thực.';
       return;
     }
 
     const code = this.otpDigitsString;
-    if (code !== this.generatedOtp) {
-      this.otpError = 'Mã xác thực không đúng. Vui lòng thử lại.';
-      return;
-    }
+    const verifyPayload = {
+      SoDienThoai: this.phoneNumber,
+      otp: code,
+      MucDich: 'DangKy'
+    };
 
-    this.clearOtpTimer();
-    this.otpError = '';
-    this.step = 'profile';
-    this.registrationError = '';
-    this.registrationSuccess = false;
+    this.authApiService.verifyOtp(verifyPayload).subscribe({
+      next: (response: any) => {
+        this.clearOtpTimer();
+        this.otpError = '';
+        this.step = 'profile';
+        this.registrationError = '';
+        this.registrationSuccess = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Verify OTP error:', err);
+        this.otpError = err.error?.message || 'Mã xác thực không đúng. Vui lòng thử lại.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   resendOtp() {
@@ -303,33 +344,34 @@ export class RegisterComponent implements OnDestroy {
     const registerPayload = {
       SoDienThoai: this.phoneNumber,
       HoTenKhachHang: this.fullName.trim(),
-      Email: this.email.trim(),
+      Email: this.email.trim() || undefined,
       MatKhau: this.password,
       otp: this.otpDigitsString,
     };
     console.log('Auth register payload:', registerPayload);
 
-    const newUser = {
-      phoneNumber: this.phoneNumber,
-      fullName: this.fullName.trim(),
-      email: this.email.trim(),
-      password: this.password
-    };
-    this.saveMockUser(newUser);
+    this.authApiService.register(registerPayload).subscribe({
+      next: (response: any) => {
+        this.registrationSuccess = true;
+        this.toastMessage = 'Đăng ký thành công!';
+        this.showToast = true;
 
-    this.registrationSuccess = true;
-    this.toastMessage = 'Đăng ký thành công!';
-    this.showToast = true;
+        localStorage.setItem('last_registered_phone', this.phoneNumber);
+        localStorage.setItem('last_registered_password', this.password);
+        this.cdr.detectChanges();
 
-    // Save phone and password to localStorage for automatic pre-fill in Login modal
-    localStorage.setItem('last_registered_phone', this.phoneNumber);
-    localStorage.setItem('last_registered_password', this.password);
-
-    setTimeout(() => {
-      this.showToast = false;
-      this.registered.emit(this.fullName.trim());
-      this.closeModal();
-      this.router.navigate(['/home']);
-    }, 1800);
+        setTimeout(() => {
+          this.showToast = false;
+          this.registered.emit(this.fullName.trim());
+          this.closeModal();
+          this.router.navigate(['/home']);
+        }, 1800);
+      },
+      error: (err: any) => {
+        console.error('Registration error:', err);
+        this.registrationError = err.error?.message || 'Đăng ký không thành công. Vui lòng kiểm tra lại.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

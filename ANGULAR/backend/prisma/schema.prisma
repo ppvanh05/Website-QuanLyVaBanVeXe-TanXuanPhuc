@@ -55,7 +55,7 @@ model DANH_GIA {
   SoSao             Int
   NoiDungDanhGia    String?             @db.VarChar(1000)
   ThoiGianDanhGia   DateTime            @db.Timestamp(6)
-  TrangThaiPhanHoi  String              @db.VarChar(30)
+  TrangThaiPhanHoi  TrangThaiDanhGia
   KHACH_HANG        KHACH_HANG          @relation(fields: [MaKhachHang], references: [MaKhachHang], onDelete: NoAction, onUpdate: NoAction)
   VE_DIEN_TU        VE_DIEN_TU          @relation(fields: [MaVe], references: [MaVe], onDelete: NoAction, onUpdate: NoAction)
   MEDIA_DANH_GIA    MEDIA_DANH_GIA[]
@@ -179,9 +179,9 @@ model LICH_SU_VE {
   GhiChu           String           @db.VarChar
   MaVe             String           @db.VarChar
   MaKhachHang      String           @db.VarChar
-  MaNVBanVe        String           @db.VarChar
+  MaNVBanVe        String?          @db.VarChar
   KHACH_HANG       KHACH_HANG       @relation(fields: [MaKhachHang], references: [MaKhachHang], onDelete: NoAction, onUpdate: NoAction)
-  NHAN_VIEN_BAN_VE NHAN_VIEN_BAN_VE @relation(fields: [MaNVBanVe], references: [MaNVBanVe], onDelete: NoAction, onUpdate: NoAction)
+  NHAN_VIEN_BAN_VE NHAN_VIEN_BAN_VE? @relation(fields: [MaNVBanVe], references: [MaNVBanVe], onDelete: NoAction, onUpdate: NoAction)
   VE_DIEN_TU       VE_DIEN_TU       @relation(fields: [MaVe], references: [MaVe], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -222,7 +222,7 @@ model LICH_TRINH_DIEM_DUNG {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model MEDIA_DANH_GIA {
   MaMedia         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  DuongDanFile    String?
+  DuongDanFile    String?   @db.Text
   LoaiMedia       String?   @db.VarChar
   DinhDang        String?   @db.VarChar
   DungLuong_bytes BigInt?
@@ -584,4 +584,10 @@ enum TrangThaiVe {
   ChoKhoiHanh
   DaHoanThanh
   DaHuy
+  DaDanhGia
+}
+
+enum TrangThaiDanhGia {
+  ChuaPhanHoi
+  DaPhanHoi
 }

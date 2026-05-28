@@ -119,6 +119,13 @@ export class AuthService {
     };
   }
 
+  async checkPhoneExists(phone: string): Promise<boolean> {
+    const existing = await this.prisma.kHACH_HANG.findFirst({
+      where: { SoDienThoai: phone.trim() },
+    });
+    return !!existing;
+  }
+
   // ===== REGISTER =====
   async register(dto: {
     HoTenKhachHang: string;

@@ -21,6 +21,13 @@ export class AuthController {
     return this.authService.verifyOtp(dto);
   }
 
+  @Post('check-phone')
+  @HttpCode(HttpStatus.OK)
+  async checkPhone(@Body() dto: { SoDienThoai: string }) {
+    const exists = await this.authService.checkPhoneExists(dto.SoDienThoai);
+    return { exists };
+  }
+
   // POST /customer/auth/register → Đăng ký tài khoản mới
   @Post('register')
   async register(
