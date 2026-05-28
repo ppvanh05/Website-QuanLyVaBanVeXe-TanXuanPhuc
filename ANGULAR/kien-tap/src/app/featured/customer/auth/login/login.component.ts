@@ -10,6 +10,12 @@ interface MockUser {
   fullName: string;
   email: string;
   password: string;
+  MaKhachHang?: string;
+  AnhDaiDien?: string;
+  GioiTinh?: string;
+  NgaySinh?: string;
+  TrangThaiTaiKhoan?: string;
+  NgayDangKy?: string;
 }
 
 @Component({
@@ -58,7 +64,13 @@ export class LoginComponent implements OnInit {
           phoneNumber: '0987654321',
           fullName: 'Nguyễn Văn An',
           email: 'an.nguyen@example.com',
-          password: '123456'
+          password: '123456',
+          MaKhachHang: 'KH001',
+          AnhDaiDien: '/asset/images/customer/user.png',
+          GioiTinh: 'Nam',
+          NgaySinh: '2000-01-01',
+          TrangThaiTaiKhoan: 'HoatDong',
+          NgayDangKy: '2023-01-01'
         }
       ];
       localStorage.setItem('mock_users', JSON.stringify(defaultUsers));
@@ -89,9 +101,18 @@ export class LoginComponent implements OnInit {
     );
 
     if (user) {
-      const userName = user.fullName || 'Người dùng'; 
-      this.authService.login(userName);
-      this.loggedIn.emit(userName); 
+      this.authService.login(
+        user.MaKhachHang || '',
+        user.fullName,
+        user.phoneNumber,
+        user.email,
+        user.AnhDaiDien || '',
+        user.GioiTinh || '',
+        user.NgaySinh || '',
+        user.TrangThaiTaiKhoan || '',
+        user.NgayDangKy || ''
+      );
+      this.loggedIn.emit(user.fullName); 
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('lastLoggedInUser', JSON.stringify({
           phoneOrEmail: this.phoneOrEmail,

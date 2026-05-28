@@ -3,6 +3,7 @@ generator client {
 }
 
 datasource db {
+  provider = "postgresql"
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
@@ -54,6 +55,12 @@ model DANH_GIA {
   MaVe              String              @db.VarChar
   MaKhachHang       String              @db.VarChar
   SoSao             Int
+  DiemAnToan        Int?                @db.SmallInt
+  DiemSachSe        Int?                @db.SmallInt
+  DiemThaiDo        Int?                @db.SmallInt
+  DiemDungGio       Int?                @db.SmallInt
+  DiemThongTin      Int?                @db.SmallInt
+  DiemTienNghi      Int?                @db.SmallInt
   NoiDungDanhGia    String?             @db.VarChar(1000)
   ThoiGianDanhGia   DateTime            @db.Timestamp(6)
   TrangThaiPhanHoi  TrangThaiDanhGia
@@ -518,6 +525,7 @@ enum TrangThaiViPhamEnum {
   DangApDung
   NgungApDung
 }
+
 
 enum LoaiDiem {
   DiemDonTra

@@ -5,9 +5,10 @@ import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DanhGiaService } from '../../../core/services/danh-gia.service';
 
 interface Review {
-  id: number;
+  id: string;
   author: string;
   avatar: string;
   date: string;
@@ -25,85 +26,218 @@ interface Review {
   templateUrl: './review.component.html',
   styleUrl: './review.component.css'
 })
-export class ReviewComponent {
-  showReviewModal = false;
+export class ReviewComponent implements OnInit {
+  Math = Math;
   activeFilter = 'Tất cả';
   isLoggedIn = false;
 
-  pages = [1, 2, 3, '...', 10];
+  pages: (number | string)[] = [];
   currentPage = 1;
+  totalPages = 1;
 
-  constructor(private authService: AuthService, private toastService: ToastService) {
+  summary: any = {
+    averageOverall: 0,
+    totalReviews: 0,
+    criteriaAverage: {
+      anToan: 0,
+      sachSe: 0,
+      thaiDoNhanVien: 0,
+      dungGio: 0,
+      thongTinDayDu: 0,
+      tienNghi: 0
+    },
+    ratingCount: {
+      five: 0,
+      four: 0,
+      three: 0,
+      two: 0,
+      one: 0
+    },
+    commentCount: 0,
+    imageCount: 0
+  };
+
+  filters = [
+    { label: 'Tất cả', count: 0 },
+    { label: 'Có bình luận', count: 0 },
+    { label: 'Có hình ảnh', count: 0 },
+    { label: '5 Sao', count: 0 },
+    { label: '4 Sao', count: 0 },
+    { label: '3 Sao', count: 0 },
+    { label: '2 Sao', count: 0 },
+    { label: '1 Sao', count: 0 }
+  ];
+
+  stats: any[] = [];
+  reviews: Review[] = [];
+
+  constructor(
+    private authService: AuthService,
+    private toastService: ToastService,
+    private danhGiaService: DanhGiaService
+  ) {
     this.authService.isLoggedIn$.subscribe(status => this.isLoggedIn = status);
   }
 
-  filters = [
-    { label: 'Tất cả', count: 498 },
-    { label: 'Có bình luận', count: 181 },
-    { label: 'Có hình ảnh', count: 12 },
-    { label: '5 Sao ★', count: 477 },
-    { label: '4 Sao ★', count: 15 },
-    { label: '3 Sao ★', count: 4 },
-    { label: '2 Sao ★', count: 1 },
-    { label: '1 Sao ★', count: 1 }
-  ];
-
-  stats = [
-    { label: 'Sạch sẽ', score: 4.0, percentage: 80 },
-    { label: 'An toàn', score: 4.5, percentage: 90 },
-    { label: 'Nhân viên', score: 3.8, percentage: 76 },
-    { label: 'Tiện ích', score: 4.2, percentage: 84 },
-    { label: 'Địa điểm', score: 3.5, percentage: 70 }
-  ];
-
-  reviews: Review[] = [
-    {
-      id: 1,
-      author: 'Evgeny Tyurin',
-      avatar: 'asset/images/customer/avatar_placeholder.png',
-      date: '18/05/2026',
-      rating: 5.0,
-      isVerified: true,
-      content: 'Xe rất sạch sẽ, đúng giờ và nhân viên phục vụ cực kỳ chu đáo. Tôi rất hài lòng với chuyến đi từ Vạn Giã vào Sài Gòn lần này. Chắc chắn sẽ quay lại ủng hộ nhà xe TXP.',
-      images: ['asset/images/customer/tintuc1.png', 'asset/images/customer/tintuc2.jpg'],
-      route: 'Vạn Giã - Nha Trang - Sài Gòn'
-    },
-    {
-      id: 2,
-      author: 'Ngọc Bích',
-      avatar: 'asset/images/customer/avatar_placeholder.png',
-      date: '15/05/2026',
-      rating: 4.0,
-      isVerified: true,
-      content: 'Dịch vụ ổn, xe chạy êm. Tuy nhiên bến xe hơi đông nên lúc lên xe hơi lộn xộn một chút. Hy vọng nhà xe có thêm nhiều chuyến vào khung giờ sáng hơn.',
-      route: 'Sài Gòn - Phan Thiết'
-    }
-  ];
-
-  // Modal Rating Form
-  ratingCriteria = [
-    { label: 'Sạch sẽ & Thoải mái', score: 0 },
-    { label: 'An toàn & Đúng giờ', score: 0 },
-    { label: 'Thái độ nhân viên', score: 0 },
-    { label: 'Tiện nghi trên xe', score: 0 },
-    { label: 'Chất lượng dịch vụ chung', score: 0 }
-  ];
-
-  setRating(criteriaIndex: number, star: number) {
-    this.ratingCriteria[criteriaIndex].score = star;
+  ngOnInit(): void {
+    this.loadReviews();
   }
 
-  openReviewModal() {
-    if (this.isLoggedIn) {
-      this.showReviewModal = true;
+  loadReviews(): void {
+    let rating: number | undefined = undefined;
+    let hasComment: boolean | undefined = undefined;
+    let hasImage: boolean | undefined = undefined;
+
+    if (this.activeFilter === 'Có bình luận') {
+      hasComment = true;
+    } else if (this.activeFilter === 'Có hình ảnh') {
+      hasImage = true;
+    } else if (this.activeFilter.includes('Sao')) {
+      const starMatch = this.activeFilter.match(/\d/);
+      if (starMatch) {
+        rating = parseInt(starMatch[0], 10);
+      }
+    }
+
+    this.danhGiaService.getReviews({
+      page: this.currentPage,
+      limit: 5,
+      rating,
+      hasComment,
+      hasImage
+    }).subscribe({
+      next: (res) => {
+        this.reviews = (res.items || []).map((item: any) => ({
+          author: item.author,
+          avatar: item.avatar,
+          date: item.date,
+          rating: item.rating,
+          content: item.content,
+          images: item.images || [],
+          route: item.route,
+
+          diemAnToan: item.diemAnToan,
+          diemSachSe: item.diemSachSe,
+          diemThaiDo: item.diemThaiDo,
+          diemDungGio: item.diemDungGio,
+          diemThongTin: item.diemThongTin,
+          diemTienNghi: item.diemTienNghi,
+
+          isVerified: true
+        }));
+        this.summary = res.summary;
+        this.currentPage = res.meta.currentPage;
+        this.totalPages = res.meta.totalPages;
+
+        this.updateFiltersAndStats();
+        this.generatePagination();
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải đánh giá:', err);
+        this.toastService.show('Không thể tải danh sách đánh giá', 'error');
+      }
+    });
+  }
+
+  updateFiltersAndStats(): void {
+    // Cập nhật số lượng của các bộ lọc
+    this.filters = [
+      { label: 'Tất cả', count: this.summary.totalReviews },
+      { label: 'Có bình luận', count: this.summary.commentCount },
+      { label: 'Có hình ảnh', count: this.summary.imageCount },
+      { label: '5 Sao', count: this.summary.ratingCount.five },
+      { label: '4 Sao', count: this.summary.ratingCount.four },
+      { label: '3 Sao', count: this.summary.ratingCount.three },
+      { label: '2 Sao', count: this.summary.ratingCount.two },
+      { label: '1 Sao', count: this.summary.ratingCount.one }
+    ];
+
+    // Cập nhật 6 tiêu chí
+    const c = this.summary.criteriaAverage;
+    this.stats = [
+      { label: 'An toàn', score: c.anToan, percentage: Math.round(c.anToan * 20) },
+      { label: 'Sạch sẽ', score: c.sachSe, percentage: Math.round(c.sachSe * 20) },
+      { label: 'Nhân viên', score: c.thaiDoNhanVien, percentage: Math.round(c.thaiDoNhanVien * 20) },
+      { label: 'Đúng giờ', score: c.dungGio, percentage: Math.round(c.dungGio * 20) },
+      { label: 'Thông tin', score: c.thongTinDayDu, percentage: Math.round(c.thongTinDayDu * 20) },
+      { label: 'Tiện nghi', score: c.tienNghi, percentage: Math.round(c.tienNghi * 20) }
+    ];
+  }
+
+  selectFilter(filterLabel: string): void {
+    this.activeFilter = filterLabel;
+    this.currentPage = 1;
+    this.loadReviews();
+  }
+
+  changePage(page: number | string): void {
+    if (typeof page === 'number' && page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.loadReviews();
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadReviews();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadReviews();
+    }
+  }
+
+  generatePagination(): void {
+    const total = this.totalPages;
+    const current = this.currentPage;
+
+    if (total <= 1) {
+      this.pages = [];
+      return;
+    }
+
+    const pagesArr: (number | string)[] = [];
+    if (total <= 5) {
+      for (let i = 1; i <= total; i++) {
+        pagesArr.push(i);
+      }
     } else {
-      this.toastService.show('Vui lòng đăng nhập để đánh giá chuyến đi của bạn', 'warning');
+      pagesArr.push(1);
+      if (current > 3) {
+        pagesArr.push('...');
+      }
+
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
+
+      for (let i = start; i <= end; i++) {
+        pagesArr.push(i);
+      }
+
+      if (current < total - 2) {
+        pagesArr.push('...');
+      }
+      pagesArr.push(total);
     }
+
+    this.pages = pagesArr;
   }
 
-  closeModal() {
-    this.showReviewModal = false;
-    // Reset form
-    this.ratingCriteria.forEach(c => c.score = 0);
+  // Tiện ích định dạng ngày tháng sang dd/MM/yyyy
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return dateStr;
+    }
   }
 }

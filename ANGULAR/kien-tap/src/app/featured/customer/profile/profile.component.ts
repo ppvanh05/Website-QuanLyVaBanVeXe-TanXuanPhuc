@@ -1,10 +1,13 @@
-﻿import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService, UserProfile } from '../../../core/services/auth.service'; // Import UserProfile
+import { CustomerHoSoService } from '../../../core/customer-ho-so.service';
+import { switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface Order {
   maDonHang: string;
@@ -60,17 +63,30 @@ export class ProfileComponent implements OnInit, OnDestroy {
   redirectTimer = 3;
   redirectInterval: any;
 
-  user = {
-    fullName: 'Nguyễn Văn An',
-    phone: '090 123 4567',
-    gender: 'Nam',
-    email: 'vanan.nguyen@email.com',
-    dob: '1992-05-15',
-    address: '123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh',
-    avatar: 'asset/images/customer/avatar_placeholder.png'
+  user: UserProfile = {
+    MaKhachHang: '',
+    HoTenKhachHang: 'Guest',
+    SoDienThoai: '',
+    Email: '',
+    AnhDaiDien: '/asset/images/customer/user.png',
+    GioiTinh: '',
+    NgaySinh: '',
+    TrangThaiTaiKhoan: ''
   };
 
-  editUser = { ...this.user };
+  editUser: UserProfile = { ...this.user };
+
+  // Validation errors
+  HoTenKhachHangError = '';
+  EmailError = '';
+  NgaySinhError = '';
+  AnhDaiDienError = '';
+  formError = '';
+
+  get isFormValid(): boolean {
+    return !this.HoTenKhachHangError && !this.EmailError && !this.NgaySinhError && !this.AnhDaiDienError && 
+           this.editUser.HoTenKhachHang.trim().length >= 2;
+  }
 
   // Filters state variables
   filterMaDonHang = '';
@@ -78,98 +94,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
   filterTenTuyenXe = '';
   filterTrangThai = '';
 
+  // Avatar upload
+  selectedAvatarFile: File | null = null;
+
   // Mock booking history records
-  historyOrders = [
-    {
-      maDonHang: 'P5UOLWB8',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Tay',
-      ngayKhoiHanh: '21-05-2026',
-      gioKhoiHanh: '00:00',
-      tongGiaVe: 260000,
-      phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5ULATI1',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Tay',
-      ngayKhoiHanh: '03-05-2026',
-      gioKhoiHanh: '17:30',
-      tongGiaVe: 364000,
-      phuongThucThanhToan: 'Momo',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5IMBT0V',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Dong moi',
-      ngayKhoiHanh: '03-05-2026',
-      gioKhoiHanh: '23:05',
-      tongGiaVe: 364000,
-      phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5IOCBZB',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Dong moi',
-      ngayKhoiHanh: '03-05-2026',
-      gioKhoiHanh: '23:05',
-      tongGiaVe: 364000,
-      phuongThucThanhToan: 'unknown',
-      trangThaiDonHang: 'Chờ thanh toán',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5ITF2W9',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Da Lat - Mien Dong moi',
-      ngayKhoiHanh: '03-05-2026',
-      gioKhoiHanh: '23:05',
-      tongGiaVe: 364000,
-      phuongThucThanhToan: 'unknown',
-      trangThaiDonHang: 'Đã hủy',
-      soDienThoai: '0901234567'
-    },
-    {
-      maDonHang: 'P5CDWE67',
-      soLuongVeDaDat: 1,
-      tenTuyenXe: 'Mien Dong moi - Da Lat',
-      ngayKhoiHanh: '24-04-2026',
-      gioKhoiHanh: '22:25',
-      tongGiaVe: 260000,
-      phuongThucThanhToan: 'MoMo',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0333555412'
-    },
-    {
-      maDonHang: 'P5CDWE88',
-      soLuongVeDaDat: 2,
-      tenTuyenXe: 'Bến xe Miền Tây - Bến xe Quy Nhơn',
-      ngayKhoiHanh: '22-05-2026',
-      gioKhoiHanh: '18:00',
-      tongGiaVe: 800000,
-      phuongThucThanhToan: 'VietQR / Napas',
-      trangThaiDonHang: 'Đã hoàn thành',
-      soDienThoai: '0981939379'
-    }
-  ];
-
-  filteredHistoryOrders = [...this.historyOrders];
-
-  
+  historyOrders: Order[] = [];
+  filteredHistoryOrders: Order[] = [];
 
   constructor(
     private router: Router,
     private authService: AuthService,
-    private route: ActivatedRoute
-  ) {
-    this.authService.userName$.subscribe((name: string) => this.user.fullName = name);
-  }
+    private route: ActivatedRoute,
+    private customerHoSoService: CustomerHoSoService
+  ) {}
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe(params => {
@@ -178,6 +115,39 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.activeTab = tab;
       } else {
         this.activeTab = 'profile';
+      }
+    });
+
+    this.authService.currentUser$.pipe(
+      switchMap(user => {
+        if (user && user.MaKhachHang) {
+          // Cập nhật MaKhachHang của user trong component
+          this.user.MaKhachHang = user.MaKhachHang;
+          return this.customerHoSoService.getProfile(user.MaKhachHang);
+        }
+        return of(null);
+      })
+    ).subscribe({
+      next: (profileData: any) => {
+        if (profileData) {
+          this.user = {
+            MaKhachHang: profileData.MaKhachHang,
+            HoTenKhachHang: profileData.HoTenKhachHang,
+            SoDienThoai: profileData.SoDienThoai,
+            Email: profileData.Email,
+            AnhDaiDien: profileData.AnhDaiDien || '/asset/images/customer/user.png',
+            GioiTinh: profileData.GioiTinh,
+            NgaySinh: profileData.NgaySinh ? new Date(profileData.NgaySinh).toISOString().split('T')[0] : '',
+            TrangThaiTaiKhoan: profileData.TrangThaiTaiKhoan
+          };
+          this.editUser = { ...this.user };
+          this.authService.setCurrentUser(this.user); // Cập nhật AuthService với dữ liệu đầy đủ
+        }
+      },
+      error: (err: any) => {
+        console.error('Error fetching profile:', err);
+        // Xử lý lỗi, ví dụ: chuyển hướng về trang đăng nhập nếu token hết hạn
+        // Profile fetch error handled.
       }
     });
   }
@@ -250,17 +220,148 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   startEdit() {
+    if (this.user.TrangThaiTaiKhoan === 'DaKhoa') {
+      alert('Tài khoản của bạn đang bị khóa, không thể chỉnh sửa hồ sơ.');
+      return;
+    }
     this.editUser = { ...this.user };
+    this.resetErrors();
     this.isEditing = true;
   }
 
   cancelEdit() {
     this.isEditing = false;
+    this.resetErrors();
+    this.editUser = { ...this.user };
+    this.selectedAvatarFile = null;
+  }
+
+  resetErrors() {
+    this.HoTenKhachHangError = '';
+    this.EmailError = '';
+    this.NgaySinhError = '';
+    this.AnhDaiDienError = '';
+    this.formError = '';
+  }
+
+  // Real-time Validation Methods
+  validateHoTenKhachHang() {
+    const val = this.editUser.HoTenKhachHang.trim();
+    if (!val) {
+      this.HoTenKhachHangError = 'Họ tên là bắt buộc';
+    } else if (val.length < 2) {
+      this.HoTenKhachHangError = 'Họ tên phải có ít nhất 2 ký tự';
+    } else if (val.length > 100) {
+      this.HoTenKhachHangError = 'Họ tên không được vượt quá 100 ký tự';
+    } else {
+      this.HoTenKhachHangError = '';
+    }
+  }
+
+  validateEmail() {
+    const val = this.editUser.Email ? this.editUser.Email.trim() : '';
+    if (!val) {
+      this.EmailError = ''; // Không bắt buộc
+      return;
+    }
+
+    if (val.includes(' ')) {
+      this.EmailError = 'Email không được chứa khoảng trắng';
+      return;
+    }
+
+    // Regex email: username@domain.tld, domain có dấu chấm, không kết thúc bằng chấm, không 2 dấu @
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    
+    if (!emailRegex.test(val) || val.endsWith('.') || !val.includes('.') || (val.match(/@/g) || []).length !== 1) {
+      this.EmailError = 'Định dạng email không hợp lệ (ví dụ: name@gmail.com)';
+    } else if (val.length > 254) {
+      this.EmailError = 'Email không được vượt quá 254 ký tự';
+    } else {
+      this.EmailError = '';
+    }
+  }
+
+  validateNgaySinh() {
+    if (!this.editUser.NgaySinh) {
+      this.NgaySinhError = '';
+      return;
+    }
+    const selectedDate = new Date(this.editUser.NgaySinh);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate > today) {
+      this.NgaySinhError = 'Ngày sinh không được lớn hơn ngày hiện tại';
+    } else {
+      this.NgaySinhError = '';
+    }
+  }
+
+  onFileSelected(event: any) {
+    this.AnhDaiDienError = '';
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      this.AnhDaiDienError = 'Chỉ chấp nhận định dạng .JPG, .JPEG hoặc .PNG';
+      event.target.value = '';
+      this.selectedAvatarFile = null;
+      return;
+    }
+
+    if (file.size > 1024 * 1024) {
+      this.AnhDaiDienError = 'Dung lượng ảnh tối đa là 1MB';
+      event.target.value = '';
+      this.selectedAvatarFile = null;
+      return;
+    }
+
+    // Lưu file thật để lát nữa upload lên Supabase
+    this.selectedAvatarFile = file;
+
+    // Preview ảnh tạm trên giao diện
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.editUser.AnhDaiDien = e.target.result;
+    };
+    reader.readAsDataURL(file);
   }
 
   saveProfile() {
-    this.user = { ...this.editUser };
-    this.isEditing = false;
+    if (!this.isFormValid) return;
+
+    const updatePayload = {
+      HoTenKhachHang: this.editUser.HoTenKhachHang,
+      Email: this.editUser.Email,
+      GioiTinh: this.editUser.GioiTinh,
+      NgaySinh: this.editUser.NgaySinh,
+      AnhDaiDien: this.editUser.AnhDaiDien // Cần xử lý upload ảnh lên server thực tế
+    };
+
+    this.customerHoSoService.updateProfile(this.user.MaKhachHang!, updatePayload).subscribe({
+      next: (updatedProfile: any) => {
+        this.user = {
+          MaKhachHang: updatedProfile.MaKhachHang,
+          HoTenKhachHang: updatedProfile.HoTenKhachHang,
+          SoDienThoai: updatedProfile.SoDienThoai,
+          Email: updatedProfile.Email,
+          AnhDaiDien: updatedProfile.AnhDaiDien || '/asset/images/customer/user.png',
+          GioiTinh: updatedProfile.GioiTinh,
+          NgaySinh: updatedProfile.NgaySinh ? new Date(updatedProfile.NgaySinh).toISOString().split('T')[0] : '',
+          TrangThaiTaiKhoan: updatedProfile.TrangThaiTaiKhoan
+        };
+        this.editUser = { ...this.user };
+        this.isEditing = false;
+        this.authService.setCurrentUser(this.user); // Cập nhật AuthService
+        alert('Cập nhật hồ sơ thành công!');
+      },
+      error: (err: any) => {
+        console.error('Error updating profile:', err);
+        alert('Cập nhật hồ sơ thất bại: ' + (err.error.message || 'Lỗi không xác định'));
+      }
+    });
   }
 
   confirmChangePassword() {
@@ -308,7 +409,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.redirectInterval = setInterval(() => {
       if (this.redirectTimer > 1) {
         this.redirectTimer--;
-      } else {
+      }
+      else {
         this.goToLogin();
       }
     }, 1000);

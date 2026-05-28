@@ -286,66 +286,38 @@
                     </div>
                     <!-- Testimonials -->
                     <div class="md:w-1/2 flex flex-col justify-center space-y-6">
-                        <h2 class="font-headline-lg text-headline-lg text-secondary">Khách hàng nói gì về Tân Xuân Phúc?
-                        </h2>
+                        <div class="flex justify-between items-center">
+                            <h2 class="font-headline-lg text-headline-lg text-secondary">Khách hàng nói gì về Tân Xuân Phúc?</h2>
+                            <a class="font-title-md text-primary hover:underline font-bold" routerLink="/danh-gia">Xem tất cả ></a>
+                        </div>
                         <div class="space-y-3">
                             <!-- Testimonial Card -->
-                            <div
+                            <div *ngFor="let rev of homeReviews"
                                 class="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/20">
                                 <div class="flex items-center gap-4 mb-4">
-                                    <div class="w-12 h-12 rounded-full bg-surface-container overflow-hidden">
-                                        <img alt="Customer avatar" class="w-full h-full object-cover"
-                                            src="/asset/images/customer/user.png">
+                                    <div class="w-12 h-12 rounded-full bg-surface-container overflow-hidden flex items-center justify-center border border-outline-variant/10">
+                                        <img [src]="rev.avatar || '/asset/images/customer/user.png'" 
+                                            (error)="rev.avatar = '/asset/images/customer/user.png'"
+                                            [alt]="rev.author" class="w-full h-full object-cover">
                                     </div>
                                     <div>
-                                        <h4 class="font-title-lg text-title-lg text-secondary">Nguyễn Văn Nam</h4>
+                                        <h4 class="font-title-lg text-title-lg text-secondary">{{ rev.author }}</h4>
                                         <div class="flex text-urgent-orange">
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                            <span class="material-symbols-outlined"
+                                            <span *ngFor="let s of [1,2,3,4,5]" class="material-symbols-outlined"
                                                 style="font-variation-settings: 'FILL' 1;">star</span>
                                         </div>
                                     </div>
                                 </div>
                                 <p class="font-body-md text-on-surface-variant italic text-lg leading-relaxed">
-                                    "Dịch vụ tuyệt vời! Xe rất sạch sẽ, đúng giờ và lái xe rất cẩn thận. Tôi thường
-                                    xuyên
-                                    đi công tác tuyến Sài Gòn - Đà Lạt và TXP luôn là lựa chọn hàng đầu của tôi."
+                                    "{{ rev.content }}"
+                                </p>
+                                <p *ngIf="rev.route" class="text-xs text-on-surface-variant/70 italic mt-2">
+                                    Tuyến: {{ rev.route }}
                                 </p>
                             </div>
-                            <!-- Testimonial Card -->
-                            <div
-                                class="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/20">
-                                <div class="flex items-center gap-4 mb-4">
-                                    <div class="w-12 h-12 rounded-full bg-surface-container overflow-hidden">
-                                        <img alt="Customer avatar" class="w-full h-full object-cover"
-                                            src="/asset/images/customer/user.png">
-                                    </div>
-                                    <div>
-                                        <h4 class="font-title-lg text-title-lg text-secondary">Lê Thị Mai</h4>
-                                        <div class="flex text-urgent-orange">
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                            <span class="material-symbols-outlined"
-                                                style="font-variation-settings: 'FILL' 1;">star</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="font-body-md text-body-md text-on-surface-variant italic">"Rất ấn tượng với sự
-                                    chu đáo của nhân viên phòng vé và lái xe. Xe limousine ngồi cực kỳ thoải mái, không
-                                    hề cảm thấy mệt mỏi sau chuyến đi dài."</p>
+                            
+                            <div *ngIf="homeReviews.length === 0" class="text-on-surface-variant italic text-center py-6">
+                                Chưa có đánh giá 5 sao nào nổi bật.
                             </div>
                         </div>
                     </div>
@@ -357,68 +329,25 @@
         <section class="py-12 max-w-container-max mx-auto px-margin-desktop">
             <div class="flex justify-between items-end mb-10">
                 <h2 class="font-headline-lg text-headline-lg text-secondary">TIN TỨC MỚI</h2>
-                <a class="font-title-lg text-title-lg text-primary hover:underline" routerLink="/tin-tuc">Xem tất cả
+                <a class="font-title-lg text-title-lg text-primary hover:underline" routerLink="/tin-tuc" fragment="latest-news">Xem tất cả
                     &gt;</a>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-                <!-- News Card -->
-                <div
-                    class="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/10">
+                <div *ngFor="let news of homeNews" class="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/10 cursor-pointer" [routerLink]="['/tin-tuc/chi-tiet', news.MaTinTuc]">
                     <div class="h-48 overflow-hidden">
-                        <img alt="News 1"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="/asset/images/customer/tintuc4.png">
+                        <img [src]="news.AnhBia || '/asset/images/customer/tintuc4.png'" alt="{{news.TieuDe}}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </div>
                     <div class="p-6 space-y-3">
-                        <span class="font-label-sm text-label-sm text-on-surface-variant">15/12/2024</span>
-                        <h4
-                            class="font-headline-md text-headline-md text-secondary group-hover:text-primary transition-colors">
-                            Khai trương tuyến mới Sài Gòn - Cần Thơ</h4>
-                        <p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">TXP chính thức mở rộng
-                            mạng lưới vận chuyển với dàn limousine VIP phục vụ hành khách đi miền Tây...</p>
-                        <button routerLink="/tin-tuc"
-                            class="font-title-lg text-title-lg text-primary flex items-center gap-1 group-hover:gap-2 transition-all">Chi
-                            tiết <span class="material-symbols-outlined">chevron_right</span></button>
-                    </div>
-                </div>
-                <!-- News Card -->
-                <div
-                    class="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/10">
-                    <div class="h-48 overflow-hidden">
-                        <img alt="News 2"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="/asset/images/customer/tintuc3.png">
-                    </div>
-                    <div class="p-6 space-y-3">
-                        <span class="font-label-sm text-label-sm text-on-surface-variant">10/12/2024</span>
-                        <h4
-                            class="font-headline-md text-headline-md text-secondary group-hover:text-primary transition-colors">
-                            Ưu đãi 20% đặt vé sớm dịp Tết Ất Tỵ</h4>
-                        <p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Chương trình khuyến
-                            mãi lớn nhất năm dành cho khách hàng đặt vé về quê ăn Tết sớm thông qua app TXP...</p>
-                        <button routerLink="/tin-tuc"
-                            class="font-title-lg text-title-lg text-primary flex items-center gap-1 group-hover:gap-2 transition-all">Chi
-                            tiết <span class="material-symbols-outlined">chevron_right</span></button>
-                    </div>
-                </div>
-                <!-- News Card -->
-                <div
-                    class="group bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(11,42,74,0.05)] border border-outline-variant/10">
-                    <div class="h-48 overflow-hidden">
-                        <img alt="News 3"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="/asset/images/customer/tintuc7.png">
-                    </div>
-                    <div class="p-6 space-y-3">
-                        <span class="font-label-sm text-label-sm text-on-surface-variant">05/12/2024</span>
-                        <h4
-                            class="font-headline-md text-headline-md text-secondary group-hover:text-primary transition-colors">
-                            TXP đạt giải thưởng Dịch Vụ Vận Tải 2024</h4>
-                        <p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Tân Xuân Phúc vinh dự
-                            được bình chọn là đơn vị vận tải hành khách được yêu thích nhất năm tại TP.HCM...</p>
-                        <button routerLink="/tin-tuc"
-                            class="font-title-lg text-title-lg text-primary flex items-center gap-1 group-hover:gap-2 transition-all">Chi
-                            tiết <span class="material-symbols-outlined">chevron_right</span></button>
+                        <span class="font-label-sm text-label-sm text-on-surface-variant">{{ news.NgayDang | date:'dd/MM/yyyy' }}</span>
+                        <h4 class="font-headline-md text-headline-md text-secondary group-hover:text-primary transition-colors">
+                            {{ news.TieuDe }}
+                        </h4>
+                        <p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">
+                            {{ news.MoTaNgan }}
+                        </p>
+                        <button class="font-title-lg text-title-lg text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
+                            Chi Tiết <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
                     </div>
                 </div>
             </div>

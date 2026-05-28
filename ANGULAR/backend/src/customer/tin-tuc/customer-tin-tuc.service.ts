@@ -136,4 +136,20 @@ export class CustomerTinTucService {
       latestNews,
     };
   }
+  async getHomeNews() {
+    const news = await this.prisma.tIN_TUC.findMany({
+      where: { TrangThai: TrangThaiTinTucEnum.DaDang },
+      orderBy: { NgayDang: 'desc' },
+      take: 3,
+      select: {
+        MaTinTuc: true,
+        TieuDe: true,
+        AnhBia: true,
+        MoTaNgan: true,
+        LoaiTinTuc: true,
+        NgayDang: true,
+      },
+    });
+    return news;
+  }
 }

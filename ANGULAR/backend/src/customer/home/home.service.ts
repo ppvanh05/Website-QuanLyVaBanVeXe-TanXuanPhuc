@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { LoaiChinhSachEnum, LoaiTinTucEnum } from '@prisma/client';
+import { LoaiChinhSachEnum, LoaiTinTucEnum, TrangThaiTinTucEnum, TrangThaiChinhSachEnum, TrangThaiTuyenXe } from '@prisma/client';
 
 @Injectable()
 export class HomeService {
@@ -10,7 +10,7 @@ export class HomeService {
     if (!tinTuc) return null;
     return {
       ...tinTuc,
-      LoaiTinTuc: tinTuc.LoaiTinTuc === 'TinTucChung' ? 'TinTuc' : tinTuc.LoaiTinTuc,
+      LoaiTinTuc: tinTuc.LoaiTinTuc === LoaiTinTucEnum.TinTucChung ? 'TinTuc' : tinTuc.LoaiTinTuc,
     };
   }
 
@@ -18,7 +18,7 @@ export class HomeService {
   async getNews() {
     const list = await this.prisma.tIN_TUC.findMany({
       where: {
-        TrangThai: 'DaDang',
+        TrangThai: TrangThaiTinTucEnum.DaDang,
       },
       orderBy: { NgayDang: 'desc' },
     });
@@ -28,7 +28,7 @@ export class HomeService {
   // ===== GET POLICIES =====
   async getPolicies(loai?: string) {
     const whereClause: any = {
-      TrangThai: 'DangApDung',
+      TrangThai: TrangThaiChinhSachEnum.DangApDung,
     };
 
     if (loai) {
@@ -45,6 +45,7 @@ export class HomeService {
   async getActiveRoutes() {
     return this.prisma.tUYEN_XE.findMany({
       where: {
+        TrangThaiTuyenXe: TrangThaiTuyenXe.DangHoatDong,
         TrangThaiTuyenXe: 'DangHoatDong',
       },
       orderBy: { TenTuyenXe: 'asc' },

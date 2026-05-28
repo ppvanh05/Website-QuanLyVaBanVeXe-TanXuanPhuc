@@ -20,6 +20,12 @@ export class CustomerTinTucController {
     });
   }
 
+  @Get('home')
+  async getHomeNews() {
+    // Return 3 latest published news for home page
+    return this.customerTinTucService.getHomeNews();
+  }
+
   @Get(':id')
   async getNewsById(@Param('id') id: string) {
     const data = await this.customerTinTucService.getNewsById(id);

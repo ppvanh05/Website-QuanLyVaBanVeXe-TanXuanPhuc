@@ -59,10 +59,11 @@
             <div *ngIf="isLoggedIn" class="relative">
                 <button (click)="toggleUserDropdown($event)"
                     class="flex items-center gap-3 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 border border-white/20">
-                    <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white font-bold text-sm">
-                        {{ (userName || 'G').charAt(0) }}
-                    </div>
-                    <span class="text-on-primary font-bold text-body-md">{{ userName || 'Guest' }}</span>
+                                <div class="w-8 h-8 rounded-full overflow-hidden bg-secondary flex items-center justify-center">
+                                    <img *ngIf="userAvatar" [src]="userAvatar" alt="Avatar" class="w-full h-full object-cover">
+                                    <span *ngIf="!userAvatar" class="material-symbols-outlined text-white text-xl">person</span>
+                                </div>
+                                <span class="font-bold text-body-md text-on-surface-variant">{{ userName }}</span>
                     <span class="material-symbols-outlined text-on-primary text-sm transition-transform duration-300"
                         [class.rotate-180]="isUserDropdownOpen">expand_more</span>
                 </button>
