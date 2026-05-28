@@ -170,21 +170,53 @@ export class TraCuuVeService {
             LICH_TRINH: {
               include: { TUYEN_XE: true },
             },
-            PHUONG_TIEN: true,
-            GHE_CHUYEN_XE: {
-              include: { GHE: true },
-            },
-            DIEM_DON: true,
-            DIEM_TRA: true,
-            LICH_SU_VE: true,
           },
         },
-        THANH_TOAN: true,
       },
       orderBy: { ThoiGianDat: 'desc' },
     });
 
-    return list.map(order => this.mapOrderToFrontend(order)).filter(Boolean);
+    return list.map(order => {
+      const firstTicket = order.VE_DIEN_TU?.[0];
+      const schedule = firstTicket?.LICH_TRINH;
+      const route = schedule?.TUYEN_XE;
+
+      const tenTuyen = route
+        ? `${route.DiemKhoiHanh} - ${route.DiemDen}`
+        : '';
+
+      let departureDate = '';
+      if (schedule?.NgayKhoiHanh) {
+        const d = new Date(schedule.NgayKhoiHanh);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        departureDate = `${y}-${m}-${day}`;
+      }
+
+      let gioKhoiHanh = '';
+      if (schedule?.GioKhoiHanh) {
+        const d = new Date(schedule.GioKhoiHanh);
+        const h = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        gioKhoiHanh = `${h}:${min}`;
+      }
+
+      const tickets = (order.VE_DIEN_TU || []).map((ticket: any) => ({
+        maVe: ticket.MaVe,
+        giaVe: ticket.GiaVe ? Number(ticket.GiaVe) : 0,
+        trangThaiVe: ticket.TrangThaiVe
+      }));
+
+      return {
+        maDonHang: order.MaDonHang,
+        tenTuyen,
+        departureDate,
+        gioKhoiHanh,
+        soDienThoai: order.SdtNguoiDi || '',
+        tickets
+      };
+    });
   }
 
   // ===== UPDATE TICKET INFO (MAX 2 EDITS, > 2 HOURS BEFORE DEPARTURE) =====

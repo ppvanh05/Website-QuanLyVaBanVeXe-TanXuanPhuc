@@ -3,7 +3,7 @@ export const environment = {
   apiBase: 'http://localhost:3000',
   apiUrl: 'http://localhost:3000',
   supabaseUrl: 'https://iomwashfqzrhzcldjixx.supabase.co',
-  supabaseKey: 'kienta@123',
-  supabaseAnonKey: 'kienta@123'
+  supabaseKey: 'Kienta@p123',
+  supabaseAnonKey: 'Kienta@p123'
 };
 

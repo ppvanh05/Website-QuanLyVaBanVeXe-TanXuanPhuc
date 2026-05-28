@@ -18,7 +18,7 @@ export class AuthApiService {
     return this.http.post<any>(`${API_BASE}/customer/auth/send-otp`, data);
   }
 
-  verifyOtp(data: { SoDienThoai: string; otp: string; MucDich: string }): Observable<any> {
+  verifyOtp(data: { SoDienThoai: string; otp: string; MucDich: string; markUsed?: boolean }): Observable<any> {
     return this.http.post<any>(`${API_BASE}/customer/auth/verify-otp`, data);
   }
 

@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { AuthModalService } from '../auth-modal.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuthApiService } from '../../../../core/services/auth-api.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-forgot-password',
@@ -21,6 +22,7 @@ export class ForgotPasswordComponent implements OnDestroy {
   phoneNumber = '';
   otpDigits = Array(6).fill('');
   otpDigitsString = '';
+  verifiedOtp = '';
   otpError = '';
   phoneNumberError = '';
   newPasswordError = '';
@@ -29,6 +31,7 @@ export class ForgotPasswordComponent implements OnDestroy {
   otpCountdown = 180;
   otpTimer: ReturnType<typeof setInterval> | null = null;
   generatedOtp = '';
+  isSendingOtp = false;
 
   newPassword = '';
   confirmPassword = '';
@@ -102,6 +105,9 @@ export class ForgotPasswordComponent implements OnDestroy {
   }
 
   sendOtp() {
+    if (this.isSendingOtp) return;
+    this.isSendingOtp = true;
+
     this.phoneNumberError = '';
     this.otpError = '';
     this.resetError = '';
@@ -111,6 +117,7 @@ export class ForgotPasswordComponent implements OnDestroy {
 
     if (!phoneRegex.test(cleaned)) {
       this.phoneNumberError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
+      this.isSendingOtp = false;
       return;
     }
 
@@ -119,16 +126,22 @@ export class ForgotPasswordComponent implements OnDestroy {
 
     this.authApiService.forgotPassword({ SoDienThoai: cleaned }).subscribe({
       next: (response: any) => {
+        this.isSendingOtp = false;
         this.generatedOtp = response.otp || '';
+        this.verifiedOtp = '';
         this.otpDigitsString = '';
         this.otpDigits = Array(6).fill('');
         this.otpError = '';
         this.step = 'otp';
         this.startOtpTimer();
         console.log('OTP đã gửi:', this.generatedOtp);
+        if (!environment.production && response.otp) {
+          this.onOtpChange(response.otp);
+        }
         this.cdr.detectChanges();
       },
       error: (err: any) => {
+        this.isSendingOtp = false;
         console.error('Forgot password error:', err);
         this.phoneNumberError = err.error?.message || 'Số điện thoại này chưa được đăng ký.';
         this.cdr.detectChanges();
@@ -161,12 +174,14 @@ export class ForgotPasswordComponent implements OnDestroy {
     const verifyPayload = {
       SoDienThoai: this.phoneNumber,
       otp: code,
-      MucDich: 'QuenMatKhau'
+      MucDich: 'QuenMatKhau',
+      markUsed: false
     };
 
     this.authApiService.verifyOtp(verifyPayload).subscribe({
       next: (response: any) => {
         this.clearOtpTimer();
+        this.verifiedOtp = code;
         this.otpError = '';
         this.step = 'reset';
         this.cdr.detectChanges();
@@ -180,12 +195,8 @@ export class ForgotPasswordComponent implements OnDestroy {
   }
 
   resendOtp() {
-    this.generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
-    this.otpDigitsString = '';
-    this.otpDigits = Array(6).fill('');
     this.otpError = '';
-    this.startOtpTimer();
-
+    this.sendOtp();
   }
 
   toggleShowNewPassword() {
@@ -221,7 +232,7 @@ export class ForgotPasswordComponent implements OnDestroy {
 
     const resetPayload = {
       SoDienThoai: this.phoneNumber,
-      otp: this.otpDigitsString,
+      otp: this.verifiedOtp || this.otpDigitsString,
       MatKhauMoi: this.newPassword,
     };
     console.log('Auth reset-password payload:', resetPayload);
@@ -231,6 +242,15 @@ export class ForgotPasswordComponent implements OnDestroy {
         this.otpError = '';
         this.toastMessage = 'Đặt lại mật khẩu thành công!';
         this.showToast = true;
+
+        if (typeof localStorage !== 'undefined') {
+          const lastLoggedInUser = {
+            phoneOrEmail: this.phoneNumber,
+            password: this.newPassword
+          };
+          localStorage.setItem('lastLoggedInUser', JSON.stringify(lastLoggedInUser));
+        }
+
         this.cdr.detectChanges();
 
         setTimeout(() => {

@@ -17,7 +17,7 @@ export class AuthController {
   // POST /customer/auth/verify-otp → Xác thực mã OTP
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
-  async verifyOtp(@Body() dto: { SoDienThoai: string; otp: string; MucDich: string }) {
+  async verifyOtp(@Body() dto: { SoDienThoai: string; otp: string; MucDich: string; markUsed?: boolean }) {
     return this.authService.verifyOtp(dto);
   }
 

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthModalService } from '../auth-modal.service';
 import { AuthApiService } from '../../../../core/services/auth-api.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-register-modal',
@@ -24,6 +25,7 @@ export class RegisterComponent implements OnDestroy {
   otpCountdown = 180;
   otpTimer: any = null;
   generatedOtp = '';
+  isSendingOtp = false;
 
   fullName = '';
   email = '';
@@ -130,6 +132,9 @@ export class RegisterComponent implements OnDestroy {
   }
 
   sendOtp() {
+    if (this.isSendingOtp) return;
+    this.isSendingOtp = true;
+
     this.phoneNumberError = '';
     this.otpError = '';
     this.registrationError = '';
@@ -139,6 +144,7 @@ export class RegisterComponent implements OnDestroy {
 
     if (!phoneRegex.test(cleaned)) {
       this.phoneNumberError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
+      this.isSendingOtp = false;
       return;
     }
 
@@ -151,6 +157,7 @@ export class RegisterComponent implements OnDestroy {
 
     this.authApiService.sendOtp(sendOtpPayload).subscribe({
       next: (response: any) => {
+        this.isSendingOtp = false;
         this.generatedOtp = response.otp || '';
         this.otpDigits = Array(6).fill('');
         this.otpDigitsString = '';
@@ -159,9 +166,13 @@ export class RegisterComponent implements OnDestroy {
         this.step = 'otp';
         this.startOtpTimer();
         console.log('OTP đã gửi:', this.generatedOtp);
+        if (!environment.production && response.otp) {
+          this.onOtpChange(response.otp);
+        }
         this.cdr.detectChanges();
       },
       error: (err: any) => {
+        this.isSendingOtp = false;
         console.error('Send OTP error:', err);
         this.phoneNumberError = err.error?.message || 'Số điện thoại này đã được đăng ký!';
         this.cdr.detectChanges();
@@ -289,7 +300,8 @@ export class RegisterComponent implements OnDestroy {
     const verifyPayload = {
       SoDienThoai: this.phoneNumber,
       otp: code,
-      MucDich: 'DangKy'
+      MucDich: 'DangKy',
+      markUsed: false
     };
 
     this.authApiService.verifyOtp(verifyPayload).subscribe({
