@@ -33,7 +33,7 @@
         <h1>Quản lý bài viết & tin tức</h1>
         <p class="subtitle">Đăng tải thông báo, cập nhật chặng đường, chèn hình ảnh và lên lịch xuất bản tự động chuẩn phong cách mạng xã hội</p>
       </div>
-      <button class="btn-add-new" (click)="openAddModal()">
+      <button *ngIf="hasPermission('news.create')" class="btn-add-new" (click)="openAddModal()">
         <span class="material-icons">add</span>
         Đăng bài viết mới
       </button>
@@ -148,7 +148,7 @@
             </td>
             <td class="text-center">
               <div class="table-actions">
-                <button class="btn-action-edit" (click)="openEditModal(news)" title="Chỉnh sửa bài viết">
+                <button *ngIf="hasPermission('news.update')" class="btn-action-edit" (click)="openEditModal(news)" title="Chỉnh sửa bài viết">
                   <span class="material-icons">edit</span>
                 </button>
               </div>
@@ -214,7 +214,7 @@
           <h3>Thông tin chi tiết & Xem trước hiển thị</h3>
         </div>
         <div class="modal-header-actions">
-          <button class="btn-edit-directly" (click)="editFromPreview(previewNews)">
+          <button *ngIf="hasPermission('news.update')" class="btn-edit-directly" (click)="editFromPreview(previewNews)">
             <span class="material-icons">edit</span>
             Chỉnh sửa
           </button>
@@ -762,7 +762,7 @@
         <div class="modal-footer-left" *ngIf="isEditing && selectedNews">
           <!-- Quick status action buttons inside edit modal -->
           <button 
-            *ngIf="selectedNews.trangThai === 'BanNhap' || selectedNews.trangThai === 'NgungHienThi'" 
+            *ngIf="hasPermission('news.update') && (selectedNews.trangThai === 'BanNhap' || selectedNews.trangThai === 'NgungHienThi')" 
             class="btn-footer-publish" 
             (click)="openConfirm('publish', selectedNews)"
             type="button">
@@ -770,7 +770,7 @@
             Đăng bài
           </button>
           <button 
-            *ngIf="selectedNews.trangThai === 'DaDang'" 
+            *ngIf="hasPermission('news.update') && selectedNews.trangThai === 'DaDang'" 
             class="btn-footer-hide" 
             (click)="openConfirm('hide', selectedNews)"
             type="button">
@@ -780,7 +780,7 @@
         </div>
         <div class="modal-footer-right">
           <button class="btn-cancel" (click)="closeModal()">Hủy bỏ</button>
-          <button class="btn-save-confirm" (click)="saveNews()">
+          <button *ngIf="isEditing ? hasPermission('news.update') : hasPermission('news.create')" class="btn-save-confirm" (click)="saveNews()">
             <span class="material-icons">save</span>
             Lưu bài viết
           </button>

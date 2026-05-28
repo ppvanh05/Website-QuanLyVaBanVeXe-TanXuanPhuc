@@ -38,4 +38,18 @@ export class AdminAuthController {
   ) {
     return this.adminAuthService.updateProfile(req.admin.maNhanVien, dto);
   }
+
+  @Post('me/change-password')
+  @UseGuards(AdminPermissionsGuard)
+  async changePassword(
+    @Req() req: any,
+    @Body()
+    dto: {
+      MatKhauCu: string;
+      MatKhauMoi: string;
+      XacNhanMatKhau: string;
+    },
+  ) {
+    return this.adminAuthService.changePassword(req.admin.maNhanVien, dto);
+  }
 }

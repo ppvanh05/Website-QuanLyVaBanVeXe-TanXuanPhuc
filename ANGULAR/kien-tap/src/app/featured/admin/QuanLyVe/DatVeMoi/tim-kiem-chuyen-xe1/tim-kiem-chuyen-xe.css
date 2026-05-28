@@ -59,3 +59,18 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   border: 1px solid #f1f5f9;
 }
+
+:host ::ng-deep .policy-rich-content ul {
+  list-style: disc;
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+:host ::ng-deep .policy-rich-content li {
+  margin: 0.5rem 0;
+}
+
+:host ::ng-deep .policy-rich-content strong {
+  color: #062f4f;
+  font-weight: 700;
+}

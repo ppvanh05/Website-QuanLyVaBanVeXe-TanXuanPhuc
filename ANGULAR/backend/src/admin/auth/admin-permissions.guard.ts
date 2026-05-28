@@ -35,9 +35,21 @@ export class AdminPermissionsGuard implements CanActivate {
       return true;
     }
 
-    const hasPermission = requiredPermissions.every(permission =>
-      payload.quyen?.includes(permission),
-    );
+    const hasPermission = requiredPermissions.every(permission => {
+      const basePermission = permission.split('.')[0];
+      
+      // Ánh xạ các quyền chi tiết của backend về các nhóm quyền lớn trên Sidebar/DB
+      let mappedPermission = basePermission;
+      if (['route', 'vehicle', 'driver', 'stop', 'trip'].includes(basePermission)) {
+        mappedPermission = 'dispatch';
+      } else if (basePermission === 'staff') {
+        mappedPermission = 'employee';
+      }
+
+      return payload.quyen?.includes(permission) || 
+             payload.quyen?.includes(basePermission) ||
+             payload.quyen?.includes(mappedPermission);
+    });
 
     if (!hasPermission) {
       throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này!');

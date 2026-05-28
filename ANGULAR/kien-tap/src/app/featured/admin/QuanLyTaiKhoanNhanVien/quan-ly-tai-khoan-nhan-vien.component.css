@@ -1065,6 +1065,10 @@ input:checked + .slider:before {
 .checkbox-container-header {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   cursor: pointer;
 }
 
@@ -1077,7 +1081,8 @@ input:checked + .slider:before {
 }
 
 .checkbox-container-header .checkmark {
-  top: -9px; /* Align correctly inside flex line */
+  top: 0;
+  margin: 0;
   height: 18px;
   width: 18px;
 }

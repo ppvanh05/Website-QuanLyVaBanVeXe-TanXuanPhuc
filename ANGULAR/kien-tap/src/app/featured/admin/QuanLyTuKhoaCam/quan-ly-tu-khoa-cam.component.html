@@ -76,7 +76,7 @@
 
     <!-- Actions Row -->
     <div class="actions-row">
-      <button class="btn-add-keyword" (click)="openAddModal()">
+      <button *ngIf="hasPermission('review.moderate')" class="btn-add-keyword" (click)="openAddModal()">
         <span class="material-icons">add</span>
         Thêm từ khóa mới
       </button>
@@ -156,7 +156,7 @@
               {{ kw.updatedBy }}
             </td>
             <td class="text-center">
-              <button class="btn-edit" (click)="openEditModal(kw)" title="Chỉnh sửa từ khóa">
+              <button *ngIf="hasPermission('review.moderate')" class="btn-edit" (click)="openEditModal(kw)" title="Chỉnh sửa từ khóa">
                 <span class="material-icons">edit_note</span>
               </button>
             </td>
@@ -251,7 +251,7 @@
     <div class="modal-footer">
       <!-- Lock/Unlock toggle on left (only in edit mode) -->
       <button
-        *ngIf="isEditing"
+        *ngIf="isEditing && hasPermission('review.moderate')"
         class="btn-status-toggle"
         [class.lock-mode]="formModel.status === 'DangApDung'"
         [class.unlock-mode]="formModel.status === 'NgungApDung'"
@@ -262,7 +262,7 @@
 
       <div class="footer-actions-right">
         <button class="btn-modal-cancel" (click)="closeModal()">Hủy</button>
-        <button class="btn-modal-save" (click)="saveKeyword()">
+        <button *ngIf="hasPermission('review.moderate')" class="btn-modal-save" (click)="saveKeyword()">
           <span class="material-icons">save</span>
           Lưu thông tin
         </button>

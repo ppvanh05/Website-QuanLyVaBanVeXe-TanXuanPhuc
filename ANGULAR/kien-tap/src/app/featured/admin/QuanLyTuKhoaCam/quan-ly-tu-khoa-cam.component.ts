@@ -2,6 +2,7 @@ import { Component, OnInit, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TuKhoaCamService } from '../../../core/services/tu-khoa-cam.service';
+import { AdminAuthService } from '../../../core/services/admin-auth.service';
 
 export interface RestrictedKeyword {
   id: string;             // Mã từ khóa
@@ -25,9 +26,16 @@ export class QuanLyTuKhoaCamComponent implements OnInit {
   constructor(
     private readonly tuKhoaCamService: TuKhoaCamService,
     private readonly cdr: ChangeDetectorRef,
+    private readonly adminAuthService: AdminAuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
+  hasPermission(permission: string): boolean {
+    const user = this.adminAuthService.currentUserValue;
+    if (!user) return false;
+    return !!user.Quyen?.includes(permission);
   }
 
   protected readonly Math = Math;

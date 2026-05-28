@@ -133,9 +133,9 @@ export class TrangChuComponent implements OnInit {
 
   setupTicketSalesDashboard(perms: string[]) {
     this.quickActions = this.filterActions([
-      { label: 'Đặt vé mới', icon: 'add_circle', route: '/admin/quan-ly-ve/dat-ve-moi', color: 'orange', permission: 'ticket.sell' },
-      { label: 'Tra cứu vé', icon: 'search', route: '/admin/quan-ly-ve/danh-sach-ve', color: 'blue', permission: 'ticket.view' },
-      { label: 'Khách hàng', icon: 'people', route: '/admin/quan-ly-khach-hang', color: 'purple', permission: 'customer.view' },
+      { label: 'Đặt vé mới', icon: 'add_circle', route: '/admin/quan-ly-ve/dat-ve-moi', color: 'orange', permission: 'ticket' },
+      { label: 'Tra cứu vé', icon: 'search', route: '/admin/quan-ly-ve/danh-sach-ve', color: 'blue', permission: 'ticket' },
+      { label: 'Khách hàng', icon: 'people', route: '/admin/quan-ly-khach-hang', color: 'purple', permission: 'customer' },
     ], perms);
     this.stats = [
       { title: 'Vé đang quản lý', value: '0', trend: 'Đang tải dữ liệu', trendType: 'up', icon: 'local_activity', theme: 'blue' },
@@ -147,10 +147,10 @@ export class TrangChuComponent implements OnInit {
 
   setupDispatchDashboard(perms: string[]) {
     this.quickActions = this.filterActions([
-      { label: 'Quản lý lịch trình', icon: 'calendar_month', route: '/admin/quan-ly-dieu-hanh/quan-ly-lich-trinh', color: 'blue', permission: 'trip.view' },
-      { label: 'Quản lý tuyến xe', icon: 'route', route: '/admin/quan-ly-dieu-hanh/quan-ly-tuyen-xe', color: 'orange', permission: 'route.view' },
-      { label: 'Quản lý phương tiện', icon: 'directions_bus', route: '/admin/quan-ly-dieu-hanh/quan-ly-phuong-tien', color: 'teal', permission: 'vehicle.view' },
-      { label: 'Tài xế & phụ xe', icon: 'badge', route: '/admin/quan-ly-dieu-hanh/quan-ly-tai-xe-phu-xe', color: 'purple', permission: 'driver.view' },
+      { label: 'Quản lý lịch trình', icon: 'calendar_month', route: '/admin/quan-ly-dieu-hanh/quan-ly-lich-trinh', color: 'blue', permission: 'dispatch' },
+      { label: 'Quản lý tuyến xe', icon: 'route', route: '/admin/quan-ly-dieu-hanh/quan-ly-tuyen-xe', color: 'orange', permission: 'dispatch' },
+      { label: 'Quản lý phương tiện', icon: 'directions_bus', route: '/admin/quan-ly-dieu-hanh/quan-ly-phuong-tien', color: 'teal', permission: 'dispatch' },
+      { label: 'Tài xế & phụ xe', icon: 'badge', route: '/admin/quan-ly-dieu-hanh/quan-ly-tai-xe-phu-xe', color: 'purple', permission: 'dispatch' },
     ], perms);
     this.stats = [
       { title: 'Chuyến hôm nay', value: '12', trend: '2 đang chạy', trendType: 'up', icon: 'departure_board', theme: 'blue' },
@@ -162,8 +162,8 @@ export class TrangChuComponent implements OnInit {
 
   setupManagementDashboard(perms: string[]) {
     this.quickActions = this.filterActions([
-      { label: 'Xem doanh thu', icon: 'payments', route: '/admin/bao-cao/bao-cao-chi-tiet', color: 'orange', permission: 'report.view' },
-      { label: 'Xuất báo cáo', icon: 'download', route: '/admin/bao-cao/bao-cao-tong-hop-theo-tuyen', color: 'blue', permission: 'report.export' },
+      { label: 'Xem doanh thu', icon: 'payments', route: '/admin/bao-cao/bao-cao-chi-tiet', color: 'orange', permission: 'report' },
+      { label: 'Xuất báo cáo', icon: 'download', route: '/admin/bao-cao/bao-cao-tong-hop-theo-tuyen', color: 'blue', permission: 'report' },
     ], perms);
     this.stats = [
       { title: 'Doanh thu tháng này', value: 145000000, isCurrency: true, trend: '+8.2% so với tháng trước', trendType: 'up', icon: 'payments', theme: 'orange' },
@@ -175,10 +175,10 @@ export class TrangChuComponent implements OnInit {
 
   setupAdminDashboard(perms: string[]) {
     this.quickActions = this.filterActions([
-      { label: 'Quản lý nhân viên', icon: 'manage_accounts', route: '/admin/quan-ly-nhan-vien', color: 'blue', permission: 'staff.view' },
-      { label: 'Nhật ký hệ thống', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', color: 'orange', permission: 'log.view' },
-      { label: 'Tin tức', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news.view' },
-      { label: 'Từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'blacklist.view' },
+      { label: 'Quản lý nhân viên', icon: 'manage_accounts', route: '/admin/quan-ly-nhan-vien', color: 'blue', permission: 'employee' },
+      { label: 'Nhật ký hệ thống', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', color: 'orange', permission: 'log' },
+      { label: 'Tin tức', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news' },
+      { label: 'Từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'blacklist' },
     ], perms);
     this.stats = [
       { title: 'Tổng nhân viên', value: '4', trend: 'Tất cả đang hoạt động', trendType: 'up', icon: 'badge', theme: 'blue' },
@@ -187,19 +187,19 @@ export class TrangChuComponent implements OnInit {
       { title: 'Báo cáo vi phạm', value: '2', trend: 'Chờ xử lý', trendType: 'down', icon: 'report', theme: 'teal' },
     ];
     this.adminTasks = this.filterAdminTasks([
-      { title: 'Tài khoản nhân viên', description: 'Tạo, khóa/mở khóa và phân quyền nhân sự nội bộ.', icon: 'manage_accounts', route: '/admin/quan-ly-nhan-vien', color: 'blue', permission: 'staff.view' },
-      { title: 'Nhật ký hệ thống', description: 'Theo dõi thao tác đăng nhập, cập nhật dữ liệu và lỗi nghiệp vụ.', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', color: 'orange', permission: 'log.view' },
-      { title: 'Tin tức & chính sách', description: 'Quản lý nội dung hiển thị cho khách hàng và quy định vận hành.', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news.view' },
-      { title: 'Từ khóa cấm', description: 'Kiểm soát nội dung vi phạm trong đánh giá và phản hồi.', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'blacklist.view' },
+      { title: 'Tài khoản nhân viên', description: 'Tạo, khóa/mở khóa và phân quyền nhân sự nội bộ.', icon: 'manage_accounts', route: '/admin/quan-ly-nhan-vien', color: 'blue', permission: 'employee' },
+      { title: 'Nhật ký hệ thống', description: 'Theo dõi thao tác đăng nhập, cập nhật dữ liệu và lỗi nghiệp vụ.', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', color: 'orange', permission: 'log' },
+      { title: 'Tin tức & chính sách', description: 'Quản lý nội dung hiển thị cho khách hàng và quy định vận hành.', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news' },
+      { title: 'Từ khóa cấm', description: 'Kiểm soát nội dung vi phạm trong đánh giá và phản hồi.', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'blacklist' },
     ], perms);
   }
 
   setupFallbackDashboard(perms: string[]) {
     this.quickActions = this.filterActions([
-      { label: 'Tra cứu vé', icon: 'search', route: '/admin/quan-ly-ve/danh-sach-ve', color: 'blue', permission: 'ticket.view' },
-      { label: 'Khách hàng', icon: 'people', route: '/admin/quan-ly-khach-hang', color: 'purple', permission: 'customer.view' },
-      { label: 'Quản lý lịch trình', icon: 'calendar_month', route: '/admin/quan-ly-dieu-hanh/quan-ly-lich-trinh', color: 'orange', permission: 'trip.view' },
-      { label: 'Báo cáo', icon: 'bar_chart', route: '/admin/bao-cao/bao-cao-chi-tiet', color: 'teal', permission: 'report.view' },
+      { label: 'Tra cứu vé', icon: 'search', route: '/admin/quan-ly-ve/danh-sach-ve', color: 'blue', permission: 'ticket' },
+      { label: 'Khách hàng', icon: 'people', route: '/admin/quan-ly-khach-hang', color: 'purple', permission: 'customer' },
+      { label: 'Quản lý lịch trình', icon: 'calendar_month', route: '/admin/quan-ly-dieu-hanh/quan-ly-lich-trinh', color: 'orange', permission: 'dispatch' },
+      { label: 'Báo cáo', icon: 'bar_chart', route: '/admin/bao-cao/bao-cao-chi-tiet', color: 'teal', permission: 'report' },
     ], perms);
     this.stats = [
       { title: 'Quyền khả dụng', value: perms.length, trend: 'Theo phân quyền tài khoản', trendType: 'up', icon: 'verified_user', theme: 'blue' },
@@ -327,22 +327,22 @@ export class TrangChuComponent implements OnInit {
 
   get showTicketSection(): boolean {
     const role = this.normalizeRole(this.currentUser?.LoaiTaiKhoan);
-    return role === 'NhanVienBanVe' || this.hasAnyPermission(['ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update']);
+    return role === 'NhanVienBanVe' || this.hasPermission('ticket');
   }
 
   get showRouteSection(): boolean {
     const role = this.normalizeRole(this.currentUser?.LoaiTaiKhoan);
-    return role === 'NhanVienDieuPhoi' || this.hasAnyPermission(['route.view', 'trip.view', 'vehicle.view', 'driver.view', 'stop.view']);
+    return role === 'NhanVienDieuPhoi' || this.hasPermission('dispatch');
   }
 
   get showFinanceSection(): boolean {
     const role = this.normalizeRole(this.currentUser?.LoaiTaiKhoan);
-    return role === 'BanQuanLy' || this.hasAnyPermission(['finance.view', 'report.view']);
+    return role === 'BanQuanLy' || this.hasPermission('report');
   }
 
   get showAdminSection(): boolean {
     const role = this.normalizeRole(this.currentUser?.LoaiTaiKhoan);
-    return role === 'QuanTriVien' || this.hasAnyPermission(['staff.view', 'employee.view', 'role.manage', 'log.view', 'system.log']);
+    return role === 'QuanTriVien' || this.hasAnyPermission(['employee', 'log', 'news', 'policy', 'blacklist']);
   }
 
   get showEmptyState(): boolean {

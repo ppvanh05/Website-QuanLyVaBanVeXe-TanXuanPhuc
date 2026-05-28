@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { AdminAuthService, AdminProfileUpdate, AdminUser } from '../../../core/services/admin-auth.service';
+import { AdminAuthService, AdminPasswordChange, AdminProfileUpdate, AdminUser } from '../../../core/services/admin-auth.service';
 
 interface MenuItem {
   label: string;
@@ -28,6 +28,12 @@ interface AdminProfileForm {
   GhiChu: string;
 }
 
+interface AdminPasswordForm {
+  MatKhauCu: string;
+  MatKhauMoi: string;
+  XacNhanMatKhau: string;
+}
+
 type ProfileValidationField =
   | 'HoVaTenDem'
   | 'Ten'
@@ -38,6 +44,11 @@ type ProfileValidationField =
   | 'DiaChi'
   | 'GhiChu';
 
+type PasswordValidationField =
+  | 'MatKhauCu'
+  | 'MatKhauMoi'
+  | 'XacNhanMatKhau';
+
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
@@ -45,18 +56,28 @@ type ProfileValidationField =
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.css']
 })
-export class AdminLayoutComponent {
+export class AdminLayoutComponent implements OnInit {
   isSidebarCollapsed = false;
   currentDate = new Date();
   currentUser: AdminUser | null = null;
   isAvatarMenuOpen = false;
   isProfileModalOpen = false;
+  isPasswordModalOpen = false;
   isSavingProfile = false;
+  isSavingPassword = false;
   profileError = '';
   profileSuccess = '';
+  passwordError = '';
+  passwordSuccess = '';
   profileForm: AdminProfileForm = this.createEmptyProfileForm();
+  passwordForm: AdminPasswordForm = this.createEmptyPasswordForm();
   profileFieldErrors: Partial<Record<ProfileValidationField, string>> = {};
   profileTouched: Partial<Record<ProfileValidationField, boolean>> = {};
+  passwordFieldErrors: Partial<Record<PasswordValidationField, string>> = {};
+  passwordTouched: Partial<Record<PasswordValidationField, boolean>> = {};
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   private readonly profileValidationFields: ProfileValidationField[] = [
     'HoVaTenDem',
@@ -67,6 +88,12 @@ export class AdminLayoutComponent {
     'NgaySinh',
     'DiaChi',
     'GhiChu',
+  ];
+
+  private readonly passwordValidationFields: PasswordValidationField[] = [
+    'MatKhauCu',
+    'MatKhauMoi',
+    'XacNhanMatKhau',
   ];
 
   constructor(private router: Router, private authService: AdminAuthService) {
@@ -97,6 +124,18 @@ export class AdminLayoutComponent {
     });
   }
 
+  ngOnInit() {
+    this.authService.getProfile().subscribe({
+      next: (user) => {
+        this.currentUser = user;
+        this.applyRBAC();
+      },
+      error: (err) => {
+        console.error('Lỗi khi đồng bộ thông tin phân quyền:', err);
+      }
+    });
+  }
+
   menuItems: MenuItem[] = [
     { label: 'Trang chủ', icon: 'home', route: '/admin/trang-chu' },
     {
@@ -104,41 +143,41 @@ export class AdminLayoutComponent {
       icon: 'confirmation_number',
       isOpen: false,
       children: [
-        { label: 'Đặt vé mới', icon: 'add_circle', route: '/admin/quan-ly-ve/dat-ve-moi', permission: 'ticket.sell' },
-        { label: 'Danh sách vé', icon: 'list_alt', route: '/admin/quan-ly-ve/danh-sach-ve', permission: 'ticket.view' }
+        { label: 'Đặt vé mới', icon: 'add_circle', route: '/admin/quan-ly-ve/dat-ve-moi', permission: 'ticket' },
+        { label: 'Danh sách vé', icon: 'list_alt', route: '/admin/quan-ly-ve/danh-sach-ve', permission: 'ticket' }
       ]
     },
-    { label: 'Quản lý tin tức', icon: 'article', route: '/admin/quan-ly-tin-tuc', permission: 'news.view' },
+    { label: 'Quản lý tin tức', icon: 'article', route: '/admin/quan-ly-tin-tuc', permission: 'news' },
     {
       label: 'Quản lý điều hành',
       icon: 'settings_input_component',
       isOpen: false,
       children: [
-        { label: 'Quản lý tuyến xe', icon: 'route', route: '/admin/quan-ly-dieu-hanh/quan-ly-tuyen-xe', permission: 'route.view' },
-        { label: 'Quản lý lịch trình', icon: 'calendar_month', route: '/admin/quan-ly-dieu-hanh/quan-ly-lich-trinh', permission: 'trip.create' },
-        { label: 'Quản lý phương tiện', icon: 'directions_bus', route: '/admin/quan-ly-dieu-hanh/quan-ly-phuong-tien', permission: 'vehicle.manage' },
-        { label: 'Quản lý tài xế & phụ xe', icon: 'badge', route: '/admin/quan-ly-dieu-hanh/quan-ly-tai-xe-phu-xe', permission: 'driver.manage' },
-        { label: 'Quản lý điểm đón trả dừng', icon: 'location_on', route: '/admin/quan-ly-dieu-hanh/quan-ly-diem-don-tra-dung', permission: 'route.manage' }
+        { label: 'Quản lý tuyến xe', icon: 'route', route: '/admin/quan-ly-dieu-hanh/quan-ly-tuyen-xe', permission: 'dispatch' },
+        { label: 'Quản lý lịch trình', icon: 'calendar_month', route: '/admin/quan-ly-dieu-hanh/quan-ly-lich-trinh', permission: 'dispatch' },
+        { label: 'Quản lý phương tiện', icon: 'directions_bus', route: '/admin/quan-ly-dieu-hanh/quan-ly-phuong-tien', permission: 'dispatch' },
+        { label: 'Quản lý tài xế & phụ xe', icon: 'badge', route: '/admin/quan-ly-dieu-hanh/quan-ly-tai-xe-phu-xe', permission: 'dispatch' },
+        { label: 'Quản lý điểm đón trả dừng', icon: 'location_on', route: '/admin/quan-ly-dieu-hanh/quan-ly-diem-don-tra-dung', permission: 'dispatch' }
       ]
     },
-    { label: 'Quản lý khách hàng', icon: 'groups', route: '/admin/quan-ly-khach-hang', permission: 'customer.view' },
-    { label: 'Quản lý nhân viên', icon: 'engineering', route: '/admin/quan-ly-nhan-vien', permission: 'staff.view' },
-    { label: 'Quản lý chính sách', icon: 'policy', route: '/admin/quan-ly-chinh-sach', permission: 'policy.view' },
-    { label: 'Quản lý từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', permission: 'blacklist.view' },
+    { label: 'Quản lý khách hàng', icon: 'groups', route: '/admin/quan-ly-khach-hang', permission: 'customer' },
+    { label: 'Quản lý nhân viên', icon: 'engineering', route: '/admin/quan-ly-nhan-vien', permission: 'employee' },
+    { label: 'Quản lý chính sách', icon: 'policy', route: '/admin/quan-ly-chinh-sach', permission: 'policy' },
+    { label: 'Quản lý từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', permission: 'blacklist' },
     {
       label: 'Báo cáo',
       icon: 'bar_chart',
       isOpen: false,
-      permission: 'report.view',
+      permission: 'report',
       children: [
-        { label: 'Báo cáo chi tiết', icon: 'list_alt', route: '/admin/bao-cao/bao-cao-chi-tiet', permission: 'report.view' },
-        { label: 'Báo cáo theo tuyến', icon: 'route', route: '/admin/bao-cao/bao-cao-tong-hop-theo-tuyen', permission: 'report.view' },
-        { label: 'Báo cáo tài xế & phụ xe', icon: 'badge', route: '/admin/bao-cao/bao-cao-tai-xe-phu-xe', permission: 'report.view' },
-        { label: 'Báo cáo khách hàng', icon: 'groups', route: '/admin/bao-cao/bao-cao-khach-hang', permission: 'report.view' },
-        { label: 'Báo cáo hoàn hủy', icon: 'cancel', route: '/admin/bao-cao/bao-cao-hoan-huy', permission: 'report.view' }
+        { label: 'Báo cáo chi tiết', icon: 'list_alt', route: '/admin/bao-cao/bao-cao-chi-tiet', permission: 'report' },
+        { label: 'Báo cáo theo tuyến', icon: 'route', route: '/admin/bao-cao/bao-cao-tong-hop-theo-tuyen', permission: 'report' },
+        { label: 'Báo cáo tài xế & phụ xe', icon: 'badge', route: '/admin/bao-cao/bao-cao-tai-xe-phu-xe', permission: 'report' },
+        { label: 'Báo cáo khách hàng', icon: 'groups', route: '/admin/bao-cao/bao-cao-khach-hang', permission: 'report' },
+        { label: 'Báo cáo hoàn hủy', icon: 'cancel', route: '/admin/bao-cao/bao-cao-hoan-huy', permission: 'report' }
       ]
     },
-    { label: 'Quản lý nhật ký', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', permission: 'log.view' }
+    { label: 'Quản lý nhật ký', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', permission: 'log' }
   ];
 
   applyRBAC() {
@@ -200,6 +239,10 @@ export class AdminLayoutComponent {
     this.isAvatarMenuOpen = false;
     this.profileError = '';
     this.profileSuccess = '';
+    this.passwordError = '';
+    this.passwordSuccess = '';
+    this.isPasswordModalOpen = false;
+    this.resetPasswordForm();
     this.resetProfileValidation();
     this.profileForm = {
       HoVaTenDem: this.currentUser.HoVaTenDem || '',
@@ -238,11 +281,31 @@ export class AdminLayoutComponent {
   }
 
   closeProfileModal() {
-    if (this.isSavingProfile) return;
+    if (this.isSavingProfile || this.isSavingPassword) return;
     this.isProfileModalOpen = false;
+    this.isPasswordModalOpen = false;
     this.profileError = '';
     this.profileSuccess = '';
+    this.passwordError = '';
+    this.passwordSuccess = '';
+    this.resetPasswordForm();
     this.resetProfileValidation();
+  }
+
+  openPasswordModal(event?: MouseEvent) {
+    event?.stopPropagation();
+    this.passwordError = '';
+    this.passwordSuccess = '';
+    this.resetPasswordForm();
+    this.isPasswordModalOpen = true;
+  }
+
+  closePasswordModal() {
+    if (this.isSavingPassword) return;
+    this.isPasswordModalOpen = false;
+    this.passwordError = '';
+    this.passwordSuccess = '';
+    this.resetPasswordForm();
   }
 
   saveProfile() {
@@ -303,6 +366,70 @@ export class AdminLayoutComponent {
     reader.readAsDataURL(file);
   }
 
+  createEmptyPasswordForm(): AdminPasswordForm {
+    return {
+      MatKhauCu: '',
+      MatKhauMoi: '',
+      XacNhanMatKhau: '',
+    };
+  }
+
+  changePassword() {
+    this.passwordError = '';
+    this.passwordSuccess = '';
+
+    if (!this.validatePasswordForm()) {
+      this.passwordError = 'Vui lòng kiểm tra lại thông tin đổi mật khẩu.';
+      return;
+    }
+
+    const payload: AdminPasswordChange = {
+      MatKhauCu: this.passwordForm.MatKhauCu,
+      MatKhauMoi: this.passwordForm.MatKhauMoi,
+      XacNhanMatKhau: this.passwordForm.XacNhanMatKhau,
+    };
+
+    this.isSavingPassword = true;
+    this.authService.changePassword(payload).subscribe({
+      next: res => {
+        this.passwordSuccess = res?.message || 'Đã đổi mật khẩu thành công.';
+        this.passwordError = '';
+        this.isSavingPassword = false;
+        this.resetPasswordForm();
+        setTimeout(() => {
+          this.isPasswordModalOpen = false;
+          this.passwordSuccess = '';
+        }, 700);
+      },
+      error: err => {
+        this.passwordError = err?.error?.message || 'Không thể đổi mật khẩu.';
+        this.passwordSuccess = '';
+        this.isSavingPassword = false;
+      }
+    });
+  }
+
+  onPasswordFieldInput(field: PasswordValidationField) {
+    this.passwordTouched[field] = true;
+    this.validatePasswordField(field);
+    if (field === 'MatKhauMoi' && this.passwordTouched.XacNhanMatKhau) {
+      this.validatePasswordField('XacNhanMatKhau');
+    }
+    if (field === 'XacNhanMatKhau' && this.passwordTouched.MatKhauMoi) {
+      this.validatePasswordField('MatKhauMoi');
+    }
+    this.passwordError = '';
+    this.passwordSuccess = '';
+  }
+
+  hasPasswordFieldError(field: PasswordValidationField): boolean {
+    return !!this.passwordTouched[field] && !!this.passwordFieldErrors[field];
+  }
+
+  get hasPasswordValidationErrors(): boolean {
+    return Object.values(this.passwordFieldErrors).some(Boolean);
+  }
+
   removeProfileAvatar(event: MouseEvent) {
     event.stopPropagation();
     this.profileForm.AnhDaiDien = '';
@@ -328,6 +455,15 @@ export class AdminLayoutComponent {
     this.profileTouched = {};
   }
 
+  private resetPasswordForm() {
+    this.passwordForm = this.createEmptyPasswordForm();
+    this.passwordFieldErrors = {};
+    this.passwordTouched = {};
+    this.showCurrentPassword = false;
+    this.showNewPassword = false;
+    this.showConfirmPassword = false;
+  }
+
   private validateProfileForm(): boolean {
     this.profileValidationFields.forEach(field => {
       this.profileTouched[field] = true;
@@ -335,6 +471,47 @@ export class AdminLayoutComponent {
     });
 
     return !this.hasProfileValidationErrors;
+  }
+
+  private validatePasswordForm(): boolean {
+    this.passwordValidationFields.forEach(field => {
+      this.passwordTouched[field] = true;
+      this.validatePasswordField(field);
+    });
+
+    return !this.hasPasswordValidationErrors;
+  }
+
+  private validatePasswordField(field: PasswordValidationField): boolean {
+    const value = String(this.passwordForm[field] || '');
+    let error = '';
+
+    if (field === 'MatKhauCu' && !value) {
+      error = 'Vui lòng nhập mật khẩu hiện tại.';
+    }
+
+    if (field === 'MatKhauMoi') {
+      if (!value) error = 'Vui lòng nhập mật khẩu mới.';
+      else if (value.length < 8) error = 'Mật khẩu mới phải có ít nhất 8 ký tự.';
+      else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+        error = 'Mật khẩu mới cần có chữ hoa, chữ thường và số.';
+      } else if (value === this.passwordForm.MatKhauCu) {
+        error = 'Mật khẩu mới phải khác mật khẩu hiện tại.';
+      }
+    }
+
+    if (field === 'XacNhanMatKhau') {
+      if (!value) error = 'Vui lòng xác nhận mật khẩu mới.';
+      else if (value !== this.passwordForm.MatKhauMoi) error = 'Xác nhận mật khẩu mới không khớp.';
+    }
+
+    if (error) {
+      this.passwordFieldErrors[field] = error;
+      return false;
+    }
+
+    delete this.passwordFieldErrors[field];
+    return true;
   }
 
   private validateProfileField(field: ProfileValidationField): boolean {

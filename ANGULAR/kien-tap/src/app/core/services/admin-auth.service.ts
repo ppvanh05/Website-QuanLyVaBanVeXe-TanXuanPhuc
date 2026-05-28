@@ -33,6 +33,12 @@ export interface AdminProfileUpdate {
   GhiChu?: string | null;
 }
 
+export interface AdminPasswordChange {
+  MatKhauCu: string;
+  MatKhauMoi: string;
+  XacNhanMatKhau: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -86,6 +92,10 @@ export class AdminAuthService {
         this.persistSession(res);
       })
     );
+  }
+
+  changePassword(payload: AdminPasswordChange): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/me/change-password`, payload);
   }
 
   private persistSession(res: any) {
