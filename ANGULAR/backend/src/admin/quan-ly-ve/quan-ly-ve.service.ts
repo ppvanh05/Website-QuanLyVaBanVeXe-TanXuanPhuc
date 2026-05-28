@@ -183,7 +183,11 @@ export class QuanLyVeService {
       VNPay: 'VNPay',
       ZaloPay: 'ZaloPay',
       ATM: 'ATM nội địa',
+      ATM_n_i___a: 'ATM nội địa',
+      'ATM nội địa': 'ATM nội địa',
       VisaMaster: 'Visa/Master/JCB',
+      Visa_Master_JCB: 'Visa/Master/JCB',
+      'Visa/Master/JCB': 'Visa/Master/JCB',
       TienMat: 'Tiền mặt',
     };
     return method ? map[method] || method : 'Chưa thanh toán';

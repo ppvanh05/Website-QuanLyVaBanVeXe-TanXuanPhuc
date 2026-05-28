@@ -8,25 +8,29 @@
     </div>
 
     <nav class="sidebar-nav">
-      <div *ngFor="let item of menuItems" class="menu-item-container" routerLinkActive="parent-active" #rla="routerLinkActive">
-        <div class="menu-item" [routerLink]="item.disabled ? null : item.route"
-          [class.active]="item.isOpen || (rla.isActive && !isAnyMenuOpen)" (click)="toggleSubmenu(item)"
-          [class.has-children]="item.children" [class.disabled]="item.disabled">
-          <span class="material-icons">{{ item.icon }}</span>
-          <span class="label">{{ item.label }}</span>
-          <span *ngIf="item.children" class="material-icons arrow" [class.open]="item.isOpen">
-            expand_more
-          </span>
-        </div>
+      <ng-container *ngFor="let item of menuItems">
+        <div *ngIf="!item.disabled" class="menu-item-container" routerLinkActive="parent-active" #rla="routerLinkActive">
+          <div class="menu-item" [routerLink]="item.route"
+            [class.active]="item.isOpen || (rla.isActive && !isAnyMenuOpen)" (click)="toggleSubmenu(item)"
+            [class.has-children]="item.children">
+            <span class="material-icons">{{ item.icon }}</span>
+            <span class="label">{{ item.label }}</span>
+            <span *ngIf="item.children" class="material-icons arrow" [class.open]="item.isOpen">
+              expand_more
+            </span>
+          </div>
 
-        <div *ngIf="item.children && item.isOpen" class="submenu">
-          <div *ngFor="let child of item.children" class="submenu-item" [routerLink]="child.disabled ? null : child.route"
-            routerLinkActive="active" [class.disabled]="child.disabled">
-            <span class="material-icons">{{ child.icon }}</span>
-            <span class="label">{{ child.label }}</span>
+          <div *ngIf="item.children && item.isOpen" class="submenu">
+            <ng-container *ngFor="let child of item.children">
+              <div *ngIf="!child.disabled" class="submenu-item" [routerLink]="child.route"
+                routerLinkActive="active">
+                <span class="material-icons">{{ child.icon }}</span>
+                <span class="label">{{ child.label }}</span>
+              </div>
+            </ng-container>
           </div>
         </div>
-      </div>
+      </ng-container>
     </nav>
 
     <div class="sidebar-footer">
@@ -105,6 +109,9 @@
               <span class="material-icons">delete</span>
             </button>
           </div>
+          <button type="button" class="profile-password-trigger" (click)="openPasswordModal($event)">
+            Đổi mật khẩu
+          </button>
         </div>
 
         <form class="profile-form" (ngSubmit)="saveProfile()">
@@ -168,6 +175,78 @@
           </footer>
         </form>
       </div>
+    </section>
+  </div>
+
+  <div class="profile-modal-backdrop password-modal-backdrop" *ngIf="isPasswordModalOpen" (click)="closePasswordModal()">
+    <section class="password-modal" (click)="$event.stopPropagation()">
+      <header class="password-modal-header">
+        <div>
+          <h3>Đổi mật khẩu</h3>
+          <p>Mật khẩu mới tối thiểu 8 ký tự, có chữ hoa, chữ thường và số.</p>
+        </div>
+        <button type="button" class="profile-close-btn" (click)="closePasswordModal()" aria-label="Đóng">×</button>
+      </header>
+
+      <form class="password-modal-form" (ngSubmit)="changePassword()">
+        <label [class.invalid]="hasPasswordFieldError('MatKhauCu')">
+          <span>Mật khẩu hiện tại</span>
+          <div class="password-input-row">
+            <input
+              name="MatKhauCuPopup"
+              [type]="showCurrentPassword ? 'text' : 'password'"
+              [(ngModel)]="passwordForm.MatKhauCu"
+              (ngModelChange)="onPasswordFieldInput('MatKhauCu')"
+              autocomplete="current-password">
+            <button type="button" class="password-toggle-btn" (click)="showCurrentPassword = !showCurrentPassword">
+              {{ showCurrentPassword ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+          <small class="profile-field-error" *ngIf="hasPasswordFieldError('MatKhauCu')">{{ passwordFieldErrors.MatKhauCu }}</small>
+        </label>
+
+        <label [class.invalid]="hasPasswordFieldError('MatKhauMoi')">
+          <span>Mật khẩu mới</span>
+          <div class="password-input-row">
+            <input
+              name="MatKhauMoiPopup"
+              [type]="showNewPassword ? 'text' : 'password'"
+              [(ngModel)]="passwordForm.MatKhauMoi"
+              (ngModelChange)="onPasswordFieldInput('MatKhauMoi')"
+              autocomplete="new-password">
+            <button type="button" class="password-toggle-btn" (click)="showNewPassword = !showNewPassword">
+              {{ showNewPassword ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+          <small class="profile-field-error" *ngIf="hasPasswordFieldError('MatKhauMoi')">{{ passwordFieldErrors.MatKhauMoi }}</small>
+        </label>
+
+        <label [class.invalid]="hasPasswordFieldError('XacNhanMatKhau')">
+          <span>Xác nhận mật khẩu mới</span>
+          <div class="password-input-row">
+            <input
+              name="XacNhanMatKhauPopup"
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              [(ngModel)]="passwordForm.XacNhanMatKhau"
+              (ngModelChange)="onPasswordFieldInput('XacNhanMatKhau')"
+              autocomplete="new-password">
+            <button type="button" class="password-toggle-btn" (click)="showConfirmPassword = !showConfirmPassword">
+              {{ showConfirmPassword ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+          <small class="profile-field-error" *ngIf="hasPasswordFieldError('XacNhanMatKhau')">{{ passwordFieldErrors.XacNhanMatKhau }}</small>
+        </label>
+
+        <div class="profile-alert error" *ngIf="passwordError">{{ passwordError }}</div>
+        <div class="profile-alert success" *ngIf="passwordSuccess">{{ passwordSuccess }}</div>
+
+        <footer class="password-modal-actions">
+          <button type="button" class="profile-secondary-btn" (click)="closePasswordModal()">Hủy</button>
+          <button type="submit" class="profile-password-submit" [disabled]="isSavingPassword || hasPasswordValidationErrors">
+            {{ isSavingPassword ? 'Đang đổi...' : 'Đổi mật khẩu' }}
+          </button>
+        </footer>
+      </form>
     </section>
   </div>
 </div>

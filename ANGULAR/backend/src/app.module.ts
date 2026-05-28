@@ -22,6 +22,7 @@ import { ThongTinDonHangModule } from './customer/thong-tin-don-hang/thong-tin-d
 import { ThanhToanModule } from './customer/thanh-toan/thanh-toan.module';
 import { TraCuuVeModule } from './customer/tra-cuu-ve/tra-cuu-ve.module';
 import { CustomerHoSoModule } from './customer/profile/customer-ho-so.module';
+import { AdminAuthModule } from './admin/auth/admin-auth.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CustomerHoSoModule } from './customer/profile/customer-ho-so.module';
     NhatKyHeThongModule,
     QuanLyVeModule,
     DieuHanhModule,
+    AdminAuthModule,
     
     // Customer Modules Registration
     AuthModule,

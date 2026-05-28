@@ -57,6 +57,9 @@ export class ThanhToan implements OnInit, OnDestroy {
   confirmMessage: string = '';
   confirmCallback: (() => void) | null = null;
 
+  // Hold seat state
+  isHoldingSeat: boolean = false;
+
   paymentMethods = [
     { id: 'vietqr', name: 'Thanh toán qua VietQR', icon: '/asset/images/customer/VietQR_Logo.png', badge: '' },
     { id: 'momo', name: 'Ví MoMo', icon: '/asset/images/customer/MoMo_Logo.png', badge: '' },
@@ -302,6 +305,50 @@ export class ThanhToan implements OnInit, OnDestroy {
         },
       });
     });
+  }
+
+  holdSeat() {
+    this.showConfirm(
+      'Giữ chỗ cho khách và lưu vé với trạng thái "Chờ thanh toán" (thu tiền mặt sau)?',
+      () => {
+        const payload = {
+          ...this.buildCreateOrderPayload(),
+          phuongThucThanhToan: 'TienMat',
+          ghiChu: 'Nhan vien giu cho - cho thu tien mat sau',
+          trangThai: 'ChuaThanhToan',
+        };
+
+        if (!payload.maLichTrinh || !payload.maGheChuyenList.length) {
+          this.showAlert('Thiếu thông tin lịch trình hoặc ghế. Vui lòng chọn lại chuyến xe.', 'warning');
+          return;
+        }
+
+        this.isHoldingSeat = true;
+        this.cdr.detectChanges();
+
+        this.http.post<any>(`${this.apiBaseUrl}/quan-ly-ve/tao-don-hang`, payload).subscribe({
+          next: result => {
+            this.isHoldingSeat = false;
+            const donHang = result?.donHang || result?.DON_HANG || {};
+            const maDonHang = donHang.maDonHang || donHang.MaDonHang || '';
+            this.showAlert(
+              `Đã giữ chỗ thành công!${maDonHang ? ' Mã đơn: ' + maDonHang + '.' : ''} Vé đang chờ thanh toán tiền mặt.`,
+              'success'
+            );
+            localStorage.removeItem('current_booking');
+            localStorage.removeItem('final_booking');
+            setTimeout(() => this.router.navigate(['/admin/trang-chu']), 2000);
+            this.cdr.detectChanges();
+          },
+          error: error => {
+            this.isHoldingSeat = false;
+            const message = error?.error?.message || 'Không thể giữ chỗ. Vui lòng thử lại.';
+            this.showAlert(message, 'error');
+            this.cdr.detectChanges();
+          },
+        });
+      }
+    );
   }
 
   private confirmCashPaymentLegacy() {

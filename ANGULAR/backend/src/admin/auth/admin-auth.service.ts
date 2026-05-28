@@ -16,6 +16,12 @@ type AdminProfileUpdateDto = {
   GhiChu?: string | null;
 };
 
+type AdminPasswordChangeDto = {
+  MatKhauCu: string;
+  MatKhauMoi: string;
+  XacNhanMatKhau: string;
+};
+
 @Injectable()
 export class AdminAuthService {
   constructor(
@@ -215,5 +221,57 @@ export class AdminAuthService {
       token: this.signToken(updated),
       admin: this.toSafeAdmin(updated),
     };
+  }
+
+  async changePassword(maNhanVien: string, dto: AdminPasswordChangeDto) {
+    const current = await this.prisma.nHAN_VIEN.findUnique({
+      where: { MaNhanVien: maNhanVien },
+    });
+
+    if (!current) {
+      throw new NotFoundException('Khong tim thay tai khoan nhan vien!');
+    }
+
+    const oldPassword = String(dto.MatKhauCu || '');
+    const newPassword = String(dto.MatKhauMoi || '');
+    const confirmPassword = String(dto.XacNhanMatKhau || '');
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      throw new BadRequestException('Vui long nhap day du mat khau hien tai, mat khau moi va xac nhan mat khau!');
+    }
+
+    if (current.MatKhau !== oldPassword) {
+      throw new BadRequestException('Mat khau hien tai khong chinh xac!');
+    }
+
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestException('Xac nhan mat khau moi khong khop!');
+    }
+
+    if (newPassword === oldPassword) {
+      throw new BadRequestException('Mat khau moi phai khac mat khau hien tai!');
+    }
+
+    if (newPassword.length < 8) {
+      throw new BadRequestException('Mat khau moi phai co it nhat 8 ky tu!');
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+      throw new BadRequestException('Mat khau moi can co chu hoa, chu thuong va so!');
+    }
+
+    await this.prisma.nHAN_VIEN.update({
+      where: { MaNhanVien: maNhanVien },
+      data: { MatKhau: newPassword },
+    });
+
+    await this.nhatKyService.ghiLog({
+      MaNhanVien: maNhanVien,
+      LoaiThaoTac: 'Doi mat khau',
+      NoiDungChiTiet: 'Nhan vien doi mat khau tai khoan Admin.',
+      TrangThai: 'Thành công',
+    }).catch(err => console.error('Failed to log admin password change:', err));
+
+    return { message: 'Đã đổi mật khẩu thành công.' };
   }
 }

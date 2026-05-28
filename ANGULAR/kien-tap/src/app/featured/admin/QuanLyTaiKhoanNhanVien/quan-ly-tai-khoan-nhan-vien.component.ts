@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NhanVienService } from '../../../core/services/nhan-vien.service';
+import { AdminAuthService } from '../../../core/services/admin-auth.service';
 
 export interface NhanVien {
   id: string; // MaNhanVien
@@ -98,80 +99,84 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
   
   permissionModules: PermissionModule[] = [
     {
-      moduleKey: 'news_policy',
-      moduleName: 'Quản lý Tin tức & Chính sách',
-      moduleIcon: 'edit_note',
+      moduleKey: 'ticket',
+      moduleName: 'Quản lý vé',
+      moduleIcon: 'confirmation_number',
       isOpen: true,
       permissions: [
-        { key: 'news.view', name: 'Xem tin tức', description: 'Cho phép xem danh sách và chi tiết các bài đăng tin tức, khuyến mãi.' },
-        { key: 'news.create', name: 'Tạo tin tức', description: 'Cho phép soạn thảo và đăng bài viết tin tức mới lên website.' },
-        { key: 'news.update', name: 'Sửa tin tức', description: 'Cho phép chỉnh sửa thông tin, ảnh bìa và nội dung bài đăng hiện có.' },
-        { key: 'news.delete', name: 'Xóa tin tức', description: 'Cho phép ẩn hoặc xóa mềm các bài đăng khỏi trang tin tức.' },
-        { key: 'policy.view', name: 'Xem điều khoản & chính sách', description: 'Xem chi tiết các điều khoản dịch vụ, quy định vận chuyển.' },
-        { key: 'policy.update', name: 'Cập nhật chính sách', description: 'Chỉnh sửa nội dung chính sách, quy chế và quy định hủy vé qua Rich Editor.' }
+        { key: 'ticket', name: 'Quản lý vé', description: 'Cho phép truy cập và thực hiện các nghiệp vụ đặt vé mới, tra cứu bối cảnh vé, hoàn tiền và sửa thông tin vé.' }
       ]
     },
     {
-      moduleKey: 'ticket',
-      moduleName: 'Bán vé & Dịch vụ khách hàng',
-      moduleIcon: 'confirmation_number',
+      moduleKey: 'news',
+      moduleName: 'Quản lý tin tức',
+      moduleIcon: 'article',
       isOpen: false,
       permissions: [
-        { key: 'ticket.view', name: 'Tra cứu thông tin vé', description: 'Tìm kiếm, kiểm tra trạng thái vé và lịch sử vé của khách hàng.' },
-        { key: 'ticket.sell', name: 'Đặt vé & Bán vé tại quầy', description: 'Tạm giữ ghế, nhập thông tin khách và thực hiện bán vé tại quầy hoặc hotline.' },
-        { key: 'ticket.cancel', name: 'Hủy vé & Đề xuất hoàn tiền', description: 'Hủy vé chờ khởi hành của khách, giải phóng ghế và gửi lệnh hoàn tiền tự động.' },
-        { key: 'ticket.update', name: 'Chỉnh sửa thông tin vé', description: 'Cập nhật họ tên, SĐT, Email, điểm đón/trả của vé (tối đa 2 lần).' }
+        { key: 'news', name: 'Quản lý tin tức', description: 'Cho phép đăng tải, xem, sửa và xóa các tin tức, bài viết khuyến mại trên website.' }
       ]
     },
     {
       moduleKey: 'dispatch',
-      moduleName: 'Điều phối Vận hành & Lộ trình',
+      moduleName: 'Quản lý điều hành',
       moduleIcon: 'engineering',
       isOpen: false,
       permissions: [
-        { key: 'route.view', name: 'Xem tuyến xe & điểm dừng', description: 'Tra cứu danh sách bến bãi, văn phòng và các tuyến đường cố định.' },
-        { key: 'route.manage', name: 'Quản lý tuyến & điểm đón/trả', description: 'Thêm mới, sửa thông tin, tọa độ Google Map bến xe, văn phòng và điểm trung chuyển.' },
-        { key: 'vehicle.manage', name: 'Quản lý phương tiện & sơ đồ ghế', description: 'Thêm mới xe, cập nhật tiện ích, hạn đăng kiểm bảo hiểm và cấu hình sơ đồ ghế.' },
-        { key: 'driver.manage', name: 'Quản lý tài xế & phụ xe', description: 'Theo dõi hồ sơ bằng lái, cảnh báo hết hạn và danh sách tài/phụ xe.' },
-        { key: 'trip.create', name: 'Tạo chuyến xe & lịch trình', description: 'Thiết lập ngày chạy, giờ khởi hành, giá vé cơ bản của các chuyến xe.' },
-        { key: 'trip.assign', name: 'Phân công xe & tài xế chạy', description: 'Gán phương tiện vật lý, tài xế chính, tài phụ và phụ xe cho từng chuyến đi.' },
-        { key: 'trip.update', name: 'Cập nhật chuyến xe & trạng thái', description: 'Thay đổi trạng thái chuyến (Còn chỗ, Hết chỗ, Đang chạy, Hủy) và cập nhật thời gian trạm dừng.' }
+        { key: 'dispatch', name: 'Quản lý điều hành', description: 'Thiết lập bến bãi, tuyến chạy, phân công phương tiện, gán tài xế phụ xe và cập nhật trạng thái chuyến xe.' }
       ]
     },
     {
-      moduleKey: 'customer_review',
-      moduleName: 'Khách hàng & Phản hồi đánh giá',
-      moduleIcon: 'people',
+      moduleKey: 'customer',
+      moduleName: 'Quản lý khách hàng',
+      moduleIcon: 'groups',
       isOpen: false,
       permissions: [
-        { key: 'customer.view', name: 'Xem thông tin khách hàng', description: 'Tra cứu thông tin tài khoản thành viên, lịch sử đi chuyến của khách hàng.' },
-        { key: 'review.view', name: 'Xem đánh giá & xếp hạng', description: 'Xem danh sách sao, ý kiến phản hồi của khách hàng sau khi hoàn thành chuyến đi.' },
-        { key: 'review.reply', name: 'Phản hồi đánh giá', description: 'Viết nội dung phản hồi chính thức của nhà xe đối với đánh giá của khách hàng.' },
-        { key: 'review.moderate', name: 'Kiểm duyệt đánh giá & từ khóa cấm', description: 'Ẩn đánh giá vi phạm, xử lý báo cáo đánh giá và quản lý danh sách từ khóa cấm.' }
+        { key: 'customer', name: 'Quản lý khách hàng', description: 'Tra cứu thông tin cá nhân khách hàng, danh sách đặt chỗ và lịch sử đi xe.' }
       ]
     },
     {
-      moduleKey: 'accounting',
-      moduleName: 'Kế toán & Tài chính',
-      moduleIcon: 'payments',
+      moduleKey: 'employee',
+      moduleName: 'Quản lý nhân viên',
+      moduleIcon: 'manage_accounts',
       isOpen: false,
       permissions: [
-        { key: 'finance.view', name: 'Xem doanh thu & giao dịch', description: 'Theo dõi log giao dịch thanh toán, hoàn tiền và đối soát doanh thu vé.' },
-        { key: 'finance.cost', name: 'Quản lý chi phí chuyến xe', description: 'Cập nhật các khoản chi thực tế phát sinh (xăng dầu, cầu đường, rửa xe, bến bãi) theo chuyến.' },
-        { key: 'report.view', name: 'Xem báo cáo thống kê', description: 'Xem các báo cáo chi tiết chuyến xe, tuyến xe, khách hàng, tài xế phụ xe và hoàn hủy.' },
-        { key: 'report.export', name: 'Xuất báo cáo thống kê', description: 'Truy xuất và tải biểu đồ doanh số, lượng khách dưới dạng Excel/PDF.' }
+        { key: 'employee', name: 'Quản lý nhân viên', description: 'Tạo tài khoản nhân viên, thiết lập vai trò, khóa tài khoản và phân quyền trực tiếp.' }
       ]
     },
     {
-      moduleKey: 'system_admin',
-      moduleName: 'Quản trị Hệ thống & Nhân sự',
-      moduleIcon: 'admin_panel_settings',
+      moduleKey: 'policy',
+      moduleName: 'Quản lý chính sách',
+      moduleIcon: 'policy',
       isOpen: false,
       permissions: [
-        { key: 'employee.view', name: 'Xem tài khoản nhân viên', description: 'Xem danh sách thông tin hồ sơ và phòng làm việc của nhân viên nội bộ.' },
-        { key: 'employee.manage', name: 'Quản lý tài khoản nhân sự', description: 'Tạo tài khoản mới, cập nhật hồ sơ, thay đổi trạng thái khóa/mở khóa tài khoản.' },
-        { key: 'role.manage', name: 'Thiết lập vai trò & phân quyền', description: 'Chỉnh sửa, cập nhật mẫu phân quyền RBAC và phân quyền trực tiếp cho tài khoản.' },
-        { key: 'system.log', name: 'Xem nhật ký hệ thống', description: 'Truy vết toàn bộ thao tác, địa chỉ IP của người dùng và nhân viên trên hệ thống.' }
+        { key: 'policy', name: 'Quản lý chính sách', description: 'Cập nhật điều khoản dịch vụ, chính sách bảo mật, quy định hủy vé và cơ chế hoạt động.' }
+      ]
+    },
+    {
+      moduleKey: 'blacklist',
+      moduleName: 'Quản lý từ khóa cấm',
+      moduleIcon: 'block',
+      isOpen: false,
+      permissions: [
+        { key: 'blacklist', name: 'Quản lý từ khóa cấm', description: 'Quản trị bộ lọc từ khóa cấm, kiểm duyệt ý kiến phản hồi và bình luận nhạy cảm.' }
+      ]
+    },
+    {
+      moduleKey: 'report',
+      moduleName: 'Báo cáo',
+      moduleIcon: 'bar_chart',
+      isOpen: false,
+      permissions: [
+        { key: 'report', name: 'Báo cáo', description: 'Theo dõi báo cáo chi tiết theo bến, doanh thu theo tuyến xe, đối soát tài chính và xuất dữ liệu thống kê.' }
+      ]
+    },
+    {
+      moduleKey: 'log',
+      moduleName: 'Quản lý nhật ký',
+      moduleIcon: 'history_edu',
+      isOpen: false,
+      permissions: [
+        { key: 'log', name: 'Quản lý nhật ký', description: 'Truy vết nhật ký hệ thống, lịch sử thao tác của các tài khoản quản trị và nhân viên.' }
       ]
     }
   ];
@@ -183,35 +188,29 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       key: 'admin',
       name: 'Quản trị viên',
       icon: 'admin_panel_settings',
-      description: 'Quản trị tài khoản nhân sự nội bộ, phân quyền, xem nhật ký hệ thống, quản lý và phản hồi đánh giá.',
-      permissions: [
-        'news.view', 'news.manage', 'news.create', 'news.update', 'news.delete',
-        'policy.view', 'policy.manage', 'policy.update',
-        'blacklist.view', 'blacklist.manage',
-        'customer.view', 'customer.manage', 'review.view', 'review.reply', 'review.moderate',
-        'staff.view', 'staff.manage', 'employee.view', 'employee.manage', 'role.manage', 'log.view', 'system.log'
-      ]
+      description: 'Quản trị tài khoản nhân sự nội bộ, phân quyền, xem nhật ký hệ thống, quản lý tin tức, từ khóa cấm.',
+      permissions: ['news', 'customer', 'employee', 'policy', 'blacklist', 'log']
     },
     {
       key: 'management',
       name: 'Ban Quản lý',
       icon: 'insights',
-      description: 'Theo dõi doanh thu giao dịch và xuất báo cáo thống kê hoạt động của nhà xe.',
-      permissions: ['finance.view', 'report.view', 'report.export']
+      description: 'Theo dõi báo cáo doanh thu giao dịch và xuất báo cáo thống kê hoạt động.',
+      permissions: ['report']
     },
     {
       key: 'dispatch',
       name: 'Nhân viên Điều phối',
       icon: 'engineering',
       description: 'Quản lý tuyến đường, điểm dừng, phương tiện, tài xế và trực tiếp gán lịch trình, phân ca chạy chuyến.',
-      permissions: ['route.view', 'route.manage', 'vehicle.view', 'vehicle.manage', 'driver.view', 'driver.manage', 'stop.view', 'stop.manage', 'trip.view', 'trip.create', 'trip.assign', 'trip.update']
+      permissions: ['dispatch']
     },
     {
       key: 'cskh',
       name: 'Nhân viên bán vé',
       icon: 'confirmation_number',
       description: 'Tư vấn, đặt giữ ghế hotline, bán vé trực tiếp, hỗ trợ đổi trả vé và tra cứu thông tin khách hàng.',
-      permissions: ['ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'ticket.manage', 'customer.view']
+      permissions: ['ticket', 'customer']
     }
   ];
 
@@ -234,9 +233,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       ghiChu: 'Theo dõi và quản trị kinh doanh chung của văn phòng.',
       trangThai: 'HoatDong',
       vaiTro: 'Ban quản lý',
-      permissions: [
-        'finance.view', 'report.view', 'report.export'
-      ]
+      permissions: ['report']
     },
     {
       id: 'CL363',
@@ -255,9 +252,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       ghiChu: 'Nhân viên bán vé chuyên nghiệp, xuất sắc ca chiều.',
       trangThai: 'HoatDong',
       vaiTro: 'Nhân viên bán vé',
-      permissions: [
-        'ticket.view', 'ticket.sell', 'ticket.cancel', 'ticket.update', 'ticket.manage', 'customer.view'
-      ]
+      permissions: ['ticket', 'customer']
     },
     {
       id: 'CL330',
@@ -276,12 +271,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       ghiChu: 'Quản trị viên hệ thống cấp cao, phụ trách hạ tầng kỹ thuật.',
       trangThai: 'HoatDong',
       vaiTro: 'Quản trị viên',
-      permissions: [
-        'news.view', 'news.manage', 'news.create', 'news.update', 'news.delete', 'policy.view', 'policy.manage', 'policy.update',
-        'blacklist.view', 'blacklist.manage',
-        'customer.view', 'customer.manage', 'review.view', 'review.reply', 'review.moderate',
-        'staff.view', 'staff.manage', 'employee.view', 'employee.manage', 'role.manage', 'log.view', 'system.log'
-      ]
+      permissions: ['news', 'customer', 'employee', 'policy', 'blacklist', 'log']
     }
   ];
 
@@ -810,6 +800,12 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
           this.formErrors['tenTruyCap'] = 'Tên truy cập từ 3-20 ký tự, chỉ gồm chữ, số và dấu gạch dưới!';
         } else {
           delete this.formErrors['tenTruyCap'];
+          // Auto populate corporate email if in creation mode
+          if (!this.isEditMode) {
+            this.formModel.email = `${this.formModel.tenTruyCap.trim().toLowerCase()}@txpbus.vn`;
+            // Trigger validation for email field too
+            this.validateField('email');
+          }
         }
       }
     }

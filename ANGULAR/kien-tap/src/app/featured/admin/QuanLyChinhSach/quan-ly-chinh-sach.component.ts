@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChinhSachService } from '../../../core/services/chinh-sach.service';
 import { HttpClientModule } from '@angular/common/http';
+import { AdminAuthService } from '../../../core/services/admin-auth.service';
 
 interface PolicyMilestone {
   hoursBeforeDeparture: number;
@@ -123,9 +124,16 @@ export class QuanLyChinhSachComponent implements OnInit {
   constructor(
     private chinhSachService: ChinhSachService,
     private cdr: ChangeDetectorRef,
+    private adminAuthService: AdminAuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
+  hasPermission(permission: string): boolean {
+    const user = this.adminAuthService.currentUserValue;
+    if (!user) return false;
+    return !!user.Quyen?.includes(permission);
   }
 
   closeConfirm() {

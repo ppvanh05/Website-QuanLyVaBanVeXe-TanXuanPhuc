@@ -68,6 +68,21 @@
               <span class="material-icons">bookmark_added</span>
               XÁC NHẬN ĐẶT GIỮ CHỖ
             </button>
+            <!-- Phân cách -->
+            <div class="flex items-center gap-3">
+              <div class="flex-1 h-px bg-outline-variant/30"></div>
+              <span class="text-label-sm text-outline font-medium">hoặc</span>
+              <div class="flex-1 h-px bg-outline-variant/30"></div>
+            </div>
+            <!-- Nút Giữ chỗ -->
+            <button (click)="holdSeat()" [disabled]="isHoldingSeat"
+              class="w-full px-8 py-3 border-2 border-primary text-primary font-bold rounded-xl hover:bg-primary-light active:scale-98 transition-all flex items-center justify-center gap-2 text-body-md disabled:opacity-60 disabled:cursor-not-allowed">
+              <span class="material-icons">bookmark_added</span>
+              {{ isHoldingSeat ? 'ĐANG GIỮ CHỖ...' : 'GIỮ CHỖ (CHỜ THANH TOÁN)' }}
+            </button>
+            <p class="text-label-sm text-on-surface-variant text-center">
+              Vé sẽ được giữ với trạng thái <strong>Chờ thanh toán</strong>. Nhân viên thu tiền sau.
+            </p>
           </div>
         </div>
 

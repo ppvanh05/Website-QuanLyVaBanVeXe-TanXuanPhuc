@@ -496,22 +496,15 @@
                       <div 
                         *ngIf="isPermissionVisible(perm)" 
                         class="permission-item-card" 
-                        [class.checked]="isPermissionChecked(perm.key)">
+                        [class.checked]="isPermissionChecked(perm.key)"
+                        style="padding: 12px 16px;">
                         
-                        <label class="checkbox-container">
-                          <input 
-                            type="checkbox" 
-                            [checked]="isPermissionChecked(perm.key)" 
-                            (change)="togglePermission(perm.key, $event)" />
-                          <span class="checkmark"></span>
-                          
-                          <div class="perm-card-details">
-                            <div class="perm-name-row">
-                              <strong class="perm-name">{{ perm.name }}</strong>
-                            </div>
-                            <p class="perm-description-text">{{ perm.description }}</p>
+                        <div class="perm-card-details" style="margin-left: 0;">
+                          <div class="perm-name-row" style="margin-bottom: 4px;">
+                            <strong class="perm-name" style="color: var(--text-primary);">{{ perm.name }}</strong>
                           </div>
-                        </label>
+                          <p class="perm-description-text" style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">{{ perm.description }}</p>
+                        </div>
                       </div>
                     </ng-container>
                   </div>

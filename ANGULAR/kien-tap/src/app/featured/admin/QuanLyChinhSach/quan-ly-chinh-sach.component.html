@@ -85,7 +85,7 @@
     <!-- Actions Row -->
     <div class="actions-row">
       <div class="dropdown-wrapper">
-        <button class="btn-add-policy" (click)="toggleAddDropdown($event)">
+        <button *ngIf="hasPermission('policy.update')" class="btn-add-policy" (click)="toggleAddDropdown($event)">
           <span class="material-icons">add</span>
           Thêm chính sách mới
           <span class="material-icons caret">arrow_drop_down</span>
@@ -155,7 +155,7 @@
               </span>
             </td>
             <td class="text-center action-col">
-              <button class="btn-edit" (click)="openEditModal(policy)" title="Chỉnh sửa chính sách">
+              <button *ngIf="hasPermission('policy.update')" class="btn-edit" (click)="openEditModal(policy)" title="Chỉnh sửa chính sách">
                 <span class="material-icons">edit_note</span>
               </button>
             </td>
@@ -442,7 +442,7 @@
       <div class="modal-footer">
         <!-- Lock/Unlock status button on the left (Only shown in edit mode) -->
         <button 
-          *ngIf="isEditing"
+          *ngIf="isEditing && hasPermission('policy.update')"
           class="btn-status-toggle" 
           [class.lock-mode]="formModel.status === 'DangApDung'"
           [class.unlock-mode]="formModel.status === 'VoHieuHoa'"
@@ -453,7 +453,7 @@
 
         <div class="footer-actions-right">
           <button class="btn-modal-cancel" (click)="closeModal()">Hủy</button>
-          <button class="btn-modal-save" (click)="savePolicy()">Lưu</button>
+          <button *ngIf="hasPermission('policy.update')" class="btn-modal-save" (click)="savePolicy()">Lưu</button>
         </div>
       </div>
 

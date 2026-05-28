@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TinTucService } from '../../../core/services/tin-tuc.service';
 import { NhatKyService } from '../../../core/services/nhat-ky.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AdminAuthService } from '../../../core/services/admin-auth.service';
 
 export interface TinTuc {
   maTinTuc: string;
@@ -49,9 +50,16 @@ export class QuanLyTinTucComponent implements OnInit {
     private readonly nhatKyService: NhatKyService,
     private sanitizer: DomSanitizer,
     private readonly cdr: ChangeDetectorRef,
+    private readonly adminAuthService: AdminAuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+
+  hasPermission(permission: string): boolean {
+    const user = this.adminAuthService.currentUserValue;
+    if (!user) return false;
+    return !!user.Quyen?.includes(permission);
   }
 
   getSafeHtml(html: string): SafeHtml {

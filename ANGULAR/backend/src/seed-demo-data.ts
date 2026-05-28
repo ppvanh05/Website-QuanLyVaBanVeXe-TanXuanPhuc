@@ -653,6 +653,76 @@ async function seedContentAndLogs() {
     },
   });
 
+  await prisma.cHINH_SACH.upsert({
+    where: { MaChinhSach_ND: 'CS100012' },
+    update: {
+      TieuDe: 'Trẻ em dưới 6 tuổi và phụ nữ có thai',
+      LoaiChinhSach: 'ChinhSachKhac',
+      NoiDung: `
+        <ul>
+          <li>Trẻ em <strong>dưới 6 tuổi</strong> hoặc cao từ 1.3m trở xuống, nặng dưới 30kg không phải mua vé. Mỗi người lớn chỉ được đi kèm tối đa 01 trẻ em.</li>
+          <li>Trẻ em <strong>từ 6 tuổi trở lên</strong> hoặc vượt quá các tiêu chuẩn trên được tính như người lớn và cần đặt Phòng Đôi.</li>
+          <li><strong>Lưu ý:</strong> Nhà xe sẽ kiểm tra độ tuổi/chiều cao của bé khi lên xe. Nếu không thỏa điều kiện phòng đơn, quý khách vui lòng phụ thu nâng cấp lên Phòng Đôi.</li>
+          <li><strong>Phụ nữ có thai:</strong> Cần đảm bảo và tự chịu trách nhiệm về sức khỏe của bản thân trong suốt quá trình di chuyển cùng nhà xe.</li>
+        </ul>
+      `,
+      NgayApDung: date('2026-05-01'),
+      TrangThai: 'DangApDung',
+      MaQuanTriVien: qtvId,
+    },
+    create: {
+      MaChinhSach_ND: 'CS100012',
+      TieuDe: 'Trẻ em dưới 6 tuổi và phụ nữ có thai',
+      LoaiChinhSach: 'ChinhSachKhac',
+      NoiDung: `
+        <ul>
+          <li>Trẻ em <strong>dưới 6 tuổi</strong> hoặc cao từ 1.3m trở xuống, nặng dưới 30kg không phải mua vé. Mỗi người lớn chỉ được đi kèm tối đa 01 trẻ em.</li>
+          <li>Trẻ em <strong>từ 6 tuổi trở lên</strong> hoặc vượt quá các tiêu chuẩn trên được tính như người lớn và cần đặt Phòng Đôi.</li>
+          <li><strong>Lưu ý:</strong> Nhà xe sẽ kiểm tra độ tuổi/chiều cao của bé khi lên xe. Nếu không thỏa điều kiện phòng đơn, quý khách vui lòng phụ thu nâng cấp lên Phòng Đôi.</li>
+          <li><strong>Phụ nữ có thai:</strong> Cần đảm bảo và tự chịu trách nhiệm về sức khỏe của bản thân trong suốt quá trình di chuyển cùng nhà xe.</li>
+        </ul>
+      `,
+      NgayApDung: date('2026-05-01'),
+      TrangThai: 'DangApDung',
+      MaQuanTriVien: qtvId,
+    },
+  });
+
+  await prisma.cHINH_SACH.upsert({
+    where: { MaChinhSach_ND: 'CS100013' },
+    update: {
+      TieuDe: 'Yêu cầu khi lên xe',
+      LoaiChinhSach: 'ChinhSachKhac',
+      NoiDung: `
+        <ul>
+          <li><strong>Thời gian có mặt:</strong> Quý khách vui lòng có mặt tại điểm đón trước giờ khởi hành 30 phút để làm thủ tục. Ngày Lễ/Tết cần có mặt trước 60 phút.</li>
+          <li><strong>Thủ tục lên xe:</strong> Xuất trình thông tin vé được gửi qua SMS/Zalo/Email/Website hoặc liên hệ quầy vé để nhận thông tin vé trước khi lên xe.</li>
+          <li><strong>Hành lý xách tay:</strong> Trọng lượng tối đa 20kg/khách.</li>
+          <li><strong>Quy định chung:</strong> Không mang động vật/thú cưng lên xe; không mang thức ăn, đồ uống có mùi nặng vào cabin; nghiêm cấm hút thuốc, sử dụng chất kích thích hoặc mang vật liệu dễ cháy nổ lên xe.</li>
+        </ul>
+      `,
+      NgayApDung: date('2026-05-01'),
+      TrangThai: 'DangApDung',
+      MaQuanTriVien: qtvId,
+    },
+    create: {
+      MaChinhSach_ND: 'CS100013',
+      TieuDe: 'Yêu cầu khi lên xe',
+      LoaiChinhSach: 'ChinhSachKhac',
+      NoiDung: `
+        <ul>
+          <li><strong>Thời gian có mặt:</strong> Quý khách vui lòng có mặt tại điểm đón trước giờ khởi hành 30 phút để làm thủ tục. Ngày Lễ/Tết cần có mặt trước 60 phút.</li>
+          <li><strong>Thủ tục lên xe:</strong> Xuất trình thông tin vé được gửi qua SMS/Zalo/Email/Website hoặc liên hệ quầy vé để nhận thông tin vé trước khi lên xe.</li>
+          <li><strong>Hành lý xách tay:</strong> Trọng lượng tối đa 20kg/khách.</li>
+          <li><strong>Quy định chung:</strong> Không mang động vật/thú cưng lên xe; không mang thức ăn, đồ uống có mùi nặng vào cabin; nghiêm cấm hút thuốc, sử dụng chất kích thích hoặc mang vật liệu dễ cháy nổ lên xe.</li>
+        </ul>
+      `,
+      NgayApDung: date('2026-05-01'),
+      TrangThai: 'DangApDung',
+      MaQuanTriVien: qtvId,
+    },
+  });
+
   await prisma.tIN_TUC.upsert({
     where: { MaTinTuc: 'TT100011' },
     update: {

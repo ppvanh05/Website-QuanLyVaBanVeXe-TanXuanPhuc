@@ -480,6 +480,25 @@
   gap: 10px;
 }
 
+.profile-password-trigger {
+  width: min(180px, 100%);
+  min-height: 44px;
+  border: 1px solid rgba(0, 155, 161, 0.25);
+  border-radius: 12px;
+  background: rgba(0, 155, 161, 0.08);
+  color: var(--primary-color);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-password-trigger:hover {
+  background: rgba(0, 155, 161, 0.14);
+  border-color: rgba(0, 155, 161, 0.42);
+  transform: translateY(-1px);
+}
+
 .profile-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -499,7 +518,7 @@
   grid-column: 1 / -1;
 }
 
-.profile-form label span {
+.profile-form label > span {
   font-size: 13px;
   font-weight: 700;
   color: #334155;
@@ -613,6 +632,169 @@
 .profile-primary-btn:disabled {
   opacity: 0.72;
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.password-modal-backdrop {
+  z-index: 2600;
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.password-modal {
+  width: min(440px, 100%);
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 18px;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.28);
+  overflow: hidden;
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.password-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.password-modal-header h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.password-modal-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.password-modal .profile-close-btn {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.password-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+}
+
+.password-modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.password-modal-form label > span {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.password-input-row {
+  position: relative;
+}
+
+.password-input-row input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 76px 12px 16px;
+  background: #f8fafc;
+  color: #0f172a;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.password-input-row input:focus {
+  background: #ffffff;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(0, 155, 161, 0.16);
+}
+
+.password-modal-form label.invalid input {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 58px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(0, 155, 161, 0.1);
+  color: var(--primary-color);
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  background: rgba(0, 155, 161, 0.18);
+}
+
+.password-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.profile-password-submit {
+  border: none;
+  min-height: 48px;
+  border-radius: 12px;
+  padding: 0 22px;
+  background: linear-gradient(135deg, var(--secondary-color), #d95d12);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(243, 112, 33, 0.25);
+}
+
+.profile-password-submit:hover:not([disabled]) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(243, 112, 33, 0.34);
+}
+
+.profile-password-submit[disabled] {
+  background: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Scrollbar for modal body */
+.profile-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+.profile-modal-body::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+.profile-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.profile-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 @media (max-width: 760px) {
@@ -628,8 +810,17 @@
     flex-direction: column-reverse;
   }
 
+  .password-modal {
+    width: 100%;
+  }
+
+  .password-modal-actions {
+    flex-direction: column-reverse;
+  }
+
   .profile-secondary-btn,
-  .profile-primary-btn {
+  .profile-primary-btn,
+  .profile-password-submit {
     width: 100%;
   }
 }
