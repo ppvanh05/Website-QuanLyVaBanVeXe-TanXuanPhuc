@@ -212,6 +212,7 @@ export class QuanLyVeController {
       maDiemDon?: string;
       maDiemTra?: string;
       phuongThucThanhToan: string;
+      trangThai?: string;
       ghiChu?: string;
     },
   ) {

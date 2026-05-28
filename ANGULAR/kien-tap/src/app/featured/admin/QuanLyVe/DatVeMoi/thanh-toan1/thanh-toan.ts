@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { ChinhSachService } from '../../../../../core/services/chinh-sach.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-thanh-toan',
@@ -60,6 +63,13 @@ export class ThanhToan implements OnInit, OnDestroy {
   // Hold seat state
   isHoldingSeat: boolean = false;
 
+  // Policies states
+  isPoliciesLoading: boolean = false;
+  cancelPolicies: any[] = [];
+  childrenPregnancyPolicy: any = null;
+  boardingRequirementPolicy: any = null;
+  generalPolicies: any[] = [];
+
   paymentMethods = [
     { id: 'vietqr', name: 'Thanh toán qua VietQR', icon: '/asset/images/customer/VietQR_Logo.png', badge: '' },
     { id: 'momo', name: 'Ví MoMo', icon: '/asset/images/customer/MoMo_Logo.png', badge: '' },
@@ -74,6 +84,7 @@ export class ThanhToan implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
+    private chinhSachService: ChinhSachService,
   ) {}
 
   // Selected date from booking context
@@ -81,6 +92,7 @@ export class ThanhToan implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('ThanhToan ngOnInit called. window type:', typeof window);
+    this.loadPolicies();
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('final_booking');
       console.log('ThanhToan final_booking in localStorage:', saved);
@@ -315,7 +327,7 @@ export class ThanhToan implements OnInit, OnDestroy {
           ...this.buildCreateOrderPayload(),
           phuongThucThanhToan: 'TienMat',
           ghiChu: 'Nhan vien giu cho - cho thu tien mat sau',
-          trangThai: 'ChuaThanhToan',
+          trangThai: 'ChoThanhToan',
         };
 
         if (!payload.maLichTrinh || !payload.maGheChuyenList.length) {
@@ -434,5 +446,73 @@ export class ThanhToan implements OnInit, OnDestroy {
   getPaymentLogo(): string {
     const selected = this.paymentMethods.find(m => m.id === this.selectedPayment);
     return selected ? selected.icon : '';
+  }
+
+  confirmCashReceived() {
+    this.showConfirm('Xác nhận đã nhận tiền mặt từ khách hàng và phát hành vé trực tiếp?', () => {
+      const payload = {
+        ...this.buildCreateOrderPayload(),
+        trangThai: 'ChoKhoiHanh'
+      };
+      if (!payload.maLichTrinh || !payload.maGheChuyenList.length) {
+        this.showAlert('Thiếu thông tin lịch trình hoặc ghế. Vui lòng chọn lại chuyến xe.', 'warning');
+        return;
+      }
+
+      this.http.post<any>(`${this.apiBaseUrl}/quan-ly-ve/tao-don-hang`, payload).subscribe({
+        next: result => {
+          this.successOrder = this.mapSuccessOrderFromApi(result);
+          this.showSuccessModal = true;
+          this.cdr.detectChanges();
+        },
+        error: error => {
+          const message = error?.error?.message || 'Không thể xác nhận thu tiền mặt.';
+          this.showAlert(message, 'error');
+          this.cdr.detectChanges();
+        },
+      });
+    });
+  }
+
+  loadPolicies() {
+    this.isPoliciesLoading = true;
+    forkJoin({
+      general: this.chinhSachService.getAllChinhSach().pipe(catchError(() => of([]))),
+      cancel: this.chinhSachService.getAllChinhSachHuyVe().pipe(catchError(() => of([])))
+    }).subscribe(({ general, cancel }) => {
+      this.generalPolicies = (general as any[]).filter((p: any) => p.TrangThai === 'DangApDung');
+      this.childrenPregnancyPolicy = this.findGeneralPolicy(
+        this.generalPolicies,
+        ['CS100012'],
+        ['tre em', 'phu nu co thai']
+      );
+      this.boardingRequirementPolicy = this.findGeneralPolicy(
+        this.generalPolicies,
+        ['CS100013'],
+        ['yeu cau khi len xe', 'boarding']
+      );
+      this.cancelPolicies = (cancel as any[])
+        .filter((cp: any) => cp.TrangThai === 'DangApDung')
+        .sort((a: any, b: any) => b.GioiHanGioTruocKhoiHanh - a.GioiHanGioTruocKhoiHanh);
+      this.isPoliciesLoading = false;
+      this.cdr.detectChanges();
+    });
+  }
+
+  private findGeneralPolicy(policies: any[], ids: string[], keywords: string[]): any | null {
+    const byId = policies.find((policy: any) => ids.includes(policy.MaChinhSach_ND));
+    if (byId) return byId;
+
+    return policies.find((policy: any) => {
+      const title = this.normalizePolicyText(policy.TieuDe ?? '');
+      return keywords.every(keyword => title.includes(this.normalizePolicyText(keyword)));
+    }) ?? null;
+  }
+
+  private normalizePolicyText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 }

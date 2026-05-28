@@ -94,7 +94,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           LoaiTaiKhoan: 'BanQuanLy',
           NOT: {
             Quyen: {
-              has: 'report.view',
+              has: 'report',
             },
           },
         },
@@ -108,7 +108,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         await this.nHAN_VIEN.update({
           where: { MaNhanVien: account.MaNhanVien },
           data: {
-            Quyen: [...new Set([...(account.Quyen ?? []), 'report.view'])],
+            Quyen: [...new Set([...(account.Quyen ?? []), 'report'])],
           },
         });
       }

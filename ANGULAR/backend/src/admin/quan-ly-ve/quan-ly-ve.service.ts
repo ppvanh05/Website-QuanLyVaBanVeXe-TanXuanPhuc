@@ -570,6 +570,7 @@ export class QuanLyVeService {
     maDiemDon?: string;
     maDiemTra?: string;
     phuongThucThanhToan: string;
+    trangThai?: string;
     ghiChu?: string;
   }) {
     if (!data.maLichTrinh) throw new BadRequestException('Thiếu mã lịch trình.');
@@ -599,7 +600,7 @@ export class QuanLyVeService {
     });
 
     const isCashPayment = data.phuongThucThanhToan === 'TienMat';
-    const initialStatus = isCashPayment ? 'ChoThanhToan' : 'ChoKhoiHanh';
+    const initialStatus = data.trangThai || (isCashPayment ? 'ChoThanhToan' : 'ChoKhoiHanh');
 
     const donHang = await this.prisma.dON_HANG.create({
       data: {
@@ -648,7 +649,7 @@ export class QuanLyVeService {
       });
     }
 
-    if (isCashPayment) {
+    if (isCashPayment && initialStatus === 'ChoKhoiHanh') {
       const maGiaoDich = this.formatCode('GD', 6, await this.nextGiaoDichNumber());
       await this.prisma.tHANH_TOAN.create({
         data: {
