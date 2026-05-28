@@ -546,82 +546,90 @@
           <!-- Transit/Pickup/Dropoff Points Selection -->
           <div class="transit-section">
             
-            <!-- Dòng 1: Điểm đón trả -->
+            <!-- Khu vực Điểm đón trả -->
             <div class="transit-row-container">
-              <!-- Headers cho Dòng 1 -->
+              <!-- Headers cho Điểm đón trả -->
               <div class="transit-row-headers">
                 <div class="transit-header-col col-point" style="font-weight: 700;">Điểm đón trả <span class="required">*</span></div>
                 <div class="transit-header-col col-address" style="font-weight: 700;">Địa điểm</div>
                 <div class="transit-header-col col-expected-time" style="font-weight: 700; justify-content: center;">Thời gian đến dự kiến</div>
                 <div class="transit-header-col col-date" style="font-weight: 700;">Ngày</div>
               </div>
-              <!-- Inputs cho Dòng 1 -->
-              <div class="transit-row-inputs">
-                <div class="transit-col col-point">
-                  <app-custom-select [(value)]="currentSchedule.pickupPoint" [options]="pickupPointOptions"
-                    placeholder="Chọn điểm đón"></app-custom-select>
-                </div>
-                <div class="transit-col col-address">
-                  <input type="text" [value]="getPointAddress(currentSchedule.pickupPoint)" readonly
-                    placeholder="Địa chỉ tự động điền" class="disabled-input">
-                </div>
-                <div class="transit-col col-expected-time">
-                  <div class="time-split-inputs mini">
-                    <div class="time-input-wrapper">
-                      <input type="number" min="0" max="23" step="1" [(ngModel)]="currentSchedule.pickupHour"
-                        class="time-number-input" placeholder="08">
-                      <span class="time-unit">giờ</span>
-                    </div>
-                    <span class="time-colon">:</span>
-                    <div class="time-input-wrapper">
-                      <input type="number" min="0" max="59" step="1" [(ngModel)]="currentSchedule.pickupMinute"
-                        class="time-number-input" placeholder="00">
-                      <span class="time-unit">phút</span>
+              
+              <!-- Danh sách dòng nhập cho Điểm đón trả -->
+              <div class="transit-rows-list" *ngIf="currentSchedule.pickupPoints">
+                <div class="transit-row-inputs" *ngFor="let item of currentSchedule.pickupPoints; let idx = index;">
+                  <div class="transit-col col-point">
+                    <app-custom-select [(value)]="item.point" [options]="pickupPointOptions"
+                      (valueChange)="onPickupPointChange(idx)"
+                      placeholder="Chọn điểm đón"></app-custom-select>
+                  </div>
+                  <div class="transit-col col-address">
+                    <input type="text" [value]="getPointAddress(item.point)" readonly
+                      placeholder="Địa chỉ tự động điền" class="disabled-input">
+                  </div>
+                  <div class="transit-col col-expected-time">
+                    <div class="time-split-inputs mini">
+                      <div class="time-input-wrapper">
+                        <input type="number" min="0" max="23" step="1" [(ngModel)]="item.hour"
+                          class="time-number-input" placeholder="08">
+                        <span class="time-unit">giờ</span>
+                      </div>
+                      <span class="time-colon">:</span>
+                      <div class="time-input-wrapper">
+                        <input type="number" min="0" max="59" step="1" [(ngModel)]="item.minute"
+                          class="time-number-input" placeholder="00">
+                        <span class="time-unit">phút</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div class="transit-col col-date">
-                  <input type="text" [(ngModel)]="currentSchedule.pickupDate" placeholder="dd/mm/yyyy" class="transit-date-input">
+                  <div class="transit-col col-date">
+                    <input type="text" [(ngModel)]="item.date" placeholder="dd/mm/yyyy" class="transit-date-input">
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Dòng 2: Điểm dừng (Hiển thị tự động khi chọn được điểm đón trả) -->
-            <div class="transit-row-container" *ngIf="currentSchedule.pickupPoint">
-              <!-- Headers cho Dòng 2 -->
+            <!-- Khu vực Điểm dừng -->
+            <div class="transit-row-container">
+              <!-- Headers cho Điểm dừng -->
               <div class="transit-row-headers">
                 <div class="transit-header-col col-point" style="font-weight: 700;">Điểm dừng <span class="required">*</span></div>
                 <div class="transit-header-col col-address" style="font-weight: 700;">Địa điểm</div>
                 <div class="transit-header-col col-expected-time" style="font-weight: 700; justify-content: center;">Thời gian đến dự kiến</div>
                 <div class="transit-header-col col-date" style="font-weight: 700;">Ngày</div>
               </div>
-              <!-- Inputs cho Dòng 2 -->
-              <div class="transit-row-inputs">
-                <div class="transit-col col-point">
-                  <app-custom-select [(value)]="currentSchedule.dropoffPoint" [options]="dropoffPointOptions"
-                    placeholder="Chọn điểm dừng"></app-custom-select>
-                </div>
-                <div class="transit-col col-address">
-                  <input type="text" [value]="getPointAddress(currentSchedule.dropoffPoint)" readonly
-                    placeholder="Địa chỉ tự động điền" class="disabled-input">
-                </div>
-                <div class="transit-col col-expected-time">
-                  <div class="time-split-inputs mini">
-                    <div class="time-input-wrapper">
-                      <input type="number" min="0" max="23" step="1" [(ngModel)]="currentSchedule.dropoffHour"
-                        class="time-number-input" placeholder="17">
-                      <span class="time-unit">giờ</span>
-                    </div>
-                    <span class="time-colon">:</span>
-                    <div class="time-input-wrapper">
-                      <input type="number" min="0" max="59" step="1" [(ngModel)]="currentSchedule.dropoffMinute"
-                        class="time-number-input" placeholder="00">
-                      <span class="time-unit">phút</span>
+              
+              <!-- Danh sách dòng nhập cho Điểm dừng -->
+              <div class="transit-rows-list" *ngIf="currentSchedule.dropoffPoints">
+                <div class="transit-row-inputs" *ngFor="let item of currentSchedule.dropoffPoints; let idx = index;">
+                  <div class="transit-col col-point">
+                    <app-custom-select [(value)]="item.point" [options]="dropoffPointOptions"
+                      (valueChange)="onDropoffPointChange(idx)"
+                      placeholder="Chọn điểm dừng"></app-custom-select>
+                  </div>
+                  <div class="transit-col col-address">
+                    <input type="text" [value]="getPointAddress(item.point)" readonly
+                      placeholder="Địa chỉ tự động điền" class="disabled-input">
+                  </div>
+                  <div class="transit-col col-expected-time">
+                    <div class="time-split-inputs mini">
+                      <div class="time-input-wrapper">
+                        <input type="number" min="0" max="23" step="1" [(ngModel)]="item.hour"
+                          class="time-number-input" placeholder="17">
+                        <span class="time-unit">giờ</span>
+                      </div>
+                      <span class="time-colon">:</span>
+                      <div class="time-input-wrapper">
+                        <input type="number" min="0" max="59" step="1" [(ngModel)]="item.minute"
+                          class="time-number-input" placeholder="00">
+                        <span class="time-unit">phút</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div class="transit-col col-date">
-                  <input type="text" [(ngModel)]="currentSchedule.dropoffDate" placeholder="dd/mm/yyyy" class="transit-date-input">
+                  <div class="transit-col col-date">
+                    <input type="text" [(ngModel)]="item.date" placeholder="dd/mm/yyyy" class="transit-date-input">
+                  </div>
                 </div>
               </div>
             </div>

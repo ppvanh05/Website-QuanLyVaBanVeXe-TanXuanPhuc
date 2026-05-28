@@ -47,11 +47,13 @@ interface Schedule {
   pickupHour?: number;
   pickupMinute?: number;
   pickupDate?: string;
+  pickupPoints?: { point: string; hour?: number; minute?: number; date?: string; }[];
   dropoffType: string;
   dropoffPoint: string;
   dropoffHour?: number;
   dropoffMinute?: number;
   dropoffDate?: string;
+  dropoffPoints?: { point: string; hour?: number; minute?: number; date?: string; }[];
 
   basePrice?: number;
 
@@ -556,11 +558,27 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupHour: 8,
       pickupMinute: 0,
       pickupDate: this.formatDate(new Date()),
+      pickupPoints: [
+        {
+          point: '',
+          hour: 8,
+          minute: 0,
+          date: this.formatDate(new Date())
+        }
+      ],
       dropoffType: 'Không trung chuyển trả',
       dropoffPoint: '',
       dropoffHour: 17,
       dropoffMinute: 0,
       dropoffDate: this.formatDate(new Date()),
+      dropoffPoints: [
+        {
+          point: '',
+          hour: 17,
+          minute: 0,
+          date: this.formatDate(new Date())
+        }
+      ],
       basePrice: undefined,
       selectedSeats: [],
       seatGroups: []
@@ -585,9 +603,29 @@ export class QuanLyLichTrinhComponent implements OnInit {
       pickupHour: schedule.pickupHour || 8,
       pickupMinute: schedule.pickupMinute || 0,
       pickupDate: schedule.pickupDate || schedule.departureDate || this.formatDate(new Date()),
+      pickupPoints: schedule.pickupPoints && schedule.pickupPoints.length > 0
+        ? JSON.parse(JSON.stringify(schedule.pickupPoints))
+        : [
+            {
+              point: schedule.pickupPoint || '',
+              hour: schedule.pickupHour || 8,
+              minute: schedule.pickupMinute || 0,
+              date: schedule.pickupDate || schedule.departureDate || this.formatDate(new Date())
+            }
+          ],
       dropoffHour: schedule.dropoffHour || 17,
       dropoffMinute: schedule.dropoffMinute || 0,
-      dropoffDate: schedule.dropoffDate || schedule.arrivalDate || schedule.departureDate || this.formatDate(new Date())
+      dropoffDate: schedule.dropoffDate || schedule.arrivalDate || schedule.departureDate || this.formatDate(new Date()),
+      dropoffPoints: schedule.dropoffPoints && schedule.dropoffPoints.length > 0
+        ? JSON.parse(JSON.stringify(schedule.dropoffPoints))
+        : [
+            {
+              point: schedule.dropoffPoint || '',
+              hour: schedule.dropoffHour || 17,
+              minute: schedule.dropoffMinute || 0,
+              date: schedule.dropoffDate || schedule.arrivalDate || schedule.departureDate || this.formatDate(new Date())
+            }
+          ]
     };
     this.generateSeatLayout();
     this.activeSeatGroupIndex = this.currentSchedule.seatGroups && this.currentSchedule.seatGroups.length > 0 ? 0 : null;
@@ -812,6 +850,32 @@ export class QuanLyLichTrinhComponent implements OnInit {
     if (details) {
       this.currentSchedule.totalTime = details.time;
       this.calculateArrivalTime();
+    }
+  }
+
+  onPickupPointChange(index: number) {
+    if (!this.currentSchedule.pickupPoints) return;
+    const points = this.currentSchedule.pickupPoints;
+    if (index === points.length - 1 && points[index].point) {
+      points.push({
+        point: '',
+        hour: 8,
+        minute: 0,
+        date: this.formatDate(new Date())
+      });
+    }
+  }
+
+  onDropoffPointChange(index: number) {
+    if (!this.currentSchedule.dropoffPoints) return;
+    const points = this.currentSchedule.dropoffPoints;
+    if (index === points.length - 1 && points[index].point) {
+      points.push({
+        point: '',
+        hour: 17,
+        minute: 0,
+        date: this.formatDate(new Date())
+      });
     }
   }
 
