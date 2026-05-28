@@ -463,159 +463,165 @@ export class QuanLyLichTrinhComponent implements OnInit {
   }
 
   refreshSchedules() {
+    const todayStr = this.formatDate(new Date());
+    const getMockSchedules = (): Schedule[] => [
+      {
+        id: 1,
+        routeName: 'Hà Nội - SaPa',
+        vehiclePlate: '15B-888.99',
+        vehicleName: 'Limousine 22 phòng',
+        vehicleSeats: 22,
+        driverName: 'Nguyễn Văn Hùng',
+        assistantName: 'Lê Văn Nam',
+        departureDate: todayStr,
+        departureTime: '08:00',
+        status: 'ChoKhoiHanh',
+        createdAt: new Date(),
+        autoRun: false,
+        allowSeatSelection: true,
+        totalTime: '5h 30p',
+        arrivalTime: '13:30',
+        frequency: 'Hàng ngày',
+        openValue: 10,
+        openUnit: 'day',
+        closeValue: 30,
+        closeUnit: 'minute',
+        holdValue: 15,
+        holdUnit: 'minute',
+        pickupType: 'Không trung chuyển đón',
+        pickupPoint: '',
+        pickupHour: 8,
+        pickupMinute: 0,
+        pickupDate: todayStr,
+        pickupPoints: [
+          {
+            point: 'Bến xe Mỹ Đình',
+            hour: 8,
+            minute: 0,
+            date: todayStr
+          }
+        ],
+        dropoffType: 'Không trung chuyển trả',
+        dropoffPoint: '',
+        dropoffHour: 13,
+        dropoffMinute: 30,
+        dropoffDate: todayStr,
+        dropoffPoints: [
+          {
+            point: 'Bến xe SaPa',
+            hour: 13,
+            minute: 30,
+            date: todayStr
+          }
+        ],
+        basePrice: 250000,
+        selectedSeats: [],
+        seatGroups: []
+      },
+      {
+        id: 2,
+        routeName: 'Hà Nội - Hải Phòng',
+        vehiclePlate: '29B-123.45',
+        vehicleName: 'Xe giường nằm 36 chỗ',
+        vehicleSeats: 36,
+        driverName: 'Trần Thanh Sơn',
+        assistantName: '',
+        departureDate: todayStr,
+        departureTime: '10:00',
+        status: 'DangChay',
+        createdAt: new Date(),
+        autoRun: false,
+        allowSeatSelection: true,
+        totalTime: '2h 0p',
+        arrivalTime: '12:00',
+        frequency: 'Hàng ngày',
+        openValue: 10,
+        openUnit: 'day',
+        closeValue: 30,
+        closeUnit: 'minute',
+        holdValue: 15,
+        holdUnit: 'minute',
+        pickupType: 'Không trung chuyển đón',
+        pickupPoint: '',
+        pickupHour: 10,
+        pickupMinute: 0,
+        pickupDate: todayStr,
+        pickupPoints: [
+          {
+            point: 'Bến xe Mỹ Đình',
+            hour: 10,
+            minute: 0,
+            date: todayStr
+          }
+        ],
+        dropoffType: 'Không trung chuyển trả',
+        dropoffPoint: '',
+        dropoffHour: 12,
+        dropoffMinute: 0,
+        dropoffDate: todayStr,
+        dropoffPoints: [
+          {
+            point: 'Bến xe Vĩnh Niệm',
+            hour: 12,
+            minute: 0,
+            date: todayStr
+          }
+        ],
+        basePrice: 150000,
+        selectedSeats: [],
+        seatGroups: []
+      }
+    ];
+
     this.http.get<any[]>('http://localhost:3000/dieu-hanh/lich-trinh').subscribe({
       next: (data) => {
-        this.schedules = data.map(s => {
-          const depDate = s.NgayKhoiHanh ? new Date(s.NgayKhoiHanh) : new Date();
-          const depTime = s.GioKhoiHanh ? new Date(s.GioKhoiHanh) : new Date();
-          const arrTime = s.GioDenDuKien ? new Date(s.GioDenDuKien) : new Date();
-          const durationHours = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getHours() : 0;
-          const durationMins = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getMinutes() : 0;
+        if (!data || data.length === 0) {
+          this.schedules = getMockSchedules();
+        } else {
+          this.schedules = data.map(s => {
+            const depDate = s.NgayKhoiHanh ? new Date(s.NgayKhoiHanh) : new Date();
+            const depTime = s.GioKhoiHanh ? new Date(s.GioKhoiHanh) : new Date();
+            const arrTime = s.GioDenDuKien ? new Date(s.GioDenDuKien) : new Date();
+            const durationHours = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getHours() : 0;
+            const durationMins = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getMinutes() : 0;
 
-          return {
-            id: s.MaLichTrinh,
-            routeName: s.TUYEN_XE?.TenTuyenXe || '',
-            vehiclePlate: s.PHUONG_TIEN?.BienSoXe || '',
-            vehicleName: s.PHUONG_TIEN?.TenXe || '',
-            vehicleSeats: s.PHUONG_TIEN?.SoGhe || 22,
-            driverName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Tài xế chính')?.TAI_XE_PHU_XE?.HoTen || '',
-            assistantName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Phụ xe')?.TAI_XE_PHU_XE?.HoTen || '',
-            departureDate: this.formatDate(depDate),
-            departureTime: `${depTime.getHours().toString().padStart(2, '0')}:${depTime.getMinutes().toString().padStart(2, '0')}`,
-            status: s.TrangThaiLichTrinh || 'ChoKhoiHanh',
-            createdAt: depDate,
-            autoRun: false,
-            allowSeatSelection: true,
-            totalTime: `${durationHours}h ${durationMins}p`,
-            arrivalTime: `${arrTime.getHours().toString().padStart(2, '0')}:${arrTime.getMinutes().toString().padStart(2, '0')}`,
-            frequency: 'Hàng ngày',
-            openValue: 10,
-            openUnit: 'day',
-            closeValue: 30,
-            closeUnit: 'minute',
-            holdValue: 15,
-            holdUnit: 'minute',
-            pickupType: 'Không trung chuyển đón',
-            pickupPoint: '',
-            dropoffType: 'Không trung chuyển trả',
-            dropoffPoint: '',
-            basePrice: Number(s.GiaVeCoBan || 200000)
-          };
-        });
+            return {
+              id: s.MaLichTrinh,
+              routeName: s.TUYEN_XE?.TenTuyenXe || '',
+              vehiclePlate: s.PHUONG_TIEN?.BienSoXe || '',
+              vehicleName: s.PHUONG_TIEN?.TenXe || '',
+              vehicleSeats: s.PHUONG_TIEN?.SoGhe || 22,
+              driverName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Tài xế chính')?.TAI_XE_PHU_XE?.HoTen || '',
+              assistantName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Phụ xe')?.TAI_XE_PHU_XE?.HoTen || '',
+              departureDate: this.formatDate(depDate),
+              departureTime: `${depTime.getHours().toString().padStart(2, '0')}:${depTime.getMinutes().toString().padStart(2, '0')}`,
+              status: s.TrangThaiLichTrinh || 'ChoKhoiHanh',
+              createdAt: depDate,
+              autoRun: false,
+              allowSeatSelection: true,
+              totalTime: `${durationHours}h ${durationMins}p`,
+              arrivalTime: `${arrTime.getHours().toString().padStart(2, '0')}:${arrTime.getMinutes().toString().padStart(2, '0')}`,
+              frequency: 'Hàng ngày',
+              openValue: 10,
+              openUnit: 'day',
+              closeValue: 30,
+              closeUnit: 'minute',
+              holdValue: 15,
+              holdUnit: 'minute',
+              pickupType: 'Không trung chuyển đón',
+              pickupPoint: '',
+              dropoffType: 'Không trung chuyển trả',
+              dropoffPoint: '',
+              basePrice: Number(s.GiaVeCoBan || 200000)
+            };
+          });
+        }
         this.filterSchedules();
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Lỗi khi tải lịch trình:', err);
-        const todayStr = this.formatDate(new Date());
-        this.schedules = [
-          {
-            id: 1,
-            routeName: 'Hà Nội - SaPa',
-            vehiclePlate: '15B-888.99',
-            vehicleName: 'Limousine 22 phòng',
-            vehicleSeats: 22,
-            driverName: 'Nguyễn Văn Hùng',
-            assistantName: 'Lê Văn Nam',
-            departureDate: todayStr,
-            departureTime: '08:00',
-            status: 'ChoKhoiHanh',
-            createdAt: new Date(),
-            autoRun: false,
-            allowSeatSelection: true,
-            totalTime: '5h 30p',
-            arrivalTime: '13:30',
-            frequency: 'Hàng ngày',
-            openValue: 10,
-            openUnit: 'day',
-            closeValue: 30,
-            closeUnit: 'minute',
-            holdValue: 15,
-            holdUnit: 'minute',
-            pickupType: 'Không trung chuyển đón',
-            pickupPoint: '',
-            pickupHour: 8,
-            pickupMinute: 0,
-            pickupDate: todayStr,
-            pickupPoints: [
-              {
-                point: 'Bến xe Mỹ Đình',
-                hour: 8,
-                minute: 0,
-                date: todayStr
-              }
-            ],
-            dropoffType: 'Không trung chuyển trả',
-            dropoffPoint: '',
-            dropoffHour: 13,
-            dropoffMinute: 30,
-            dropoffDate: todayStr,
-            dropoffPoints: [
-              {
-                point: 'Bến xe SaPa',
-                hour: 13,
-                minute: 30,
-                date: todayStr
-              }
-            ],
-            basePrice: 250000,
-            selectedSeats: [],
-            seatGroups: []
-          },
-          {
-            id: 2,
-            routeName: 'Hà Nội - Hải Phòng',
-            vehiclePlate: '29B-123.45',
-            vehicleName: 'Xe giường nằm 36 chỗ',
-            vehicleSeats: 36,
-            driverName: 'Trần Thanh Sơn',
-            assistantName: '',
-            departureDate: todayStr,
-            departureTime: '10:00',
-            status: 'DangChay',
-            createdAt: new Date(),
-            autoRun: false,
-            allowSeatSelection: true,
-            totalTime: '2h 0p',
-            arrivalTime: '12:00',
-            frequency: 'Hàng ngày',
-            openValue: 10,
-            openUnit: 'day',
-            closeValue: 30,
-            closeUnit: 'minute',
-            holdValue: 15,
-            holdUnit: 'minute',
-            pickupType: 'Không trung chuyển đón',
-            pickupPoint: '',
-            pickupHour: 10,
-            pickupMinute: 0,
-            pickupDate: todayStr,
-            pickupPoints: [
-              {
-                point: 'Bến xe Mỹ Đình',
-                hour: 10,
-                minute: 0,
-                date: todayStr
-              }
-            ],
-            dropoffType: 'Không trung chuyển trả',
-            dropoffPoint: '',
-            dropoffHour: 12,
-            dropoffMinute: 0,
-            dropoffDate: todayStr,
-            dropoffPoints: [
-              {
-                point: 'Bến xe Vĩnh Niệm',
-                hour: 12,
-                minute: 0,
-                date: todayStr
-              }
-            ],
-            basePrice: 150000,
-            selectedSeats: [],
-            seatGroups: []
-          }
-        ];
+        this.schedules = getMockSchedules();
         this.filterSchedules();
         this.cdr.detectChanges();
       }

@@ -82,80 +82,88 @@ export class PhuongTienService {
   refreshVehicles() {
     this.http.get<any[]>(this.apiUrl).subscribe({
       next: (data) => {
-        this.vehicles.length = 0;
-        data.forEach(v => {
-          this.vehicles.push({
-            id: v.MaXe,
-            name: v.TenXe,
-            licensePlate: v.BienSoXe,
-            type: v.LoaiXe,
-            seats: v.SoGhe,
-            floors: v.SoTang,
-            rows: v.SoDay,
-            registrationExpiry: v.HanDangKiem ? new Date(v.HanDangKiem).toLocaleDateString('vi-VN') : '',
-            insuranceExpiry: v.HanBaoHiem ? new Date(v.HanBaoHiem).toLocaleDateString('vi-VN') : '',
-            amenities: v.TienIch ? (Array.isArray(v.TienIch) ? v.TienIch : parsePgArray(v.TienIch)).map((x: string) => dbToFrontendMap[x] || x) : [],
-            status: v.TrangThaiPhuongTien === 'DaKhoa' ? 'locked' : 'active',
-            vehicleImage: v.AnhXe || undefined,
-            selectedSeats: [],
-            createdAt: new Date(),
+        if (!data || data.length === 0) {
+          this.loadMockVehicles();
+        } else {
+          this.vehicles.length = 0;
+          data.forEach(v => {
+            this.vehicles.push({
+              id: v.MaXe,
+              name: v.TenXe,
+              licensePlate: v.BienSoXe,
+              type: v.LoaiXe,
+              seats: v.SoGhe,
+              floors: v.SoTang,
+              rows: v.SoDay,
+              registrationExpiry: v.HanDangKiem ? new Date(v.HanDangKiem).toLocaleDateString('vi-VN') : '',
+              insuranceExpiry: v.HanBaoHiem ? new Date(v.HanBaoHiem).toLocaleDateString('vi-VN') : '',
+              amenities: v.TienIch ? (Array.isArray(v.TienIch) ? v.TienIch : parsePgArray(v.TienIch)).map((x: string) => dbToFrontendMap[x] || x) : [],
+              status: v.TrangThaiPhuongTien === 'DaKhoa' ? 'locked' : 'active',
+              vehicleImage: v.AnhXe || undefined,
+              selectedSeats: [],
+              createdAt: new Date(),
+            });
           });
-        });
-        this.vehiclesUpdated$.next();
+          this.vehiclesUpdated$.next();
+        }
       },
       error: (err) => {
         console.error('Lỗi khi tải danh sách xe:', err);
-        this.vehicles.length = 0;
-        this.vehicles.push(
-          {
-            id: 1,
-            name: 'Limousine 22 phòng',
-            licensePlate: '15B-888.99',
-            type: 'Limousine 22 phòng',
-            seats: 22,
-            floors: 2,
-            rows: 6,
-            registrationExpiry: '30/12/2026',
-            insuranceExpiry: '30/12/2026',
-            amenities: ['wifi', 'usb', 'water', 'ac'],
-            status: 'active',
-            selectedSeats: [],
-            createdAt: new Date()
-          },
-          {
-            id: 2,
-            name: 'Xe giường nằm 36 chỗ',
-            licensePlate: '29B-123.45',
-            type: 'Giường nằm 36 chỗ',
-            seats: 36,
-            floors: 2,
-            rows: 6,
-            registrationExpiry: '15/08/2026',
-            insuranceExpiry: '15/08/2026',
-            amenities: ['wifi', 'water', 'ac'],
-            status: 'active',
-            selectedSeats: [],
-            createdAt: new Date()
-          },
-          {
-            id: 3,
-            name: 'Limousine 9 chỗ VIP',
-            licensePlate: '30F-999.99',
-            type: 'Limousine 9 chỗ',
-            seats: 9,
-            floors: 1,
-            rows: 3,
-            registrationExpiry: '01/10/2026',
-            insuranceExpiry: '01/10/2026',
-            amenities: ['wifi', 'usb', 'water', 'tivi', 'ac'],
-            status: 'locked',
-            selectedSeats: [],
-            createdAt: new Date()
-          }
-        );
-        this.vehiclesUpdated$.next();
+        this.loadMockVehicles();
       }
     });
+  }
+
+  private loadMockVehicles() {
+    this.vehicles.length = 0;
+    this.vehicles.push(
+      {
+        id: 1,
+        name: 'Limousine 22 phòng',
+        licensePlate: '15B-888.99',
+        type: 'Limousine 22 phòng',
+        seats: 22,
+        floors: 2,
+        rows: 6,
+        registrationExpiry: '30/12/2026',
+        insuranceExpiry: '30/12/2026',
+        amenities: ['wifi', 'usb', 'water', 'ac'],
+        status: 'active',
+        selectedSeats: [],
+        createdAt: new Date()
+      },
+      {
+        id: 2,
+        name: 'Xe giường nằm 36 chỗ',
+        licensePlate: '29B-123.45',
+        type: 'Giường nằm 36 chỗ',
+        seats: 36,
+        floors: 2,
+        rows: 6,
+        registrationExpiry: '15/08/2026',
+        insuranceExpiry: '15/08/2026',
+        amenities: ['wifi', 'water', 'ac'],
+        status: 'active',
+        selectedSeats: [],
+        createdAt: new Date()
+      },
+      {
+        id: 3,
+        name: 'Limousine 9 chỗ VIP',
+        licensePlate: '30F-999.99',
+        type: 'Limousine 9 chỗ',
+        seats: 9,
+        floors: 1,
+        rows: 3,
+        registrationExpiry: '01/10/2026',
+        insuranceExpiry: '01/10/2026',
+        amenities: ['wifi', 'usb', 'water', 'tivi', 'ac'],
+        status: 'locked',
+        selectedSeats: [],
+        createdAt: new Date()
+      }
+    );
+    this.vehiclesUpdated$.next();
   }
 
   getVehicles(): Vehicle[] {
