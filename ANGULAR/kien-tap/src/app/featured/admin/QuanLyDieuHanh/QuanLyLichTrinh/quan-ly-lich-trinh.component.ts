@@ -44,8 +44,14 @@ interface Schedule {
   holdUnit: 'day' | 'hour' | 'minute';
   pickupType: string;
   pickupPoint: string;
+  pickupHour?: number;
+  pickupMinute?: number;
+  pickupDate?: string;
   dropoffType: string;
   dropoffPoint: string;
+  dropoffHour?: number;
+  dropoffMinute?: number;
+  dropoffDate?: string;
 
   basePrice?: number;
 
@@ -547,8 +553,14 @@ export class QuanLyLichTrinhComponent implements OnInit {
       holdUnit: 'minute',
       pickupType: 'Không trung chuyển đón',
       pickupPoint: '',
+      pickupHour: 8,
+      pickupMinute: 0,
+      pickupDate: this.formatDate(new Date()),
       dropoffType: 'Không trung chuyển trả',
       dropoffPoint: '',
+      dropoffHour: 17,
+      dropoffMinute: 0,
+      dropoffDate: this.formatDate(new Date()),
       basePrice: undefined,
       selectedSeats: [],
       seatGroups: []
@@ -569,7 +581,13 @@ export class QuanLyLichTrinhComponent implements OnInit {
     this.currentSchedule = {
       ...schedule,
       selectedSeats: schedule.selectedSeats ? [...schedule.selectedSeats] : [],
-      seatGroups: schedule.seatGroups ? JSON.parse(JSON.stringify(schedule.seatGroups)) : []
+      seatGroups: schedule.seatGroups ? JSON.parse(JSON.stringify(schedule.seatGroups)) : [],
+      pickupHour: schedule.pickupHour || 8,
+      pickupMinute: schedule.pickupMinute || 0,
+      pickupDate: schedule.pickupDate || schedule.departureDate || this.formatDate(new Date()),
+      dropoffHour: schedule.dropoffHour || 17,
+      dropoffMinute: schedule.dropoffMinute || 0,
+      dropoffDate: schedule.dropoffDate || schedule.arrivalDate || schedule.departureDate || this.formatDate(new Date())
     };
     this.generateSeatLayout();
     this.activeSeatGroupIndex = this.currentSchedule.seatGroups && this.currentSchedule.seatGroups.length > 0 ? 0 : null;
