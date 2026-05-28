@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../layout/header/header.component';
@@ -74,7 +74,8 @@ export class ReviewComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private toastService: ToastService,
-    private danhGiaService: DanhGiaService
+    private danhGiaService: DanhGiaService,
+    private cdr: ChangeDetectorRef
   ) {
     this.authService.isLoggedIn$.subscribe(status => this.isLoggedIn = status);
   }
@@ -131,6 +132,7 @@ export class ReviewComponent implements OnInit {
 
         this.updateFiltersAndStats();
         this.generatePagination();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Lỗi khi tải đánh giá:', err);

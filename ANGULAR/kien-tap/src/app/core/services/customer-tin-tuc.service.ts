@@ -31,7 +31,6 @@ export class CustomerTinTucService {
     if (params.search !== undefined && params.search !== '') {
       httpParams = httpParams.set('search', params.search);
     }
-
     return this.http.get<any>(this.url, { params: httpParams });
   }
 

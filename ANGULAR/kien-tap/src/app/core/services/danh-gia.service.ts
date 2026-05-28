@@ -35,7 +35,6 @@ export class DanhGiaService {
     if (params.hasImage !== undefined) {
       httpParams = httpParams.set('hasImage', params.hasImage.toString());
     }
-
     return this.http.get<any>(this.url, { params: httpParams });
   }
 

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -37,8 +37,8 @@ export class HomeComponent implements OnInit {
   showDepartureDropdown: boolean = false;
   showDestinationDropdown: boolean = false;
 
-  departureSearch: string = 'TP. Hồ Chí Minh';
-  destinationSearch: string = 'Bình Định';
+  departureSearch: string = '';
+  destinationSearch: string = '';
 
   locations = ['TP. Hồ Chí Minh', 'Bình Định', 'Phú Yên'];
 
@@ -94,17 +94,20 @@ export class HomeComponent implements OnInit {
     private router: Router,
     private toastService: ToastService,
     private danhGiaService: DanhGiaService,
-    private tinTucService: CustomerTinTucService
+    private tinTucService: CustomerTinTucService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.danhGiaService.getHomeReviews().subscribe({
       next: (data) => {
         this.homeReviews = data;
+        this.cdr.detectChanges();
         // Fetch home news after reviews
         this.tinTucService.getHomeNews().subscribe({
           next: (news) => {
             this.homeNews = news;
+            this.cdr.detectChanges();
           },
           error: (err) => {
             console.error('Error fetching home news:', err);
