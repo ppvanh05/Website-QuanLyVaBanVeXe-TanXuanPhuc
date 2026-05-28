@@ -882,6 +882,7 @@
                       </div>
                     </div>
 
+                    <!-- Trẻ em dưới 6 tuổi và phụ nữ có thai -->
                     <div *ngIf="!isPoliciesLoading && childrenPregnancyPolicy" class="space-y-3 pt-2">
                       <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">
                         2. TRẺ EM DƯỚI 6 TUỔI VÀ PHỤ NỮ CÓ THAI
@@ -891,42 +892,13 @@
                       </div>
                     </div>
 
+                    <!-- Yêu cầu khi lên xe -->
                     <div *ngIf="!isPoliciesLoading && boardingRequirementPolicy" class="space-y-3 pt-2">
                       <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">
                         3. YÊU CẦU KHI LÊN XE
                       </h4>
                       <div class="policy-rich-content text-body-md text-on-surface-variant leading-relaxed"
                         [innerHTML]="boardingRequirementPolicy.NoiDung">
-                      </div>
-                            </li>
-                          </ul>
-                        </li>
-                      </ul>
-=======
-                    <div *ngIf="!isPoliciesLoading && childrenPregnancyPolicy" class="space-y-3 pt-2">
-                      <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">
-                        2. TRẺ EM DƯỚI 6 TUỔI VÀ PHỤ NỮ CÓ THAI
-                      </h4>
-                      <div class="policy-rich-content text-body-md text-on-surface-variant leading-relaxed"
-                        [innerHTML]="childrenPregnancyPolicy.NoiDung">
-                      </div>
-                    </div>
-
-                    <div *ngIf="!isPoliciesLoading && boardingRequirementPolicy" class="space-y-3 pt-2">
-                      <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">
-                        3. YÊU CẦU KHI LÊN XE
-                      </h4>
-                      <div class="policy-rich-content text-body-md text-on-surface-variant leading-relaxed"
-                        [innerHTML]="boardingRequirementPolicy.NoiDung">
-                      </div>
->>>>>>> c6f651e8 (cap nhat chuc nang admin va dat ve)
-                    </div>
-
-                    <!-- 4. General Policies from backend (Dynamic) -->
-                    <div class="space-y-3 pt-2" *ngFor="let p of policies">
-                      <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">{{ p.TieuDe }}</h4>
-                      <div class="text-body-md text-on-surface-variant leading-relaxed whitespace-pre-line">
-                        {{ p.NoiDung }}
                       </div>
                     </div>
                   </div>

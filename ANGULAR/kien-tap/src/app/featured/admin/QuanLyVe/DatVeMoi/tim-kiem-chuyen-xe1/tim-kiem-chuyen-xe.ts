@@ -110,11 +110,9 @@ export class TimKiemChuyenXe implements OnInit {
   filteredTrips: Trip[] = [];
   isLoadingTrips = false;
   tripLoadError = '';
+  // Policy data loaded from API
   policies: any[] = [];
   cancelPolicies: any[] = [];
-
-  // Policy data loaded from API
-  cancelPolicies: any[] = [];     // CHINH_SACH_HUY_VE
   generalPolicies: any[] = [];    // CHINH_SACH (bảo hiểm, thanh toán, khác)
   childrenPregnancyPolicy: any | null = null;
   boardingRequirementPolicy: any | null = null;
@@ -236,29 +234,6 @@ export class TimKiemChuyenXe implements OnInit {
       .toLowerCase();
   }
 
-  loadPolicies() {
-    if (!isPlatformBrowser(this.platformId)) return;
-    
-    // Fetch cancellation policies
-    this.http.get<any[]>(`${this.apiBaseUrl}/chinh-sach/huy-ve/all`).pipe(
-      catchError(error => {
-        console.error('Không tải được chính sách hủy vé:', error);
-        return of([]);
-      })
-    ).subscribe(data => {
-      this.cancelPolicies = data || [];
-    });
-
-    // Fetch general policies
-    this.http.get<any[]>(`${this.apiBaseUrl}/chinh-sach`).pipe(
-      catchError(error => {
-        console.error('Không tải được chính sách chung:', error);
-        return of([]);
-      })
-    ).subscribe(data => {
-      this.policies = data || [];
-    });
-  }
 
   getEarlyArrivalTime(trip: Trip): number {
     if (trip.stops && trip.stops.length > 0) {
@@ -694,8 +669,9 @@ export class TimKiemChuyenXe implements OnInit {
       finalize(() => {
         this.isLoadingTrips = false;
       }),
-    ).subscribe(trips => {
-      this.allTrips = (trips as any[]).map(trip => this.mapApiTrip(trip));
+    ).subscribe((res: any) => {
+      const tripsArray = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+      this.allTrips = tripsArray.map((trip: any) => this.mapApiTrip(trip));
       this.syncLocationsFromTrips(this.allTrips);
       this.activeTrip = null;
       this.selectedSeatsList = [];

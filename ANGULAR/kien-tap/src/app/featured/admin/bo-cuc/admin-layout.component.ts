@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
@@ -56,7 +56,7 @@ type PasswordValidationField =
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.css']
 })
-export class AdminLayoutComponent {
+export class AdminLayoutComponent implements OnInit {
   isSidebarCollapsed = false;
   currentDate = new Date();
   currentUser: AdminUser | null = null;
@@ -121,6 +121,18 @@ export class AdminLayoutComponent {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       this.applyRBAC();
+    });
+  }
+
+  ngOnInit() {
+    this.authService.getProfile().subscribe({
+      next: (user) => {
+        this.currentUser = user;
+        this.applyRBAC();
+      },
+      error: (err) => {
+        console.error('Lỗi khi đồng bộ thông tin phân quyền:', err);
+      }
     });
   }
 
