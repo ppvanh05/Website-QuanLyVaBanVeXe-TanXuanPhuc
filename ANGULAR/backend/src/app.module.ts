@@ -22,7 +22,7 @@ import { TimKiemChuyenXeModule } from './customer/tim-kiem-chuyen-xe/tim-kiem-ch
 import { ThongTinDonHangModule } from './customer/thong-tin-don-hang/thong-tin-don-hang.module';
 import { ThanhToanModule } from './customer/thanh-toan/thanh-toan.module';
 import { TraCuuVeModule } from './customer/tra-cuu-ve/tra-cuu-ve.module';
-import { ProfileModule } from './customer/profile/profile.module';
+import { CustomerHoSoModule } from './customer/profile/customer-ho-so.module';
 
 @Module({
   imports: [
@@ -47,7 +47,7 @@ import { ProfileModule } from './customer/profile/profile.module';
     ThongTinDonHangModule,
     ThanhToanModule,
     TraCuuVeModule,
-    ProfileModule,
+    CustomerHoSoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

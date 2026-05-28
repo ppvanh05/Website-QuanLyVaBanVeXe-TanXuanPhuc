@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TrangThaiGhe, TrangThaiLichTrinh } from '@prisma/client';
 
 @Injectable()
 export class TimKiemChuyenXeService {
@@ -95,7 +96,7 @@ export class TimKiemChuyenXeService {
             MaGheChuyen: gheChuyenId,
             NhomGhe: 'Limousine',
             GiaVe: basePrice,
-            TrangThaiGhe: 'Trong',
+            TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
             ThoiGianCapNhatTrangThai: new Date(),
             MaLichTrinh: scheduleId,
             MaGhe: ghe.MaGhe,
@@ -115,7 +116,7 @@ export class TimKiemChuyenXeService {
           MaGheChuyen: gheChuyenId,
           NhomGhe: 'Limousine',
           GiaVe: basePrice,
-          TrangThaiGhe: 'Trong',
+          TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
           ThoiGianCapNhatTrangThai: new Date(),
           MaLichTrinh: scheduleId,
           MaGhe: seat.MaGhe,
@@ -151,6 +152,19 @@ export class TimKiemChuyenXeService {
 
     // Find schedules matching date and route (insensitive search)
     const schedules = await this.prisma.lICH_TRINH.findMany({
+      where: {
+        NgayKhoiHanh: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        TrangThaiLichTrinh: {
+          notIn: [TrangThaiLichTrinh.DaKhoa],
+        },
+        TUYEN_XE: {
+          DiemKhoiHanh: { contains: dto.departure, mode: 'insensitive' },
+          DiemDen: { contains: dto.destination, mode: 'insensitive' },
+        },
+      },
       where,
       include: {
         TUYEN_XE: true,
@@ -173,7 +187,7 @@ export class TimKiemChuyenXeService {
       );
 
       // Count available seats
-      const availableSeats = seats.filter(s => s.TrangThaiGhe === 'Trong').length;
+      const availableSeats = seats.filter(s => s.TrangThaiGhe === TrangThaiGhe.C_n_Tr_ng).length;
 
       // Only return trips that still have available seats
       if (availableSeats > 0) {

@@ -41,7 +41,7 @@ export class TintucDetailComponent implements OnInit {
 
   fetchNewsDetail(id: string) {
     this.newsService.getNewsById(id).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         if (response) {
           const rawNews = response.news;
           this.newsDetail = {
@@ -69,7 +69,7 @@ export class TintucDetailComponent implements OnInit {
           }));
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error fetching news detail:', err);
       }
     });

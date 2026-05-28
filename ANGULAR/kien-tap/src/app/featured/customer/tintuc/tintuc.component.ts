@@ -1,3 +1,6 @@
+import { Component, OnInit, ChangeDetectorRef, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -12,7 +15,9 @@ import { CustomerTinTucService } from '../../../core/services/customer-tin-tuc.s
   templateUrl: './tintuc.component.html',
   styleUrl: './tintuc.component.css'
 })
-export class TintucComponent implements OnInit {
+export class TintucComponent implements OnInit, AfterViewInit {
+  @ViewChild('latestNewsSection') latestNewsSection!: ElementRef;
+
   categories = ['THÔNG BÁO', 'SỰ KIỆN', 'KHUYẾN MÃI', 'TIN NHÀ XE', 'CẨM NANG DI CHUYỂN', 'TUYỂN DỤNG'];
   activeCategory = '';
   searchQuery = '';
@@ -31,6 +36,8 @@ export class TintucComponent implements OnInit {
   constructor(
     private newsService: CustomerTinTucService,
     private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
+  ) {}
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -40,6 +47,20 @@ export class TintucComponent implements OnInit {
     if (this.isBrowser) {
       this.loadNews();
     }
+  }
+
+  ngAfterViewInit() {
+    this.route.fragment.subscribe(fragment => {
+      if (fragment === 'latest-news') {
+        // Scroll to the latest news section after the view has initialized and data is loaded
+        // Use a timeout to ensure rendering is complete
+        setTimeout(() => {
+          if (this.latestNewsSection) {
+            this.latestNewsSection.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 500); // Adjust timeout as needed
+      }
+    });
   }
 
   loadNews() {
@@ -69,7 +90,7 @@ export class TintucComponent implements OnInit {
             this.latestNews = mappedItems.slice(0, 3);
             this.subFeaturedNews = mappedItems.slice(3, 5);
             
-            // Hiện toàn bộ vào mục "Tất cả tin tức" để section này không bị trống khi có ít bài viết
+            // "Tất cả tin tức" lấy toàn bộ các tin tức để đảm bảo mục này luôn hiển thị
             this.allNews = mappedItems;
           } else {
             // TRANG FILTER (Theo loại hoặc Search): Hiện tất cả vào grid All News, ẩn các mục đặc biệt

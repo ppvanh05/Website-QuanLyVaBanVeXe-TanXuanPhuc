@@ -4,6 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthModalService } from '../auth-modal.service';
 
+interface MockUser {
+  SoDienThoai: string;
+  HoTenKhachHang: string;
+  Email: string;
+  MatKhau: string;
+  MaKhachHang?: string;
+  AnhDaiDien?: string;
+  GioiTinh?: string;
+  NgaySinh?: string;
+  TrangThaiTaiKhoan?: string;
+  NgayDangKy?: string;
+}
+
 @Component({
   selector: 'app-register-modal',
   standalone: true,
@@ -58,12 +71,18 @@ export class RegisterComponent implements OnDestroy {
     }
     const usersJson = localStorage.getItem('mock_users');
     if (!usersJson) {
-      const defaultUsers = [
+      const defaultUsers: MockUser[] = [
         {
-          phoneNumber: '0987654321',
-          fullName: 'Nguyễn Văn An',
-          email: 'an.nguyen@example.com',
-          password: '123456'
+          SoDienThoai: '0987654321',
+          HoTenKhachHang: 'Nguyễn Văn An',
+          Email: 'an.nguyen@example.com',
+          MatKhau: '123456',
+          MaKhachHang: 'KH001',
+          AnhDaiDien: '/asset/images/customer/user.png',
+          GioiTinh: 'Nam',
+          NgaySinh: '2000-01-01',
+          TrangThaiTaiKhoan: 'HoatDong',
+          NgayDangKy: '2023-01-01'
         }
       ];
       localStorage.setItem('mock_users', JSON.stringify(defaultUsers));
@@ -72,7 +91,7 @@ export class RegisterComponent implements OnDestroy {
     return JSON.parse(usersJson);
   }
 
-  saveMockUser(user: any) {
+  saveMockUser(user: MockUser) {
     const users = this.getMockUsers();
     users.push(user);
     localStorage.setItem('mock_users', JSON.stringify(users));
@@ -141,7 +160,7 @@ export class RegisterComponent implements OnDestroy {
     }
 
     const users = this.getMockUsers();
-    const phoneExists = users.some(u => u.phoneNumber === cleaned);
+    const phoneExists = users.some(u => u.SoDienThoai === cleaned);
     if (phoneExists) {
       this.phoneNumberError = 'Số điện thoại này đã được sử dụng để đăng ký tài khoản.';
       return;
@@ -212,11 +231,11 @@ export class RegisterComponent implements OnDestroy {
   registerUser() {
     // Here you would typically send data to a backend service
     // For now, we'll use mock data and emit the event
-    const newUser = {
-      phoneNumber: this.phoneNumber,
-      fullName: this.fullName,
-      email: this.email,
-      password: this.password
+    const newUser: MockUser = {
+      SoDienThoai: this.phoneNumber,
+      HoTenKhachHang: this.fullName,
+      Email: this.email,
+      MatKhau: this.password
     };
     this.saveMockUser(newUser); // Save the new user
 
@@ -294,11 +313,11 @@ export class RegisterComponent implements OnDestroy {
       return;
     }
 
-    const newUser = {
-      phoneNumber: this.phoneNumber,
-      fullName: this.fullName.trim(),
-      email: this.email.trim(),
-      password: this.password
+    const newUser: MockUser = {
+      SoDienThoai: this.phoneNumber,
+      HoTenKhachHang: this.fullName.trim(),
+      Email: this.email.trim(),
+      MatKhau: this.password
     };
     this.saveMockUser(newUser);
 

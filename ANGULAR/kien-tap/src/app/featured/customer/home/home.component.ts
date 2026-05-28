@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 import { ToastService } from '../../../core/services/toast.service';
+import { DanhGiaService } from '../../../core/services/danh-gia.service';
+import { CustomerTinTucService } from '../../../core/services/customer-tin-tuc.service';
 
 @Component({
   selector: 'app-home',
@@ -14,7 +16,7 @@ import { ToastService } from '../../../core/services/toast.service';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   isRoundTrip: boolean = false;
   departure: string = 'TP. Hồ Chí Minh';
   destination: string = 'Bình Định';
@@ -85,7 +87,35 @@ export class HomeComponent {
     { day: 31, label: '15', dateStr: '31/05/2026' }
   ];
 
-  constructor(private router: Router, private toastService: ToastService) {}
+  homeReviews: any[] = [];
+  homeNews: any[] = [];
+
+  constructor(
+    private router: Router,
+    private toastService: ToastService,
+    private danhGiaService: DanhGiaService,
+    private tinTucService: CustomerTinTucService
+  ) {}
+
+  ngOnInit() {
+    this.danhGiaService.getHomeReviews().subscribe({
+      next: (data) => {
+        this.homeReviews = data;
+        // Fetch home news after reviews
+        this.tinTucService.getHomeNews().subscribe({
+          next: (news) => {
+            this.homeNews = news;
+          },
+          error: (err) => {
+            console.error('Error fetching home news:', err);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error fetching home reviews:', err);
+      }
+    });
+  }
 
   isPastDate(dateStr: string): boolean {
     const today = new Date();

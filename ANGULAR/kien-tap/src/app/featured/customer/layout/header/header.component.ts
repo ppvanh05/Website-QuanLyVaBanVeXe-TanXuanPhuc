@@ -24,7 +24,8 @@ export class HeaderComponent {
   isIntroDropdownOpen = false;
   isUserDropdownOpen = false;
   isLoggedIn = false;
-  userName = '';
+  userName: string | null = null;
+  userAvatar: string | null = null;
   modalMode: AuthModalMode = null;
 
   // ĐÃ SỬA: Gộp 2 cái constructor lỗi thành 1 cái duy nhất sạch sẽ
@@ -36,7 +37,15 @@ export class HeaderComponent {
   ) {
     // Logic của bên thứ nhất
     this.authService.isLoggedIn$.subscribe(status => this.isLoggedIn = status);
-    this.authService.userName$.subscribe(name => this.userName = name);
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.userName = user.HoTenKhachHang;
+        this.userAvatar = user.AnhDaiDien || '/asset/images/customer/user.png';
+      } else {
+        this.userName = null;
+        this.userAvatar = null;
+      }
+    });
 
     // Logic của bên thứ hai (bạn Nghi)
     this.authModalService.modalMode$.subscribe(mode => {
@@ -52,14 +61,14 @@ export class HeaderComponent {
     this.authModalService.closeModal();
   }
 
-  handleRegistered(name: any) {
-    this.userName = name || 'Người dùng';
+  handleRegistered(HoTenKhachHang: string) {
+    this.userName = HoTenKhachHang || 'Người dùng';
     this.isLoggedIn = true;
     this.closeModal();
   }
 
-  handleLoggedIn(name: any) {
-    this.userName = name || 'Người dùng';
+  handleLoggedIn(HoTenKhachHang: string) {
+    this.userName = HoTenKhachHang || 'Người dùng';
     this.isLoggedIn = true;
     this.closeModal();
   }

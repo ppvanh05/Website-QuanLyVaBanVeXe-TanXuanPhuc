@@ -7,16 +7,17 @@ const API_BASE = 'http://localhost:3000';
 @Injectable({
   providedIn: 'root',
 })
-export class CustomerTinTucService {
-  private url = `${API_BASE}/customer/tin-tuc`;
+export class DanhGiaService {
+  private url = `${API_BASE}/customer/danh-gia`;
 
   constructor(private http: HttpClient) {}
 
-  getPublishedNews(params: {
+  getReviews(params: {
     page?: number;
     limit?: number;
-    loai?: string;
-    search?: string;
+    rating?: number;
+    hasComment?: boolean;
+    hasImage?: boolean;
   }): Observable<any> {
     let httpParams = new HttpParams();
     if (params.page !== undefined) {
@@ -25,22 +26,20 @@ export class CustomerTinTucService {
     if (params.limit !== undefined) {
       httpParams = httpParams.set('limit', params.limit.toString());
     }
-    if (params.loai !== undefined && params.loai !== '') {
-      httpParams = httpParams.set('loai', params.loai);
+    if (params.rating !== undefined) {
+      httpParams = httpParams.set('rating', params.rating.toString());
     }
-    if (params.search !== undefined && params.search !== '') {
-      httpParams = httpParams.set('search', params.search);
+    if (params.hasComment !== undefined) {
+      httpParams = httpParams.set('hasComment', params.hasComment.toString());
+    }
+    if (params.hasImage !== undefined) {
+      httpParams = httpParams.set('hasImage', params.hasImage.toString());
     }
 
     return this.http.get<any>(this.url, { params: httpParams });
   }
 
-  getHomeNews(): Observable<any> {
+  getHomeReviews(): Observable<any> {
     return this.http.get<any>(`${this.url}/home`);
   }
-
-  getNewsById(id: string): Observable<any> {
-    return this.http.get<any>(`${this.url}/${id}`);
-  }
-
 }
