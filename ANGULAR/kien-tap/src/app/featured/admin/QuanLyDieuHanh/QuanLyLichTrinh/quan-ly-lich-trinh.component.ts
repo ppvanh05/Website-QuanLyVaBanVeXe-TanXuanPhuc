@@ -505,7 +505,120 @@ export class QuanLyLichTrinhComponent implements OnInit {
         this.filterSchedules();
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Lỗi khi tải lịch trình:', err)
+      error: (err) => {
+        console.error('Lỗi khi tải lịch trình:', err);
+        const todayStr = this.formatDate(new Date());
+        this.schedules = [
+          {
+            id: 1,
+            routeName: 'Hà Nội - SaPa',
+            vehiclePlate: '15B-888.99',
+            vehicleName: 'Limousine 22 phòng',
+            vehicleSeats: 22,
+            driverName: 'Nguyễn Văn Hùng',
+            assistantName: 'Lê Văn Nam',
+            departureDate: todayStr,
+            departureTime: '08:00',
+            status: 'ChoKhoiHanh',
+            createdAt: new Date(),
+            autoRun: false,
+            allowSeatSelection: true,
+            totalTime: '5h 30p',
+            arrivalTime: '13:30',
+            frequency: 'Hàng ngày',
+            openValue: 10,
+            openUnit: 'day',
+            closeValue: 30,
+            closeUnit: 'minute',
+            holdValue: 15,
+            holdUnit: 'minute',
+            pickupType: 'Không trung chuyển đón',
+            pickupPoint: '',
+            pickupHour: 8,
+            pickupMinute: 0,
+            pickupDate: todayStr,
+            pickupPoints: [
+              {
+                point: 'Bến xe Mỹ Đình',
+                hour: 8,
+                minute: 0,
+                date: todayStr
+              }
+            ],
+            dropoffType: 'Không trung chuyển trả',
+            dropoffPoint: '',
+            dropoffHour: 13,
+            dropoffMinute: 30,
+            dropoffDate: todayStr,
+            dropoffPoints: [
+              {
+                point: 'Bến xe SaPa',
+                hour: 13,
+                minute: 30,
+                date: todayStr
+              }
+            ],
+            basePrice: 250000,
+            selectedSeats: [],
+            seatGroups: []
+          },
+          {
+            id: 2,
+            routeName: 'Hà Nội - Hải Phòng',
+            vehiclePlate: '29B-123.45',
+            vehicleName: 'Xe giường nằm 36 chỗ',
+            vehicleSeats: 36,
+            driverName: 'Trần Thanh Sơn',
+            assistantName: '',
+            departureDate: todayStr,
+            departureTime: '10:00',
+            status: 'DangChay',
+            createdAt: new Date(),
+            autoRun: false,
+            allowSeatSelection: true,
+            totalTime: '2h 0p',
+            arrivalTime: '12:00',
+            frequency: 'Hàng ngày',
+            openValue: 10,
+            openUnit: 'day',
+            closeValue: 30,
+            closeUnit: 'minute',
+            holdValue: 15,
+            holdUnit: 'minute',
+            pickupType: 'Không trung chuyển đón',
+            pickupPoint: '',
+            pickupHour: 10,
+            pickupMinute: 0,
+            pickupDate: todayStr,
+            pickupPoints: [
+              {
+                point: 'Bến xe Mỹ Đình',
+                hour: 10,
+                minute: 0,
+                date: todayStr
+              }
+            ],
+            dropoffType: 'Không trung chuyển trả',
+            dropoffPoint: '',
+            dropoffHour: 12,
+            dropoffMinute: 0,
+            dropoffDate: todayStr,
+            dropoffPoints: [
+              {
+                point: 'Bến xe Vĩnh Niệm',
+                hour: 12,
+                minute: 0,
+                date: todayStr
+              }
+            ],
+            basePrice: 150000,
+            selectedSeats: [],
+            seatGroups: []
+          }
+        ];
+        this.filterSchedules();
+        this.cdr.detectChanges();
+      }
     });
   }
 

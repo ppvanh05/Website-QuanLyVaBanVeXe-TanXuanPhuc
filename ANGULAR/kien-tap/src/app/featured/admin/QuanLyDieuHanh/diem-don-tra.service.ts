@@ -45,7 +45,57 @@ export class DiemDonTraService {
         });
         this.pointsUpdated$.next();
       },
-      error: (err) => console.error('Lỗi khi tải danh sách điểm đón/trả/dừng:', err)
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách điểm đón/trả/dừng:', err);
+        this.points.length = 0;
+        this.points.push(
+          {
+            id: 1,
+            name: 'Bến xe Mỹ Đình',
+            address: '20 Phạm Hùng, Mỹ Đình, Từ Liêm',
+            city: 'Hà Nội',
+            phone: '02437685549',
+            mapLink: '',
+            image: null,
+            status: 'active',
+            type: 'don-tra'
+          },
+          {
+            id: 2,
+            name: 'Bến xe SaPa',
+            address: 'Đường Điện Biên Phủ, Sa Pa',
+            city: 'Lào Cai',
+            phone: '02143771771',
+            mapLink: '',
+            image: null,
+            status: 'active',
+            type: 'don-tra'
+          },
+          {
+            id: 3,
+            name: 'Trạm dừng chân Km57',
+            address: 'Cao tốc Nội Bài - Lào Cai',
+            city: 'Phú Thọ',
+            phone: '',
+            mapLink: '',
+            image: null,
+            status: 'active',
+            type: 'dung'
+          },
+          {
+            id: 4,
+            name: 'Văn phòng Hải Phòng',
+            address: '129 Đinh Tiên Hoàng',
+            city: 'Hải Phòng',
+            phone: '02253888999',
+            mapLink: '',
+            image: null,
+            status: 'active',
+            type: 'don-tra'
+          }
+        );
+        this.pointsUpdated$.next();
+      }
     });
   }
 

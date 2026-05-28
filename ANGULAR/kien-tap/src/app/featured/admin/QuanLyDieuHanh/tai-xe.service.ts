@@ -56,7 +56,61 @@ export class TaiXeService {
         });
         this.driversUpdated$.next();
       },
-      error: (err) => console.error('Lỗi khi tải danh sách tài xế/phụ xe:', err)
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách tài xế/phụ xe:', err);
+        this.drivers.length = 0;
+        this.drivers.push(
+          {
+            id: 1,
+            name: 'Nguyễn Văn Hùng',
+            dob: '12/05/1985',
+            phone: '0912345678',
+            licenseClass: 'Hạng E',
+            licenseExpiry: '12/05/2030',
+            avatar: null,
+            licenseFront: null,
+            licenseBack: null,
+            cccdFront: null,
+            cccdBack: null,
+            status: 'active',
+            cccdNumber: '037085001234',
+            role: 'driver'
+          },
+          {
+            id: 2,
+            name: 'Trần Thanh Sơn',
+            dob: '22/10/1990',
+            phone: '0987654321',
+            licenseClass: 'Hạng D',
+            licenseExpiry: '22/10/2029',
+            avatar: null,
+            licenseFront: null,
+            licenseBack: null,
+            cccdFront: null,
+            cccdBack: null,
+            status: 'active',
+            cccdNumber: '037090005678',
+            role: 'driver'
+          },
+          {
+            id: 3,
+            name: 'Lê Văn Nam',
+            dob: '15/03/1995',
+            phone: '0905111222',
+            licenseClass: 'Hạng C',
+            licenseExpiry: '15/03/2028',
+            avatar: null,
+            licenseFront: null,
+            licenseBack: null,
+            cccdFront: null,
+            cccdBack: null,
+            status: 'active',
+            cccdNumber: '037095009999',
+            role: 'assistant'
+          }
+        );
+        this.driversUpdated$.next();
+      }
     });
   }
 

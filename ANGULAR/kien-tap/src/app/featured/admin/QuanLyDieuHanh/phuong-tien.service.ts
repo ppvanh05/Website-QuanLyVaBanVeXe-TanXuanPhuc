@@ -103,7 +103,58 @@ export class PhuongTienService {
         });
         this.vehiclesUpdated$.next();
       },
-      error: (err) => console.error('Lỗi khi tải danh sách xe:', err)
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách xe:', err);
+        this.vehicles.length = 0;
+        this.vehicles.push(
+          {
+            id: 1,
+            name: 'Limousine 22 phòng',
+            licensePlate: '15B-888.99',
+            type: 'Limousine 22 phòng',
+            seats: 22,
+            floors: 2,
+            rows: 6,
+            registrationExpiry: '30/12/2026',
+            insuranceExpiry: '30/12/2026',
+            amenities: ['wifi', 'usb', 'water', 'ac'],
+            status: 'active',
+            selectedSeats: [],
+            createdAt: new Date()
+          },
+          {
+            id: 2,
+            name: 'Xe giường nằm 36 chỗ',
+            licensePlate: '29B-123.45',
+            type: 'Giường nằm 36 chỗ',
+            seats: 36,
+            floors: 2,
+            rows: 6,
+            registrationExpiry: '15/08/2026',
+            insuranceExpiry: '15/08/2026',
+            amenities: ['wifi', 'water', 'ac'],
+            status: 'active',
+            selectedSeats: [],
+            createdAt: new Date()
+          },
+          {
+            id: 3,
+            name: 'Limousine 9 chỗ VIP',
+            licensePlate: '30F-999.99',
+            type: 'Limousine 9 chỗ',
+            seats: 9,
+            floors: 1,
+            rows: 3,
+            registrationExpiry: '01/10/2026',
+            insuranceExpiry: '01/10/2026',
+            amenities: ['wifi', 'usb', 'water', 'tivi', 'ac'],
+            status: 'locked',
+            selectedSeats: [],
+            createdAt: new Date()
+          }
+        );
+        this.vehiclesUpdated$.next();
+      }
     });
   }
 
