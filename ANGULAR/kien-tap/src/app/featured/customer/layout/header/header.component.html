@@ -73,13 +73,13 @@
 
             <div *ngIf="isLoggedIn" class="relative">
                 <button (click)="toggleUserDropdown($event)"
-                    class="flex items-center gap-3 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all duration-300 border border-white/20">
-                                <div class="w-8 h-8 rounded-full overflow-hidden bg-secondary flex items-center justify-center">
-                                    <img *ngIf="userAvatar" [src]="userAvatar" alt="Avatar" class="w-full h-full object-cover">
-                                    <span *ngIf="!userAvatar" class="material-symbols-outlined text-white text-xl">person</span>
-                                </div>
-                                <span class="font-bold text-body-md text-on-surface-variant">{{ userName }}</span>
-                    <span class="material-symbols-outlined text-on-primary text-sm transition-transform duration-300"
+                    class="flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 bg-white/10 hover:bg-white/20 border border-white/20 active:scale-98 cursor-pointer select-none">
+                    <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border border-white/30 bg-white/25">
+                        <img *ngIf="userAvatar" [src]="userAvatar" alt="Avatar" class="w-full h-full object-cover rounded-full">
+                        <span *ngIf="!userAvatar" class="material-symbols-outlined text-white text-xl">person</span>
+                    </div>
+                    <span class="font-bold text-body-md text-white tracking-wide">{{ userName }}</span>
+                    <span class="material-symbols-outlined text-sm transition-transform duration-300 text-white/90"
                         [class.rotate-180]="isUserDropdownOpen">expand_more</span>
                 </button>
 
@@ -91,25 +91,25 @@
                     </div>
                     <ul class="space-y-1">
                         <li>
-                            <a routerLink="/profile" [queryParams]="{ tab: 'profile' }" (click)="isUserDropdownOpen = false"
-                                class="flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
+                            <button (click)="navigateProfileTab('profile')"
+                                class="w-full text-left flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
                                 <span class="material-symbols-outlined text-xl text-outline group-hover:text-secondary">person</span>
                                 <span class="font-body-md">Thông tin cá nhân</span>
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a routerLink="/profile" [queryParams]="{ tab: 'history' }" (click)="isUserDropdownOpen = false"
-                                class="flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
+                            <button (click)="navigateProfileTab('history')"
+                                class="w-full text-left flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
                                 <span class="material-symbols-outlined text-xl text-outline group-hover:text-secondary">history</span>
                                 <span class="font-body-md">Lịch sử mua vé</span>
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a routerLink="/profile" [queryParams]="{ tab: 'password' }" (click)="isUserDropdownOpen = false"
-                                class="flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
+                            <button (click)="navigateProfileTab('password')"
+                                class="w-full text-left flex items-center gap-3 px-6 py-3 text-on-surface hover:bg-secondary-light hover:text-secondary transition-colors group">
                                 <span class="material-symbols-outlined text-xl text-outline group-hover:text-secondary">lock_reset</span>
                                 <span class="font-body-md">Đổi mật khẩu</span>
-                            </a>
+                            </button>
                         </li>
                         <li class="pt-2 mt-2 border-t border-outline-variant/10">
                             <button (click)="logout()"

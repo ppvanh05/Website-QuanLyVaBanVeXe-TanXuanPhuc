@@ -164,12 +164,12 @@
                                 <!-- Filter Inputs Bar -->
                                 <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end mb-6">
                                     <div class="space-y-1.5">
-                                        <label class="text-label-sm font-bold text-navy uppercase tracking-wider">Mã vé</label>
+                                        <label class="text-label-sm font-bold text-navy uppercase tracking-wider">Mã đơn hàng</label>
                                         <input 
                                             type="text" 
                                             [(ngModel)]="filterMaDonHang" 
                                             (ngModelChange)="onMaVeChange($event)"
-                                            placeholder="Nhập mã vé" 
+                                            placeholder="Nhập mã đơn hàng" 
                                             class="w-full px-3 py-2 bg-white border border-outline-variant rounded-xl text-body-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-medium"
                                         />
                                     </div>
@@ -203,8 +203,9 @@
                                             class="w-full px-3 py-2 bg-white border border-outline-variant rounded-xl text-body-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-medium outline-none cursor-pointer text-on-surface-variant">
                                             <option value="">Tất cả</option>
                                             <option value="Chờ thanh toán">Chờ thanh toán</option>
-                                            <option value="Đã xác nhận">Đã xác nhận</option>
+                                            <option value="Chờ khởi hành">Chờ khởi hành</option>
                                             <option value="Đã hoàn thành">Đã hoàn thành</option>
+                                            <option value="Đã đánh giá">Đã đánh giá</option>
                                             <option value="Đã hủy">Đã hủy</option>
                                         </select>
                                     </div>
@@ -231,7 +232,7 @@
                                         <table class="w-full border-collapse text-left text-body-sm">
                                             <thead>
                                                 <tr class="bg-surface-container-low border-b border-outline-variant/15 text-navy font-bold">
-                                                    <th class="px-4 py-3.5">Mã vé</th>
+                                                    <th class="px-4 py-3.5">Mã đơn hàng</th>
                                                     <th class="px-4 py-3.5 text-center">Số vé</th>
                                                     <th class="px-4 py-3.5">Tuyến đường</th>
                                                     <th class="px-4 py-3.5 text-center">Ngày đi</th>
@@ -267,7 +268,7 @@
                                                 <!-- Real Data Rows -->
                                                 <ng-container *ngIf="!isHistoryLoading">
                                                     <tr *ngFor="let order of filteredHistoryOrders" class="hover:bg-surface-container-lowest/50 transition-colors">
-                                                        <td class="px-4 py-4 font-bold text-navy font-mono">{{ order.maVe }}</td>
+                                                        <td class="px-4 py-4 font-bold text-navy font-mono">{{ order.maDonHang }}</td>
                                                         <td class="px-4 py-4 text-center">{{ order.soLuongVeDaDat }}</td>
                                                         <td class="px-4 py-4 font-bold text-primary">{{ order.tenTuyenXe }}</td>
                                                         <td class="px-4 py-4 text-center text-navy font-semibold whitespace-nowrap">

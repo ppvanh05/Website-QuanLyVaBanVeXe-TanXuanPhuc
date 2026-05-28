@@ -25,11 +25,32 @@ export class AuthService {
 
   constructor() {
     if (typeof window !== 'undefined' && window.localStorage) {
+      // Prefer explicit `currentUser` if present
       const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        const user: UserProfile = JSON.parse(storedUser);
-        this._currentUser.next(user);
-        this._isLoggedIn.next(true);
+      const customerInfo = localStorage.getItem('customer_info');
+      // Require a valid access token (or auth_token) in localStorage to treat the user as logged in.
+      const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+
+      if (storedUser && token) {
+        try {
+          const user: UserProfile = JSON.parse(storedUser);
+          this._currentUser.next(user);
+          this._isLoggedIn.next(true);
+        } catch {
+          // ignore parse errors
+        }
+      } else if (customerInfo && token) {
+        try {
+          const user: UserProfile = JSON.parse(customerInfo);
+          this._currentUser.next(user);
+          this._isLoggedIn.next(true);
+          // Also mirror to `currentUser` for compatibility
+          localStorage.setItem('currentUser', JSON.stringify(user));
+        } catch {
+          // ignore parse errors
+        }
+      } else {
+        // Do not auto-login when token is missing; leave currentUser null and isLoggedIn false
       }
     }
   }
@@ -80,6 +101,7 @@ export class AuthService {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.removeItem('currentUser');
       localStorage.removeItem('access_token');
+      localStorage.removeItem('auth_token');
       localStorage.removeItem('customer_info');
       localStorage.removeItem('currentUserId');
     }

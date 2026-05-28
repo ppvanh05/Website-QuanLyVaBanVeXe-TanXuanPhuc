@@ -128,7 +128,7 @@ export class LoginComponent implements OnInit {
 
           this.customerAuthApiService.setToken(token);
           const userName = customer.HoTenKhachHang || 'Người dùng';
-          this.authService.login(userName);
+          this.authService.login(customer);
           this.loggedIn.emit(userName);
 
           this.closeModal();

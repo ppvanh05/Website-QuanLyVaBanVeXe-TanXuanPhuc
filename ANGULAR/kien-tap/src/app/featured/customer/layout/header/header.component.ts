@@ -106,4 +106,9 @@ export class HeaderComponent {
     this.isUserDropdownOpen = false;
     this.router.navigate(['/home']);
   }
+
+  navigateProfileTab(tab: 'profile' | 'history' | 'password') {
+    this.isUserDropdownOpen = false;
+    this.router.navigate(['/profile'], { queryParams: { tab } });
+  }
 }

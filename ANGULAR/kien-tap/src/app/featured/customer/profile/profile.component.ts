@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -87,144 +87,167 @@ export class ProfileComponent implements OnInit, OnDestroy {
   totalItems = 0;
   currentPage = 1;
   pageSize = 10;
-  maVeSubject = new Subject<string>();
+  maDonHangSubject = new Subject<string>();
   tuyenXeSubject = new Subject<string>();
 
   constructor(
     private router: Router,
     private authService: AuthService,
     private profileApiService: ProfileApiService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     this.authService.currentUser$.subscribe((user: any) => {
-      if (user && user.HoTenKhachHang) this.user.fullName = user.HoTenKhachHang;
+      if (user) {
+        this.user = {
+          fullName: user.HoTenKhachHang || '',
+          phone: user.SoDienThoai || '',
+          gender: user.GioiTinh || '',
+          email: user.Email || '',
+          dob: user.NgaySinh ? new Date(user.NgaySinh).toISOString().slice(0, 10) : '',
+          address: user.DiaChi || '',
+          avatar: user.AnhDaiDien || 'asset/images/customer/avatar_placeholder.png',
+          MaKhachHang: user.MaKhachHang,
+          HoTenKhachHang: user.HoTenKhachHang,
+          SoDienThoai: user.SoDienThoai,
+          Email: user.Email,
+          AnhDaiDien: user.AnhDaiDien || 'asset/images/customer/user.png',
+          GioiTinh: user.GioiTinh,
+          NgaySinh: user.NgaySinh,
+          TrangThaiTaiKhoan: user.TrangThaiTaiKhoan,
+        };
+        this.editUser = { ...this.user };
+      }
     });
   }
 
   ngOnInit(): void {
     this.loadProfile();
 
-    this.maVeSubject.pipe(
+    this.maDonHangSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe(value => {
-      this.filterMaDonHang = value;
-      this.currentPage = 1;
-      this.loadHistoryFromApi();
+      this.ngZone.run(() => {
+        this.filterMaDonHang = value;
+        this.currentPage = 1;
+        this.loadHistoryFromApi();
+      });
     });
 
     this.tuyenXeSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe(value => {
-      this.filterTenTuyenXe = value;
-      this.currentPage = 1;
-      this.loadHistoryFromApi();
+      this.ngZone.run(() => {
+        this.filterTenTuyenXe = value;
+        this.currentPage = 1;
+        this.loadHistoryFromApi();
+      });
     });
 
     this.route.queryParamMap.subscribe(params => {
-      const tab = params.get('tab');
-      if (tab === 'history' || tab === 'password' || tab === 'profile') {
-        this.activeTab = tab;
-      } else {
-        this.activeTab = 'profile';
-      }
-      if (this.activeTab === 'history') {
-        this.loadHistory();
-      }
+      this.ngZone.run(() => {
+        const tab = params.get('tab');
+        if (tab === 'history' || tab === 'password' || tab === 'profile') {
+          this.activeTab = tab;
+        } else {
+          this.activeTab = 'profile';
+        }
+        
+        // Force immediate change detection to switch views instantly
+        this.cdr.detectChanges();
+
+        if (this.activeTab === 'history') {
+          if (!this.isHistoryLoading) {
+            this.loadHistory();
+          }
+        } else {
+          this.stopHistoryPolling();
+        }
+      });
     });
 
-    this.authService.currentUser$.pipe(
-      switchMap(user => {
-        if (user) {
-          return this.profileApiService.getProfile();
+    // If user logs in after opening this page, and the history tab is active,
+    // load history when login state becomes true.
+    this.authService.isLoggedIn$.subscribe(logged => {
+      this.ngZone.run(() => {
+        if (logged && this.activeTab === 'history' && this.filteredHistoryOrders.length === 0 && !this.isHistoryLoading) {
+          console.log('User logged in and history tab active — loading history');
+          this.loadHistory();
+        } else {
+          this.cdr.detectChanges();
         }
-        return of(null);
-      })
-    ).subscribe({
-      next: (profileData: any) => {
-        if (profileData) {
-          this.user = {
-            fullName: profileData.HoTenKhachHang || profileData.hoTenKhachHang || this.user.fullName,
-            phone: profileData.SoDienThoai || profileData.soDienThoai || this.user.phone,
-            gender: profileData.GioiTinh || profileData.gioiTinh || this.user.gender,
-            email: profileData.Email || profileData.email || this.user.email,
-            dob: profileData.NgaySinh ? new Date(profileData.NgaySinh).toISOString().slice(0,10) : this.user.dob,
-            address: profileData.DiaChi || profileData.diaChi || this.user.address,
-            avatar: profileData.AnhDaiDien || profileData.anhDaiDien || this.user.avatar,
-          };
-          this.editUser = { ...this.user };
-          const current = this.authService.getCurrentUser() || {};
-          this.authService.setCurrentUser({
-            MaKhachHang: profileData.MaKhachHang,
-            HoTenKhachHang: profileData.HoTenKhachHang || (current as any).HoTenKhachHang || this.user.fullName,
-            SoDienThoai: profileData.SoDienThoai || (current as any).SoDienThoai,
-            Email: profileData.Email || (current as any).Email,
-            AnhDaiDien: profileData.AnhDaiDien || (current as any).AnhDaiDien,
-            GioiTinh: profileData.GioiTinh || (current as any).GioiTinh,
-            NgaySinh: profileData.NgaySinh || (current as any).NgaySinh,
-            TrangThaiTaiKhoan: profileData.TrangThaiTaiKhoan || (current as any).TrangThaiTaiKhoan,
-          });
-        }
-      },
-      error: (err: any) => {
-        console.error('Error fetching profile:', err);
-        // Xử lý lỗi, ví dụ: chuyển hướng về trang đăng nhập nếu token hết hạn
-        // Profile fetch error handled.
-      }
+      });
     });
+
+    // Redundant currentUser$ subscription removed to prevent infinite recursive profile-fetching loops
   }
 
   ngOnDestroy() {
     if (this.timerInterval) clearInterval(this.timerInterval);
     if (this.redirectInterval) clearInterval(this.redirectInterval);
+    this.stopHistoryPolling();
   }
 
   loadProfile(): void {
     this.isProfileLoading = true;
     this.profileApiService.getProfile().subscribe({
       next: (response: any) => {
-        const profile = response?.data || {};
-        this.currentUserId = profile.MaKhachHang || profile.maKhachHang || '';
-        this.user = {
-          fullName: profile.HoTenKhachHang || profile.hoTenKhachHang || '',
-          phone: profile.SoDienThoai || profile.soDienThoai || '',
-          gender: profile.GioiTinh || profile.gioiTinh || '',
-          email: profile.Email || profile.email || '',
-          dob: profile.NgaySinh ? new Date(profile.NgaySinh).toISOString().slice(0, 10) : '',
-          address: profile.DiaChi || profile.diaChi || '',
-          avatar: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/avatar_placeholder.png',
-          MaKhachHang: profile.MaKhachHang,
-          HoTenKhachHang: profile.HoTenKhachHang,
-          SoDienThoai: profile.SoDienThoai,
-          Email: profile.Email,
-          AnhDaiDien: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/user.png',
-          GioiTinh: profile.GioiTinh,
-          NgaySinh: profile.NgaySinh,
-          TrangThaiTaiKhoan: profile.TrangThaiTaiKhoan,
-        } as any;
-        this.editUser = { ...this.user };
-        const cur = this.authService.getCurrentUser() || {};
-        this.authService.setCurrentUser({ ...(cur as any), HoTenKhachHang: this.user.fullName || (cur as any).HoTenKhachHang || 'Khách hàng' });
-        this.isProfileLoading = false;
-
-        if (this.activeTab === 'history') {
-          this.loadHistory();
-        }
+        this.ngZone.run(() => {
+          const profile = response?.data || {};
+          this.currentUserId = profile.MaKhachHang || profile.maKhachHang || '';
+          this.user = {
+            fullName: profile.HoTenKhachHang || profile.hoTenKhachHang || '',
+            phone: profile.SoDienThoai || profile.soDienThoai || '',
+            gender: profile.GioiTinh || profile.gioiTinh || '',
+            email: profile.Email || profile.email || '',
+            dob: profile.NgaySinh ? new Date(profile.NgaySinh).toISOString().slice(0, 10) : '',
+            address: profile.DiaChi || profile.diaChi || '',
+            avatar: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/avatar_placeholder.png',
+            MaKhachHang: profile.MaKhachHang,
+            HoTenKhachHang: profile.HoTenKhachHang,
+            SoDienThoai: profile.SoDienThoai,
+            Email: profile.Email,
+            AnhDaiDien: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/user.png',
+            GioiTinh: profile.GioiTinh,
+            NgaySinh: profile.NgaySinh,
+            TrangThaiTaiKhoan: profile.TrangThaiTaiKhoan,
+          } as any;
+          this.editUser = { ...this.user };
+          const cur = this.authService.getCurrentUser() || {};
+          this.authService.setCurrentUser({ ...(cur as any), HoTenKhachHang: this.user.fullName || (cur as any).HoTenKhachHang || 'Khách hàng' });
+          this.isProfileLoading = false;
+          this.cdr.detectChanges();
+        });
       },
       error: (err: any) => {
-        console.error('Load profile error:', err);
-        this.isProfileLoading = false;
+        this.ngZone.run(() => {
+          console.error('Load profile error:', err);
+          this.isProfileLoading = false;
+          this.cdr.detectChanges();
+        });
       }
     });
+  }
+
+  normalizeString(str: string): string {
+    return (str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9]/g, '');
   }
 
   loadHistory(): void {
     this.currentPage = 1;
     this.loadHistoryFromApi();
+    this.startHistoryPolling();
   }
 
-  onMaVeChange(val: string): void { this.maVeSubject.next(val); }
+  onMaVeChange(val: string): void { this.maDonHangSubject.next(val); }
   onTuyenXeChange(val: string): void { this.tuyenXeSubject.next(val); }
   onFilterChange(): void { this.currentPage = 1; this.loadHistoryFromApi(); }
   searchHistory(): void { this.currentPage = 1; this.loadHistoryFromApi(); }
@@ -262,116 +285,100 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.profileApiService.getHistory().subscribe({
       next: (response: any) => {
-        const orders = Array.isArray(response?.data) ? response.data : [];
+        this.ngZone.run(() => {
+          let orders = Array.isArray(response?.data) ? response.data : [];
 
-        // Mỗi order trong response chứa field tickets[]
-        // Mình flat ra thành từng vé để hiển thị theo dòng
-        let allTickets: any[] = [];
-        const ticketCounts: Record<string, number> = {};
-
-        for (const order of orders) {
-          const orderId = order.maDonHang;
-          const tickets = order.tickets || [];
-          ticketCounts[orderId] = tickets.length;
-
-          for (const ticket of tickets) {
-            allTickets.push({ ticket, order });
+          // Lọc theo mã đơn hàng (maDonHang)
+          if (this.filterMaDonHang.trim()) {
+            const q = this.filterMaDonHang.trim().toLowerCase();
+            orders = orders.filter((o: any) =>
+              (o.maDonHang || '').toLowerCase().includes(q)
+            );
           }
-        }
 
-        // Lọc theo mã vé
-        if (this.filterMaDonHang.trim()) {
-          const q = this.filterMaDonHang.trim().toLowerCase();
-          allTickets = allTickets.filter(item =>
-            (item.ticket.maVe || '').toLowerCase().includes(q)
+          // Lọc theo tuyến đường
+          if (this.filterTenTuyenXe.trim()) {
+            const q = this.filterTenTuyenXe.trim().toLowerCase();
+            orders = orders.filter((o: any) =>
+              (o.tenTuyen || '').toLowerCase().includes(q)
+            );
+          }
+
+          // Lọc theo ngày đi (departureDate dạng YYYY-MM-DD)
+          if (this.filterThoiGianDat) {
+            orders = orders.filter((o: any) =>
+              o.departureDate === this.filterThoiGianDat
+            );
+          }
+
+          // Lọc theo trạng thái
+          if (this.filterTrangThai) {
+            const targetStatus = this.normalizeString(this.filterTrangThai);
+            orders = orders.filter((o: any) =>
+              this.normalizeString(o.trangThaiDonHang) === targetStatus
+            );
+          }
+
+          // Sắp xếp mã đơn hàng mới nhất lên đầu
+          orders.sort((a: any, b: any) =>
+            (b.maDonHang || '').localeCompare(a.maDonHang || '')
           );
-        }
 
-        // Lọc theo tuyến đường
-        if (this.filterTenTuyenXe.trim()) {
-          const q = this.filterTenTuyenXe.trim().toLowerCase();
-          allTickets = allTickets.filter(item =>
-            (item.order.tenTuyen || '').toLowerCase().includes(q)
-          );
-        }
+          this.totalItems = orders.length;
 
-        // Lọc theo ngày đi (departureDate dạng YYYY-MM-DD)
-        if (this.filterThoiGianDat) {
-          allTickets = allTickets.filter(item =>
-            item.order.departureDate === this.filterThoiGianDat
-          );
-        }
+          // Phân trang
+          const from = (this.currentPage - 1) * this.pageSize;
+          const paged = orders.slice(from, from + this.pageSize);
 
-        // Lọc theo trạng thái
-        if (this.filterTrangThai) {
-          allTickets = allTickets.filter(item => {
-            const s = item.ticket.trangThaiVe || '';
-            if (this.filterTrangThai === 'Chờ thanh toán')
-              return ['Chờ thanh toán','ChoThanhToan','CHO_THANH_TOAN'].includes(s);
-            if (this.filterTrangThai === 'Đã xác nhận')
-              return ['Đã xác nhận','Chờ khởi hành','ChoKhoiHanh','DA_XAC_NHAN'].includes(s);
-            if (this.filterTrangThai === 'Đã hoàn thành')
-              return ['Đã hoàn thành','Đã đánh giá','DaHoanThanh','DaDanhGia','DA_SU_DUNG'].includes(s);
-            if (this.filterTrangThai === 'Đã hủy')
-              return ['Đã hủy','DaHuy','DA_HUY'].includes(s);
-            return true;
+          this.filteredHistoryOrders = paged.map((o: any) => {
+            // Format ngày giờ: "HH:mm DD-MM-YYYY"
+            let formattedNgayDi = '';
+            if (o.gioKhoiHanh && o.departureDate) {
+              const [y, m, d] = o.departureDate.split('-');
+              formattedNgayDi = `${o.gioKhoiHanh} ${d}-${m}-${y}`;
+            }
+
+            // Chuẩn hóa trạng thái
+            const rawStatus = (o.trangThaiDonHang || '').toString();
+            let displayStatus = 'Chờ thanh toán';
+            const s = rawStatus.toLowerCase();
+            if (s.includes('chothanhtoan') || s.includes('cho_thanh_toan') || s.includes('cho_thanhtoan') || s.includes('cho thanh toan') || s.includes('cho thanhtoan') || s === 'chờ thanh toán') {
+              displayStatus = 'Chờ thanh toán';
+            } else if (s.includes('chokhoihanh') || s.includes('cho_khoi_hanh') || s.includes('cho khoi hanh') || s.includes('chờ khởi hành') || s.includes('cho khoihanh') || s === 'chờ khởi hành') {
+              displayStatus = 'Chờ khởi hành';
+            } else if (s.includes('dahoanthanh') || s.includes('da_hoan_thanh') || s.includes('da hoàn thành') || s.includes('da hoan thanh') || s === 'đã hoàn thành') {
+              displayStatus = 'Đã hoàn thành';
+            } else if (s.includes('dadanhgia') || s.includes('da_danh_gia') || s.includes('đã đánh giá') || s.includes('da danh gia') || s === 'đã đánh giá') {
+              displayStatus = 'Đã đánh giá';
+            } else if (s.includes('dahuy') || s.includes('da_huy') || s.includes('đã hủy') || s.includes('da huy') || s === 'đã hủy') {
+              displayStatus = 'Đã hủy';
+            }
+
+            return {
+              maDonHang: o.maDonHang,
+              soLuongVeDaDat: o.soLuongVeDaDat || 1,
+              tenTuyenXe: o.tenTuyen || '',
+              gioKhoiHanh: o.gioKhoiHanh || '',
+              ngayKhoiHanh: o.departureDate || '',
+              formattedNgayDi,
+              tongGiaVe: o.tongGiaVe || 0,
+              trangThaiDonHang: displayStatus as any,
+              soDienThoai: o.soDienThoai || this.user.phone
+            };
           });
-        }
 
-        // Sắp xếp mã vé mới nhất lên đầu
-        allTickets.sort((a, b) =>
-          (b.ticket.maVe || '').localeCompare(a.ticket.maVe || '')
-        );
-
-        this.totalItems = allTickets.length;
-
-        // Phân trang
-        const from = (this.currentPage - 1) * this.pageSize;
-        const paged = allTickets.slice(from, from + this.pageSize);
-
-        this.filteredHistoryOrders = paged.map(item => {
-          const t = item.ticket;
-          const o = item.order;
-
-          // Format ngày giờ: "HH:mm DD-MM-YYYY"
-          let formattedNgayDi = '';
-          if (o.gioKhoiHanh && o.departureDate) {
-            const [y, m, d] = o.departureDate.split('-');
-            formattedNgayDi = `${o.gioKhoiHanh} ${d}-${m}-${y}`;
-          }
-
-          // Chuẩn hóa trạng thái
-          let displayStatus = t.trangThaiVe || 'Chờ thanh toán';
-          if (['Chờ khởi hành','ChoKhoiHanh','DA_XAC_NHAN'].includes(displayStatus))
-            displayStatus = 'Đã xác nhận';
-          else if (['DaHoanThanh','DaDanhGia','Đã đánh giá','DA_SU_DUNG'].includes(displayStatus))
-            displayStatus = 'Đã hoàn thành';
-          else if (['ChoThanhToan','CHO_THANH_TOAN'].includes(displayStatus))
-            displayStatus = 'Chờ thanh toán';
-          else if (['DaHuy','DA_HUY'].includes(displayStatus))
-            displayStatus = 'Đã hủy';
-
-          return {
-            maVe: t.maVe,
-            maDonHang: o.maDonHang,
-            soLuongVeDaDat: ticketCounts[o.maDonHang] || 1,
-            tenTuyenXe: o.tenTuyen || '',
-            gioKhoiHanh: o.gioKhoiHanh || '',
-            ngayKhoiHanh: o.departureDate || '',
-            formattedNgayDi,
-            tongGiaVe: t.giaVe || 0,
-            trangThaiDonHang: displayStatus as any,
-            soDienThoai: o.soDienThoai || this.user.phone
-          };
+          this.isHistoryLoading = false;
+          this.cdr.detectChanges();
         });
-
-        this.isHistoryLoading = false;
       },
       error: (err: any) => {
-        console.error('Load history error:', err);
-        this.filteredHistoryOrders = [];
-        this.totalItems = 0;
-        this.isHistoryLoading = false;
+        this.ngZone.run(() => {
+          console.error('Load history error:', err);
+          this.filteredHistoryOrders = [];
+          this.totalItems = 0;
+          this.isHistoryLoading = false;
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -379,8 +386,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   viewTicketDetail(order: any): void {
     this.router.navigate(['/tra-cuu-ve'], {
       queryParams: {
-        phone: order.soDienThoai,
-        code: order.maDonHang
+        soDienThoai: order.soDienThoai,
+        maDonHang: order.maDonHang
       }
     });
   }
@@ -500,7 +507,113 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  goToBooking() { this.router.navigate(['/tim-kiem-chuyen']); }
+  historyInterval: any;
+
+  startHistoryPolling(): void {
+    this.stopHistoryPolling();
+    this.historyInterval = setInterval(() => {
+      if (this.activeTab === 'history' && !this.isHistoryLoading) {
+        this.loadHistorySilent();
+      }
+    }, 5000);
+  }
+
+  stopHistoryPolling(): void {
+    if (this.historyInterval) {
+      clearInterval(this.historyInterval);
+      this.historyInterval = null;
+    }
+  }
+
+  loadHistorySilent(): void {
+    this.profileApiService.getHistory().subscribe({
+      next: (response: any) => {
+        this.ngZone.run(() => {
+          let orders = Array.isArray(response?.data) ? response.data : [];
+
+          if (this.filterMaDonHang.trim()) {
+            const q = this.filterMaDonHang.trim().toLowerCase();
+            orders = orders.filter((o: any) =>
+              (o.maDonHang || '').toLowerCase().includes(q)
+            );
+          }
+
+          if (this.filterTenTuyenXe.trim()) {
+            const q = this.filterTenTuyenXe.trim().toLowerCase();
+            orders = orders.filter((o: any) =>
+              (o.tenTuyen || '').toLowerCase().includes(q)
+            );
+          }
+
+          if (this.filterThoiGianDat) {
+            orders = orders.filter((o: any) =>
+              o.departureDate === this.filterThoiGianDat
+            );
+          }
+
+          if (this.filterTrangThai) {
+            const targetStatus = this.normalizeString(this.filterTrangThai);
+            orders = orders.filter((o: any) =>
+              this.normalizeString(o.trangThaiDonHang) === targetStatus
+            );
+          }
+
+          orders.sort((a: any, b: any) =>
+            (b.maDonHang || '').localeCompare(a.maDonHang || '')
+          );
+
+          this.totalItems = orders.length;
+
+          const from = (this.currentPage - 1) * this.pageSize;
+          const paged = orders.slice(from, from + this.pageSize);
+
+          this.filteredHistoryOrders = paged.map((o: any) => {
+            let formattedNgayDi = '';
+            if (o.gioKhoiHanh && o.departureDate) {
+              const [y, m, d] = o.departureDate.split('-');
+              formattedNgayDi = `${o.gioKhoiHanh} ${d}-${m}-${y}`;
+            }
+
+            const rawStatus = (o.trangThaiDonHang || '').toString();
+            let displayStatus = 'Chờ thanh toán';
+            const s = rawStatus.toLowerCase();
+            if (s.includes('chothanhtoan') || s.includes('cho_thanh_toan') || s.includes('cho_thanhtoan') || s.includes('cho thanh toan') || s.includes('cho thanhtoan') || s === 'chờ thanh toán') {
+              displayStatus = 'Chờ thanh toán';
+            } else if (s.includes('chokhoihanh') || s.includes('cho_khoi_hanh') || s.includes('cho khoi hanh') || s.includes('chờ khởi hành') || s.includes('cho khoihanh') || s === 'chờ khởi hành') {
+              displayStatus = 'Chờ khởi hành';
+            } else if (s.includes('dahoanthanh') || s.includes('da_hoan_thanh') || s.includes('da hoàn thành') || s.includes('da hoan thanh') || s === 'đã hoàn thành') {
+              displayStatus = 'Đã hoàn thành';
+            } else if (s.includes('dadanhgia') || s.includes('da_danh_gia') || s.includes('đã đánh giá') || s.includes('da danh gia') || s === 'đã đánh giá') {
+              displayStatus = 'Đã đánh giá';
+            } else if (s.includes('dahuy') || s.includes('da_huy') || s.includes('đã hủy') || s.includes('da huy') || s === 'đã hủy') {
+              displayStatus = 'Đã hủy';
+            }
+
+            return {
+              maDonHang: o.maDonHang,
+              soLuongVeDaDat: o.soLuongVeDaDat || 1,
+              tenTuyenXe: o.tenTuyen || '',
+              gioKhoiHanh: o.gioKhoiHanh || '',
+              ngayKhoiHanh: o.departureDate || '',
+              formattedNgayDi,
+              tongGiaVe: o.tongGiaVe || 0,
+              trangThaiDonHang: displayStatus as any,
+              soDienThoai: o.soDienThoai || this.user.phone
+            };
+          });
+
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  goToBooking() { this.router.navigate(['/home']); }
 
   logout() {
     this.isLogoutActive = true;
@@ -509,12 +622,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   selectTab(tab: string) {
-    this.activeTab = tab;
     this.router.navigate([], {
       queryParams: { tab },
       queryParamsHandling: 'merge',
     });
-    if (tab === 'history') this.loadHistory();
   }
 
   getStatusClasses(status: string): { [key: string]: boolean } {
@@ -523,10 +634,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       'text-success-text': status === 'Đã hoàn thành' || status === 'Đã đánh giá',
       'bg-danger-light': status === 'Đã hủy',
       'text-danger-text': status === 'Đã hủy',
-      'bg-info-light': status === 'Đã xác nhận',
-      'text-info-text': status === 'Đã xác nhận',
-      'bg-warning-light': status === 'Chờ thanh toán',
-      'text-warning-text': status === 'Chờ thanh toán',
+      'bg-info-light': status === 'Chờ thanh toán',
+      'text-info-text': status === 'Chờ thanh toán',
+      'bg-warning-light': status === 'Chờ khởi hành',
+      'text-warning-text': status === 'Chờ khởi hành',
     };
   }
 }

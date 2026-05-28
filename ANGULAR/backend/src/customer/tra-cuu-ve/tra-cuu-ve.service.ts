@@ -175,6 +175,22 @@ export class TraCuuVeService {
       orderBy: { ThoiGianDat: 'desc' },
     });
 
+    const statusMap: Record<string, string> = {
+      [TrangThaiVe.ChoThanhToan]: 'Chờ thanh toán',
+      [TrangThaiVe.ChoKhoiHanh]: 'Chờ khởi hành',
+      [TrangThaiVe.DaHoanThanh]: 'Đã hoàn thành',
+      [TrangThaiVe.DaHuy]: 'Đã hủy',
+      [TrangThaiVe.DaDanhGia]: 'Đã đánh giá',
+    };
+
+    const ticketStatusMap: Record<string, string> = {
+      ChoThanhToan: 'Chờ thanh toán',
+      ChoKhoiHanh: 'Chờ khởi hành',
+      DaHoanThanh: 'Đã hoàn thành',
+      DaHuy: 'Đã hủy',
+      DaDanhGia: 'Đã đánh giá',
+    };
+
     return list.map(order => {
       const firstTicket = order.VE_DIEN_TU?.[0];
       const schedule = firstTicket?.LICH_TRINH;
@@ -204,7 +220,7 @@ export class TraCuuVeService {
       const tickets = (order.VE_DIEN_TU || []).map((ticket: any) => ({
         maVe: ticket.MaVe,
         giaVe: ticket.GiaVe ? Number(ticket.GiaVe) : 0,
-        trangThaiVe: ticket.TrangThaiVe
+        trangThaiVe: ticketStatusMap[ticket.TrangThaiVe] || ticket.TrangThaiVe || 'Chờ khởi hành'
       }));
 
       return {
@@ -213,6 +229,9 @@ export class TraCuuVeService {
         departureDate,
         gioKhoiHanh,
         soDienThoai: order.SdtNguoiDi || '',
+        tongGiaVe: order.TongGiaVe ? Number(order.TongGiaVe) : 0,
+        soLuongVeDaDat: order.SoLuongVeDaDat || tickets.length,
+        trangThaiDonHang: statusMap[order.TrangThaiDonHang] || order.TrangThaiDonHang || 'Chờ thanh toán',
         tickets
       };
     });
