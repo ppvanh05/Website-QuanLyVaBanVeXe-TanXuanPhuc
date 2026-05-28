@@ -142,7 +142,7 @@ export class DieuHanhService implements OnModuleInit {
         MaXe: id,
         TenXe: data.name,
         BienSoXe: data.licensePlate,
-        LoaiXe: data.type,
+        LoaiXe: data.type === 'Limousine 22 phòng' ? 'Limousine_22_ph_ng' : data.type,
         SoTang: data.floors ? parseInt(data.floors) : 1,
         SoDay: data.rows ? parseInt(data.rows) : 2,
         SoGhe: data.seats ? parseInt(data.seats) : 22,
@@ -160,7 +160,7 @@ export class DieuHanhService implements OnModuleInit {
     const updateData: any = {};
     if (data.name !== undefined) updateData.TenXe = data.name;
     if (data.licensePlate !== undefined) updateData.BienSoXe = data.licensePlate;
-    if (data.type !== undefined) updateData.LoaiXe = data.type;
+    if (data.type !== undefined) updateData.LoaiXe = data.type === 'Limousine 22 phòng' ? 'Limousine_22_ph_ng' : data.type;
     if (data.floors !== undefined) updateData.SoTang = parseInt(data.floors);
     if (data.rows !== undefined) updateData.SoDay = parseInt(data.rows);
     if (data.seats !== undefined) updateData.SoGhe = parseInt(data.seats);
@@ -545,11 +545,11 @@ export class DieuHanhService implements OnModuleInit {
     if (!amenities || !Array.isArray(amenities)) return [];
     const AMENITY_MAP: { [key: string]: TienIch } = {
       tivi: TienIch.Tivi,
-      usb: TienIch.SacUSB,
+      usb: TienIch.s_c__USB,
       wifi: TienIch.Wifi,
-      water: TienIch.NuocKhanUot,
+      water: TienIch.N__c__kh_n___t,
       gps: TienIch.GPS,
-      ac: TienIch.DieuHoa,
+      ac: TienIch.i_u_h_a,
     };
     return amenities
       .map(a => AMENITY_MAP[a.toLowerCase()])

@@ -191,11 +191,11 @@ async function seedVehicles() {
       },
       create: {
         ...vehicle,
-        LoaiXe: 'Limousine22Phong',
+        LoaiXe: 'Limousine_22_ph_ng',
         SoTang: 2,
         SoDay: 2,
         SoGhe: 22,
-        TienIch: ['Tivi', 'SacUSB', 'Wifi', 'NuocKhanUot', 'GPS', 'DieuHoa'],
+        TienIch: ['Tivi', 's_c__USB', 'Wifi', 'N__c__kh_n___t', 'GPS', 'i_u_h_a'],
         HanDangKiem: date('2028-12-31'),
         HanBaoHiem: date('2028-12-31'),
         TrangThaiPhuongTien: 'DangHoatDong',

@@ -96,7 +96,7 @@ export class TimKiemChuyenXeService {
             MaGheChuyen: gheChuyenId,
             NhomGhe: 'Limousine',
             GiaVe: basePrice,
-            TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
+            TrangThaiGhe: TrangThaiGhe.Trong,
             ThoiGianCapNhatTrangThai: new Date(),
             MaLichTrinh: scheduleId,
             MaGhe: ghe.MaGhe,
@@ -116,7 +116,7 @@ export class TimKiemChuyenXeService {
           MaGheChuyen: gheChuyenId,
           NhomGhe: 'Limousine',
           GiaVe: basePrice,
-          TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
+          TrangThaiGhe: TrangThaiGhe.Trong,
           ThoiGianCapNhatTrangThai: new Date(),
           MaLichTrinh: scheduleId,
           MaGhe: seat.MaGhe,
@@ -130,33 +130,24 @@ export class TimKiemChuyenXeService {
   // ===== SEARCH TRIPS =====
   async searchTrips(dto: { departure?: string; destination?: string; date?: string }) {
     const searchDate = this.parseSearchDate(dto.date);
-    const where: any = {
-      TrangThaiLichTrinh: {
-        notIn: ['DaKhoa'],
-      },
-    };
-
-    if (searchDate) {
-      const startOfDay = new Date(searchDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(searchDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      where.NgayKhoiHanh = {
-        gte: startOfDay,
-        lte: endOfDay,
-      };
-    }
-
     const departure = dto.departure?.trim();
     const destination = dto.destination?.trim();
+
+    const startOfDay = searchDate ? new Date(searchDate) : null;
+    if (startOfDay) startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = searchDate ? new Date(searchDate) : null;
+    if (endOfDay) endOfDay.setHours(23, 59, 59, 999);
 
     // Find schedules matching date and route (insensitive search)
     const schedules = await this.prisma.lICH_TRINH.findMany({
       where: {
-        NgayKhoiHanh: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
+        ...(searchDate ? {
+          NgayKhoiHanh: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        } : {}),
         TrangThaiLichTrinh: {
           notIn: [TrangThaiLichTrinh.DaKhoa],
         },
@@ -165,7 +156,6 @@ export class TimKiemChuyenXeService {
           DiemDen: { contains: dto.destination, mode: 'insensitive' },
         },
       },
-      where,
       include: {
         TUYEN_XE: true,
         PHUONG_TIEN: true,
@@ -187,7 +177,7 @@ export class TimKiemChuyenXeService {
       );
 
       // Count available seats
-      const availableSeats = seats.filter(s => s.TrangThaiGhe === TrangThaiGhe.C_n_Tr_ng).length;
+      const availableSeats = seats.filter(s => s.TrangThaiGhe === TrangThaiGhe.Trong).length;
 
       // Fetch stops
       const stops = await this.prisma.lICH_TRINH_DIEM_DUNG.findMany({
