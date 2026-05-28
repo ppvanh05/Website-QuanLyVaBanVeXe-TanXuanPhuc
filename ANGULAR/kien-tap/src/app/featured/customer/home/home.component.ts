@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { Component, HostListener, OnInit, ChangeDetectorRef } from '@angular/core';
-=======
 import { Component, HostListener, OnInit } from '@angular/core';
->>>>>>> nghi
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,13 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 import { ToastService } from '../../../core/services/toast.service';
-<<<<<<< HEAD
-import { DanhGiaService } from '../../../core/services/danh-gia.service';
-import { CustomerTinTucService } from '../../../core/services/customer-tin-tuc.service';
-=======
 import { HomeApiService } from '../../../core/services/home-api.service';
 import { LunarCalendarService } from '../../../core/services/lunar-calendar.service';
->>>>>>> nghi
 
 @Component({
   selector: 'app-home',
@@ -59,44 +50,14 @@ export class HomeComponent implements OnInit {
     { from: 'Phú Yên', to: 'TP. Hồ Chí Minh', price: '250.000đ', image: 'benxemiendong.jpg' }
   ];
 
+  // placeholders used by template
+  homeReviews: any[] = [];
+  homeNews: any[] = [];
+
   calendarTitle: string = '';
   calendarEmptySpaces: number[] = [];
   calendarDays: any[] = [];
 
-<<<<<<< HEAD
-  homeReviews: any[] = [];
-  homeNews: any[] = [];
-
-  constructor(
-    private router: Router,
-    private toastService: ToastService,
-    private danhGiaService: DanhGiaService,
-    private tinTucService: CustomerTinTucService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  ngOnInit() {
-    this.danhGiaService.getHomeReviews().subscribe({
-      next: (data) => {
-        this.homeReviews = data;
-        this.cdr.detectChanges();
-        // Fetch home news after reviews
-        this.tinTucService.getHomeNews().subscribe({
-          next: (news) => {
-            this.homeNews = news;
-            this.cdr.detectChanges();
-          },
-          error: (err) => {
-            console.error('Error fetching home news:', err);
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Error fetching home reviews:', err);
-      }
-    });
-  }
-=======
   constructor(
     private router: Router, 
     private toastService: ToastService,
@@ -190,18 +151,15 @@ export class HomeComponent implements OnInit {
     if (!from || !to || !date) return;
 
     const search = { from, to, date };
-    // Remove if already exists
     this.recentSearches = this.recentSearches.filter(s => !(s.from === from && s.to === to && s.date === date));
-    // Add to top
     this.recentSearches.unshift(search);
-    // Keep only last 5
+
     if (this.recentSearches.length > 5) {
       this.recentSearches = this.recentSearches.slice(0, 5);
     }
-    // Save to localStorage
+
     window.localStorage.setItem('recentSearches', JSON.stringify(this.recentSearches));
   }
->>>>>>> nghi
 
   isPastDate(dateStr: string): boolean {
     const today = new Date();

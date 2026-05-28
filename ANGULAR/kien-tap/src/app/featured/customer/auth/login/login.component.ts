@@ -104,31 +104,6 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-<<<<<<< HEAD
-    const mockUsers = this.getMockUsers();
-    const user: MockUser | undefined = mockUsers.find(u => 
-      (u.phoneNumber === this.phoneOrEmail || u.email === this.phoneOrEmail) && u.password === this.password
-    );
-
-    if (user) {
-      this.authService.login(
-        user.MaKhachHang || '',
-        user.fullName,
-        user.phoneNumber,
-        user.email,
-        user.AnhDaiDien || '',
-        user.GioiTinh || '',
-        user.NgaySinh || '',
-        user.TrangThaiTaiKhoan || '',
-        user.NgayDangKy || ''
-      );
-      this.loggedIn.emit(user.fullName); 
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('lastLoggedInUser', JSON.stringify({
-          phoneOrEmail: this.phoneOrEmail,
-          password: this.password
-        }));
-=======
     const loginPayload = {
       phoneOrEmail: this.phoneOrEmail,
       MatKhau: this.password,
@@ -165,7 +140,6 @@ export class LoginComponent implements OnInit {
       error: (err: any) => {
         console.error('Login error:', err);
         this.loginError = err.error?.message || err.message || 'Số điện thoại/email hoặc mật khẩu không đúng.';
->>>>>>> nghi
       }
     });
   }

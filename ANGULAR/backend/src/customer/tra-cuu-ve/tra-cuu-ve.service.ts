@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NhatKyHeThongService } from '../../admin/nhat-ky-he-thong/nhat-ky-he-thong.service';
-import { Prisma, TrangThaiVe, TrangThaiGhe, TrangThaiChinhSachEnum } from '@prisma/client';
+import { Prisma, TrangThaiVe, TrangThaiGhe, TrangThaiChinhSachEnum, TrangThaiThanhToan } from '@prisma/client';
 
 @Injectable()
 export class TraCuuVeService {
@@ -21,29 +21,22 @@ export class TraCuuVeService {
     // DB TrangThaiDonHang: Ch__thanh_to_n, Ch__kh_i_h_nh, ho_n_th_nh, h_y
     // Frontend expects: 'Chờ thanh toán', 'Chờ khởi hành', 'Đã hoàn thành', 'Đã hủy', 'Đã đánh giá'
     const statusMap: Record<string, string> = {
-      [TrangThaiVe.Ch__thanh_to_n]: 'Chờ thanh toán',
-      [TrangThaiVe.Ch__kh_i_h_nh]: 'Chờ khởi hành',
-      [TrangThaiVe.ho_n_th_nh]: 'Đã hoàn thành',
-      [TrangThaiVe.h_y]: 'Đã hủy',
+      [TrangThaiVe.ChoThanhToan]: 'Chờ thanh toán',
+      [TrangThaiVe.ChoKhoiHanh]: 'Chờ khởi hành',
+      [TrangThaiVe.DaHoanThanh]: 'Đã hoàn thành',
+      [TrangThaiVe.DaHuy]: 'Đã hủy',
     };
     const trangThaiDonHang = statusMap[order.TrangThaiDonHang] || order.TrangThaiDonHang || 'Chờ thanh toán';
 
     // Map tickets list
     const tickets = (order.VE_DIEN_TU || []).map((ticket: any) => {
       const ticketStatusMap: Record<string, string> = {
-<<<<<<< HEAD
-        [TrangThaiVe.Ch__thanh_to_n]: 'Chờ thanh toán',
-        [TrangThaiVe.Ch__kh_i_h_nh]: 'Chờ khởi hành',
-        [TrangThaiVe.ho_n_th_nh]: 'Đã hoàn thành',
-        [TrangThaiVe.h_y]: 'Đã hủy',
-=======
-        ChoThanhToan: 'Chờ thanh toán',
-        ChoKhoiHanh: 'Chờ khởi hành',
-        DaHoanThanh: 'Đã hoàn thành',
-        DaHuy: 'Đã hủy',
-        DaDanhGia: 'Đã đánh giá',
->>>>>>> nghi
-      };
+      ChoThanhToan: 'Chờ thanh toán',
+      ChoKhoiHanh: 'Chờ khởi hành',
+      DaHoanThanh: 'Đã hoàn thành',
+      DaHuy: 'Đã hủy',
+      DaDanhGia: 'Đã đánh giá',
+    };
       
       const departureDateStr = schedule?.NgayKhoiHanh
         ? new Date(schedule.NgayKhoiHanh).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')
@@ -364,7 +357,7 @@ export class TraCuuVeService {
       throw new NotFoundException(`Không tìm thấy vé với mã ${maVe}`);
     }
 
-    if (ticket.TrangThaiVe === 'DaHuy') {
+    if (ticket.TrangThaiVe === TrangThaiVe.DaHuy) {
       throw new BadRequestException('Vé này đã được huỷ bỏ trước đó!');
     }
 
@@ -413,14 +406,14 @@ export class TraCuuVeService {
       // A. Update ticket status to h_y
       await tx.vE_DIEN_TU.update({
         where: { MaVe: maVe },
-        data: { TrangThaiVe: TrangThaiVe.h_y },
+        data: { TrangThaiVe: TrangThaiVe.DaHuy },
       });
 
       // B. Release seat back to 'C_n_Tr_ng'
       await tx.gHE_CHUYEN_XE.update({
         where: { MaGheChuyen: ticket.MaGheChuyen },
         data: {
-          TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
+          TrangThaiGhe: TrangThaiGhe.Trong,
           ThoiGianCapNhatTrangThai: new Date(),
         },
       });
@@ -434,7 +427,7 @@ export class TraCuuVeService {
           PhuongThucThanhToan: ticket.DON_HANG.PhuongThucThanhToan || 'ChuyenKhoan',
           SoTien: new Prisma.Decimal(refund),
           ThoiGianGiaoDich: new Date(),
-          TrangThaiGiaoDich: 'ThanhCong',
+          TrangThaiGiaoDich: TrangThaiThanhToan.DaThanhToan,
           LichSuHoanTien: `Hoàn tiền hủy vé ${maVe}. Số tiền: ${refund}đ (Phí hủy: ${fee}đ)`,
         },
       });
@@ -462,7 +455,7 @@ export class TraCuuVeService {
           MaLichSu: `LSV_${Date.now()}`,
           HanhDong: 'Huỷ vé',
           TrangThaiCu: ticket.TrangThaiVe,
-          TrangThaiMoi: TrangThaiVe.h_y,
+          TrangThaiMoi: TrangThaiVe.DaHuy,
           ThoiGianThayDoi: new Date(),
           GhiChu: `Khách hàng yêu cầu hủy vé. Lý do: ${lyDo || 'Đổi kế hoạch'}`,
           MaVe: maVe,
@@ -479,11 +472,11 @@ export class TraCuuVeService {
         },
       });
 
-      const allCancelled = otherTickets.every(t => t.TrangThaiVe === TrangThaiVe.h_y);
+      const allCancelled = otherTickets.every(t => t.TrangThaiVe === TrangThaiVe.DaHuy);
       if (allCancelled) {
         await tx.dON_HANG.update({
           where: { MaDonHang: ticket.MaDonHang },
-          data: { TrangThaiDonHang: TrangThaiVe.h_y },
+          data: { TrangThaiDonHang: TrangThaiVe.DaHuy },
         });
       }
     });

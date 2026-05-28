@@ -46,30 +46,42 @@ export class AuthService {
     return this._currentUser.getValue();
   }
 
-  login(MaKhachHang: string, HoTenKhachHang: string, SoDienThoai: string, Email: string, AnhDaiDien: string, GioiTinh: string, NgaySinh: string, TrangThaiTaiKhoan: string, NgayDangKy: string) {
-    const user: UserProfile = {
-      MaKhachHang,
-      HoTenKhachHang,
-      SoDienThoai,
-      Email,
-      AnhDaiDien,
-      GioiTinh,
-      NgaySinh,
-      TrangThaiTaiKhoan,
-      NgayDangKy
-    };
-    this.setCurrentUser(user);
+  // Accept either a UserProfile object or a simple display name string
+  login(userOrName: UserProfile | string, ...rest: any[]) {
+    if (typeof userOrName === 'string') {
+      const user: UserProfile = { HoTenKhachHang: userOrName };
+      this.setCurrentUser(user);
+      return;
+    }
+
+    if (userOrName && typeof userOrName === 'object') {
+      this.setCurrentUser(userOrName as UserProfile);
+      return;
+    }
+
+    // Fallback: if old signature with many args used
+    if (rest && rest.length >= 8 && typeof userOrName === 'string') {
+      const MaKhachHang = userOrName as unknown as string;
+      const HoTenKhachHang = rest[0];
+      const SoDienThoai = rest[1];
+      const Email = rest[2];
+      const AnhDaiDien = rest[3];
+      const GioiTinh = rest[4];
+      const NgaySinh = rest[5];
+      const TrangThaiTaiKhoan = rest[6];
+      const NgayDangKy = rest[7];
+      const user: UserProfile = { MaKhachHang, HoTenKhachHang, SoDienThoai, Email, AnhDaiDien, GioiTinh, NgaySinh, TrangThaiTaiKhoan, NgayDangKy };
+      this.setCurrentUser(user);
+    }
   }
 
   logout() {
     this._currentUser.next(null);
     if (typeof window !== 'undefined' && window.localStorage) {
-<<<<<<< HEAD
       localStorage.removeItem('currentUser');
-=======
-      localStorage.removeItem('currentUserName'); // Xóa tên người dùng khỏi localStorage
-      localStorage.removeItem('access_token'); // Xóa JWT Token
->>>>>>> nghi
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('customer_info');
+      localStorage.removeItem('currentUserId');
     }
     this._isLoggedIn.next(false);
   }

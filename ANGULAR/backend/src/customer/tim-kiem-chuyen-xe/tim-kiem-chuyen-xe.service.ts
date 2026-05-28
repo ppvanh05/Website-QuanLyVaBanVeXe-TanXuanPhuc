@@ -96,7 +96,7 @@ export class TimKiemChuyenXeService {
             MaGheChuyen: gheChuyenId,
             NhomGhe: 'Limousine',
             GiaVe: basePrice,
-            TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
+            TrangThaiGhe: TrangThaiGhe.Trong,
             ThoiGianCapNhatTrangThai: new Date(),
             MaLichTrinh: scheduleId,
             MaGhe: ghe.MaGhe,
@@ -116,7 +116,7 @@ export class TimKiemChuyenXeService {
           MaGheChuyen: gheChuyenId,
           NhomGhe: 'Limousine',
           GiaVe: basePrice,
-          TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
+          TrangThaiGhe: TrangThaiGhe.Trong,
           ThoiGianCapNhatTrangThai: new Date(),
           MaLichTrinh: scheduleId,
           MaGhe: seat.MaGhe,
@@ -156,39 +156,16 @@ export class TimKiemChuyenXeService {
 
     // Find schedules matching date
     const schedules = await this.prisma.lICH_TRINH.findMany({
-      where: {
-        NgayKhoiHanh: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-<<<<<<< HEAD
-        TrangThaiLichTrinh: {
-          notIn: [TrangThaiLichTrinh.DaKhoa],
-        },
-        TUYEN_XE: {
-          DiemKhoiHanh: { contains: dto.departure, mode: 'insensitive' },
-          DiemDen: { contains: dto.destination, mode: 'insensitive' },
-=======
-        TrangThai: {
-          notIn: ['DaKhoa'],
->>>>>>> nghi
-        },
-      },
       where,
       include: {
         TUYEN_XE: true,
         PHUONG_TIEN: true,
       },
     });
-    const filteredSchedules = schedules.filter(schedule =>
-      this.matchLocation(schedule.TUYEN_XE?.DiemKhoiHanh, departure) &&
-      this.matchLocation(schedule.TUYEN_XE?.DiemDen, destination),
-    );
 
     const cleanDeparture = this.removeAccents(dto.departure || '').toLowerCase().trim();
     const cleanDestination = this.removeAccents(dto.destination || '').toLowerCase().trim();
 
-    // Filter in-memory for 100% case- and accent-insensitive matching
     const matchedSchedules = schedules.filter(schedule => {
       const dbDep = this.removeAccents(schedule.TUYEN_XE?.DiemKhoiHanh || '').toLowerCase().trim();
       const dbDest = this.removeAccents(schedule.TUYEN_XE?.DiemDen || '').toLowerCase().trim();
@@ -197,11 +174,7 @@ export class TimKiemChuyenXeService {
 
     const results = [];
 
-<<<<<<< HEAD
-    for (const schedule of filteredSchedules) {
-=======
     for (const schedule of matchedSchedules) {
->>>>>>> nghi
       // Auto initialize seats if empty
       await this.checkAndInitializeSeats(
         schedule.MaLichTrinh,
@@ -233,7 +206,7 @@ export class TimKiemChuyenXeService {
       });
 
       // Count available seats
-      const availableSeats = seats.filter(s => s.TrangThaiGhe === TrangThaiGhe.C_n_Tr_ng).length;
+      const availableSeats = seats.filter(s => s.TrangThaiGhe === TrangThaiGhe.Trong).length;
 
       // Fetch stops
       const stops = await this.prisma.lICH_TRINH_DIEM_DUNG.findMany({
@@ -265,7 +238,9 @@ export class TimKiemChuyenXeService {
             GiaVe: s.GiaVe,
             TrangThaiGhe: s.TrangThaiGhe,
             ThoiGianCapNhatTrangThai: s.ThoiGianCapNhatTrangThai,
-<<<<<<< HEAD
+            SoGhe: s.GHE?.SoGhe,
+            TangGhe: s.GHE?.TangGhe,
+            DayGhe: s.GHE?.DayGhe,
           })),
           diemDungLichTrinh: stops.map(stop => ({
             MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
@@ -280,11 +255,6 @@ export class TimKiemChuyenXeService {
             LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
             ThoiGianCoMatTruoc: stop.DIEM_DON_TRA_DUNG?.ThoiGianCoMatTruoc,
             GioCanCoMat: stop.DIEM_DON_TRA_DUNG?.GioCanCoMat,
-=======
-            SoGhe: s.GHE?.SoGhe,
-            TangGhe: s.GHE?.TangGhe,
-            DayGhe: s.GHE?.DayGhe,
->>>>>>> nghi
           })),
         });
       }
@@ -406,24 +376,7 @@ export class TimKiemChuyenXeService {
         TangGhe: s.GHE?.TangGhe,
         DayGhe: s.GHE?.DayGhe,
       })),
-<<<<<<< HEAD
-      diemDungLichTrinh: stops.map(stop => ({
-        MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
-        ThuTuDung: stop.ThuTuDung,
-        GioDenDuKien: stop.GioDenDuKien,
-        GhiChu: stop.GhiChu,
-        MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
-        TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
-        DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
-        ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
-        Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
-        LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
-        ThoiGianCoMatTruoc: stop.DIEM_DON_TRA_DUNG?.ThoiGianCoMatTruoc,
-        GioCanCoMat: stop.DIEM_DON_TRA_DUNG?.GioCanCoMat,
-      })),
-=======
       diemDungLichTrinh: finalStops,
->>>>>>> nghi
     };
   }
 }

@@ -6,8 +6,8 @@ import { HeaderComponent } from '../layout/header/header.component';
 import { FooterComponent } from '../layout/footer/footer.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileApiService } from '../../../core/services/profile-api.service';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 interface Order {
   maDonHang: string;
@@ -54,7 +54,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   redirectTimer = 3;
   redirectInterval: any;
-
   user = {
     fullName: '',
     phone: '',
@@ -63,9 +62,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
     dob: '',
     address: '',
     avatar: 'asset/images/customer/avatar_placeholder.png',
-  };
+  } as any;
 
-  editUser = { ...this.user };
+  // Validation / template helpers
+  AnhDaiDienError: string = '';
+  HoTenKhachHangError: string = '';
+  EmailError: string = '';
+  NgaySinhError: string = '';
+  isFormValid = true;
+
+  editUser = { ...this.user } as any;
   isProfileLoading = false;
 
   filterMaDonHang = '';
@@ -90,7 +96,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private profileApiService: ProfileApiService,
     private route: ActivatedRoute
   ) {
-    this.authService.userName$.subscribe((name: string) => this.user.fullName = name);
+    this.authService.currentUser$.subscribe((user: any) => {
+      if (user && user.HoTenKhachHang) this.user.fullName = user.HoTenKhachHang;
+    });
   }
 
   ngOnInit(): void {
@@ -128,10 +136,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.authService.currentUser$.pipe(
       switchMap(user => {
-        if (user && user.MaKhachHang) {
-          // Cập nhật MaKhachHang của user trong component
-          this.user.MaKhachHang = user.MaKhachHang;
-          return this.customerHoSoService.getProfile(user.MaKhachHang);
+        if (user) {
+          return this.profileApiService.getProfile();
         }
         return of(null);
       })
@@ -139,17 +145,26 @@ export class ProfileComponent implements OnInit, OnDestroy {
       next: (profileData: any) => {
         if (profileData) {
           this.user = {
-            MaKhachHang: profileData.MaKhachHang,
-            HoTenKhachHang: profileData.HoTenKhachHang,
-            SoDienThoai: profileData.SoDienThoai,
-            Email: profileData.Email,
-            AnhDaiDien: profileData.AnhDaiDien || '/asset/images/customer/user.png',
-            GioiTinh: profileData.GioiTinh,
-            NgaySinh: profileData.NgaySinh ? new Date(profileData.NgaySinh).toISOString().split('T')[0] : '',
-            TrangThaiTaiKhoan: profileData.TrangThaiTaiKhoan
+            fullName: profileData.HoTenKhachHang || profileData.hoTenKhachHang || this.user.fullName,
+            phone: profileData.SoDienThoai || profileData.soDienThoai || this.user.phone,
+            gender: profileData.GioiTinh || profileData.gioiTinh || this.user.gender,
+            email: profileData.Email || profileData.email || this.user.email,
+            dob: profileData.NgaySinh ? new Date(profileData.NgaySinh).toISOString().slice(0,10) : this.user.dob,
+            address: profileData.DiaChi || profileData.diaChi || this.user.address,
+            avatar: profileData.AnhDaiDien || profileData.anhDaiDien || this.user.avatar,
           };
           this.editUser = { ...this.user };
-          this.authService.setCurrentUser(this.user); // Cập nhật AuthService với dữ liệu đầy đủ
+          const current = this.authService.getCurrentUser() || {};
+          this.authService.setCurrentUser({
+            MaKhachHang: profileData.MaKhachHang,
+            HoTenKhachHang: profileData.HoTenKhachHang || (current as any).HoTenKhachHang || this.user.fullName,
+            SoDienThoai: profileData.SoDienThoai || (current as any).SoDienThoai,
+            Email: profileData.Email || (current as any).Email,
+            AnhDaiDien: profileData.AnhDaiDien || (current as any).AnhDaiDien,
+            GioiTinh: profileData.GioiTinh || (current as any).GioiTinh,
+            NgaySinh: profileData.NgaySinh || (current as any).NgaySinh,
+            TrangThaiTaiKhoan: profileData.TrangThaiTaiKhoan || (current as any).TrangThaiTaiKhoan,
+          });
         }
       },
       error: (err: any) => {
@@ -179,9 +194,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
           dob: profile.NgaySinh ? new Date(profile.NgaySinh).toISOString().slice(0, 10) : '',
           address: profile.DiaChi || profile.diaChi || '',
           avatar: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/avatar_placeholder.png',
-        };
+          MaKhachHang: profile.MaKhachHang,
+          HoTenKhachHang: profile.HoTenKhachHang,
+          SoDienThoai: profile.SoDienThoai,
+          Email: profile.Email,
+          AnhDaiDien: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/user.png',
+          GioiTinh: profile.GioiTinh,
+          NgaySinh: profile.NgaySinh,
+          TrangThaiTaiKhoan: profile.TrangThaiTaiKhoan,
+        } as any;
         this.editUser = { ...this.user };
-        this.authService.setUserName(this.user.fullName || 'Khách hàng');
+        const cur = this.authService.getCurrentUser() || {};
+        this.authService.setCurrentUser({ ...(cur as any), HoTenKhachHang: this.user.fullName || (cur as any).HoTenKhachHang || 'Khách hàng' });
         this.isProfileLoading = false;
 
         if (this.activeTab === 'history') {
@@ -373,7 +397,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.user = { ...this.editUser };
-        this.authService.setUserName(this.user.fullName || 'Khách hàng');
+        const cur2 = this.authService.getCurrentUser() || {};
+        this.authService.setCurrentUser({ ...(cur2 as any), HoTenKhachHang: this.user.fullName || (cur2 as any).HoTenKhachHang || 'Khách hàng' });
         this.isEditing = false;
       },
       error: (err: any) => {
@@ -381,6 +406,43 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.isEditing = false;
       }
     });
+  }
+
+  onFileSelected(event: any) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    // simple client preview and basic size check
+    if (file.size > 1024 * 1024) {
+      this.AnhDaiDienError = 'File quá lớn, tối đa 1MB';
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    (this.editUser as any).AnhDaiDien = url;
+    this.AnhDaiDienError = '';
+  }
+
+  validateHoTenKhachHang() {
+    const name = (this.editUser as any).HoTenKhachHang || '';
+    this.HoTenKhachHangError = name.trim() ? '' : 'Vui lòng nhập họ tên';
+    this.updateFormValidity();
+  }
+
+  validateEmail() {
+    const email = (this.editUser as any).Email || '';
+    if (!email) { this.EmailError = ''; this.updateFormValidity(); return; }
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    this.EmailError = ok ? '' : 'Email không hợp lệ';
+    this.updateFormValidity();
+  }
+
+  validateNgaySinh() {
+    const d = (this.editUser as any).NgaySinh || '';
+    this.NgaySinhError = d ? '' : '';
+    this.updateFormValidity();
+  }
+
+  updateFormValidity() {
+    this.isFormValid = !this.HoTenKhachHangError && !this.EmailError && !this.NgaySinhError && !this.AnhDaiDienError;
   }
 
   confirmChangePassword() { this.showOtpModal = true; this.startOtpTimer(); }

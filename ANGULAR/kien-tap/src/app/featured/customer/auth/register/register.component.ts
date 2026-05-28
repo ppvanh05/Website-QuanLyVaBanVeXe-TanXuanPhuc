@@ -163,17 +163,7 @@ export class RegisterComponent implements OnDestroy {
 
     if (!phoneRegex.test(cleaned)) {
       this.phoneNumberError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
-<<<<<<< HEAD
-      return;
-    }
-
-    const users = this.getMockUsers();
-    const phoneExists = users.some(u => u.SoDienThoai === cleaned);
-    if (phoneExists) {
-      this.phoneNumberError = 'Số điện thoại này đã được sử dụng để đăng ký tài khoản.';
-=======
       this.isSendingOtp = false;
->>>>>>> nghi
       return;
     }
 
@@ -382,20 +372,12 @@ export class RegisterComponent implements OnDestroy {
       return;
     }
 
-<<<<<<< HEAD
-    const newUser: MockUser = {
-      SoDienThoai: this.phoneNumber,
-      HoTenKhachHang: this.fullName.trim(),
-      Email: this.email.trim(),
-      MatKhau: this.password
-=======
     const registerPayload = {
       SoDienThoai: this.phoneNumber,
       HoTenKhachHang: this.fullName.trim(),
       Email: this.email.trim() || undefined,
       MatKhau: this.password,
       otp: this.otpDigitsString,
->>>>>>> nghi
     };
     console.log('Auth register payload:', registerPayload);
 

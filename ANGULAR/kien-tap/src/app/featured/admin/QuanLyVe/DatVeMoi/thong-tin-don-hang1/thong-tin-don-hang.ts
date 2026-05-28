@@ -144,19 +144,11 @@ export class ThongTinDonHang implements OnInit {
     this.syncStopOptionsFromTrip();
 
     // Set default pickup and dropoff based on saved data
-<<<<<<< HEAD
     this.selectedPickup = this.pickupOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.startStation || '').toLowerCase())) || this.pickupOptions[0];
     this.pickupSearch = this.selectedPickup.name;
 
     this.selectedDropoff = this.dropoffOptions.find(opt => opt.name.toLowerCase().includes((this.bookingData?.endStation || '').toLowerCase())) || this.dropoffOptions[this.dropoffOptions.length - 1] || this.dropoffOptions[0];
     this.dropoffSearch = this.selectedDropoff.name;
-=======
-    this.selectedPickup = null;
-    this.pickupSearch = '';
-
-    this.selectedDropoff = null;
-    this.dropoffSearch = '';
->>>>>>> nghi
 
     this.initSeats();
     this.recalculatePrice();

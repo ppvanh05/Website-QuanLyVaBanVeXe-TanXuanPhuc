@@ -86,6 +86,30 @@ export class ProfileService {
     return updatedCustomer;
   }
 
+  async changePassword(id: string, dto: { MatKhauCu: string; MatKhauMoi: string; otp: string }) {
+    const customer = await this.prisma.kHACH_HANG.findUnique({
+      where: { MaKhachHang: id },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Không tìm thấy khách hàng với mã ${id}`);
+    }
+
+    if (customer.MatKhau !== dto.MatKhauCu) {
+      throw new BadRequestException('Mật khẩu cũ không đúng.');
+    }
+
+    await this.prisma.kHACH_HANG.update({
+      where: { MaKhachHang: id },
+      data: { MatKhau: dto.MatKhauMoi },
+    });
+
+    return {
+      success: true,
+      message: 'Đổi mật khẩu thành công!',
+    };
+  }
+
   // Helper to map order details for frontend output
   private mapOrderToFrontend(order: any) {
     if (!order) return null;

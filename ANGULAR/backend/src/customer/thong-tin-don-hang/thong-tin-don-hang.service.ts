@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NhatKyHeThongService } from '../../admin/nhat-ky-he-thong/nhat-ky-he-thong.service';
-import { Prisma, TrangThaiGhe, TrangThaiVe, PhuongThucThanhToan } from '@prisma/client';
+import { Prisma, TrangThaiGhe, TrangThaiVe, PhuongThucThanhToan, TrangThaiThanhToan } from '@prisma/client';
 
 @Injectable()
 export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
@@ -60,12 +60,12 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
       
       const expiredHeldSeats = await this.prisma.gHE_CHUYEN_XE.findMany({
         where: {
-          TrangThaiGhe: TrangThaiGhe.ang_ch_n,
+          TrangThaiGhe: TrangThaiGhe.GiuCho,
           ThoiGianCapNhatTrangThai: { lt: fifteenMinsAgo },
           VE_DIEN_TU: {
             none: {
               DON_HANG: {
-                TrangThaiDonHang: { in: ['ChoKhoiHanh', 'DaHoanThanh'] }
+                TrangThaiDonHang: { in: [TrangThaiVe.ChoKhoiHanh, TrangThaiVe.DaHoanThanh] }
               }
             }
           }
@@ -80,7 +80,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
             MaGheChuyen: { in: ids }
           },
           data: {
-            TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
+            TrangThaiGhe: TrangThaiGhe.Trong,
             ThoiGianCapNhatTrangThai: new Date(),
           }
         });
@@ -88,7 +88,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         // Also cancel the orders associated with these seats if they are still unpaid
         const ordersToCancel = await this.prisma.dON_HANG.findMany({
           where: {
-            TrangThaiDonHang: TrangThaiVe.Ch__thanh_to_n,
+            TrangThaiDonHang: TrangThaiVe.ChoThanhToan,
             VE_DIEN_TU: {
               some: {
                 MaGheChuyen: { in: ids }
@@ -100,12 +100,12 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         for (const order of ordersToCancel) {
           await this.prisma.dON_HANG.update({
             where: { MaDonHang: order.MaDonHang },
-            data: { TrangThaiDonHang: TrangThaiVe.h_y }
+            data: { TrangThaiDonHang: TrangThaiVe.DaHuy }
           });
 
           await this.prisma.vE_DIEN_TU.updateMany({
             where: { MaDonHang: order.MaDonHang },
-            data: { TrangThaiVe: TrangThaiVe.h_y }
+            data: { TrangThaiVe: TrangThaiVe.DaHuy }
           });
 
           await this.nhatKyService.ghiLog({
@@ -140,8 +140,8 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
     }
 
     for (const seat of seats) {
-      const isHeld = seat.TrangThaiGhe === TrangThaiGhe.ang_ch_n && seat.ThoiGianCapNhatTrangThai >= fifteenMinsAgo;
-      const isSold = seat.TrangThaiGhe === TrangThaiGhe.b_n;
+      const isHeld = seat.TrangThaiGhe === TrangThaiGhe.GiuCho && seat.ThoiGianCapNhatTrangThai >= fifteenMinsAgo;
+      const isSold = seat.TrangThaiGhe === TrangThaiGhe.DaBan;
 
       if (isHeld || isSold) {
         throw new BadRequestException(`Ghế ${seat.MaGheChuyen.split('_').pop() || seat.MaGheChuyen} đã có người giữ hoặc đã được bán!`);
@@ -153,7 +153,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         MaGheChuyen: { in: DanhSachMaGheChuyen },
       },
       data: {
-        TrangThaiGhe: TrangThaiGhe.ang_ch_n,
+        TrangThaiGhe: TrangThaiGhe.GiuCho,
         ThoiGianCapNhatTrangThai: new Date(),
       },
     });
@@ -224,14 +224,9 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
       PhuongThucThanhToan,
     } = dto;
 
-<<<<<<< HEAD
-    const customer = await this.prisma.kHACH_HANG.findUnique({
-=======
     let finalMaKhachHang = MaKhachHang;
 
-    // Verify customer exists or find/create guest customer record
     let customer = await this.prisma.kHACH_HANG.findUnique({
->>>>>>> nghi
       where: { MaKhachHang },
     });
 
@@ -264,11 +259,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-<<<<<<< HEAD
-=======
-
     // Verify schedule exists
->>>>>>> nghi
     const schedule = await this.prisma.lICH_TRINH.findUnique({
       where: { MaLichTrinh },
       include: { PHUONG_TIEN: true },
@@ -300,7 +291,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
     }
 
     for (const seat of seats) {
-      if (seat.TrangThaiGhe === TrangThaiGhe.b_n) {
+      if (seat.TrangThaiGhe === TrangThaiGhe.DaBan) {
         throw new BadRequestException(`Ghế đã được đặt bởi người khác!`);
       }
     }
@@ -310,20 +301,12 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
       totalSeatPrice += s.GiaVe.toNumber();
     });
 
-<<<<<<< HEAD
-    const insurancePerTicket = 10000;
-    const totalInsurance = insurancePerTicket * DanhSachMaGheChuyen.length;
-=======
-    const insurancePerTicket = 0; // removed insurance calculation
+    const insurancePerTicket = 0;
     const totalInsurance = 0;
->>>>>>> nghi
     const finalTotal = totalSeatPrice + totalInsurance;
 
     const maDonHang = await this.generateNextOrderCode();
 
-<<<<<<< HEAD
-    const result = await this.prisma.$transaction(async (tx) => {
-=======
     // Query tickets to find the start sequential number for new tickets
     const listTickets = await this.prisma.vE_DIEN_TU.findMany({
       select: { MaVe: true },
@@ -343,7 +326,6 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
     // Use Prisma transaction to create order, create tickets, update seats and create payment
     const result = await this.prisma.$transaction(async (tx) => {
       // 1. Create order (State: ChoKhoiHanh since it's paid)
->>>>>>> nghi
       const order = await tx.dON_HANG.create({
         data: {
           MaDonHang: maDonHang,
@@ -355,36 +337,22 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           SoLuongVeDaDat: DanhSachMaGheChuyen.length,
           TienBaoHiem: new Prisma.Decimal(totalInsurance),
           TongGiaVe: new Prisma.Decimal(finalTotal),
-<<<<<<< HEAD
-          PhuongThucThanhToan: PhuongThucThanhToan as PhuongThucThanhToan,
-          TrangThaiDonHang: TrangThaiVe.Ch__thanh_to_n,
-          PhuongThucThanhToan: PhuongThucThanhToan as any,
-          TrangThaiDonHang: 'ChoThanhToan',
-        },
-      });
-
-=======
           PhuongThucThanhToan: this.mapPhuongThucThanhToan(PhuongThucThanhToan),
-          TrangThaiDonHang: 'ChoKhoiHanh',
+          TrangThaiDonHang: TrangThaiVe.ChoKhoiHanh,
         },
       });
 
       // 2. Create tickets and update seat status to DaBan
->>>>>>> nghi
       const tickets = [];
       for (const seat of seats) {
         const maVe = `VE${String(nextTicketNum).padStart(6, '0')}`;
         nextTicketNum++;
         const soGhe = (seat as any).GHE?.SoGhe || seat.MaGheChuyen.split('_').pop() || seat.MaGhe;
         const ticket = await tx.vE_DIEN_TU.create({
-          data: {
+            data: {
             MaVe: maVe,
             GiaVe: seat.GiaVe,
-<<<<<<< HEAD
-            TrangThaiVe: TrangThaiVe.Ch__thanh_to_n,
-=======
-            TrangThaiVe: 'ChoKhoiHanh',
->>>>>>> nghi
+            TrangThaiVe: TrangThaiVe.ChoKhoiHanh,
             SoLanDaSua: 0,
             ThoiGianXuatVe: new Date(),
             MaQRVe: `QR_${maVe}_${MaLichTrinh}_${soGhe}`,
@@ -398,18 +366,10 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         });
         tickets.push(ticket);
 
-<<<<<<< HEAD
         await tx.gHE_CHUYEN_XE.update({
           where: { MaGheChuyen: seat.MaGheChuyen },
           data: {
-            TrangThaiGhe: TrangThaiGhe.ang_ch_n,
-=======
-        // Update seat to DaBan status permanently
-        await tx.gHE_CHUYEN_XE.update({
-          where: { MaGheChuyen: seat.MaGheChuyen },
-          data: {
-            TrangThaiGhe: 'DaBan',
->>>>>>> nghi
+            TrangThaiGhe: TrangThaiGhe.DaBan,
             ThoiGianCapNhatTrangThai: new Date(),
           },
         });
@@ -425,7 +385,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           PhuongThucThanhToan: this.mapPhuongThucThanhToan(PhuongThucThanhToan),
           SoTien: new Prisma.Decimal(finalTotal),
           ThoiGianGiaoDich: new Date(),
-          TrangThaiGiaoDich: 'ThanhCong',
+          TrangThaiGiaoDich: TrangThaiThanhToan.DaThanhToan,
           LichSuHoanTien: '',
         },
       });
@@ -477,7 +437,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
       where: {
         MaKhachHang: customerId,
         TrangThaiDonHang: {
-          in: [TrangThaiVe.Ch__thanh_to_n, TrangThaiVe.Ch__kh_i_h_nh, TrangThaiVe.ho_n_th_nh],
+          in: [TrangThaiVe.ChoThanhToan, TrangThaiVe.ChoKhoiHanh, TrangThaiVe.DaHoanThanh],
         },
       },
       include: {
@@ -502,10 +462,10 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
     return this.prisma.gHE_CHUYEN_XE.updateMany({
       where: {
         MaGheChuyen: { in: seatIds },
-        TrangThaiGhe: TrangThaiGhe.ang_ch_n,
+        TrangThaiGhe: TrangThaiGhe.GiuCho,
       },
       data: {
-        TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
+        TrangThaiGhe: TrangThaiGhe.Trong,
         ThoiGianCapNhatTrangThai: new Date(),
       },
     });
@@ -522,23 +482,23 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
       throw new NotFoundException(`Không tìm thấy đơn hàng mã ${orderId}`);
     }
 
-    if (order.TrangThaiDonHang === TrangThaiVe.Ch__thanh_to_n) {
+    if (order.TrangThaiDonHang === TrangThaiVe.ChoThanhToan) {
       return this.prisma.$transaction(async (tx) => {
         await tx.dON_HANG.update({
           where: { MaDonHang: orderId },
-          data: { TrangThaiDonHang: TrangThaiVe.h_y },
+          data: { TrangThaiDonHang: TrangThaiVe.DaHuy },
         });
 
         await tx.vE_DIEN_TU.updateMany({
           where: { MaDonHang: orderId },
-          data: { TrangThaiVe: TrangThaiVe.h_y },
+          data: { TrangThaiVe: TrangThaiVe.DaHuy },
         });
 
         const seatIds = order.VE_DIEN_TU.map(v => v.MaGheChuyen);
         await tx.gHE_CHUYEN_XE.updateMany({
           where: { MaGheChuyen: { in: seatIds } },
           data: {
-            TrangThaiGhe: TrangThaiGhe.C_n_Tr_ng,
+            TrangThaiGhe: TrangThaiGhe.Trong,
             ThoiGianCapNhatTrangThai: new Date(),
           },
         });

@@ -99,7 +99,7 @@ export class ProfileController {
   @Put(':id')
   async updateProfile(
     @Param('id') id: string,
-    @Body() data: any,
+    @Body() dto: any,
   ) {
     const data = await this.profileService.updateProfile(id, dto);
     return {

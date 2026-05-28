@@ -1044,11 +1044,8 @@ export class TimKiemChuyenXe implements OnInit {
     const selectedSeatIds = selectedSeats.map(seat => seat.maGheChuyen || seat.name);
     const bookingData = {
       tripId: trip.id,
-<<<<<<< HEAD
       maLichTrinh: trip.id,
-=======
       selectedDate: this.departureDate,
->>>>>>> nghi
       departureTime: trip.departureTime,
       suggestedPresenceTime: trip.suggestedPresenceTime,
       arrivalTime: trip.arrivalTime,
