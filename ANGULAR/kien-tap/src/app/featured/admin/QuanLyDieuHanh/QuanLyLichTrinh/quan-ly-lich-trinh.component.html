@@ -545,20 +545,21 @@
 
           <!-- Transit/Pickup/Dropoff Points Selection -->
           <div class="transit-section">
-            <div class="transit-table">
-              <!-- Header -->
-              <div class="transit-header-row">
-                <div class="transit-header-col col-point" style="font-weight: 700;">ĐIỂM ĐÓN TRẢ / DỪNG *</div>
-                <div class="transit-header-col col-address" style="font-weight: 700;">ĐỊA ĐIỂM</div>
-                <div class="transit-header-col col-expected-time" style="font-weight: 700; justify-content: center;">THỜI GIAN ĐẾN DỰ KIẾN</div>
-                <div class="transit-header-col col-date" style="font-weight: 700;">NGÀY</div>
+            
+            <!-- Dòng 1: Điểm đón trả -->
+            <div class="transit-row-container">
+              <!-- Headers cho Dòng 1 -->
+              <div class="transit-row-headers">
+                <div class="transit-header-col col-point" style="font-weight: 700;">Điểm đón trả <span class="required">*</span></div>
+                <div class="transit-header-col col-address" style="font-weight: 700;">Địa điểm</div>
+                <div class="transit-header-col col-expected-time" style="font-weight: 700; justify-content: center;">Thời gian đến dự kiến</div>
+                <div class="transit-header-col col-date" style="font-weight: 700;">Ngày</div>
               </div>
-              
-              <!-- Hàng 1: Điểm đón trả -->
-              <div class="transit-row">
+              <!-- Inputs cho Dòng 1 -->
+              <div class="transit-row-inputs">
                 <div class="transit-col col-point">
                   <app-custom-select [(value)]="currentSchedule.pickupPoint" [options]="pickupPointOptions"
-                    placeholder="Chọn điểm đón trả"></app-custom-select>
+                    placeholder="Chọn điểm đón"></app-custom-select>
                 </div>
                 <div class="transit-col col-address">
                   <input type="text" [value]="getPointAddress(currentSchedule.pickupPoint)" readonly
@@ -583,9 +584,19 @@
                   <input type="text" [(ngModel)]="currentSchedule.pickupDate" placeholder="dd/mm/yyyy" class="transit-date-input">
                 </div>
               </div>
+            </div>
 
-              <!-- Hàng 2: Điểm dừng -->
-              <div class="transit-row">
+            <!-- Dòng 2: Điểm dừng (Hiển thị tự động khi chọn được điểm đón trả) -->
+            <div class="transit-row-container" *ngIf="currentSchedule.pickupPoint">
+              <!-- Headers cho Dòng 2 -->
+              <div class="transit-row-headers">
+                <div class="transit-header-col col-point" style="font-weight: 700;">Điểm dừng <span class="required">*</span></div>
+                <div class="transit-header-col col-address" style="font-weight: 700;">Địa điểm</div>
+                <div class="transit-header-col col-expected-time" style="font-weight: 700; justify-content: center;">Thời gian đến dự kiến</div>
+                <div class="transit-header-col col-date" style="font-weight: 700;">Ngày</div>
+              </div>
+              <!-- Inputs cho Dòng 2 -->
+              <div class="transit-row-inputs">
                 <div class="transit-col col-point">
                   <app-custom-select [(value)]="currentSchedule.dropoffPoint" [options]="dropoffPointOptions"
                     placeholder="Chọn điểm dừng"></app-custom-select>
@@ -614,6 +625,7 @@
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 

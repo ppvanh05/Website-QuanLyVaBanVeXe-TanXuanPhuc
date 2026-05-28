@@ -2345,11 +2345,17 @@ input:checked+.slider:before {
 }
 
 /* Transit Section Table Styles */
-.transit-table {
+.transit-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
   margin-top: 15px;
+}
+
+.transit-row-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   background-color: #fff;
   border: 1px solid #edf2f7;
   border-radius: 12px;
@@ -2357,13 +2363,12 @@ input:checked+.slider:before {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-.transit-header-row {
+.transit-row-headers {
   display: grid;
   grid-template-columns: 1.5fr 2fr 1.5fr 1.2fr;
   gap: 15px;
-  padding: 10px 0;
-  border-bottom: 2px solid #edf2f7;
   box-sizing: border-box;
+  padding-bottom: 4px;
 }
 
 .transit-header-col {
@@ -2376,12 +2381,11 @@ input:checked+.slider:before {
   align-items: center;
 }
 
-.transit-row {
+.transit-row-inputs {
   display: grid;
   grid-template-columns: 1.5fr 2fr 1.5fr 1.2fr;
   gap: 15px;
   align-items: center;
-  padding: 8px 0;
   box-sizing: border-box;
 }
 
@@ -2405,9 +2409,15 @@ input:checked+.slider:before {
   color: #4a5568;
 }
 
+.transit-col .time-split-inputs.mini {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .transit-col .time-split-inputs.mini .time-number-input {
   height: 38px;
-  padding: 8px 8px 8px 12px !important;
+  padding: 8px 4px 8px 10px !important;
   font-size: 13px;
   width: 100%;
 }
