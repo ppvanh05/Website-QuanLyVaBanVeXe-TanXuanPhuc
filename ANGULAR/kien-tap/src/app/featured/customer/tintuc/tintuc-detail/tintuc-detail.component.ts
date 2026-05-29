@@ -42,8 +42,9 @@ export class TintucDetailComponent implements OnInit {
   fetchNewsDetail(id: string) {
     this.newsService.getNewsById(id).subscribe({
       next: (response: any) => {
-        if (response) {
-          const rawNews = response.news;
+        if (response && response.success && response.data) {
+          const data = response.data;
+          const rawNews = data.news;
           this.newsDetail = {
             category: this.getCategoryLabel(rawNews.LoaiTinTuc),
             title: rawNews.TieuDe,
@@ -53,13 +54,13 @@ export class TintucDetailComponent implements OnInit {
             image: rawNews.AnhBia || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800'
           };
 
-          this.otherNews = (response.latestNews || []).map((item: any) => ({
+          this.otherNews = (data.latestNews || []).map((item: any) => ({
             id: item.MaTinTuc,
             title: item.TieuDe,
             date: this.formatDateLabel(item.NgayDang)
           }));
 
-          this.relatedNews = (response.relatedNews || []).map((item: any) => ({
+          this.relatedNews = (data.relatedNews || []).map((item: any) => ({
             maTinTuc: item.MaTinTuc,
             category: this.getCategoryLabel(item.LoaiTinTuc),
             title: item.TieuDe,

@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy, BadRequestException, NotFoun
 import { PrismaService } from '../../prisma/prisma.service';
 import { NhatKyHeThongService } from '../../admin/nhat-ky-he-thong/nhat-ky-he-thong.service';
 import { Prisma, TrangThaiGhe, TrangThaiVe, PhuongThucThanhToan, TrangThaiThanhToan } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
@@ -335,8 +336,8 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           EmailNguoiDi: EmailNguoiDi || null,
           ThoiGianDat: new Date(),
           SoLuongVeDaDat: DanhSachMaGheChuyen.length,
-          TienBaoHiem: new Prisma.Decimal(totalInsurance),
-          TongGiaVe: new Prisma.Decimal(finalTotal),
+          TienBaoHiem: new Decimal(totalInsurance),
+          TongGiaVe: new Decimal(finalTotal),
           PhuongThucThanhToan: this.mapPhuongThucThanhToan(PhuongThucThanhToan),
           TrangThaiDonHang: TrangThaiVe.ChoKhoiHanh,
         },
@@ -383,7 +384,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           MaDonHang: maDonHang,
           LoaiGiaoDich: 'ThanhToan',
           PhuongThucThanhToan: this.mapPhuongThucThanhToan(PhuongThucThanhToan),
-          SoTien: new Prisma.Decimal(finalTotal),
+          SoTien: new Decimal(finalTotal),
           ThoiGianGiaoDich: new Date(),
           TrangThaiGiaoDich: TrangThaiThanhToan.DaThanhToan,
           LichSuHoanTien: '',

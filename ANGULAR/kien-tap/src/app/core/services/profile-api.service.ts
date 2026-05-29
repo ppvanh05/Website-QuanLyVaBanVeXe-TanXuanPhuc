@@ -12,7 +12,9 @@ export class ProfileApiService {
   constructor(private http: HttpClient) {}
 
   getProfile(): Observable<any> {
-    return this.http.get<any>(`${API_BASE}/customer/profile`);
+    return this.http.get<any>(`${API_BASE}/customer/profile`, {
+      headers: this.getAuthHeaders()
+    });
   }
 
   updateProfile(dto: {
@@ -22,14 +24,17 @@ export class ProfileApiService {
     GioiTinh?: string;
     NgaySinh?: string;
   }): Observable<any> {
-    return this.http.put<any>(`${API_BASE}/customer/profile`, dto);
+    return this.http.put<any>(`${API_BASE}/customer/profile`, dto, {
+      headers: this.getAuthHeaders()
+    });
   }
 
   private getAuthHeaders(): HttpHeaders {
     let token = '';
     if (typeof localStorage !== 'undefined') {
-      token = localStorage.getItem('auth_token') || localStorage.getItem('access_token') || '';
+      token = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
     }
+    console.log('[DEBUG FRONTEND] Using token for API:', token ? (token.substring(0, 10) + '...') : 'NONE');
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });

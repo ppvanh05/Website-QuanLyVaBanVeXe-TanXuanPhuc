@@ -8,6 +8,8 @@ import { FooterComponent } from '../layout/footer/footer.component';
 import { ToastService } from '../../../core/services/toast.service';
 import { HomeApiService } from '../../../core/services/home-api.service';
 import { LunarCalendarService } from '../../../core/services/lunar-calendar.service';
+import { CustomerTinTucService } from '../../../core/services/customer-tin-tuc.service';
+import { DanhGiaService } from '../../../core/services/danh-gia.service';
 
 @Component({
   selector: 'app-home',
@@ -62,7 +64,9 @@ export class HomeComponent implements OnInit {
     private router: Router, 
     private toastService: ToastService,
     private homeApiService: HomeApiService,
-    private lunarCalendarService: LunarCalendarService
+    private lunarCalendarService: LunarCalendarService,
+    private newsService: CustomerTinTucService,
+    private reviewService: DanhGiaService
   ) {}
 
   ngOnInit(): void {
@@ -75,6 +79,38 @@ export class HomeComponent implements OnInit {
     this.generateCalendarDays();
     this.loadActiveRoutes();
     this.loadRecentSearches();
+    this.loadHomeNews();
+    this.loadHomeReviews();
+  }
+
+  loadHomeReviews(): void {
+    this.reviewService.getHomeReviews().subscribe({
+      next: (response: any) => {
+        const data = response.data || response;
+        if (Array.isArray(data)) {
+          this.homeReviews = data;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load home reviews', err);
+      }
+    });
+  }
+
+  loadHomeNews(): void {
+    this.newsService.getHomeNews().subscribe({
+      next: (response: any) => {
+        if (response && response.success && Array.isArray(response.data)) {
+          this.homeNews = response.data;
+        } else if (Array.isArray(response)) {
+          // Fallback if backend returns array directly
+          this.homeNews = response;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load home news', err);
+      }
+    });
   }
 
   generateCalendarDays() {

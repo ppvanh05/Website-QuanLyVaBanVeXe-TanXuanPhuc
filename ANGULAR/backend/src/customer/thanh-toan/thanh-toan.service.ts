@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { NhatKyHeThongService } from '../../admin/nhat-ky-he-thong/nhat-ky-he-thong.service';
 import { TrangThaiVe, TrangThaiThanhToan, TrangThaiGhe, Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ThanhToanService {
@@ -39,7 +40,7 @@ export class ThanhToanService {
         MaDonHang,
         LoaiGiaoDich: 'ThanhToan',
         PhuongThucThanhToan,
-        SoTien: new Prisma.Decimal(SoTien),
+        SoTien: new Decimal(SoTien),
         ThoiGianGiaoDich: new Date(),
         TrangThaiGiaoDich: TrangThaiThanhToan.ChoThanhToan,
         LichSuHoanTien: '',

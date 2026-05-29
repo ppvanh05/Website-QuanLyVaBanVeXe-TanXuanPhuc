@@ -8,7 +8,7 @@ const API_BASE = 'http://localhost:3000';
   providedIn: 'root',
 })
 export class DanhGiaService {
-  private url = `${API_BASE}/customer/danh-gia`;
+  private url = `${API_BASE}/customer/reviews`;
 
   constructor(private http: HttpClient) {}
 

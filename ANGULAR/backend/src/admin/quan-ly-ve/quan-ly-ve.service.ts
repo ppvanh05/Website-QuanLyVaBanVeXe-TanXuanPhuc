@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
 
 @Injectable()
@@ -612,7 +613,7 @@ export class QuanLyVeService {
         EmailNguoiDi: data.emailNguoiDi,
         ThoiGianDat: new Date(),
         SoLuongVeDaDat: data.maGheChuyenList.length,
-        TongGiaVe: new Prisma.Decimal(tongGiaVe),
+        TongGiaVe: new Decimal(tongGiaVe),
         PhuongThucThanhToan: data.phuongThucThanhToan as any,
         TrangThaiDonHang: initialStatus as any,
       },
@@ -657,7 +658,7 @@ export class QuanLyVeService {
           MaDonHang: maDonHang,
           LoaiGiaoDich: 'ThanhToan',
           PhuongThucThanhToan: data.phuongThucThanhToan as any,
-          SoTien: new Prisma.Decimal(tongGiaVe),
+          SoTien: new Decimal(tongGiaVe),
           ThoiGianGiaoDich: new Date(),
           TrangThaiGiaoDich: 'ThanhCong',
           LichSuHoanTien: data.ghiChu || '',
@@ -860,7 +861,7 @@ export class QuanLyVeService {
         MaDonHang: ve.MaDonHang,
         LoaiGiaoDich: 'HoanTien',
         PhuongThucThanhToan: 'ChuyenKhoan',
-        SoTien: new Prisma.Decimal(tienHoanLai),
+        SoTien: new Decimal(tienHoanLai),
         ThoiGianGiaoDich: new Date(),
         TrangThaiGiaoDich: paidPayment ? 'ThanhCong' : 'DaHuy',
         LichSuHoanTien: paidPayment ? '' : 'Vé chưa thanh toán nên không phát sinh hoàn tiền.',
@@ -877,8 +878,8 @@ export class QuanLyVeService {
         MaNVBanVe: maNV,
         TienVeGoc: ve.GiaVe,
         TyLePhiHuyApDung: quote.tyLePhiHuy,
-        LePhiHuy: new Prisma.Decimal(paidPayment ? quote.phiHuy : 0),
-        TienHoanLai: new Prisma.Decimal(tienHoanLai),
+        LePhiHuy: new Decimal(paidPayment ? quote.phiHuy : 0),
+        TienHoanLai: new Decimal(tienHoanLai),
         MaGiaoDichHoan: maGiaoDichHoan,
       },
     });

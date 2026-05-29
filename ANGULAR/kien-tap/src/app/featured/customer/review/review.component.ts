@@ -107,7 +107,8 @@ export class ReviewComponent implements OnInit {
       hasComment,
       hasImage
     }).subscribe({
-      next: (res) => {
+      next: (response: any) => {
+        const res = response.data || response;
         this.reviews = (res.items || []).map((item: any) => ({
           author: item.author,
           avatar: item.avatar,
@@ -126,9 +127,9 @@ export class ReviewComponent implements OnInit {
 
           isVerified: true
         }));
-        this.summary = res.summary;
-        this.currentPage = res.meta.currentPage;
-        this.totalPages = res.meta.totalPages;
+        this.summary = res.summary || this.summary;
+        this.currentPage = res.meta?.currentPage || this.currentPage;
+        this.totalPages = res.meta?.totalPages || 1;
 
         this.updateFiltersAndStats();
         this.generatePagination();

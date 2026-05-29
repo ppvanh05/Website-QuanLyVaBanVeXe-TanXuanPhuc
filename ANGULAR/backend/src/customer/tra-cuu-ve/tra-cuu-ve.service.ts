@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { NhatKyHeThongService } from '../../admin/nhat-ky-he-thong/nhat-ky-he-thong.service';
 import { Prisma, TrangThaiVe, TrangThaiGhe, TrangThaiChinhSachEnum, TrangThaiThanhToan } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class TraCuuVeService {
@@ -161,9 +162,12 @@ export class TraCuuVeService {
 
   // ===== GET TICKET HISTORY (JWT) =====
   async getHistory(maKhachHang: string) {
+    console.log(`[DEBUG BACKEND] Fetching history for MaKhachHang: "${maKhachHang}"`);
+    
     const list = await this.prisma.dON_HANG.findMany({
       where: { MaKhachHang: maKhachHang },
       include: {
+        KHACH_HANG: true,
         VE_DIEN_TU: {
           include: {
             LICH_TRINH: {
@@ -174,6 +178,8 @@ export class TraCuuVeService {
       },
       orderBy: { ThoiGianDat: 'desc' },
     });
+
+    console.log(`[DEBUG BACKEND] Found ${list.length} orders for user "${maKhachHang}"`);
 
     const statusMap: Record<string, string> = {
       [TrangThaiVe.ChoThanhToan]: 'Chờ thanh toán',
@@ -192,30 +198,11 @@ export class TraCuuVeService {
     };
 
     return list.map(order => {
-      const firstTicket = order.VE_DIEN_TU?.[0];
-      const schedule = firstTicket?.LICH_TRINH;
+      const schedule = order.VE_DIEN_TU?.[0]?.LICH_TRINH;
       const route = schedule?.TUYEN_XE;
-
       const tenTuyen = route
         ? `${route.DiemKhoiHanh} - ${route.DiemDen}`
         : '';
-
-      let departureDate = '';
-      if (schedule?.NgayKhoiHanh) {
-        const d = new Date(schedule.NgayKhoiHanh);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        departureDate = `${y}-${m}-${day}`;
-      }
-
-      let gioKhoiHanh = '';
-      if (schedule?.GioKhoiHanh) {
-        const d = new Date(schedule.GioKhoiHanh);
-        const h = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        gioKhoiHanh = `${h}:${min}`;
-      }
 
       const tickets = (order.VE_DIEN_TU || []).map((ticket: any) => ({
         maVe: ticket.MaVe,
@@ -223,12 +210,19 @@ export class TraCuuVeService {
         trangThaiVe: ticketStatusMap[ticket.TrangThaiVe] || ticket.TrangThaiVe || 'Chờ khởi hành'
       }));
 
+      const departureDate = schedule?.NgayKhoiHanh 
+        ? new Date(schedule.NgayKhoiHanh).toISOString().split('T')[0] 
+        : '';
+      const gioKhoiHanh = schedule?.GioKhoiHanh 
+        ? new Date(schedule.GioKhoiHanh).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })
+        : '';
+
       return {
         maDonHang: order.MaDonHang,
         tenTuyen,
         departureDate,
         gioKhoiHanh,
-        soDienThoai: order.SdtNguoiDi || '',
+        soDienThoai: order.SdtNguoiDi || order.KHACH_HANG?.SoDienThoai || '',
         tongGiaVe: order.TongGiaVe ? Number(order.TongGiaVe) : 0,
         soLuongVeDaDat: order.SoLuongVeDaDat || tickets.length,
         trangThaiDonHang: statusMap[order.TrangThaiDonHang] || order.TrangThaiDonHang || 'Chờ thanh toán',
@@ -444,7 +438,7 @@ export class TraCuuVeService {
           MaDonHang: ticket.MaDonHang,
           LoaiGiaoDich: 'HoanTien',
           PhuongThucThanhToan: ticket.DON_HANG.PhuongThucThanhToan || 'ChuyenKhoan',
-          SoTien: new Prisma.Decimal(refund),
+          SoTien: new Decimal(refund),
           ThoiGianGiaoDich: new Date(),
           TrangThaiGiaoDich: TrangThaiThanhToan.DaThanhToan,
           LichSuHoanTien: `Hoàn tiền hủy vé ${maVe}. Số tiền: ${refund}đ (Phí hủy: ${fee}đ)`,
@@ -462,8 +456,8 @@ export class TraCuuVeService {
           MaNVBanVe: null,
           TienVeGoc: ticket.GiaVe,
           TyLePhiHuyApDung: tyLePhiHuy,
-          LePhiHuy: new Prisma.Decimal(fee),
-          TienHoanLai: new Prisma.Decimal(refund),
+          LePhiHuy: new Decimal(fee),
+          TienHoanLai: new Decimal(refund),
           MaGiaoDichHoan: maGiaoDichHoan,
         },
       });

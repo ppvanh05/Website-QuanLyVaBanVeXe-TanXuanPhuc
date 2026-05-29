@@ -101,20 +101,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.authService.currentUser$.subscribe((user: any) => {
       if (user) {
         this.user = {
-          fullName: user.HoTenKhachHang || '',
-          phone: user.SoDienThoai || '',
-          gender: user.GioiTinh || '',
-          email: user.Email || '',
-          dob: user.NgaySinh ? new Date(user.NgaySinh).toISOString().slice(0, 10) : '',
-          address: user.DiaChi || '',
-          avatar: user.AnhDaiDien || 'asset/images/customer/avatar_placeholder.png',
           MaKhachHang: user.MaKhachHang,
-          HoTenKhachHang: user.HoTenKhachHang,
-          SoDienThoai: user.SoDienThoai,
-          Email: user.Email,
+          HoTenKhachHang: user.HoTenKhachHang || '',
+          SoDienThoai: user.SoDienThoai || '',
+          Email: user.Email || '',
           AnhDaiDien: user.AnhDaiDien || 'asset/images/customer/user.png',
-          GioiTinh: user.GioiTinh,
-          NgaySinh: user.NgaySinh,
+          GioiTinh: user.GioiTinh || '',
+          NgaySinh: user.NgaySinh ? new Date(user.NgaySinh).toISOString().slice(0, 10) : '',
           TrangThaiTaiKhoan: user.TrangThaiTaiKhoan,
         };
         this.editUser = { ...this.user };
@@ -192,32 +185,38 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   loadProfile(): void {
-    this.isProfileLoading = true;
+    setTimeout(() => {
+      this.isProfileLoading = true;
+      this.cdr.detectChanges();
+    });
     this.profileApiService.getProfile().subscribe({
       next: (response: any) => {
         this.ngZone.run(() => {
           const profile = response?.data || {};
-          this.currentUserId = profile.MaKhachHang || profile.maKhachHang || '';
+          this.currentUserId = profile.MaKhachHang || '';
           this.user = {
-            fullName: profile.HoTenKhachHang || profile.hoTenKhachHang || '',
-            phone: profile.SoDienThoai || profile.soDienThoai || '',
-            gender: profile.GioiTinh || profile.gioiTinh || '',
-            email: profile.Email || profile.email || '',
-            dob: profile.NgaySinh ? new Date(profile.NgaySinh).toISOString().slice(0, 10) : '',
-            address: profile.DiaChi || profile.diaChi || '',
-            avatar: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/avatar_placeholder.png',
             MaKhachHang: profile.MaKhachHang,
-            HoTenKhachHang: profile.HoTenKhachHang,
-            SoDienThoai: profile.SoDienThoai,
-            Email: profile.Email,
-            AnhDaiDien: profile.AnhDaiDien || profile.anhDaiDien || 'asset/images/customer/user.png',
-            GioiTinh: profile.GioiTinh,
-            NgaySinh: profile.NgaySinh,
+            HoTenKhachHang: profile.HoTenKhachHang || '',
+            SoDienThoai: profile.SoDienThoai || '',
+            Email: profile.Email || '',
+            AnhDaiDien: profile.AnhDaiDien || 'asset/images/customer/user.png',
+            GioiTinh: profile.GioiTinh || '',
+            NgaySinh: profile.NgaySinh ? new Date(profile.NgaySinh).toISOString().slice(0, 10) : '',
             TrangThaiTaiKhoan: profile.TrangThaiTaiKhoan,
           } as any;
           this.editUser = { ...this.user };
+          
+          // Đồng bộ với AuthService
           const cur = this.authService.getCurrentUser() || {};
-          this.authService.setCurrentUser({ ...(cur as any), HoTenKhachHang: this.user.fullName || (cur as any).HoTenKhachHang || 'Khách hàng' });
+          this.authService.setCurrentUser({ 
+            ...(cur as any), 
+            HoTenKhachHang: this.user.HoTenKhachHang,
+            Email: this.user.Email,
+            AnhDaiDien: this.user.AnhDaiDien,
+            GioiTinh: this.user.GioiTinh,
+            NgaySinh: this.user.NgaySinh
+          });
+          
           this.isProfileLoading = false;
           this.cdr.detectChanges();
         });
@@ -280,13 +279,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   // ===== HÀM CHÍNH: Gọi backend API (KHÔNG dùng Supabase) =====
   loadHistoryFromApi(): void {
-    this.isHistoryLoading = true;
-    this.filteredHistoryOrders = [];
+    setTimeout(() => {
+      this.isHistoryLoading = true;
+      this.filteredHistoryOrders = [];
+      this.cdr.detectChanges();
+    });
 
     this.profileApiService.getHistory().subscribe({
       next: (response: any) => {
         this.ngZone.run(() => {
+          console.log('[DEBUG FRONTEND] Raw History Response:', response);
           let orders = Array.isArray(response?.data) ? response.data : [];
+          console.log(`[DEBUG FRONTEND] Total orders from API: ${orders.length}`);
 
           // Lọc theo mã đơn hàng (maDonHang)
           if (this.filterMaDonHang.trim()) {
@@ -294,6 +298,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             orders = orders.filter((o: any) =>
               (o.maDonHang || '').toLowerCase().includes(q)
             );
+            console.log(`[DEBUG FRONTEND] After MaDonHang filter: ${orders.length}`);
           }
 
           // Lọc theo tuyến đường
@@ -302,6 +307,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             orders = orders.filter((o: any) =>
               (o.tenTuyen || '').toLowerCase().includes(q)
             );
+            console.log(`[DEBUG FRONTEND] After TuyenXe filter: ${orders.length}`);
           }
 
           // Lọc theo ngày đi (departureDate dạng YYYY-MM-DD)
@@ -309,6 +315,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             orders = orders.filter((o: any) =>
               o.departureDate === this.filterThoiGianDat
             );
+            console.log(`[DEBUG FRONTEND] After ThoiGian filter: ${orders.length}`);
           }
 
           // Lọc theo trạng thái
@@ -317,6 +324,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             orders = orders.filter((o: any) =>
               this.normalizeString(o.trangThaiDonHang) === targetStatus
             );
+            console.log(`[DEBUG FRONTEND] After TrangThai filter: ${orders.length}`);
           }
 
           // Sắp xếp mã đơn hàng mới nhất lên đầu
@@ -363,7 +371,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
               formattedNgayDi,
               tongGiaVe: o.tongGiaVe || 0,
               trangThaiDonHang: displayStatus as any,
-              soDienThoai: o.soDienThoai || this.user.phone
+              soDienThoai: o.soDienThoai || this.user.SoDienThoai || ''
             };
           });
 
@@ -373,7 +381,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.ngZone.run(() => {
-          console.error('Load history error:', err);
+          console.error('[DEBUG FRONTEND] Load history error:', err);
           this.filteredHistoryOrders = [];
           this.totalItems = 0;
           this.isHistoryLoading = false;
@@ -397,20 +405,48 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   saveProfile() {
     this.profileApiService.updateProfile({
-      HoTenKhachHang: this.editUser.fullName,
-      Email: this.editUser.email,
-      GioiTinh: this.editUser.gender,
-      NgaySinh: this.editUser.dob,
+      HoTenKhachHang: this.editUser.HoTenKhachHang,
+      Email: this.editUser.Email,
+      GioiTinh: this.editUser.GioiTinh,
+      NgaySinh: this.editUser.NgaySinh,
+      AnhDaiDien: this.editUser.AnhDaiDien
     }).subscribe({
-      next: () => {
-        this.user = { ...this.editUser };
-        const cur2 = this.authService.getCurrentUser() || {};
-        this.authService.setCurrentUser({ ...(cur2 as any), HoTenKhachHang: this.user.fullName || (cur2 as any).HoTenKhachHang || 'Khách hàng' });
+      next: (response: any) => {
+        const updatedProfile = response?.data || this.editUser;
+        
+        // Cập nhật state local của component
+        this.user = {
+          ...this.user,
+          fullName: updatedProfile.HoTenKhachHang || updatedProfile.fullName,
+          email: updatedProfile.Email || updatedProfile.email,
+          gender: updatedProfile.GioiTinh || updatedProfile.gender,
+          dob: updatedProfile.NgaySinh ? new Date(updatedProfile.NgaySinh).toISOString().slice(0, 10) : updatedProfile.dob,
+          avatar: updatedProfile.AnhDaiDien || updatedProfile.avatar || 'asset/images/customer/user.png',
+          HoTenKhachHang: updatedProfile.HoTenKhachHang,
+          Email: updatedProfile.Email,
+          GioiTinh: updatedProfile.GioiTinh,
+          NgaySinh: updatedProfile.NgaySinh,
+          AnhDaiDien: updatedProfile.AnhDaiDien
+        };
+        
+        // Cập nhật AuthService để Header/Footer nhận được thông tin mới
+        const curUser = this.authService.getCurrentUser() || {};
+        this.authService.setCurrentUser({
+          ...curUser,
+          HoTenKhachHang: updatedProfile.HoTenKhachHang,
+          Email: updatedProfile.Email,
+          AnhDaiDien: updatedProfile.AnhDaiDien,
+          GioiTinh: updatedProfile.GioiTinh,
+          NgaySinh: updatedProfile.NgaySinh
+        });
+
         this.isEditing = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('Save profile error:', err);
         this.isEditing = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -418,14 +454,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
   onFileSelected(event: any) {
     const file = event?.target?.files?.[0];
     if (!file) return;
-    // simple client preview and basic size check
+
     if (file.size > 1024 * 1024) {
       this.AnhDaiDienError = 'File quá lớn, tối đa 1MB';
       return;
     }
-    const url = URL.createObjectURL(file);
-    (this.editUser as any).AnhDaiDien = url;
-    this.AnhDaiDienError = '';
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.ngZone.run(() => {
+        this.editUser.AnhDaiDien = e.target.result;
+        this.AnhDaiDienError = '';
+        this.cdr.detectChanges();
+      });
+    };
+    reader.readAsDataURL(file);
   }
 
   validateHoTenKhachHang() {
@@ -526,6 +569,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   loadHistorySilent(): void {
+    if (!this.authService.getCurrentUser()) {
+      this.stopHistoryPolling();
+      return;
+    }
+    
     this.profileApiService.getHistory().subscribe({
       next: (response: any) => {
         this.ngZone.run(() => {
@@ -598,15 +646,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
               formattedNgayDi,
               tongGiaVe: o.tongGiaVe || 0,
               trangThaiDonHang: displayStatus as any,
-              soDienThoai: o.soDienThoai || this.user.phone
+              soDienThoai: o.soDienThoai || this.user.SoDienThoai || ''
             };
           });
 
           this.cdr.detectChanges();
         });
       },
-      error: () => {
+      error: (err: any) => {
         this.ngZone.run(() => {
+          if (err.status === 401) {
+            console.error('[DEBUG FRONTEND] Unauthorized history polling - stopping');
+            this.stopHistoryPolling();
+          }
           this.cdr.detectChanges();
         });
       }
