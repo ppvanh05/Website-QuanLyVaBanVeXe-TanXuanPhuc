@@ -2,10 +2,9 @@ import { Component, OnDestroy, OnInit, ChangeDetectorRef, NgZone } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HeaderComponent } from '../layout/header/header.component';
-import { FooterComponent } from '../layout/footer/footer.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileApiService } from '../../../core/services/profile-api.service';
+import { AuthApiService } from '../../../core/services/auth-api.service';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
@@ -28,7 +27,7 @@ interface Order {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
@@ -44,13 +43,35 @@ export class ProfileComponent implements OnInit, OnDestroy {
   showConfirmPwd = false;
 
   passwords = { current: '', new: '', confirm: '' };
+  currentPasswordError: string = '';
+  newPasswordError: string = '';
+  confirmPasswordError: string = '';
+  changePasswordSuccess: string = '';
+  changePasswordFailure: string = '';
 
-  otpInputs = [
-    { value: '' }, { value: '' }, { value: '' },
-    { value: '' }, { value: '' }, { value: '' }
-  ];
-  otpTimer = 90;
-  timerInterval: any;
+  // Properties for profile-initiated OTP forgot password flow
+  showForgotPwdModal = false;
+  forgotStep: 'phone' | 'otp' | 'reset' = 'phone';
+  forgotPhone = '';
+  forgotPhoneError = '';
+  forgotOtpDigits = Array(6).fill('');
+  forgotOtpString = '';
+  forgotOtpCountdown = 180;
+  forgotOtpTimer: any = null;
+  forgotNewPwd = '';
+  forgotConfirmPwd = '';
+  forgotShowNewPwd = false;
+  forgotShowConfirmPwd = false;
+  forgotNewPwdError = '';
+  forgotConfirmPwdError = '';
+  forgotResetError = '';
+  showForgotToast = false;
+  forgotToastMessage = '';
+  forgotOtpError = '';
+  isSendingForgotOtp = false;
+  verifiedForgotOtp = '';
+
+
 
   redirectTimer = 3;
   redirectInterval: any;
@@ -94,6 +115,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private profileApiService: ProfileApiService,
+    private authApiService: AuthApiService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
@@ -179,7 +201,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.timerInterval) clearInterval(this.timerInterval);
     if (this.redirectInterval) clearInterval(this.redirectInterval);
     this.stopHistoryPolling();
   }
@@ -413,6 +434,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: (response: any) => {
         const updatedProfile = response?.data || this.editUser;
+        console.log('[DEBUG FRONTEND] Updated Profile from Backend:', updatedProfile);
         
         // Cập nhật state local của component
         this.user = {
@@ -428,6 +450,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           NgaySinh: updatedProfile.NgaySinh,
           AnhDaiDien: updatedProfile.AnhDaiDien
         };
+        console.log('[DEBUG FRONTEND] this.user after update:', this.user);
         
         // Cập nhật AuthService để Header/Footer nhận được thông tin mới
         const curUser = this.authService.getCurrentUser() || {};
@@ -495,36 +518,280 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.isFormValid = !this.HoTenKhachHangError && !this.EmailError && !this.NgaySinhError && !this.AnhDaiDienError;
   }
 
-  confirmChangePassword() { this.showOtpModal = true; this.startOtpTimer(); }
+  changePassword(): void {
+    this.currentPasswordError = '';
+    this.newPasswordError = '';
+    this.confirmPasswordError = '';
+    this.changePasswordSuccess = '';
+    this.changePasswordFailure = '';
 
-  startOtpTimer() {
-    this.otpTimer = 90;
-    if (this.timerInterval) clearInterval(this.timerInterval);
-    this.timerInterval = setInterval(() => {
-      if (this.otpTimer > 0) this.otpTimer--;
-      else clearInterval(this.timerInterval);
+    if (!this.passwords.current) {
+      this.currentPasswordError = 'Vui lòng nhập mật khẩu hiện tại.';
+      return;
+    }
+    if (!this.passwords.new) {
+      this.newPasswordError = 'Vui lòng nhập mật khẩu mới.';
+      return;
+    }
+    if (this.passwords.new.length < 6) {
+      this.newPasswordError = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+      return;
+    }
+    if (this.passwords.new !== this.passwords.confirm) {
+      this.confirmPasswordError = 'Mật khẩu mới và xác nhận mật khẩu không khớp.';
+      return;
+    }
+    if (this.passwords.new === this.passwords.current) {
+      this.newPasswordError = 'Mật khẩu mới không được trùng với mật khẩu cũ.';
+      return;
+    }
+
+    this.profileApiService.changePassword({
+      MatKhauCu: this.passwords.current,
+      MatKhauMoi: this.passwords.new,
+      XacNhanMatKhauMoi: this.passwords.confirm
+    }).subscribe({
+      next: (response: any) => {
+        this.ngZone.run(() => {
+          this.changePasswordSuccess = response.message || 'Đổi mật khẩu thành công!';
+          this.passwords = { current: '', new: '', confirm: '' }; // Clear form
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err: any) => {
+        this.ngZone.run(() => {
+          this.changePasswordFailure = err.error?.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.';
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  // ===== FLOW QUÊN MẬT KHẨU TỪ PROFILE (OTP) =====
+  openForgotPwdModal() {
+    this.ngZone.run(() => {
+      this.clearForgotOtpTimer();
+      this.forgotStep = 'phone';
+      this.forgotPhone = this.user.SoDienThoai || '';
+      this.forgotPhoneError = '';
+      this.forgotOtpString = '';
+      this.forgotOtpDigits = Array(6).fill('');
+      this.forgotOtpError = '';
+      this.forgotNewPwd = '';
+      this.forgotConfirmPwd = '';
+      this.forgotShowNewPwd = false;
+      this.forgotShowConfirmPwd = false;
+      this.forgotNewPwdError = '';
+      this.forgotConfirmPwdError = '';
+      this.forgotResetError = '';
+      this.verifiedForgotOtp = '';
+      this.isSendingForgotOtp = false;
+      this.showForgotPwdModal = true;
+      this.cdr.detectChanges();
+    });
+  }
+
+  closeForgotPwdModal() {
+    this.ngZone.run(() => {
+      this.clearForgotOtpTimer();
+      this.showForgotPwdModal = false;
+      this.cdr.detectChanges();
+    });
+  }
+
+  startForgotOtpTimer() {
+    this.clearForgotOtpTimer();
+    this.forgotOtpCountdown = 180;
+    this.forgotOtpTimer = setInterval(() => {
+      this.ngZone.run(() => {
+        if (this.forgotOtpCountdown > 0) {
+          this.forgotOtpCountdown -= 1;
+          this.cdr.detectChanges();
+        } else {
+          this.clearForgotOtpTimer();
+        }
+      });
     }, 1000);
   }
 
-  formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}s`;
-  }
-
-  closeOtpModal() {
-    this.showOtpModal = false;
-    if (this.timerInterval) clearInterval(this.timerInterval);
-  }
-
-  verifyOtp() {
-    const otpCode = this.otpInputs.map(i => i.value).join('');
-    if (otpCode.length === 6) {
-      this.closeOtpModal();
-      this.showSuccessModal = true;
-      this.startRedirectTimer();
+  clearForgotOtpTimer() {
+    if (this.forgotOtpTimer) {
+      clearInterval(this.forgotOtpTimer);
+      this.forgotOtpTimer = null;
     }
   }
+
+  formatForgotCountdown(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  sendForgotOtp() {
+    if (this.isSendingForgotOtp) return;
+    this.isSendingForgotOtp = true;
+
+    this.forgotPhoneError = '';
+    this.forgotOtpError = '';
+    this.forgotResetError = '';
+
+    const cleaned = this.forgotPhone.trim();
+    const phoneRegex = /^(0|\+84)\d{9}$/;
+
+    if (!phoneRegex.test(cleaned)) {
+      this.forgotPhoneError = 'Vui lòng nhập đúng số điện thoại gồm 10 chữ số.';
+      this.isSendingForgotOtp = false;
+      return;
+    }
+
+    this.forgotPhone = cleaned;
+    console.log('Profile forgot-password send-otp:', cleaned);
+
+    this.authApiService.forgotPassword({ SoDienThoai: cleaned }).subscribe({
+      next: (response: any) => {
+        this.ngZone.run(() => {
+          this.isSendingForgotOtp = false;
+          this.verifiedForgotOtp = '';
+          this.forgotOtpString = '';
+          this.forgotOtpDigits = Array(6).fill('');
+          this.forgotOtpError = '';
+          this.forgotStep = 'otp';
+          this.startForgotOtpTimer();
+          console.log('[OTP DEBUG PROFILE] OTP code received:', response.otp);
+          
+          // Autofill OTP if mock/debugging or returned in response
+          if (response.otp) {
+            this.onForgotOtpChange(response.otp);
+          }
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err: any) => {
+        this.ngZone.run(() => {
+          this.isSendingForgotOtp = false;
+          console.error('Send forgot OTP from profile error:', err);
+          this.forgotPhoneError = err.error?.message || 'Số điện thoại này chưa được đăng ký.';
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  onForgotOtpChange(val: string) {
+    const cleaned = val.replace(/[^0-9]/g, '').slice(0, 6);
+    this.forgotOtpString = cleaned;
+    for (let i = 0; i < 6; i++) {
+      this.forgotOtpDigits[i] = cleaned[i] || '';
+    }
+  }
+
+  get isForgotOtpValid(): boolean {
+    return this.forgotOtpString.length === 6;
+  }
+
+  verifyForgotOtp() {
+    this.forgotOtpError = '';
+    this.forgotResetError = '';
+
+    if (!this.forgotOtpString || this.forgotOtpString.length !== 6) {
+      this.forgotOtpError = 'Vui lòng nhập đủ 6 chữ số mã xác thực.';
+      return;
+    }
+
+    const code = this.forgotOtpString;
+    const verifyPayload = {
+      SoDienThoai: this.forgotPhone,
+      otp: code,
+      MucDich: 'QuenMatKhau',
+      markUsed: false
+    };
+
+    this.authApiService.verifyOtp(verifyPayload).subscribe({
+      next: (response: any) => {
+        this.ngZone.run(() => {
+          this.clearForgotOtpTimer();
+          this.verifiedForgotOtp = code;
+          this.forgotOtpError = '';
+          this.forgotStep = 'reset';
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err: any) => {
+        this.ngZone.run(() => {
+          console.error('Verify OTP in profile forgot-password error:', err);
+          this.forgotOtpError = err.error?.message || 'Mã xác thực không đúng. Vui lòng thử lại.';
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  resendForgotOtp() {
+    this.forgotOtpError = '';
+    this.sendForgotOtp();
+  }
+
+  toggleForgotShowNewPwd() {
+    this.forgotShowNewPwd = !this.forgotShowNewPwd;
+  }
+
+  toggleForgotShowConfirmPwd() {
+    this.forgotShowConfirmPwd = !this.forgotShowConfirmPwd;
+  }
+
+  resetForgotNewPassword() {
+    this.forgotNewPwdError = '';
+    this.forgotConfirmPwdError = '';
+    this.forgotResetError = '';
+
+    if (!this.forgotNewPwd || this.forgotNewPwd.length < 6) {
+      this.forgotNewPwdError = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+      return;
+    }
+    if (!this.forgotConfirmPwd) {
+      this.forgotConfirmPwdError = 'Vui lòng nhập lại mật khẩu mới.';
+      return;
+    }
+    if (this.forgotNewPwd !== this.forgotConfirmPwd) {
+      this.forgotConfirmPwdError = 'Mật khẩu nhập lại không khớp.';
+      return;
+    }
+
+    const resetPayload = {
+      SoDienThoai: this.forgotPhone,
+      otp: this.verifiedForgotOtp || this.forgotOtpString,
+      MatKhauMoi: this.forgotNewPwd,
+    };
+    console.log('Profile reset-password payload:', resetPayload);
+
+    this.authApiService.resetPassword(resetPayload).subscribe({
+      next: (response: any) => {
+        this.ngZone.run(() => {
+          this.forgotOtpError = '';
+          this.forgotToastMessage = 'Đặt lại mật khẩu thành công!';
+          this.showForgotToast = true;
+          this.cdr.detectChanges();
+
+          setTimeout(() => {
+            this.ngZone.run(() => {
+              this.showForgotToast = false;
+              this.closeForgotPwdModal();
+              this.cdr.detectChanges();
+            });
+          }, 1500);
+        });
+      },
+      error: (err: any) => {
+        this.ngZone.run(() => {
+          console.error('Profile reset password error:', err);
+          this.forgotResetError = err.error?.message || 'Đặt lại mật khẩu thất bại. Vui lòng thử lại.';
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  // confirmChangePassword() { this.showOtpModal = true; this.startOtpTimer(); } // OTP logic removed
 
   startRedirectTimer() {
     this.redirectTimer = 3;
@@ -542,13 +809,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.router.navigate(['/login']);
   }
 
-  onOtpInput(event: any, index: number) {
-    const value = event.target.value;
-    if (value && index < 5) {
-      const nextInput = event.target.nextElementSibling;
-      if (nextInput) nextInput.focus();
-    }
-  }
+
 
   historyInterval: any;
 

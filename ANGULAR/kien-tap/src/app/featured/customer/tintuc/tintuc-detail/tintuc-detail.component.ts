@@ -1,14 +1,12 @@
 import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { HeaderComponent } from '../../layout/header/header.component';
-import { FooterComponent } from '../../layout/footer/footer.component';
 import { CustomerTinTucService } from '../../../../core/services/customer-tin-tuc.service';
 
 @Component({
   selector: 'app-tintuc-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, RouterModule],
   templateUrl: './tintuc-detail.component.html',
   styleUrl: './tintuc-detail.component.css'
 })

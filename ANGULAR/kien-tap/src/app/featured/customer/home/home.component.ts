@@ -1,10 +1,8 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
-import { HeaderComponent } from '../layout/header/header.component';
-import { FooterComponent } from '../layout/footer/footer.component';
 import { ToastService } from '../../../core/services/toast.service';
 import { HomeApiService } from '../../../core/services/home-api.service';
 import { LunarCalendarService } from '../../../core/services/lunar-calendar.service';
@@ -14,7 +12,7 @@ import { DanhGiaService } from '../../../core/services/danh-gia.service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
@@ -56,6 +54,9 @@ export class HomeComponent implements OnInit {
   homeReviews: any[] = [];
   homeNews: any[] = [];
 
+  isLoadingReviews: boolean = true;
+  isLoadingNews: boolean = true;
+
   calendarTitle: string = '';
   calendarEmptySpaces: number[] = [];
   calendarDays: any[] = [];
@@ -66,15 +67,12 @@ export class HomeComponent implements OnInit {
     private homeApiService: HomeApiService,
     private lunarCalendarService: LunarCalendarService,
     private newsService: CustomerTinTucService,
-    private reviewService: DanhGiaService
+    private reviewService: DanhGiaService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    const today = new Date();
-    const dd = String(today.getDate()).padStart(2, '0');
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const yyyy = today.getFullYear();
-    this.departureDate = `${dd}/${mm}/${yyyy}`;
+    this.departureDate = '';
 
     this.generateCalendarDays();
     this.loadActiveRoutes();
@@ -84,31 +82,43 @@ export class HomeComponent implements OnInit {
   }
 
   loadHomeReviews(): void {
+    this.isLoadingReviews = true;
     this.reviewService.getHomeReviews().subscribe({
       next: (response: any) => {
+        console.log('[DEBUG] Home Reviews Response:', response);
         const data = response.data || response;
         if (Array.isArray(data)) {
           this.homeReviews = data;
         }
+        this.isLoadingReviews = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Failed to load home reviews', err);
+        this.isLoadingReviews = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   loadHomeNews(): void {
+    this.isLoadingNews = true;
     this.newsService.getHomeNews().subscribe({
       next: (response: any) => {
+        console.log('[DEBUG] Home News Response:', response);
         if (response && response.success && Array.isArray(response.data)) {
           this.homeNews = response.data;
         } else if (Array.isArray(response)) {
           // Fallback if backend returns array directly
           this.homeNews = response;
         }
+        this.isLoadingNews = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Failed to load home news', err);
+        this.isLoadingNews = false;
+        this.cdr.detectChanges();
       }
     });
   }

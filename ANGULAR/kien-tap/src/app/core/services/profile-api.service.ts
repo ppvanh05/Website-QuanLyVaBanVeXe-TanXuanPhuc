@@ -12,9 +12,7 @@ export class ProfileApiService {
   constructor(private http: HttpClient) {}
 
   getProfile(): Observable<any> {
-    return this.http.get<any>(`${API_BASE}/customer/profile`, {
-      headers: this.getAuthHeaders()
-    });
+    return this.http.get<any>(`${API_BASE}/customer/profile`);
   }
 
   updateProfile(dto: {
@@ -24,20 +22,7 @@ export class ProfileApiService {
     GioiTinh?: string;
     NgaySinh?: string;
   }): Observable<any> {
-    return this.http.put<any>(`${API_BASE}/customer/profile`, dto, {
-      headers: this.getAuthHeaders()
-    });
-  }
-
-  private getAuthHeaders(): HttpHeaders {
-    let token = '';
-    if (typeof localStorage !== 'undefined') {
-      token = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
-    }
-    console.log('[DEBUG FRONTEND] Using token for API:', token ? (token.substring(0, 10) + '...') : 'NONE');
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
+    return this.http.put<any>(`${API_BASE}/customer/profile`, dto);
   }
 
   getHistory(trangThai?: string, sortByDate: 'asc' | 'desc' = 'desc'): Observable<any> {
@@ -50,8 +35,15 @@ export class ProfileApiService {
     }
 
     return this.http.get<any>(`${API_BASE}/customer/tra-cuu-ve/history`, {
-      params,
-      headers: this.getAuthHeaders()
+      params
     });
+  }
+
+  changePassword(dto: { MatKhauCu: string; MatKhauMoi: string; XacNhanMatKhauMoi: string }): Observable<any> {
+    return this.http.post<any>(`${API_BASE}/customer/profile/change-password`, dto);
+  }
+
+  sendOtpForPasswordChange(): Observable<any> {
+    return this.http.post<any>(`${API_BASE}/customer/profile/send-otp`, {});
   }
 }
