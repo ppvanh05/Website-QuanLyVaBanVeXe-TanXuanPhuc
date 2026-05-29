@@ -192,11 +192,11 @@ async function seedVehicles() {
       },
       create: {
         ...vehicle,
-        LoaiXe: 'Limousine22Phong',
+        LoaiXe: 'Limousine_22_ph_ng',
         SoTang: 2,
         SoDay: 2,
         SoGhe: 22,
-        TienIch: ['Tivi', 'SacUSB', 'Wifi', 'NuocKhanUot', 'GPS', 'DieuHoa'],
+        TienIch: ['Tivi', 's_c__USB', 'Wifi', 'N__c__kh_n___t', 'GPS', 'i_u_h_a'],
         HanDangKiem: date('2028-12-31'),
         HanBaoHiem: date('2028-12-31'),
         TrangThaiPhuongTien: 'DangHoatDong',
@@ -356,16 +356,15 @@ async function seedSchedules() {
         where: { MaLichTrinhDiemDung: `${schedule.MaLichTrinh}_STOP_${index + 1}` },
         update: {
           MaDiem: maDiem,
-          ThuTuDung: index + 1,
           GioDenDuKien: index === 0 ? schedule.GioKhoiHanh : schedule.GioDenDuKien,
+          Ngay: date(schedule.NgayKhoiHanh),
         },
         create: {
           MaLichTrinhDiemDung: `${schedule.MaLichTrinh}_STOP_${index + 1}`,
           MaLichTrinh: schedule.MaLichTrinh,
           MaDiem: maDiem,
-          ThuTuDung: index + 1,
           GioDenDuKien: index === 0 ? schedule.GioKhoiHanh : schedule.GioDenDuKien,
-          GhiChu: index === 0 ? 'Diem don chinh' : 'Diem tra chinh',
+          Ngay: date(schedule.NgayKhoiHanh),
         },
       });
     }

@@ -160,7 +160,7 @@ export class QuanLyVeService {
 
     const stop = await this.prisma.lICH_TRINH_DIEM_DUNG.findFirst({
       where: { MaLichTrinh: maLichTrinh },
-      orderBy: { ThuTuDung: fallback === 'first' ? 'asc' : 'desc' },
+      orderBy: { GioDenDuKien: fallback === 'first' ? 'asc' : 'desc' },
       select: { MaDiem: true },
     });
     if (!stop) throw new BadRequestException('Lich trinh chua co diem don/tra hop le.');

@@ -29,30 +29,84 @@ export class TuyenXeService {
   }
 
   refreshRoutes() {
+    if (typeof window === 'undefined') return;
     this.http.get<any[]>(this.apiUrl).subscribe({
       next: (data) => {
-        this.routes.length = 0;
-        data.forEach(r => {
-          const hours = r.ThoiGianDiChuyenDuKien ? new Date(r.ThoiGianDiChuyenDuKien).getHours() : 0;
-          const minutes = r.ThoiGianDiChuyenDuKien ? new Date(r.ThoiGianDiChuyenDuKien).getMinutes() : 0;
-          this.routes.push({
-            id: r.MaTuyenXe,
-            name: r.TenTuyenXe,
-            startPoint: r.DiemKhoiHanh,
-            startProvince: r.DiemKhoiHanh,
-            endPoint: r.DiemDen,
-            endProvince: r.DiemDen,
-            distance: r.KhoangCach || 0,
-            estimatedHours: hours,
-            estimatedMinutes: minutes,
-            status: r.TrangThaiTuyenXe === 'DaKhoa' ? 'locked' : 'active',
-            createdAt: new Date(),
+        if (!data || data.length === 0) {
+          this.loadMockRoutes();
+        } else {
+          this.routes.length = 0;
+          data.forEach(r => {
+            const hours = r.ThoiGianDiChuyenDuKien ? new Date(r.ThoiGianDiChuyenDuKien).getHours() : 0;
+            const minutes = r.ThoiGianDiChuyenDuKien ? new Date(r.ThoiGianDiChuyenDuKien).getMinutes() : 0;
+            this.routes.push({
+              id: r.MaTuyenXe,
+              name: r.TenTuyenXe,
+              startPoint: r.DiemKhoiHanh,
+              startProvince: r.DiemKhoiHanh,
+              endPoint: r.DiemDen,
+              endProvince: r.DiemDen,
+              distance: r.KhoangCach || 0,
+              estimatedHours: hours,
+              estimatedMinutes: minutes,
+              status: r.TrangThaiTuyenXe === 'DaKhoa' ? 'locked' : 'active',
+              createdAt: new Date(),
+            });
           });
-        });
-        this.routesUpdated$.next();
+          this.routesUpdated$.next();
+        }
       },
-      error: (err) => console.error('Lỗi khi tải danh sách tuyến xe:', err)
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách tuyến xe:', err);
+        this.loadMockRoutes();
+      }
     });
+  }
+
+  private loadMockRoutes() {
+    this.routes.length = 0;
+    this.routes.push(
+      {
+        id: 1,
+        name: 'Hà Nội - SaPa',
+        startPoint: 'Bến xe Mỹ Đình',
+        startProvince: 'Hà Nội',
+        endPoint: 'Bến xe SaPa',
+        endProvince: 'Lào Cai',
+        distance: 320,
+        estimatedHours: 5,
+        estimatedMinutes: 30,
+        status: 'active',
+        createdAt: new Date()
+      },
+      {
+        id: 2,
+        name: 'Hà Nội - Hải Phòng',
+        startPoint: 'Bến xe Mỹ Đình',
+        startProvince: 'Hà Nội',
+        endPoint: 'Bến xe Vĩnh Niệm',
+        endProvince: 'Hải Phòng',
+        distance: 120,
+        estimatedHours: 2,
+        estimatedMinutes: 0,
+        status: 'active',
+        createdAt: new Date()
+      },
+      {
+        id: 3,
+        name: 'Hải Phòng - Hà Giang',
+        startPoint: 'Bến xe Vĩnh Niệm',
+        startProvince: 'Hải Phòng',
+        endPoint: 'Bến xe Hà Giang',
+        endProvince: 'Hà Giang',
+        distance: 380,
+        estimatedHours: 7,
+        estimatedMinutes: 15,
+        status: 'active',
+        createdAt: new Date()
+      }
+    );
+    this.routesUpdated$.next();
   }
 
   getRoutes(): Route[] {

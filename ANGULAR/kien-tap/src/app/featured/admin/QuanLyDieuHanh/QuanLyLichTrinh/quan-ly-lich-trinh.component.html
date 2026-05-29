@@ -57,43 +57,56 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let s of filteredSchedules; let i = index">
-            <td class="text-center" style="font-weight: 500; color: #718096;">{{ i + 1 }}</td>
-            <td class="font-bold">
-              <span class="status-dot" [class]="'status-dot ' + s.status"></span>
-              {{ s.routeName }}
-            </td>
-            <td>
-              <span class="plate-badge">{{ s.vehiclePlate }}</span>
-            </td>
-            <td>
-              <div class="staff-info">
-                <div><span class="staff-role">Tài xế:</span> {{ s.driverName }}</div>
-                <div *ngIf="s.assistantName"><span class="staff-role">Phụ xe:</span> {{ s.assistantName }}</div>
+          <!-- Loading Spinner Row -->
+          <tr *ngIf="isLoading">
+            <td colspan="7" class="text-center" style="padding: 30px; color: #4a5568;">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500;">
+                <span class="material-icons rotating" style="animation: spin 1s linear infinite;">autorenew</span>
+                <span>Đang tải danh sách lịch trình từ database...</span>
               </div>
             </td>
-            <td>
-              <div class="time-info">
-                <div class="date-val"><span class="material-icons sm-icon-grey">calendar_today</span> {{ s.departureDate
-                  }}</div>
-                <div class="time-val"><span class="material-icons sm-icon-grey">schedule</span> {{ s.departureTime }}
+          </tr>
+
+          <!-- Data Rows -->
+          <ng-container *ngIf="!isLoading">
+            <tr *ngFor="let s of filteredSchedules; let i = index">
+              <td class="text-center" style="font-weight: 500; color: #718096;">{{ i + 1 }}</td>
+              <td class="font-bold">
+                <span class="status-dot" [class]="'status-dot ' + s.status"></span>
+                {{ s.routeName }}
+              </td>
+              <td>
+                <span class="plate-badge">{{ s.vehiclePlate }}</span>
+              </td>
+              <td>
+                <div class="staff-info">
+                  <div><span class="staff-role">Tài xế:</span> {{ s.driverName }}</div>
+                  <div *ngIf="s.assistantName"><span class="staff-role">Phụ xe:</span> {{ s.assistantName }}</div>
                 </div>
-              </div>
-            </td>
-            <td class="text-center">
-              <span class="status-badge" [class]="s.status" style="display: inline-block; margin: 0 auto;">
-                {{ s.status === 'DangChay' ? 'Đang chạy' : s.status === 'ChoKhoiHanh' ? 'Chờ khởi hành' : s.status === 'HoanThanh' ? 'Hoàn thành' : 'Đã khóa' }}
-              </span>
-            </td>
-            <td class="text-center">
-              <button class="btn-icon" (click)="openEditModal(s)">
-                <span class="material-icons">edit_note</span>
-              </button>
-            </td>
-          </tr>
-          <tr *ngIf="filteredSchedules.length === 0">
-            <td colspan="7" class="empty-row-text">Không tìm thấy lịch trình nào khớp với bộ lọc.</td>
-          </tr>
+              </td>
+              <td>
+                <div class="time-info">
+                  <div class="date-val"><span class="material-icons sm-icon-grey">calendar_today</span> {{ s.departureDate
+                    }}</div>
+                  <div class="time-val"><span class="material-icons sm-icon-grey">schedule</span> {{ s.departureTime }}
+                  </div>
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="status-badge" [class]="s.status" style="display: inline-block; margin: 0 auto;">
+                  {{ s.status === 'DangChay' ? 'Đang chạy' : s.status === 'ChoKhoiHanh' ? 'Chờ khởi hành' : s.status === 'HoanThanh' ? 'Hoàn thành' : 'Đã khóa' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn-icon" (click)="openEditModal(s)">
+                  <span class="material-icons">edit_note</span>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredSchedules.length === 0">
+              <td colspan="7" class="empty-row-text">Không tìm thấy lịch trình nào khớp với bộ lọc.</td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
@@ -545,37 +558,191 @@
 
           <!-- Transit/Pickup/Dropoff Points Selection -->
           <div class="transit-section">
-            <!-- Điểm đón trả -->
-            <div class="transit-group">
-              <label>Điểm đón trả <span class="required">*</span></label>
-              <div class="transit-inputs" style="display: flex; gap: 15px;">
-                <div style="flex: 1;">
-                  <app-custom-select [(value)]="currentSchedule.pickupPoint" [options]="pickupPointOptions"
-                    placeholder="Chọn điểm đón trả"></app-custom-select>
-                </div>
-                <div style="flex: 1;">
-                  <input type="text" [value]="getPointAddress(currentSchedule.pickupPoint)" readonly
-                    placeholder="Địa chỉ tự động điền" class="disabled-input"
-                    style="width: 100%; height: 40px; box-sizing: border-box; padding: 10px 14px; border-radius: 8px; font-size: 14px; outline: none;">
+            
+            <!-- Khu vực Điểm đón trả -->
+            <div class="transit-row-container">
+              <!-- Headers cho Điểm đón trả -->
+              <div class="transit-row-headers">
+                <div class="transit-header-col col-point" style="font-weight: 700;">Điểm đón trả <span class="required">*</span></div>
+                <div class="transit-header-col col-address" style="font-weight: 700;">Địa điểm</div>
+                <div class="transit-header-col col-expected-time" style="font-weight: 700; justify-content: center;">Thời gian đến dự kiến</div>
+                <div class="transit-header-col col-date" style="font-weight: 700;">Ngày</div>
+              </div>
+              
+              <!-- Danh sách dòng nhập cho Điểm đón trả -->
+              <div class="transit-rows-list" *ngIf="currentSchedule.pickupPoints">
+                <div class="transit-row-inputs" *ngFor="let item of currentSchedule.pickupPoints; let idx = index;">
+                  <div class="transit-col col-point">
+                    <app-custom-select [(value)]="item.point" [options]="pickupPointOptions"
+                      (valueChange)="onPickupPointChange(idx)"
+                      placeholder="Chọn điểm đón"></app-custom-select>
+                  </div>
+                  <div class="transit-col col-address">
+                    <input type="text" [value]="getPointAddress(item.point)" readonly
+                      placeholder="Địa chỉ tự động điền" class="disabled-input">
+                  </div>
+                  <div class="transit-col col-expected-time">
+                    <div class="time-split-inputs mini">
+                      <div class="time-input-wrapper">
+                        <input type="number" min="0" max="23" step="1" [(ngModel)]="item.hour"
+                          class="time-number-input" placeholder="08">
+                        <span class="time-unit">giờ</span>
+                      </div>
+                      <span class="time-colon">:</span>
+                      <div class="time-input-wrapper">
+                        <input type="number" min="0" max="59" step="1" [(ngModel)]="item.minute"
+                          class="time-number-input" placeholder="00">
+                        <span class="time-unit">phút</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="transit-col col-date">
+                    <div class="date-input-container" (click)="$event.stopPropagation()">
+                      <input type="text" [(ngModel)]="item.date" placeholder="dd/mm/yyyy"
+                        class="transit-date-input" (click)="toggleTransitDatePicker('pickup', idx, $event)">
+                      <span class="material-icons date-icon-inside" (click)="toggleTransitDatePicker('pickup', idx, $event)" style="pointer-events: auto; cursor: pointer;">calendar_today</span>
+
+                      <!-- Date Picker Popup -->
+                      <div class="calendar-popup" *ngIf="activePickupDatePickerIndex === idx" style="width: 280px; right: 0; left: auto;">
+                        <div class="calendar-header">
+                          <button type="button" (click)="prevTransit()">
+                            <span class="material-icons">chevron_left</span>
+                          </button>
+                          <div class="month-year-labels">
+                            <span class="month-label" (click)="setTransitPickerView('month')">
+                              {{ months[transitViewDate.getMonth()] }}
+                            </span>
+                            <span class="year-label" (click)="setTransitPickerView('year')">
+                              {{ transitViewDate.getFullYear() }}
+                            </span>
+                          </div>
+                          <button type="button" (click)="nextTransit()">
+                            <span class="material-icons">chevron_right</span>
+                          </button>
+                        </div>
+
+                        <!-- Day View -->
+                        <div class="calendar-days-wrapper" *ngIf="transitPickerViewMode === 'day'">
+                          <div class="calendar-grid">
+                            <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+                            <div class="day" *ngFor="let day of transitCalendarDays" [class.empty]="!day" (click)="selectTransitDate(day, 'pickup', idx)">
+                              {{ day }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Month View -->
+                        <div class="month-grid" *ngIf="transitPickerViewMode === 'month'">
+                          <div class="month-item" *ngFor="let m of months; let i = index" (click)="selectTransitMonth(i)">
+                            {{ m }}
+                          </div>
+                        </div>
+
+                        <!-- Year View -->
+                        <div class="year-grid" *ngIf="transitPickerViewMode === 'year'">
+                          <div class="year-item" *ngFor="let y of transitYearsList" (click)="selectTransitYear(y)">
+                            {{ y }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Điểm dừng -->
-            <div class="transit-group mt-3">
-              <label>Điểm dừng <span class="required">*</span></label>
-              <div class="transit-inputs" style="display: flex; gap: 15px;">
-                <div style="flex: 1;">
-                  <app-custom-select [(value)]="currentSchedule.dropoffPoint" [options]="dropoffPointOptions"
-                    placeholder="Chọn điểm dừng"></app-custom-select>
-                </div>
-                <div style="flex: 1;">
-                  <input type="text" [value]="getPointAddress(currentSchedule.dropoffPoint)" readonly
-                    placeholder="Địa chỉ tự động điền" class="disabled-input"
-                    style="width: 100%; height: 40px; box-sizing: border-box; padding: 10px 14px; border-radius: 8px; font-size: 14px; outline: none;">
+            <!-- Khu vực Điểm dừng -->
+            <div class="transit-row-container">
+              <!-- Headers cho Điểm dừng -->
+              <div class="transit-row-headers">
+                <div class="transit-header-col col-point" style="font-weight: 700;">Điểm dừng <span class="required">*</span></div>
+                <div class="transit-header-col col-address" style="font-weight: 700;">Địa điểm</div>
+                <div class="transit-header-col col-expected-time" style="font-weight: 700; justify-content: center;">Thời gian đến dự kiến</div>
+                <div class="transit-header-col col-date" style="font-weight: 700;">Ngày</div>
+              </div>
+              
+              <!-- Danh sách dòng nhập cho Điểm dừng -->
+              <div class="transit-rows-list" *ngIf="currentSchedule.dropoffPoints">
+                <div class="transit-row-inputs" *ngFor="let item of currentSchedule.dropoffPoints; let idx = index;">
+                  <div class="transit-col col-point">
+                    <app-custom-select [(value)]="item.point" [options]="dropoffPointOptions"
+                      (valueChange)="onDropoffPointChange(idx)"
+                      placeholder="Chọn điểm dừng"></app-custom-select>
+                  </div>
+                  <div class="transit-col col-address">
+                    <input type="text" [value]="getPointAddress(item.point)" readonly
+                      placeholder="Địa chỉ tự động điền" class="disabled-input">
+                  </div>
+                  <div class="transit-col col-expected-time">
+                    <div class="time-split-inputs mini">
+                      <div class="time-input-wrapper">
+                        <input type="number" min="0" max="23" step="1" [(ngModel)]="item.hour"
+                          class="time-number-input" placeholder="17">
+                        <span class="time-unit">giờ</span>
+                      </div>
+                      <span class="time-colon">:</span>
+                      <div class="time-input-wrapper">
+                        <input type="number" min="0" max="59" step="1" [(ngModel)]="item.minute"
+                          class="time-number-input" placeholder="00">
+                        <span class="time-unit">phút</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="transit-col col-date">
+                    <div class="date-input-container" (click)="$event.stopPropagation()">
+                      <input type="text" [(ngModel)]="item.date" placeholder="dd/mm/yyyy"
+                        class="transit-date-input" (click)="toggleTransitDatePicker('dropoff', idx, $event)">
+                      <span class="material-icons date-icon-inside" (click)="toggleTransitDatePicker('dropoff', idx, $event)" style="pointer-events: auto; cursor: pointer;">calendar_today</span>
+
+                      <!-- Date Picker Popup -->
+                      <div class="calendar-popup" *ngIf="activeDropoffDatePickerIndex === idx" style="width: 280px; right: 0; left: auto;">
+                        <div class="calendar-header">
+                          <button type="button" (click)="prevTransit()">
+                            <span class="material-icons">chevron_left</span>
+                          </button>
+                          <div class="month-year-labels">
+                            <span class="month-label" (click)="setTransitPickerView('month')">
+                              {{ months[transitViewDate.getMonth()] }}
+                            </span>
+                            <span class="year-label" (click)="setTransitPickerView('year')">
+                              {{ transitViewDate.getFullYear() }}
+                            </span>
+                          </div>
+                          <button type="button" (click)="nextTransit()">
+                            <span class="material-icons">chevron_right</span>
+                          </button>
+                        </div>
+
+                        <!-- Day View -->
+                        <div class="calendar-days-wrapper" *ngIf="transitPickerViewMode === 'day'">
+                          <div class="calendar-grid">
+                            <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+                            <div class="day" *ngFor="let day of transitCalendarDays" [class.empty]="!day" (click)="selectTransitDate(day, 'dropoff', idx)">
+                              {{ day }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Month View -->
+                        <div class="month-grid" *ngIf="transitPickerViewMode === 'month'">
+                          <div class="month-item" *ngFor="let m of months; let i = index" (click)="selectTransitMonth(i)">
+                            {{ m }}
+                          </div>
+                        </div>
+
+                        <!-- Year View -->
+                        <div class="year-grid" *ngIf="transitPickerViewMode === 'year'">
+                          <div class="year-item" *ngFor="let y of transitYearsList" (click)="selectTransitYear(y)">
+                            {{ y }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 
@@ -586,10 +753,6 @@
           <button *ngIf="isEditMode" class="btn-lock" (click)="toggleStatus()">
             <span class="material-icons">lock</span>
             {{ currentSchedule.status === 'DaKhoa' ? 'Mở khóa' : 'Khóa lịch trình' }}
-          </button>
-          <button *ngIf="isEditMode" class="btn-delete" (click)="deleteSchedule()">
-            <span class="material-icons">delete</span>
-            Xóa lịch trình
           </button>
         </div>
         <div class="footer-right">

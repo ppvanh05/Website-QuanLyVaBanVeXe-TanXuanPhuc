@@ -26,18 +26,19 @@ export class TraCuuVeService {
       [TrangThaiVe.ChoKhoiHanh]: 'Chờ khởi hành',
       [TrangThaiVe.DaHoanThanh]: 'Đã hoàn thành',
       [TrangThaiVe.DaHuy]: 'Đã hủy',
+      [TrangThaiVe.DaDanhGia]: 'Đã đánh giá',
     };
     const trangThaiDonHang = statusMap[order.TrangThaiDonHang] || order.TrangThaiDonHang || 'Chờ thanh toán';
 
     // Map tickets list
     const tickets = (order.VE_DIEN_TU || []).map((ticket: any) => {
       const ticketStatusMap: Record<string, string> = {
-      ChoThanhToan: 'Chờ thanh toán',
-      ChoKhoiHanh: 'Chờ khởi hành',
-      DaHoanThanh: 'Đã hoàn thành',
-      DaHuy: 'Đã hủy',
-      DaDanhGia: 'Đã đánh giá',
-    };
+        [TrangThaiVe.ChoThanhToan]: 'Chờ thanh toán',
+        [TrangThaiVe.ChoKhoiHanh]: 'Chờ khởi hành',
+        [TrangThaiVe.DaHoanThanh]: 'Đã hoàn thành',
+        [TrangThaiVe.DaHuy]: 'Đã hủy',
+        [TrangThaiVe.DaDanhGia]: 'Đã đánh giá',
+      };
       
       const departureDateStr = schedule?.NgayKhoiHanh
         ? new Date(schedule.NgayKhoiHanh).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')

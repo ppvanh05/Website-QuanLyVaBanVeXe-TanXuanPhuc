@@ -2342,4 +2342,129 @@ input:checked+.slider:before {
 .btn-delete:hover {
   background-color: #fff0f0;
   border-color: #fc8181;
+}
+
+/* Transit Section Table Styles */
+.transit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.transit-row-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #fff;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.transit-row-headers {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 1.5fr 1.2fr;
+  gap: 15px;
+  box-sizing: border-box;
+  padding-bottom: 4px;
+}
+
+.transit-header-col {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #718096;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+}
+
+.transit-row-inputs {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 1.5fr 1.2fr;
+  gap: 15px;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.transit-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+
+.transit-col input.disabled-input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background-color: #f7fafc;
+  border: 1px solid var(--border-color);
+  color: #4a5568;
+}
+
+.transit-col .time-split-inputs.mini {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.transit-col .time-split-inputs.mini .time-number-input {
+  height: 38px;
+  padding: 8px 4px 8px 10px !important;
+  font-size: 13px;
+  width: 100%;
+}
+
+.transit-col .time-split-inputs.mini .time-input-wrapper {
+  height: 40px;
+  border-radius: 8px;
+  padding-right: 8px;
+}
+
+.transit-col .time-split-inputs.mini .time-unit {
+  font-size: 12px;
+}
+
+.transit-col .time-split-inputs.mini .time-colon {
+  font-size: 16px;
+}
+
+.transit-date-input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  border: 1px solid var(--border-color);
+  background-color: #fff;
+  transition: border-color 0.2s;
+}
+
+.transit-date-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 155, 161, 0.1);
+}
+
+.transit-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotating {
+  display: inline-block;
 }

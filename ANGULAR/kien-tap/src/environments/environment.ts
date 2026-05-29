@@ -1,9 +1,8 @@
 export const environment = {
   production: false,
-  apiBase: 'http://localhost:3000',
-  apiUrl: 'http://localhost:3000',
-  supabaseUrl: 'https://iomwashfqzrhzcldjixx.supabase.co',
-  supabaseKey: 'Kienta@p123',
-  supabaseAnonKey: 'Kienta@p123'
+  apiUrl: 'http://localhost:3000/api', // backend base url
+  supabaseUrl: 'https://placeholder-project-id.supabase.co',
+  supabaseKey: 'placeholder-anon-key-string-here',
+  supabaseAnonKey: 'placeholder-anon-key-string-here'
 };
 

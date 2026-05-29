@@ -134,29 +134,32 @@ export class TimKiemChuyenXeService {
   // ===== SEARCH TRIPS =====
   async searchTrips(dto: { departure?: string; destination?: string; date?: string }) {
     const searchDate = this.parseSearchDate(dto.date);
-    const where: any = {
-      TrangThaiLichTrinh: {
-        notIn: ['DaKhoa'],
-      },
-    };
-
-    if (searchDate) {
-      const startOfDay = new Date(searchDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(searchDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      where.NgayKhoiHanh = {
-        gte: startOfDay,
-        lte: endOfDay,
-      };
-    }
-
     const departure = dto.departure?.trim();
     const destination = dto.destination?.trim();
 
-    // Find schedules matching date
+    const startOfDay = searchDate ? new Date(searchDate) : null;
+    if (startOfDay) startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = searchDate ? new Date(searchDate) : null;
+    if (endOfDay) endOfDay.setHours(23, 59, 59, 999);
+
+    // Find schedules matching date and route (insensitive search)
     const schedules = await this.prisma.lICH_TRINH.findMany({
-      where,
+      where: {
+        ...(searchDate ? {
+          NgayKhoiHanh: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        } : {}),
+        TrangThaiLichTrinh: {
+          notIn: [TrangThaiLichTrinh.DaKhoa],
+        },
+        TUYEN_XE: {
+          DiemKhoiHanh: { contains: dto.departure, mode: 'insensitive' },
+          DiemDen: { contains: dto.destination, mode: 'insensitive' },
+        },
+      },
       include: {
         TUYEN_XE: true,
         PHUONG_TIEN: true,
@@ -215,7 +218,7 @@ export class TimKiemChuyenXeService {
           DIEM_DON_TRA_DUNG: true,
         },
         orderBy: {
-          ThuTuDung: 'asc',
+          GioDenDuKien: 'asc',
         },
       });
 
@@ -242,11 +245,11 @@ export class TimKiemChuyenXeService {
             TangGhe: s.GHE?.TangGhe,
             DayGhe: s.GHE?.DayGhe,
           })),
-          diemDungLichTrinh: stops.map(stop => ({
+          diemDungLichTrinh: stops.map((stop, idx) => ({
             MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
-            ThuTuDung: stop.ThuTuDung,
+            ThuTuDung: idx + 1,
             GioDenDuKien: stop.GioDenDuKien,
-            GhiChu: stop.GhiChu,
+            GhiChu: stop.Ngay ? stop.Ngay.toLocaleDateString() : '',
             MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
             TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
             DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
@@ -315,7 +318,7 @@ export class TimKiemChuyenXeService {
         DIEM_DON_TRA_DUNG: true,
       },
       orderBy: {
-        ThuTuDung: 'asc',
+        GioDenDuKien: 'asc',
       },
     });
 
@@ -376,7 +379,20 @@ export class TimKiemChuyenXeService {
         TangGhe: s.GHE?.TangGhe,
         DayGhe: s.GHE?.DayGhe,
       })),
-      diemDungLichTrinh: finalStops,
+      diemDungLichTrinh: stops.map((stop, idx) => ({
+        MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
+        ThuTuDung: idx + 1,
+        GioDenDuKien: stop.GioDenDuKien,
+        GhiChu: stop.Ngay ? stop.Ngay.toLocaleDateString() : '',
+        MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
+        TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
+        DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
+        ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
+        Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
+        LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
+        ThoiGianCoMatTruoc: stop.DIEM_DON_TRA_DUNG?.ThoiGianCoMatTruoc,
+        GioCanCoMat: stop.DIEM_DON_TRA_DUNG?.GioCanCoMat,
+      })),
     };
   }
 }

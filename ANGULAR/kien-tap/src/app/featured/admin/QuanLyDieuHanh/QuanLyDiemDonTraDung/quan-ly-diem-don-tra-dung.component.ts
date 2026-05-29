@@ -94,11 +94,18 @@ export class QuanLyDiemDonTraDungComponent implements OnInit {
   ];
 
   ngOnInit() {
+    this.diemDonTraService.refreshPoints();
     this.filterPoints();
 
     this.diemDonTraService.pointsUpdated$.subscribe(() => {
       this.filterPoints();
+      this.cdr.detectChanges();
     });
+
+    setTimeout(() => {
+      this.filterPoints();
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   setTab(tab: 'don-tra' | 'dung' | 'locked') {

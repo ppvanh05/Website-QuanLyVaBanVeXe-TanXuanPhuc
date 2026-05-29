@@ -336,10 +336,10 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           EmailNguoiDi: EmailNguoiDi || null,
           ThoiGianDat: new Date(),
           SoLuongVeDaDat: DanhSachMaGheChuyen.length,
-          TienBaoHiem: new Decimal(totalInsurance),
-          TongGiaVe: new Decimal(finalTotal),
-          PhuongThucThanhToan: this.mapPhuongThucThanhToan(PhuongThucThanhToan),
-          TrangThaiDonHang: TrangThaiVe.ChoKhoiHanh,
+          TienBaoHiem: new Prisma.Decimal(totalInsurance),
+          TongGiaVe: new Prisma.Decimal(finalTotal),
+          PhuongThucThanhToan: PhuongThucThanhToan as any,
+          TrangThaiDonHang: TrangThaiVe.ChoThanhToan,
         },
       });
 
@@ -353,7 +353,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
             data: {
             MaVe: maVe,
             GiaVe: seat.GiaVe,
-            TrangThaiVe: TrangThaiVe.ChoKhoiHanh,
+            TrangThaiVe: TrangThaiVe.ChoThanhToan,
             SoLanDaSua: 0,
             ThoiGianXuatVe: new Date(),
             MaQRVe: `QR_${maVe}_${MaLichTrinh}_${soGhe}`,
@@ -370,7 +370,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         await tx.gHE_CHUYEN_XE.update({
           where: { MaGheChuyen: seat.MaGheChuyen },
           data: {
-            TrangThaiGhe: TrangThaiGhe.DaBan,
+            TrangThaiGhe: TrangThaiGhe.GiuCho,
             ThoiGianCapNhatTrangThai: new Date(),
           },
         });

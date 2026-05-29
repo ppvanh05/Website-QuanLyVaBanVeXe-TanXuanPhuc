@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -54,15 +52,15 @@ model DANH_GIA {
   MaVe              String              @db.VarChar
   MaKhachHang       String              @db.VarChar
   SoSao             Int
+  NoiDungDanhGia    String?             @db.VarChar(1000)
+  ThoiGianDanhGia   DateTime            @db.Timestamp(6)
+  TrangThaiPhanHoi  TrangThaiDanhGia
   DiemAnToan        Int?                @db.SmallInt
   DiemSachSe        Int?                @db.SmallInt
   DiemThaiDo        Int?                @db.SmallInt
   DiemDungGio       Int?                @db.SmallInt
   DiemThongTin      Int?                @db.SmallInt
   DiemTienNghi      Int?                @db.SmallInt
-  NoiDungDanhGia    String?             @db.VarChar(1000)
-  ThoiGianDanhGia   DateTime            @db.Timestamp(6)
-  TrangThaiPhanHoi  TrangThaiDanhGia
   KHACH_HANG        KHACH_HANG          @relation(fields: [MaKhachHang], references: [MaKhachHang], onDelete: NoAction, onUpdate: NoAction)
   VE_DIEN_TU        VE_DIEN_TU          @relation(fields: [MaVe], references: [MaVe], onDelete: NoAction, onUpdate: NoAction)
   MEDIA_DANH_GIA    MEDIA_DANH_GIA[]
@@ -219,21 +217,20 @@ model LICH_TRINH_DIEM_DUNG {
   MaLichTrinhDiemDung String            @id @db.VarChar
   MaLichTrinh         String            @db.VarChar
   MaDiem              String            @db.VarChar
-  ThuTuDung           Int
   GioDenDuKien        DateTime          @db.Time(6)
-  GhiChu              String?
+  Ngay                DateTime?         @db.Date
   DIEM_DON_TRA_DUNG   DIEM_DON_TRA_DUNG @relation(fields: [MaDiem], references: [MaDiem], onDelete: NoAction, onUpdate: NoAction)
   LICH_TRINH          LICH_TRINH        @relation(fields: [MaLichTrinh], references: [MaLichTrinh], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model MEDIA_DANH_GIA {
-  MaMedia         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  DuongDanFile    String?   @db.Text
+  DuongDanFile    String?
   LoaiMedia       String?   @db.VarChar
   DinhDang        String?   @db.VarChar
   DungLuong_bytes BigInt?
   MaDanhGia       String?   @db.VarChar
+  MaMedia         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   DANH_GIA        DANH_GIA? @relation(fields: [MaDanhGia], references: [MaDanhGia], onDelete: Cascade, onUpdate: NoAction)
 }
 
@@ -525,7 +522,6 @@ enum TrangThaiViPhamEnum {
   NgungApDung
 }
 
-
 enum LoaiDiem {
   DiemDonTra
   DiemDung
@@ -595,20 +591,20 @@ enum TrangThaiVe {
   DaDanhGia
 }
 
+enum TrangThaiDanhGia {
+  ChuaPhanHoi
+  DaPhanHoi
+}
+
 enum LoaiXe {
-  Limousine22Phong @map("Limousine 22 phòng")
+  Limousine_22_ph_ng @map("Limousine 22 phòng")
 }
 
 enum TienIch {
   Tivi
-  NuocKhanUot @map("Nước, khăn ướt")
-  SacUSB      @map("Ổ sạc, USB")
+  N__c__kh_n___t @map("Nước, khăn ướt")
+  s_c__USB       @map("Ổ sạc, USB")
   GPS
   Wifi
-  DieuHoa     @map("Điều hòa")
-}
-
-enum TrangThaiDanhGia {
-  ChuaPhanHoi
-  DaPhanHoi
+  i_u_h_a        @map("Điều hòa")
 }
