@@ -44,8 +44,16 @@ interface Schedule {
   holdUnit: 'day' | 'hour' | 'minute';
   pickupType: string;
   pickupPoint: string;
+  pickupHour?: number;
+  pickupMinute?: number;
+  pickupDate?: string;
+  pickupPoints?: { point: string; hour?: number; minute?: number; date?: string; }[];
   dropoffType: string;
   dropoffPoint: string;
+  dropoffHour?: number;
+  dropoffMinute?: number;
+  dropoffDate?: string;
+  dropoffPoints?: { point: string; hour?: number; minute?: number; date?: string; }[];
 
   basePrice?: number;
 
@@ -221,182 +229,7 @@ export class QuanLyLichTrinhComponent implements OnInit {
     '#8b5cf6', '#ec4899', '#f43f5e', '#84cc16'
   ];
 
-  schedules: Schedule[] = [
-    {
-      id: 1,
-      routeName: 'Bến xe Miền Đông – Bến xe Quy Nhơn',
-      vehiclePlate: '59B-01234',
-      vehicleName: 'Limousine 22 phòng Premium',
-      vehicleSeats: 22,
-      driverName: 'Hoàng Anh Tú',
-      assistantName: 'Phạm Thành Đạt',
-      departureDate: '20/05/2026',
-      departureTime: '08:30',
-      status: 'DangChay',
-      createdAt: new Date('2026-05-10'),
-      autoRun: false,
-      allowSeatSelection: true,
-      totalTime: '13h 30p',
-      arrivalTime: '22:00',
-      frequency: 'Hàng ngày',
-      openValue: 10,
-      openUnit: 'day',
-      closeValue: 30,
-      closeUnit: 'minute',
-      holdValue: 15,
-      holdUnit: 'minute',
-      pickupType: 'Không trung chuyển đón',
-      pickupPoint: 'Bến xe Miền Đông',
-      dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Quy Nhơn',
-      basePrice: 300000
-    },
-    {
-      id: 2,
-      routeName: 'Bến xe Miền Đông – Bến xe Hà Nội',
-      vehiclePlate: '77B-00987',
-      vehicleName: 'Limousine 22 phòng Luxury',
-      vehicleSeats: 22,
-      driverName: 'Nguyễn Văn Long',
-      assistantName: 'Võ Minh Khang',
-      departureDate: '21/05/2026',
-      departureTime: '13:00',
-      status: 'DangChay',
-      createdAt: new Date('2026-05-11'),
-      autoRun: true,
-      allowSeatSelection: true,
-      totalTime: '32h 0p',
-      arrivalTime: '21:00 (+1 ngày)',
-      frequency: 'Hàng ngày',
-      openValue: 15,
-      openUnit: 'day',
-      closeValue: 60,
-      closeUnit: 'minute',
-      holdValue: 20,
-      holdUnit: 'minute',
-      pickupType: 'Có trung chuyển đón',
-      pickupPoint: 'Văn phòng Q.1',
-      dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Hà Nội',
-      basePrice: 850000
-    },
-    {
-      id: 3,
-      routeName: 'Bến xe Quy Nhơn – Bến xe Đà Lạt',
-      vehiclePlate: '59B-05566',
-      vehicleName: 'Limousine 22 phòng Deluxe',
-      vehicleSeats: 22,
-      driverName: 'Trần Minh Quân',
-      assistantName: 'Nguyễn Quốc Huy',
-      departureDate: '22/05/2026',
-      departureTime: '19:45',
-      status: 'DangChay',
-      createdAt: new Date('2026-05-12'),
-      autoRun: false,
-      allowSeatSelection: true,
-      totalTime: '9h 0p',
-      arrivalTime: '04:45 (+1 ngày)',
-      frequency: 'Hàng ngày',
-      openValue: 7,
-      openUnit: 'day',
-      closeValue: 45,
-      closeUnit: 'minute',
-      holdValue: 15,
-      holdUnit: 'minute',
-      pickupType: 'Không trung chuyển đón',
-      pickupPoint: 'Bến xe Quy Nhơn',
-      dropoffType: 'Có trung chuyển trả',
-      dropoffPoint: 'Bến xe Đà Lạt',
-      basePrice: 350000
-    },
-    {
-      id: 4,
-      routeName: 'Bến xe An Sương – Bến xe Vũng Tàu',
-      vehiclePlate: '77B-01122',
-      vehicleName: 'Limousine 22 phòng Gold',
-      vehicleSeats: 22,
-      driverName: 'Lê Quốc Bảo',
-      assistantName: 'Phạm Thành Đạt',
-      departureDate: '20/05/2026',
-      departureTime: '06:00',
-      status: 'DangChay',
-      createdAt: new Date('2026-05-13'),
-      autoRun: false,
-      allowSeatSelection: true,
-      totalTime: '3h 0p',
-      arrivalTime: '09:00',
-      frequency: 'Cuối tuần (Thứ 7, Chủ nhật)',
-      openValue: 5,
-      openUnit: 'day',
-      closeValue: 15,
-      closeUnit: 'minute',
-      holdValue: 10,
-      holdUnit: 'minute',
-      pickupType: 'Không trung chuyển đón',
-      pickupPoint: 'Bến xe An Sương',
-      dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Vũng Tàu',
-      basePrice: 180000
-    },
-    {
-      id: 5,
-      routeName: 'Bến xe Quy Nhơn – Bến xe Nha Trang',
-      vehiclePlate: '59B-09988',
-      vehicleName: 'Limousine 22 phòng Silver',
-      vehicleSeats: 22,
-      driverName: 'Đặng Hải Nam',
-      assistantName: 'Võ Minh Khang',
-      departureDate: '23/05/2026',
-      departureTime: '10:15',
-      status: 'ChoKhoiHanh',
-      createdAt: new Date('2026-05-14'),
-      autoRun: true,
-      allowSeatSelection: true,
-      totalTime: '5h 0p',
-      arrivalTime: '15:15',
-      frequency: 'Hàng ngày',
-      openValue: 10,
-      openUnit: 'day',
-      closeValue: 30,
-      closeUnit: 'minute',
-      holdValue: 15,
-      holdUnit: 'minute',
-      pickupType: 'Có trung chuyển đón',
-      pickupPoint: 'Văn phòng Bình Thạnh',
-      dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Nha Trang',
-      basePrice: 220000
-    },
-    {
-      id: 6,
-      routeName: 'Bến xe Miền Tây – Bến xe Phan Thiết',
-      vehiclePlate: '77B-05577',
-      vehicleName: 'Limousine 22 phòng Diamond',
-      vehicleSeats: 22,
-      driverName: 'Trần Gia Bảo',
-      assistantName: 'Nguyễn Quốc Huy',
-      departureDate: '24/05/2026',
-      departureTime: '15:30',
-      status: 'DaKhoa',
-      createdAt: new Date('2026-05-15'),
-      autoRun: false,
-      allowSeatSelection: true,
-      totalTime: '4h 30p',
-      arrivalTime: '20:00',
-      frequency: 'Hàng ngày',
-      openValue: 10,
-      openUnit: 'day',
-      closeValue: 30,
-      closeUnit: 'minute',
-      holdValue: 15,
-      holdUnit: 'minute',
-      pickupType: 'Không trung chuyển đón',
-      pickupPoint: 'Bến xe Miền Tây',
-      dropoffType: 'Không trung chuyển trả',
-      dropoffPoint: 'Bến xe Phan Thiết',
-      basePrice: 250000
-    }
-  ];
+  schedules: Schedule[] = [];
 
   filteredSchedules: Schedule[] = [];
   isModalOpen = false;
@@ -422,11 +255,25 @@ export class QuanLyLichTrinhComponent implements OnInit {
 
   pickerViewMode: 'day' | 'month' | 'year' = 'day';
   yearRangeStart: number = 2020;
+  isLoading = false;
+  isBrowser = false;
+
+  // Transit Date Pickers State
+  activePickupDatePickerIndex: number | null = null;
+  activeDropoffDatePickerIndex: number | null = null;
+  transitViewDate: Date = new Date();
+  transitCalendarDays: (number | null)[] = [];
+  transitPickerViewMode: 'day' | 'month' | 'year' = 'day';
+  transitYearRangeStart: number = 2026;
 
   floorLayouts: any[] = [];
 
   get yearsList(): number[] {
     return Array.from({ length: 12 }, (_, i) => this.yearRangeStart + i);
+  }
+
+  get transitYearsList(): number[] {
+    return Array.from({ length: 12 }, (_, i) => this.transitYearRangeStart + i);
   }
 
   constructor(
@@ -439,59 +286,241 @@ export class QuanLyLichTrinhComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.refreshSchedules();
+    this.isBrowser = typeof window !== 'undefined';
+    this.filterSchedules();
+
+    if (this.isBrowser) {
+      this.refreshSchedules();
+      setTimeout(() => {
+        this.filterSchedules();
+        this.cdr.detectChanges();
+      }, 100);
+    }
   }
 
   refreshSchedules() {
+    if (typeof window === 'undefined') return;
+    const todayStr = this.formatDate(new Date());
+    const getMockSchedules = (): Schedule[] => [
+      {
+        id: 1,
+        routeName: 'Hà Nội - SaPa',
+        vehiclePlate: '15B-888.99',
+        vehicleName: 'Limousine 22 phòng',
+        vehicleSeats: 22,
+        driverName: 'Nguyễn Văn Hùng',
+        assistantName: 'Lê Văn Nam',
+        departureDate: todayStr,
+        departureTime: '08:00',
+        status: 'ChoKhoiHanh',
+        createdAt: new Date(),
+        autoRun: false,
+        allowSeatSelection: true,
+        totalTime: '5h 30p',
+        arrivalTime: '13:30',
+        frequency: 'Hàng ngày',
+        openValue: 10,
+        openUnit: 'day',
+        closeValue: 30,
+        closeUnit: 'minute',
+        holdValue: 15,
+        holdUnit: 'minute',
+        pickupType: 'Không trung chuyển đón',
+        pickupPoint: '',
+        pickupHour: 8,
+        pickupMinute: 0,
+        pickupDate: todayStr,
+        pickupPoints: [
+          {
+            point: 'Bến xe Mỹ Đình',
+            hour: 8,
+            minute: 0,
+            date: todayStr
+          }
+        ],
+        dropoffType: 'Không trung chuyển trả',
+        dropoffPoint: '',
+        dropoffHour: 13,
+        dropoffMinute: 30,
+        dropoffDate: todayStr,
+        dropoffPoints: [
+          {
+            point: 'Bến xe SaPa',
+            hour: 13,
+            minute: 30,
+            date: todayStr
+          }
+        ],
+        basePrice: 250000,
+        selectedSeats: [],
+        seatGroups: []
+      },
+      {
+        id: 2,
+        routeName: 'Hà Nội - Hải Phòng',
+        vehiclePlate: '29B-123.45',
+        vehicleName: 'Xe giường nằm 36 chỗ',
+        vehicleSeats: 36,
+        driverName: 'Trần Thanh Sơn',
+        assistantName: '',
+        departureDate: todayStr,
+        departureTime: '10:00',
+        status: 'DangChay',
+        createdAt: new Date(),
+        autoRun: false,
+        allowSeatSelection: true,
+        totalTime: '2h 0p',
+        arrivalTime: '12:00',
+        frequency: 'Hàng ngày',
+        openValue: 10,
+        openUnit: 'day',
+        closeValue: 30,
+        closeUnit: 'minute',
+        holdValue: 15,
+        holdUnit: 'minute',
+        pickupType: 'Không trung chuyển đón',
+        pickupPoint: '',
+        pickupHour: 10,
+        pickupMinute: 0,
+        pickupDate: todayStr,
+        pickupPoints: [
+          {
+            point: 'Bến xe Mỹ Đình',
+            hour: 10,
+            minute: 0,
+            date: todayStr
+          }
+        ],
+        dropoffType: 'Không trung chuyển trả',
+        dropoffPoint: '',
+        dropoffHour: 12,
+        dropoffMinute: 0,
+        dropoffDate: todayStr,
+        dropoffPoints: [
+          {
+            point: 'Bến xe Vĩnh Niệm',
+            hour: 12,
+            minute: 0,
+            date: todayStr
+          }
+        ],
+        basePrice: 150000,
+        selectedSeats: [],
+        seatGroups: []
+      }
+    ];
+
     this.http.get<any[]>('http://localhost:3000/dieu-hanh/lich-trinh').subscribe({
       next: (data) => {
-        this.schedules = data.map(s => {
-          const depDate = s.NgayKhoiHanh ? new Date(s.NgayKhoiHanh) : new Date();
-          const depTime = s.GioKhoiHanh ? new Date(s.GioKhoiHanh) : new Date();
-          const arrTime = s.GioDenDuKien ? new Date(s.GioDenDuKien) : new Date();
-          const durationHours = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getHours() : 0;
-          const durationMins = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getMinutes() : 0;
+        setTimeout(() => {
+          console.log('LỊCH TRÌNH DATA RECEIVED:', data ? data.length : null, data);
+          this.isLoading = false;
+          if (!data || data.length === 0) {
+            this.schedules = getMockSchedules();
+          } else {
+            this.schedules = data.map(s => {
+              const depDate = s.NgayKhoiHanh ? new Date(s.NgayKhoiHanh) : new Date();
+              const depTime = s.GioKhoiHanh ? new Date(s.GioKhoiHanh) : new Date();
+              const arrTime = s.GioDenDuKien ? new Date(s.GioDenDuKien) : new Date();
+              const durationHours = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getHours() : 0;
+              const durationMins = s.TUYEN_XE?.ThoiGianDiChuyenDuKien ? new Date(s.TUYEN_XE.ThoiGianDiChuyenDuKien).getMinutes() : 0;
 
-          return {
-            id: s.MaLichTrinh,
-            routeName: s.TUYEN_XE?.TenTuyenXe || '',
-            vehiclePlate: s.PHUONG_TIEN?.BienSoXe || '',
-            vehicleName: s.PHUONG_TIEN?.TenXe || '',
-            vehicleSeats: s.PHUONG_TIEN?.SoGhe || 22,
-            driverName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Tài xế chính')?.TAI_XE_PHU_XE?.HoTen || '',
-            assistantName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Phụ xe')?.TAI_XE_PHU_XE?.HoTen || '',
-            departureDate: this.formatDate(depDate),
-            departureTime: `${depTime.getHours().toString().padStart(2, '0')}:${depTime.getMinutes().toString().padStart(2, '0')}`,
-            status: s.TrangThaiLichTrinh || 'ChoKhoiHanh',
-            createdAt: depDate,
-            autoRun: false,
-            allowSeatSelection: true,
-            totalTime: `${durationHours}h ${durationMins}p`,
-            arrivalTime: `${arrTime.getHours().toString().padStart(2, '0')}:${arrTime.getMinutes().toString().padStart(2, '0')}`,
-            frequency: 'Hàng ngày',
-            openValue: 10,
-            openUnit: 'day',
-            closeValue: 30,
-            closeUnit: 'minute',
-            holdValue: 15,
-            holdUnit: 'minute',
-            pickupType: 'Không trung chuyển đón',
-            pickupPoint: '',
-            dropoffType: 'Không trung chuyển trả',
-            dropoffPoint: '',
-            basePrice: Number(s.GiaVeCoBan || 200000)
-          };
-        });
-        this.filterSchedules();
-        this.cdr.detectChanges();
+              const pickupPoints = s.LICH_TRINH_DIEM_DUNG
+                ? s.LICH_TRINH_DIEM_DUNG.filter((pt: any) => pt.DIEM_DON_TRA_DUNG?.LoaiDiem === 'DiemDonTra').map((pt: any) => {
+                    const hasNgay = !!pt.Ngay;
+                    const ptDate = pt.GioDenDuKien ? new Date(pt.GioDenDuKien) : depDate;
+                    const actualDate = pt.Ngay ? new Date(pt.Ngay) : ((ptDate.getFullYear() > 1970) ? ptDate : depDate);
+                    return {
+                      point: pt.DIEM_DON_TRA_DUNG?.TenDiem || '',
+                      hour: pt.GioDenDuKien ? new Date(pt.GioDenDuKien).getUTCHours() : 8,
+                      minute: pt.GioDenDuKien ? new Date(pt.GioDenDuKien).getUTCMinutes() : 0,
+                      date: hasNgay ? this.formatDateUTC(actualDate) : this.formatDate(actualDate)
+                    };
+                  })
+                : [];
+
+              const dropoffPoints = s.LICH_TRINH_DIEM_DUNG
+                ? s.LICH_TRINH_DIEM_DUNG.filter((pt: any) => pt.DIEM_DON_TRA_DUNG?.LoaiDiem === 'DiemDung').map((pt: any) => {
+                    const hasNgay = !!pt.Ngay;
+                    const ptDate = pt.GioDenDuKien ? new Date(pt.GioDenDuKien) : depDate;
+                    const actualDate = pt.Ngay ? new Date(pt.Ngay) : ((ptDate.getFullYear() > 1970) ? ptDate : depDate);
+                    return {
+                      point: pt.DIEM_DON_TRA_DUNG?.TenDiem || '',
+                      hour: pt.GioDenDuKien ? new Date(pt.GioDenDuKien).getUTCHours() : 17,
+                      minute: pt.GioDenDuKien ? new Date(pt.GioDenDuKien).getUTCMinutes() : 0,
+                      date: hasNgay ? this.formatDateUTC(actualDate) : this.formatDate(actualDate)
+                    };
+                  })
+                : [];
+
+              return {
+                id: s.MaLichTrinh,
+                routeName: s.TUYEN_XE?.TenTuyenXe || '',
+                vehiclePlate: s.PHUONG_TIEN?.BienSoXe || '',
+                vehicleName: s.PHUONG_TIEN?.TenXe || '',
+                vehicleSeats: s.PHUONG_TIEN?.SoGhe || 22,
+                driverName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Tài xế chính')?.TAI_XE_PHU_XE?.HoTen || '',
+                assistantName: s.PHAN_CONG_CHUYEN?.find((pc: any) => pc.VaiTro === 'Phụ xe')?.TAI_XE_PHU_XE?.HoTen || '',
+                departureDate: this.formatDate(depDate),
+                departureTime: `${depTime.getUTCHours().toString().padStart(2, '0')}:${depTime.getUTCMinutes().toString().padStart(2, '0')}`,
+                status: s.TrangThaiLichTrinh || 'ChoKhoiHanh',
+                createdAt: depDate,
+                autoRun: false,
+                allowSeatSelection: true,
+                totalTime: `${durationHours}h ${durationMins}p`,
+                arrivalTime: `${arrTime.getUTCHours().toString().padStart(2, '0')}:${arrTime.getUTCMinutes().toString().padStart(2, '0')}`,
+                frequency: 'Hàng ngày',
+                openValue: 10,
+                openUnit: 'day',
+                closeValue: 30,
+                closeUnit: 'minute',
+                holdValue: 15,
+                holdUnit: 'minute',
+                pickupType: 'Không trung chuyển đón',
+                pickupPoint: pickupPoints[0]?.point || '',
+                pickupPoints: pickupPoints.length > 0 ? pickupPoints : [
+                  {
+                    point: (s.TUYEN_XE?.TenTuyenXe && s.TUYEN_XE.TenTuyenXe.includes('-')) ? s.TUYEN_XE.TenTuyenXe.split('-')[0].trim() : (s.TUYEN_XE?.TenTuyenXe || ''),
+                    hour: 8,
+                    minute: 0,
+                    date: this.formatDate(depDate)
+                  }
+                ],
+                dropoffType: 'Không trung chuyển trả',
+                dropoffPoint: dropoffPoints[0]?.point || '',
+                dropoffPoints: dropoffPoints.length > 0 ? dropoffPoints : [
+                  {
+                    point: (s.TUYEN_XE?.TenTuyenXe && s.TUYEN_XE.TenTuyenXe.includes('-')) ? s.TUYEN_XE.TenTuyenXe.split('-')[1].trim() : (s.TUYEN_XE?.TenTuyenXe || ''),
+                    hour: 17,
+                    minute: 0,
+                    date: this.formatDate(depDate)
+                  }
+                ],
+                basePrice: Number(s.GiaVeCoBan || 200000)
+              };
+            });
+          }
+          this.filterSchedules();
+          this.cdr.detectChanges();
+        }, 0);
       },
-      error: (err) => console.error('Lỗi khi tải lịch trình:', err)
+      error: (err) => {
+        setTimeout(() => {
+          console.error('Lỗi khi tải lịch trình:', err);
+          this.isLoading = false;
+          this.schedules = getMockSchedules();
+          this.filterSchedules();
+          this.cdr.detectChanges();
+        }, 0);
+      }
     });
   }
 
   @HostListener('document:click')
   onDocumentClick() {
     this.isDatePickerOpen = false;
+    this.activePickupDatePickerIndex = null;
+    this.activeDropoffDatePickerIndex = null;
     this.openedColorMenuIndex = null;
     this.showOpenUnitDropdown = false;
     this.showCloseUnitDropdown = false;
@@ -547,8 +576,30 @@ export class QuanLyLichTrinhComponent implements OnInit {
       holdUnit: 'minute',
       pickupType: 'Không trung chuyển đón',
       pickupPoint: '',
+      pickupHour: 8,
+      pickupMinute: 0,
+      pickupDate: this.formatDate(new Date()),
+      pickupPoints: [
+        {
+          point: '',
+          hour: 8,
+          minute: 0,
+          date: this.formatDate(new Date())
+        }
+      ],
       dropoffType: 'Không trung chuyển trả',
       dropoffPoint: '',
+      dropoffHour: 17,
+      dropoffMinute: 0,
+      dropoffDate: this.formatDate(new Date()),
+      dropoffPoints: [
+        {
+          point: '',
+          hour: 17,
+          minute: 0,
+          date: this.formatDate(new Date())
+        }
+      ],
       basePrice: undefined,
       selectedSeats: [],
       seatGroups: []
@@ -569,7 +620,33 @@ export class QuanLyLichTrinhComponent implements OnInit {
     this.currentSchedule = {
       ...schedule,
       selectedSeats: schedule.selectedSeats ? [...schedule.selectedSeats] : [],
-      seatGroups: schedule.seatGroups ? JSON.parse(JSON.stringify(schedule.seatGroups)) : []
+      seatGroups: schedule.seatGroups ? JSON.parse(JSON.stringify(schedule.seatGroups)) : [],
+      pickupHour: schedule.pickupHour || 8,
+      pickupMinute: schedule.pickupMinute || 0,
+      pickupDate: schedule.pickupDate || schedule.departureDate || this.formatDate(new Date()),
+      pickupPoints: schedule.pickupPoints && schedule.pickupPoints.length > 0
+        ? JSON.parse(JSON.stringify(schedule.pickupPoints))
+        : [
+            {
+              point: schedule.pickupPoint || '',
+              hour: schedule.pickupHour || 8,
+              minute: schedule.pickupMinute || 0,
+              date: schedule.pickupDate || schedule.departureDate || this.formatDate(new Date())
+            }
+          ],
+      dropoffHour: schedule.dropoffHour || 17,
+      dropoffMinute: schedule.dropoffMinute || 0,
+      dropoffDate: schedule.dropoffDate || schedule.arrivalDate || schedule.departureDate || this.formatDate(new Date()),
+      dropoffPoints: schedule.dropoffPoints && schedule.dropoffPoints.length > 0
+        ? JSON.parse(JSON.stringify(schedule.dropoffPoints))
+        : [
+            {
+              point: schedule.dropoffPoint || '',
+              hour: schedule.dropoffHour || 17,
+              minute: schedule.dropoffMinute || 0,
+              date: schedule.dropoffDate || schedule.arrivalDate || schedule.departureDate || this.formatDate(new Date())
+            }
+          ]
     };
     this.generateSeatLayout();
     this.activeSeatGroupIndex = this.currentSchedule.seatGroups && this.currentSchedule.seatGroups.length > 0 ? 0 : null;
@@ -718,6 +795,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
   closeModal() {
     this.isModalOpen = false;
     this.isDatePickerOpen = false;
+    this.activePickupDatePickerIndex = null;
+    this.activeDropoffDatePickerIndex = null;
     this.errors = {};
   }
 
@@ -794,6 +873,32 @@ export class QuanLyLichTrinhComponent implements OnInit {
     if (details) {
       this.currentSchedule.totalTime = details.time;
       this.calculateArrivalTime();
+    }
+  }
+
+  onPickupPointChange(index: number) {
+    if (!this.currentSchedule.pickupPoints) return;
+    const points = this.currentSchedule.pickupPoints;
+    if (index === points.length - 1 && points[index].point) {
+      points.push({
+        point: '',
+        hour: 8,
+        minute: 0,
+        date: this.formatDate(new Date())
+      });
+    }
+  }
+
+  onDropoffPointChange(index: number) {
+    if (!this.currentSchedule.dropoffPoints) return;
+    const points = this.currentSchedule.dropoffPoints;
+    if (index === points.length - 1 && points[index].point) {
+      points.push({
+        point: '',
+        hour: 17,
+        minute: 0,
+        date: this.formatDate(new Date())
+      });
     }
   }
 
@@ -1052,6 +1157,8 @@ export class QuanLyLichTrinhComponent implements OnInit {
   toggleDatePicker() {
     this.isDatePickerOpen = !this.isDatePickerOpen;
     if (this.isDatePickerOpen) {
+      this.activePickupDatePickerIndex = null;
+      this.activeDropoffDatePickerIndex = null;
       this.viewDate = new Date();
       this.viewDate.setDate(1);
       this.pickerViewMode = 'day';
@@ -1131,6 +1238,13 @@ export class QuanLyLichTrinhComponent implements OnInit {
     return `${d}/${m}/${y}`;
   }
 
+  formatDateUTC(date: Date): string {
+    const d = date.getUTCDate().toString().padStart(2, '0');
+    const m = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const y = date.getUTCFullYear();
+    return `${d}/${m}/${y}`;
+  }
+
   toggleOpenUnitDropdown(event: Event) {
     event.stopPropagation();
     this.showOpenUnitDropdown = !this.showOpenUnitDropdown;
@@ -1172,5 +1286,129 @@ export class QuanLyLichTrinhComponent implements OnInit {
     if (unit === 'hour') return 'Giờ';
     if (unit === 'minute') return 'Phút';
     return 'Phút';
+  }
+
+  // Transit Custom Date Picker Logic
+  toggleTransitDatePicker(type: 'pickup' | 'dropoff', index: number, event: Event) {
+    event.stopPropagation();
+    this.isDatePickerOpen = false;
+    if (type === 'pickup') {
+      if (this.activePickupDatePickerIndex === index) {
+        this.activePickupDatePickerIndex = null;
+      } else {
+        this.activePickupDatePickerIndex = index;
+        this.activeDropoffDatePickerIndex = null;
+        const currentDateStr = this.currentSchedule.pickupPoints?.[index]?.date;
+        this.initTransitCalendar(currentDateStr);
+      }
+    } else {
+      if (this.activeDropoffDatePickerIndex === index) {
+        this.activeDropoffDatePickerIndex = null;
+      } else {
+        this.activeDropoffDatePickerIndex = index;
+        this.activePickupDatePickerIndex = null;
+        const currentDateStr = this.currentSchedule.dropoffPoints?.[index]?.date;
+        this.initTransitCalendar(currentDateStr);
+      }
+    }
+  }
+
+  initTransitCalendar(dateStr: string | undefined) {
+    if (dateStr) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const d = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const y = parseInt(parts[2], 10);
+        if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+          this.transitViewDate = new Date(y, m, 1);
+        } else {
+          this.transitViewDate = new Date();
+          this.transitViewDate.setDate(1);
+        }
+      } else {
+        this.transitViewDate = new Date();
+        this.transitViewDate.setDate(1);
+      }
+    } else {
+      this.transitViewDate = new Date();
+      this.transitViewDate.setDate(1);
+    }
+    this.transitPickerViewMode = 'day';
+    this.generateTransitCalendar();
+  }
+
+  setTransitPickerView(mode: 'day' | 'month' | 'year') {
+    this.transitPickerViewMode = mode;
+    if (mode === 'year') {
+      this.transitYearRangeStart = this.transitViewDate.getFullYear() - (this.transitViewDate.getFullYear() % 12);
+    }
+  }
+
+  selectTransitMonth(monthIndex: number) {
+    this.transitViewDate.setMonth(monthIndex);
+    this.transitPickerViewMode = 'day';
+    this.generateTransitCalendar();
+  }
+
+  selectTransitYear(year: number) {
+    this.transitViewDate.setFullYear(year);
+    this.transitPickerViewMode = 'month';
+  }
+
+  generateTransitCalendar() {
+    const year = this.transitViewDate.getFullYear();
+    const month = this.transitViewDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let startDay = firstDay === 0 ? 6 : firstDay - 1;
+
+    this.transitCalendarDays = [];
+    for (let i = 0; i < startDay; i++) {
+      this.transitCalendarDays.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      this.transitCalendarDays.push(i);
+    }
+  }
+
+  prevTransit() {
+    if (this.transitPickerViewMode === 'day') {
+      this.transitViewDate = new Date(this.transitViewDate.getFullYear(), this.transitViewDate.getMonth() - 1, 1);
+      this.generateTransitCalendar();
+    } else if (this.transitPickerViewMode === 'month') {
+      this.transitViewDate = new Date(this.transitViewDate.getFullYear() - 1, this.transitViewDate.getMonth(), 1);
+    } else if (this.transitPickerViewMode === 'year') {
+      this.transitYearRangeStart -= 12;
+    }
+  }
+
+  nextTransit() {
+    if (this.transitPickerViewMode === 'day') {
+      this.transitViewDate = new Date(this.transitViewDate.getFullYear(), this.transitViewDate.getMonth() + 1, 1);
+      this.generateTransitCalendar();
+    } else if (this.transitPickerViewMode === 'month') {
+      this.transitViewDate = new Date(this.transitViewDate.getFullYear() + 1, this.transitViewDate.getMonth(), 1);
+    } else if (this.transitPickerViewMode === 'year') {
+      this.transitYearRangeStart += 12;
+    }
+  }
+
+  selectTransitDate(day: number | null, type: 'pickup' | 'dropoff', index: number) {
+    if (!day) return;
+    const date = new Date(this.transitViewDate.getFullYear(), this.transitViewDate.getMonth(), day);
+    const dateStr = this.formatDate(date);
+    if (type === 'pickup') {
+      if (this.currentSchedule.pickupPoints?.[index]) {
+        this.currentSchedule.pickupPoints[index].date = dateStr;
+      }
+      this.activePickupDatePickerIndex = null;
+    } else {
+      if (this.currentSchedule.dropoffPoints?.[index]) {
+        this.currentSchedule.dropoffPoints[index].date = dateStr;
+      }
+      this.activeDropoffDatePickerIndex = null;
+    }
   }
 }

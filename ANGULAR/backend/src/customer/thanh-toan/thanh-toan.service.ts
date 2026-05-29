@@ -38,7 +38,7 @@ export class ThanhToanService {
         MaGiaoDich: maGiaoDich,
         MaDonHang,
         LoaiGiaoDich: 'ThanhToan',
-        PhuongThucThanhToan,
+        PhuongThucThanhToan: PhuongThucThanhToan as any,
         SoTien: new Prisma.Decimal(SoTien),
         ThoiGianGiaoDich: new Date(),
         TrangThaiGiaoDich: TrangThaiThanhToan.ChoThanhToan,

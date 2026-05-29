@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PhuongTienService, Vehicle } from '../phuong-tien.service';
@@ -12,7 +12,7 @@ import { CustomSelectComponent } from '../custom-select.component';
   styleUrls: ['./quan-ly-phuong-tien.component.css']
 })
 export class QuanLyPhuongTienComponent implements OnInit {
-  constructor(private phuongTienService: PhuongTienService) { }
+  constructor(private phuongTienService: PhuongTienService, private cdr: ChangeDetectorRef) { }
 
   activeTab: 'all' | 'active' | 'locked' = 'all';
   searchQuery: string = '';
@@ -100,13 +100,21 @@ export class QuanLyPhuongTienComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.phuongTienService.refreshVehicles();
     this.vehicles = this.phuongTienService.getVehicles();
     this.filterVehicles();
 
     this.phuongTienService.vehiclesUpdated$.subscribe(() => {
       this.vehicles = this.phuongTienService.getVehicles();
       this.filterVehicles();
+      this.cdr.detectChanges();
     });
+
+    setTimeout(() => {
+      this.vehicles = this.phuongTienService.getVehicles();
+      this.filterVehicles();
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   @HostListener('document:click')

@@ -6,4 +6,3 @@ export const environment = {
   supabaseKey: 'Kienta@p123',
   supabaseAnonKey: 'Kienta@p123'
 };
-

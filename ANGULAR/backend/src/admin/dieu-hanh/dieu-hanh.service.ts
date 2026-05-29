@@ -142,7 +142,7 @@ export class DieuHanhService implements OnModuleInit {
         MaXe: id,
         TenXe: data.name,
         BienSoXe: data.licensePlate,
-        LoaiXe: data.type,
+        LoaiXe: data.type === 'Limousine 22 phòng' ? 'Limousine_22_ph_ng' : data.type,
         SoTang: data.floors ? parseInt(data.floors) : 1,
         SoDay: data.rows ? parseInt(data.rows) : 2,
         SoGhe: data.seats ? parseInt(data.seats) : 22,
@@ -160,7 +160,7 @@ export class DieuHanhService implements OnModuleInit {
     const updateData: any = {};
     if (data.name !== undefined) updateData.TenXe = data.name;
     if (data.licensePlate !== undefined) updateData.BienSoXe = data.licensePlate;
-    if (data.type !== undefined) updateData.LoaiXe = data.type;
+    if (data.type !== undefined) updateData.LoaiXe = data.type === 'Limousine 22 phòng' ? 'Limousine_22_ph_ng' : data.type;
     if (data.floors !== undefined) updateData.SoTang = parseInt(data.floors);
     if (data.rows !== undefined) updateData.SoDay = parseInt(data.rows);
     if (data.seats !== undefined) updateData.SoGhe = parseInt(data.seats);
@@ -343,6 +343,14 @@ export class DieuHanhService implements OnModuleInit {
             TAI_XE_PHU_XE: true,
           },
         },
+        LICH_TRINH_DIEM_DUNG: {
+          include: {
+            DIEM_DON_TRA_DUNG: true,
+          },
+          orderBy: {
+            GioDenDuKien: 'asc',
+          },
+        },
       },
       orderBy: { MaLichTrinh: 'desc' },
     });
@@ -357,6 +365,14 @@ export class DieuHanhService implements OnModuleInit {
         PHAN_CONG_CHUYEN: {
           include: {
             TAI_XE_PHU_XE: true,
+          },
+        },
+        LICH_TRINH_DIEM_DUNG: {
+          include: {
+            DIEM_DON_TRA_DUNG: true,
+          },
+          orderBy: {
+            GioDenDuKien: 'asc',
           },
         },
       },
@@ -432,6 +448,70 @@ export class DieuHanhService implements OnModuleInit {
             VaiTro: 'Phụ xe',
           },
         });
+      }
+    }
+
+    if (data.pickupPoints && Array.isArray(data.pickupPoints)) {
+      for (const item of data.pickupPoints) {
+        if (!item.point) continue;
+        const pt = await this.prisma.dIEM_DON_TRA_DUNG.findFirst({
+          where: { TenDiem: item.point },
+        });
+        if (pt) {
+          let y = depDate.getUTCFullYear();
+          let m = depDate.getUTCMonth();
+          let d = depDate.getUTCDate();
+          if (item.date) {
+            const parts = item.date.split('/');
+            if (parts.length === 3) {
+              y = parseInt(parts[2]);
+              m = parseInt(parts[1]) - 1;
+              d = parseInt(parts[0]);
+            }
+          }
+
+          await this.prisma.lICH_TRINH_DIEM_DUNG.create({
+            data: {
+              MaLichTrinhDiemDung: `LTDD_${id}_P_${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+              MaLichTrinh: id,
+              MaDiem: pt.MaDiem,
+              GioDenDuKien: new Date(Date.UTC(1970, 0, 1, item.hour || 0, item.minute || 0, 0)),
+              Ngay: new Date(Date.UTC(y, m, d, 12, 0, 0)),
+            },
+          });
+        }
+      }
+    }
+
+    if (data.dropoffPoints && Array.isArray(data.dropoffPoints)) {
+      for (const item of data.dropoffPoints) {
+        if (!item.point) continue;
+        const pt = await this.prisma.dIEM_DON_TRA_DUNG.findFirst({
+          where: { TenDiem: item.point },
+        });
+        if (pt) {
+          let y = depDate.getUTCFullYear();
+          let m = depDate.getUTCMonth();
+          let d = depDate.getUTCDate();
+          if (item.date) {
+            const parts = item.date.split('/');
+            if (parts.length === 3) {
+              y = parseInt(parts[2]);
+              m = parseInt(parts[1]) - 1;
+              d = parseInt(parts[0]);
+            }
+          }
+
+          await this.prisma.lICH_TRINH_DIEM_DUNG.create({
+            data: {
+              MaLichTrinhDiemDung: `LTDD_${id}_D_${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+              MaLichTrinh: id,
+              MaDiem: pt.MaDiem,
+              GioDenDuKien: new Date(Date.UTC(1970, 0, 1, item.hour || 0, item.minute || 0, 0)),
+              Ngay: new Date(Date.UTC(y, m, d, 12, 0, 0)),
+            },
+          });
+        }
       }
     }
 
@@ -514,11 +594,86 @@ export class DieuHanhService implements OnModuleInit {
       }
     }
 
+    if (data.pickupPoints !== undefined || data.dropoffPoints !== undefined) {
+      await this.prisma.lICH_TRINH_DIEM_DUNG.deleteMany({
+        where: { MaLichTrinh: id },
+      });
+
+      const depDate = updated.NgayKhoiHanh || new Date();
+
+      if (data.pickupPoints && Array.isArray(data.pickupPoints)) {
+        for (const item of data.pickupPoints) {
+          if (!item.point) continue;
+          const pt = await this.prisma.dIEM_DON_TRA_DUNG.findFirst({
+            where: { TenDiem: item.point },
+          });
+          if (pt) {
+            let y = depDate.getUTCFullYear();
+            let m = depDate.getUTCMonth();
+            let d = depDate.getUTCDate();
+            if (item.date) {
+              const parts = item.date.split('/');
+              if (parts.length === 3) {
+                y = parseInt(parts[2]);
+                m = parseInt(parts[1]) - 1;
+                d = parseInt(parts[0]);
+              }
+            }
+
+            await this.prisma.lICH_TRINH_DIEM_DUNG.create({
+              data: {
+                MaLichTrinhDiemDung: `LTDD_${id}_P_${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+                MaLichTrinh: id,
+                MaDiem: pt.MaDiem,
+                GioDenDuKien: new Date(Date.UTC(1970, 0, 1, item.hour || 0, item.minute || 0, 0)),
+                Ngay: new Date(Date.UTC(y, m, d, 12, 0, 0)),
+              },
+            });
+          }
+        }
+      }
+
+      if (data.dropoffPoints && Array.isArray(data.dropoffPoints)) {
+        for (const item of data.dropoffPoints) {
+          if (!item.point) continue;
+          const pt = await this.prisma.dIEM_DON_TRA_DUNG.findFirst({
+            where: { TenDiem: item.point },
+          });
+          if (pt) {
+            let y = depDate.getUTCFullYear();
+            let m = depDate.getUTCMonth();
+            let d = depDate.getUTCDate();
+            if (item.date) {
+              const parts = item.date.split('/');
+              if (parts.length === 3) {
+                y = parseInt(parts[2]);
+                m = parseInt(parts[1]) - 1;
+                d = parseInt(parts[0]);
+              }
+            }
+
+            await this.prisma.lICH_TRINH_DIEM_DUNG.create({
+              data: {
+                MaLichTrinhDiemDung: `LTDD_${id}_D_${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+                MaLichTrinh: id,
+                MaDiem: pt.MaDiem,
+                GioDenDuKien: new Date(Date.UTC(1970, 0, 1, item.hour || 0, item.minute || 0, 0)),
+                Ngay: new Date(Date.UTC(y, m, d, 12, 0, 0)),
+              },
+            });
+          }
+        }
+      }
+    }
+
     return updated;
   }
 
   async deleteSchedule(id: string) {
     await this.prisma.pHAN_CONG_CHUYEN.deleteMany({
+      where: { MaLichTrinh: id },
+    });
+    await this.prisma.lICH_TRINH_DIEM_DUNG.deleteMany({
       where: { MaLichTrinh: id },
     });
     return this.prisma.lICH_TRINH.delete({
@@ -529,27 +684,27 @@ export class DieuHanhService implements OnModuleInit {
   private parseDateString(dateStr: string): Date {
     if (dateStr.includes('/')) {
       const parts = dateStr.split('/');
-      return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      return new Date(Date.UTC(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), 12, 0, 0));
     }
-    return new Date(dateStr);
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return new Date();
+    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0));
   }
 
   private parseTimeString(timeStr: string): Date {
     const parts = timeStr.split(':');
-    const d = new Date();
-    d.setHours(parseInt(parts[0]), parseInt(parts[1]), 0, 0);
-    return d;
+    return new Date(Date.UTC(1970, 0, 1, parseInt(parts[0], 10), parseInt(parts[1], 10), 0, 0));
   }
 
   private formatTienIch(amenities: string[]): TienIch[] {
     if (!amenities || !Array.isArray(amenities)) return [];
     const AMENITY_MAP: { [key: string]: TienIch } = {
       tivi: TienIch.Tivi,
-      usb: TienIch.SacUSB,
+      usb: TienIch.s_c__USB,
       wifi: TienIch.Wifi,
-      water: TienIch.NuocKhanUot,
+      water: TienIch.N__c__kh_n___t,
       gps: TienIch.GPS,
-      ac: TienIch.DieuHoa,
+      ac: TienIch.i_u_h_a,
     };
     return amenities
       .map(a => AMENITY_MAP[a.toLowerCase()])

@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -48,21 +46,22 @@ model CHI_PHI_CHUYEN_XE {
   LICH_TRINH  LICH_TRINH @relation(fields: [MaLichTrinh], references: [MaLichTrinh], onDelete: NoAction, onUpdate: NoAction)
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model DANH_GIA {
   MaDanhGia         String              @id @db.VarChar
   MaVe              String              @db.VarChar
   MaKhachHang       String              @db.VarChar
   SoSao             Int
+  NoiDungDanhGia    String?             @db.VarChar(1000)
+  ThoiGianDanhGia   DateTime            @db.Timestamp(6)
+  TrangThaiPhanHoi  TrangThaiDanhGia
   DiemAnToan        Int?                @db.SmallInt
   DiemSachSe        Int?                @db.SmallInt
   DiemThaiDo        Int?                @db.SmallInt
   DiemDungGio       Int?                @db.SmallInt
   DiemThongTin      Int?                @db.SmallInt
   DiemTienNghi      Int?                @db.SmallInt
-  NoiDungDanhGia    String?             @db.VarChar(1000)
-  ThoiGianDanhGia   DateTime            @db.Timestamp(6)
-  TrangThaiPhanHoi  TrangThaiDanhGia
   KHACH_HANG        KHACH_HANG          @relation(fields: [MaKhachHang], references: [MaKhachHang], onDelete: NoAction, onUpdate: NoAction)
   VE_DIEN_TU        VE_DIEN_TU          @relation(fields: [MaVe], references: [MaVe], onDelete: NoAction, onUpdate: NoAction)
   MEDIA_DANH_GIA    MEDIA_DANH_GIA[]
@@ -71,24 +70,24 @@ model DANH_GIA {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model DIEM_DON_TRA_DUNG {
-  MaDiem               String                 @id @db.VarChar
-  MaTuyenXe            String                 @db.VarChar
-  TenDiem              String                 @db.VarChar(100)
-  ThanhPho             String                 @db.VarChar(100)
-  Tinh                 String                 @db.VarChar(100)
-  DiaChi               String                 @db.VarChar(255)
-  LinkGoogleMap        String?                @db.VarChar(255)
-  AnhDiem              String?                @db.VarChar(255)
-  LoaiDiem             LoaiDiem
-  TrangThaiDiem        TrangThaiDiem
-  MaNVDieuPhoi         String                 @db.VarChar
-  GioCanCoMat          DateTime?              @db.Time(6)
-  ThoiGianCoMatTruoc   Int?
-  NHAN_VIEN_DIEU_PHOI  NHAN_VIEN_DIEU_PHOI    @relation(fields: [MaNVDieuPhoi], references: [MaNVDieuPhoi], onDelete: NoAction, onUpdate: NoAction)
-  TUYEN_XE             TUYEN_XE               @relation(fields: [MaTuyenXe], references: [MaTuyenXe], onDelete: NoAction, onUpdate: NoAction)
-  LICH_TRINH_DIEM_DUNG LICH_TRINH_DIEM_DUNG[]
-  VE_DIEN_TU_DON       VE_DIEN_TU[]           @relation("DiemDon")
-  VE_DIEN_TU_TRA       VE_DIEN_TU[]           @relation("DiemTra")
+  MaDiem                                             String                 @id @db.VarChar
+  MaTuyenXe                                          String                 @db.VarChar
+  TenDiem                                            String                 @db.VarChar(100)
+  ThanhPho                                           String                 @db.VarChar(100)
+  Tinh                                               String                 @db.VarChar(100)
+  DiaChi                                             String                 @db.VarChar(255)
+  LinkGoogleMap                                      String?                @db.VarChar(255)
+  AnhDiem                                            String?                @db.VarChar(255)
+  LoaiDiem                                           LoaiDiem
+  TrangThaiDiem                                      TrangThaiDiem
+  MaNVDieuPhoi                                       String                 @db.VarChar
+  GioCanCoMat                                        DateTime?              @db.Time(6)
+  ThoiGianCoMatTruoc                                 Int?
+  NHAN_VIEN_DIEU_PHOI                                NHAN_VIEN_DIEU_PHOI    @relation(fields: [MaNVDieuPhoi], references: [MaNVDieuPhoi], onDelete: NoAction, onUpdate: NoAction)
+  TUYEN_XE                                           TUYEN_XE               @relation(fields: [MaTuyenXe], references: [MaTuyenXe], onDelete: NoAction, onUpdate: NoAction)
+  LICH_TRINH_DIEM_DUNG                               LICH_TRINH_DIEM_DUNG[]
+  VE_DIEN_TU_VE_DIEN_TU_MaDiemDonToDIEM_DON_TRA_DUNG VE_DIEN_TU[]           @relation("VE_DIEN_TU_MaDiemDonToDIEM_DON_TRA_DUNG")
+  VE_DIEN_TU_VE_DIEN_TU_MaDiemTraToDIEM_DON_TRA_DUNG VE_DIEN_TU[]           @relation("VE_DIEN_TU_MaDiemTraToDIEM_DON_TRA_DUNG")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -219,21 +218,20 @@ model LICH_TRINH_DIEM_DUNG {
   MaLichTrinhDiemDung String            @id @db.VarChar
   MaLichTrinh         String            @db.VarChar
   MaDiem              String            @db.VarChar
-  ThuTuDung           Int
   GioDenDuKien        DateTime          @db.Time(6)
-  GhiChu              String?
+  Ngay                DateTime?         @db.Date
   DIEM_DON_TRA_DUNG   DIEM_DON_TRA_DUNG @relation(fields: [MaDiem], references: [MaDiem], onDelete: NoAction, onUpdate: NoAction)
   LICH_TRINH          LICH_TRINH        @relation(fields: [MaLichTrinh], references: [MaLichTrinh], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model MEDIA_DANH_GIA {
-  MaMedia         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  DuongDanFile    String?   @db.Text
+  DuongDanFile    String?
   LoaiMedia       String?   @db.VarChar
   DinhDang        String?   @db.VarChar
   DungLuong_bytes BigInt?
   MaDanhGia       String?   @db.VarChar
+  MaMedia         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   DANH_GIA        DANH_GIA? @relation(fields: [MaDanhGia], references: [MaDanhGia], onDelete: Cascade, onUpdate: NoAction)
 }
 
@@ -441,27 +439,27 @@ model TU_KHOA_HAN_CHE {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model VE_DIEN_TU {
-  MaVe           String            @id @db.VarChar
-  GiaVe          Decimal           @db.Decimal
-  TrangThaiVe    TrangThaiVe
-  SoLanDaSua     Int
-  ThoiGianXuatVe DateTime          @db.Timestamp(6)
-  MaQRVe         String
-  MaDonHang      String            @db.VarChar
-  MaLichTrinh    String            @db.VarChar
-  MaXe           String            @db.VarChar
-  MaGheChuyen    String            @db.VarChar
-  MaDiemDon      String            @db.VarChar
-  MaDiemTra      String            @db.VarChar
-  DANH_GIA       DANH_GIA[]
-  LICH_SU_HUY_VE LICH_SU_HUY_VE[]
-  LICH_SU_VE     LICH_SU_VE[]
-  DIEM_DON       DIEM_DON_TRA_DUNG @relation("DiemDon", fields: [MaDiemDon], references: [MaDiem], onDelete: NoAction, onUpdate: NoAction)
-  DIEM_TRA       DIEM_DON_TRA_DUNG @relation("DiemTra", fields: [MaDiemTra], references: [MaDiem], onDelete: NoAction, onUpdate: NoAction)
-  DON_HANG       DON_HANG          @relation(fields: [MaDonHang], references: [MaDonHang], onDelete: NoAction, onUpdate: NoAction)
-  GHE_CHUYEN_XE  GHE_CHUYEN_XE     @relation(fields: [MaGheChuyen], references: [MaGheChuyen], onDelete: NoAction, onUpdate: NoAction)
-  LICH_TRINH     LICH_TRINH        @relation(fields: [MaLichTrinh], references: [MaLichTrinh], onDelete: NoAction, onUpdate: NoAction)
-  PHUONG_TIEN    PHUONG_TIEN       @relation(fields: [MaXe], references: [MaXe], onDelete: NoAction, onUpdate: NoAction)
+  MaVe                                                      String            @id @db.VarChar
+  GiaVe                                                     Decimal           @db.Decimal
+  TrangThaiVe                                               TrangThaiVe
+  SoLanDaSua                                                Int
+  ThoiGianXuatVe                                            DateTime          @db.Timestamp(6)
+  MaQRVe                                                    String
+  MaDonHang                                                 String            @db.VarChar
+  MaLichTrinh                                               String            @db.VarChar
+  MaXe                                                      String            @db.VarChar
+  MaGheChuyen                                               String            @db.VarChar
+  MaDiemDon                                                 String            @db.VarChar
+  MaDiemTra                                                 String            @db.VarChar
+  DANH_GIA                                                  DANH_GIA[]
+  LICH_SU_HUY_VE                                            LICH_SU_HUY_VE[]
+  LICH_SU_VE                                                LICH_SU_VE[]
+  DIEM_DON_TRA_DUNG_VE_DIEN_TU_MaDiemDonToDIEM_DON_TRA_DUNG DIEM_DON_TRA_DUNG @relation("VE_DIEN_TU_MaDiemDonToDIEM_DON_TRA_DUNG", fields: [MaDiemDon], references: [MaDiem], onDelete: NoAction, onUpdate: NoAction)
+  DIEM_DON_TRA_DUNG_VE_DIEN_TU_MaDiemTraToDIEM_DON_TRA_DUNG DIEM_DON_TRA_DUNG @relation("VE_DIEN_TU_MaDiemTraToDIEM_DON_TRA_DUNG", fields: [MaDiemTra], references: [MaDiem], onDelete: NoAction, onUpdate: NoAction)
+  DON_HANG                                                  DON_HANG          @relation(fields: [MaDonHang], references: [MaDonHang], onDelete: NoAction, onUpdate: NoAction)
+  GHE_CHUYEN_XE                                             GHE_CHUYEN_XE     @relation(fields: [MaGheChuyen], references: [MaGheChuyen], onDelete: NoAction, onUpdate: NoAction)
+  LICH_TRINH                                                LICH_TRINH        @relation(fields: [MaLichTrinh], references: [MaLichTrinh], onDelete: NoAction, onUpdate: NoAction)
+  PHUONG_TIEN                                               PHUONG_TIEN       @relation(fields: [MaXe], references: [MaXe], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum GioiTinhEnum {
@@ -474,6 +472,16 @@ enum LoaiChinhSachEnum {
   ChinhSachHuyVe
   ChinhSachKhac
   ChinhSachThanhToan
+}
+
+enum LoaiDiem {
+  DiemDonTra
+  DiemDung
+}
+
+enum LoaiNhanVien {
+  TaiXe
+  PhuXe
 }
 
 enum LoaiTaiKhoanNhanVienEnum {
@@ -498,42 +506,8 @@ enum LoaiViPhamEnum {
   TrungBinh
 }
 
-enum TrangThaiChinhSachEnum {
-  DangApDung
-  NgungApDung
-}
-
-enum TrangThaiNhatKyEnum {
-  ThanhCong
-  ThatBai
-}
-
-enum TrangThaiTaiKhoanEnum {
-  DaKhoa
-  HoatDong
-}
-
-enum TrangThaiTinTucEnum {
-  DaDang
-  BanNhap
-  NgungHienThi
-  HenGio
-}
-
-enum TrangThaiViPhamEnum {
-  DangApDung
-  NgungApDung
-}
-
-
-enum LoaiDiem {
-  DiemDonTra
-  DiemDung
-}
-
-enum LoaiNhanVien {
-  TaiXe
-  PhuXe
+enum LoaiXe {
+  Limousine_22_ph_ng @map("Limousine 22 phòng")
 }
 
 enum PhuongThucThanhToan {
@@ -541,9 +515,28 @@ enum PhuongThucThanhToan {
   MoMo
   VNPay
   ZaloPay
-  ATM_noi_dia     @map("ATM nội địa")
+  ATM_n_i___a     @map("ATM nội địa")
   Visa_Master_JCB @map("Visa/Master/JCB")
   TienMat
+}
+
+enum TienIch {
+  Tivi
+  N__c__kh_n___t @map("Nước, khăn ướt")
+  s_c__USB       @map("Ổ sạc, USB")
+  GPS
+  Wifi
+  i_u_h_a        @map("Điều hòa")
+}
+
+enum TrangThaiChinhSachEnum {
+  DangApDung
+  NgungApDung
+}
+
+enum TrangThaiDanhGia {
+  ChuaPhanHoi
+  DaPhanHoi
 }
 
 enum TrangThaiDiem {
@@ -552,9 +545,9 @@ enum TrangThaiDiem {
 }
 
 enum TrangThaiGhe {
-  DaBan  @map("Đã bán")
-  Trong  @map("Còn Trống")
-  GiuCho @map("Đang chọn")
+  b_n       @map("Đã bán")
+  C_n_Tr_ng @map("Còn Trống")
+  ang_ch_n  @map("Đang chọn")
 }
 
 enum TrangThaiLamViec {
@@ -569,17 +562,34 @@ enum TrangThaiLichTrinh {
   DaKhoa
 }
 
+enum TrangThaiNhatKyEnum {
+  ThanhCong
+  ThatBai
+}
+
 enum TrangThaiPhuongTien {
   DangHoatDong
   DaKhoa
 }
 
+enum TrangThaiTaiKhoanEnum {
+  DaKhoa
+  HoatDong
+}
+
 enum TrangThaiThanhToan {
-  ChoThanhToan @map("Chờ thanh toán")
-  DaThanhToan  @map("Đã thanh toán")
-  ChoHoanTien  @map("Chờ hoàn tiền")
-  DaHoanTien   @map("Đã hoàn tiền")
-  DaHuy        @map("Đã hủy")
+  Ch__thanh_to_n @map("Chờ thanh toán")
+  thanh_to_n     @map("Đã thanh toán")
+  Ch__ho_n_ti_n  @map("Chờ hoàn tiền")
+  ho_n_ti_n      @map("Đã hoàn tiền")
+  h_y            @map("Đã hủy")
+}
+
+enum TrangThaiTinTucEnum {
+  DaDang
+  BanNhap
+  NgungHienThi
+  HenGio
 }
 
 enum TrangThaiTuyenXe {
@@ -595,20 +605,7 @@ enum TrangThaiVe {
   DaDanhGia
 }
 
-enum LoaiXe {
-  Limousine22Phong @map("Limousine 22 phòng")
-}
-
-enum TienIch {
-  Tivi
-  NuocKhanUot @map("Nước, khăn ướt")
-  SacUSB      @map("Ổ sạc, USB")
-  GPS
-  Wifi
-  DieuHoa     @map("Điều hòa")
-}
-
-enum TrangThaiDanhGia {
-  ChuaPhanHoi
-  DaPhanHoi
+enum TrangThaiViPhamEnum {
+  DangApDung
+  NgungApDung
 }
