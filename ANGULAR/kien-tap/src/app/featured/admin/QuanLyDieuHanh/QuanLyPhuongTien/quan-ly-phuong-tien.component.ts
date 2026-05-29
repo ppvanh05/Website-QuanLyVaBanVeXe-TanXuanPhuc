@@ -100,6 +100,7 @@ export class QuanLyPhuongTienComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.phuongTienService.refreshVehicles();
     this.vehicles = this.phuongTienService.getVehicles();
     this.filterVehicles();
 
@@ -108,6 +109,12 @@ export class QuanLyPhuongTienComponent implements OnInit {
       this.filterVehicles();
       this.cdr.detectChanges();
     });
+
+    setTimeout(() => {
+      this.vehicles = this.phuongTienService.getVehicles();
+      this.filterVehicles();
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   @HostListener('document:click')

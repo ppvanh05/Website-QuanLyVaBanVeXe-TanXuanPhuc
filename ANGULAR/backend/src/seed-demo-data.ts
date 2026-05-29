@@ -355,16 +355,15 @@ async function seedSchedules() {
         where: { MaLichTrinhDiemDung: `${schedule.MaLichTrinh}_STOP_${index + 1}` },
         update: {
           MaDiem: maDiem,
-          ThuTuDung: index + 1,
           GioDenDuKien: index === 0 ? schedule.GioKhoiHanh : schedule.GioDenDuKien,
+          Ngay: date(schedule.NgayKhoiHanh),
         },
         create: {
           MaLichTrinhDiemDung: `${schedule.MaLichTrinh}_STOP_${index + 1}`,
           MaLichTrinh: schedule.MaLichTrinh,
           MaDiem: maDiem,
-          ThuTuDung: index + 1,
           GioDenDuKien: index === 0 ? schedule.GioKhoiHanh : schedule.GioDenDuKien,
-          GhiChu: index === 0 ? 'Diem don chinh' : 'Diem tra chinh',
+          Ngay: date(schedule.NgayKhoiHanh),
         },
       });
     }

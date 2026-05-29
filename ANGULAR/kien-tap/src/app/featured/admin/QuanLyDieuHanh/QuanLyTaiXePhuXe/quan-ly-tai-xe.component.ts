@@ -85,6 +85,7 @@ export class QuanLyTaiXeComponent implements OnInit {
   yearRangeStart: number = 2026;
 
   ngOnInit() {
+    this.taiXeService.refreshDrivers();
     this.drivers = this.taiXeService.getDrivers();
     this.filterDrivers();
     this.generateCalendar();
@@ -94,6 +95,12 @@ export class QuanLyTaiXeComponent implements OnInit {
       this.filterDrivers();
       this.cdr.detectChanges();
     });
+
+    setTimeout(() => {
+      this.drivers = this.taiXeService.getDrivers();
+      this.filterDrivers();
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   @HostListener('document:click')

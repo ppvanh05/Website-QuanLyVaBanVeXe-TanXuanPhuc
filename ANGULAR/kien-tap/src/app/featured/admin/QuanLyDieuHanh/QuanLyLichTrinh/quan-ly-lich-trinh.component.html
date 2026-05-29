@@ -57,43 +57,56 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let s of filteredSchedules; let i = index">
-            <td class="text-center" style="font-weight: 500; color: #718096;">{{ i + 1 }}</td>
-            <td class="font-bold">
-              <span class="status-dot" [class]="'status-dot ' + s.status"></span>
-              {{ s.routeName }}
-            </td>
-            <td>
-              <span class="plate-badge">{{ s.vehiclePlate }}</span>
-            </td>
-            <td>
-              <div class="staff-info">
-                <div><span class="staff-role">Tài xế:</span> {{ s.driverName }}</div>
-                <div *ngIf="s.assistantName"><span class="staff-role">Phụ xe:</span> {{ s.assistantName }}</div>
+          <!-- Loading Spinner Row -->
+          <tr *ngIf="isLoading">
+            <td colspan="7" class="text-center" style="padding: 30px; color: #4a5568;">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500;">
+                <span class="material-icons rotating" style="animation: spin 1s linear infinite;">autorenew</span>
+                <span>Đang tải danh sách lịch trình từ database...</span>
               </div>
             </td>
-            <td>
-              <div class="time-info">
-                <div class="date-val"><span class="material-icons sm-icon-grey">calendar_today</span> {{ s.departureDate
-                  }}</div>
-                <div class="time-val"><span class="material-icons sm-icon-grey">schedule</span> {{ s.departureTime }}
+          </tr>
+
+          <!-- Data Rows -->
+          <ng-container *ngIf="!isLoading">
+            <tr *ngFor="let s of filteredSchedules; let i = index">
+              <td class="text-center" style="font-weight: 500; color: #718096;">{{ i + 1 }}</td>
+              <td class="font-bold">
+                <span class="status-dot" [class]="'status-dot ' + s.status"></span>
+                {{ s.routeName }}
+              </td>
+              <td>
+                <span class="plate-badge">{{ s.vehiclePlate }}</span>
+              </td>
+              <td>
+                <div class="staff-info">
+                  <div><span class="staff-role">Tài xế:</span> {{ s.driverName }}</div>
+                  <div *ngIf="s.assistantName"><span class="staff-role">Phụ xe:</span> {{ s.assistantName }}</div>
                 </div>
-              </div>
-            </td>
-            <td class="text-center">
-              <span class="status-badge" [class]="s.status" style="display: inline-block; margin: 0 auto;">
-                {{ s.status === 'DangChay' ? 'Đang chạy' : s.status === 'ChoKhoiHanh' ? 'Chờ khởi hành' : s.status === 'HoanThanh' ? 'Hoàn thành' : 'Đã khóa' }}
-              </span>
-            </td>
-            <td class="text-center">
-              <button class="btn-icon" (click)="openEditModal(s)">
-                <span class="material-icons">edit_note</span>
-              </button>
-            </td>
-          </tr>
-          <tr *ngIf="filteredSchedules.length === 0">
-            <td colspan="7" class="empty-row-text">Không tìm thấy lịch trình nào khớp với bộ lọc.</td>
-          </tr>
+              </td>
+              <td>
+                <div class="time-info">
+                  <div class="date-val"><span class="material-icons sm-icon-grey">calendar_today</span> {{ s.departureDate
+                    }}</div>
+                  <div class="time-val"><span class="material-icons sm-icon-grey">schedule</span> {{ s.departureTime }}
+                  </div>
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="status-badge" [class]="s.status" style="display: inline-block; margin: 0 auto;">
+                  {{ s.status === 'DangChay' ? 'Đang chạy' : s.status === 'ChoKhoiHanh' ? 'Chờ khởi hành' : s.status === 'HoanThanh' ? 'Hoàn thành' : 'Đã khóa' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn-icon" (click)="openEditModal(s)">
+                  <span class="material-icons">edit_note</span>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredSchedules.length === 0">
+              <td colspan="7" class="empty-row-text">Không tìm thấy lịch trình nào khớp với bộ lọc.</td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>

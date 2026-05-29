@@ -73,6 +73,7 @@ export class QuanLyTuyenXeComponent implements OnInit {
   constructor(private tuyenXeService: TuyenXeService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
+    this.tuyenXeService.refreshRoutes();
     this.routes = this.tuyenXeService.getRoutes();
     this.filterRoutes();
 
@@ -81,6 +82,12 @@ export class QuanLyTuyenXeComponent implements OnInit {
       this.filterRoutes();
       this.cdr.detectChanges();
     });
+
+    setTimeout(() => {
+      this.routes = this.tuyenXeService.getRoutes();
+      this.filterRoutes();
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   setTab(tab: 'all' | 'active' | 'locked') {

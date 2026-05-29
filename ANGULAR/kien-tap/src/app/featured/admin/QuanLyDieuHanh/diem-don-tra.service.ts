@@ -27,6 +27,7 @@ export class DiemDonTraService {
   }
 
   refreshPoints() {
+    if (typeof window === 'undefined') return;
     this.http.get<any[]>(this.apiUrl).subscribe({
       next: (data) => {
         if (!data || data.length === 0) {

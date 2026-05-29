@@ -186,7 +186,7 @@ export class TimKiemChuyenXeService {
           DIEM_DON_TRA_DUNG: true,
         },
         orderBy: {
-          ThuTuDung: 'asc',
+          GioDenDuKien: 'asc',
         },
       });
 
@@ -210,11 +210,11 @@ export class TimKiemChuyenXeService {
             TrangThaiGhe: s.TrangThaiGhe,
             ThoiGianCapNhatTrangThai: s.ThoiGianCapNhatTrangThai,
           })),
-          diemDungLichTrinh: stops.map(stop => ({
+          diemDungLichTrinh: stops.map((stop, idx) => ({
             MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
-            ThuTuDung: stop.ThuTuDung,
+            ThuTuDung: idx + 1,
             GioDenDuKien: stop.GioDenDuKien,
-            GhiChu: stop.GhiChu,
+            GhiChu: stop.Ngay ? stop.Ngay.toLocaleDateString() : '',
             MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
             TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
             DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
@@ -270,7 +270,7 @@ export class TimKiemChuyenXeService {
         DIEM_DON_TRA_DUNG: true,
       },
       orderBy: {
-        ThuTuDung: 'asc',
+        GioDenDuKien: 'asc',
       },
     });
 
@@ -294,11 +294,11 @@ export class TimKiemChuyenXeService {
         TangGhe: s.GHE?.TangGhe,
         DayGhe: s.GHE?.DayGhe,
       })),
-      diemDungLichTrinh: stops.map(stop => ({
+      diemDungLichTrinh: stops.map((stop, idx) => ({
         MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
-        ThuTuDung: stop.ThuTuDung,
+        ThuTuDung: idx + 1,
         GioDenDuKien: stop.GioDenDuKien,
-        GhiChu: stop.GhiChu,
+        GhiChu: stop.Ngay ? stop.Ngay.toLocaleDateString() : '',
         MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
         TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
         DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,

@@ -21,6 +21,18 @@ export const ADMIN_PERMISSIONS = [
   'role.manage',
   'log.view',
   'system.log',
+  'route.view',
+  'route.manage',
+  'vehicle.view',
+  'vehicle.manage',
+  'driver.view',
+  'driver.manage',
+  'stop.view',
+  'stop.manage',
+  'trip.view',
+  'trip.create',
+  'trip.assign',
+  'trip.update',
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {

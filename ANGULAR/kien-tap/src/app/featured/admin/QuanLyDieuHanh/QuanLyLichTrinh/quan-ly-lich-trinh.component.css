@@ -2458,4 +2458,13 @@ input:checked+.slider:before {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotating {
+  display: inline-block;
 }
