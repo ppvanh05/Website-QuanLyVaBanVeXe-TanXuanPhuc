@@ -35,6 +35,10 @@ export class AdminPermissionsGuard implements CanActivate {
       return true;
     }
 
+    if (payload.quyen?.includes('admin')) {
+      return true;
+    }
+
     const hasPermission = requiredPermissions.every(permission => {
       const basePermission = permission.split('.')[0];
       
@@ -44,6 +48,10 @@ export class AdminPermissionsGuard implements CanActivate {
         mappedPermission = 'dispatch';
       } else if (basePermission === 'staff') {
         mappedPermission = 'employee';
+      } else if (['finance', 'report'].includes(basePermission)) {
+        mappedPermission = 'report';
+      } else if (['ticket', 'customer'].includes(basePermission)) {
+        mappedPermission = 'ticket';
       }
 
       return payload.quyen?.includes(permission) || 
