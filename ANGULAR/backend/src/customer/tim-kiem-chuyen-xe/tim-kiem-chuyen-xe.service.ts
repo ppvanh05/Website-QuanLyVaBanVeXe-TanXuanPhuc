@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TrangThaiGhe, TrangThaiLichTrinh, Prisma } from '@prisma/client';
 
@@ -64,6 +64,108 @@ export class TimKiemChuyenXeService {
       queryEndDate,
       dateKey: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
     };
+  }
+
+  // ===== SEAT RESERVATION (hold) APIs =====
+  // Reserve (hold) seats atomically for a short period (10 minutes)
+  async reserveSeats(dto: { maLichTrinh: string; seats: string[]; sessionId?: string }) {
+    if (!dto?.maLichTrinh || !Array.isArray(dto.seats) || dto.seats.length === 0) {
+      throw new BadRequestException('Invalid parameters');
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
+
+    try {
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Re-fetch seat statuses inside transaction
+        const rows = await tx.gHE_CHUYEN_XE.findMany({ where: { MaGheChuyen: { in: dto.seats } } });
+        const notAvailable = rows.filter(r => r.TrangThaiGhe !== TrangThaiGhe.Trong).map(r => r.MaGheChuyen);
+        if (notAvailable.length > 0) {
+          return { success: false, message: 'Some seats are not available', unavailable: notAvailable };
+        }
+
+        // Mark seats as held
+        await tx.gHE_CHUYEN_XE.updateMany({
+          where: { MaGheChuyen: { in: dto.seats } },
+          data: { TrangThaiGhe: TrangThaiGhe.GiuCho, ThoiGianCapNhatTrangThai: now },
+        });
+
+        // Create hold records
+        const creates = dto.seats.map((maGhe) =>
+          tx.gHE_GIU_CHO.create({
+            data: {
+              MaGheChuyen: maGhe,
+              MaLichTrinh: dto.maLichTrinh,
+              MaSession: dto.sessionId || null,
+              TrangThai: 'GiuCho',
+              ThoiGianHetHan: expiresAt,
+            },
+          }),
+        );
+        await Promise.all(creates);
+
+        return { success: true, expiresAt: expiresAt.toISOString() };
+      });
+      return result;
+    } catch (err) {
+      console.error('[reserveSeats] error', err);
+      throw new ConflictException('Failed to reserve seats');
+    }
+  }
+
+  // Release held seats (called on user cancel or manual release)
+  async releaseSeats(dto: { maLichTrinh: string; seats: string[]; sessionId?: string }) {
+    if (!dto?.maLichTrinh || !Array.isArray(dto.seats) || dto.seats.length === 0) {
+      throw new BadRequestException('Invalid parameters');
+    }
+
+    const now = new Date();
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Delete hold records for these seats (optionally filter by sessionId)
+      await tx.gHE_GIU_CHO.deleteMany({ where: { MaGheChuyen: { in: dto.seats }, MaLichTrinh: dto.maLichTrinh } });
+
+      // Set seat status back to available if they were in held state
+      await tx.gHE_CHUYEN_XE.updateMany({
+        where: { MaGheChuyen: { in: dto.seats }, MaLichTrinh: dto.maLichTrinh, TrangThaiGhe: TrangThaiGhe.GiuCho },
+        data: { TrangThaiGhe: TrangThaiGhe.Trong, ThoiGianCapNhatTrangThai: now },
+      });
+
+      return { success: true };
+    });
+    return result;
+  }
+
+  // Finalize seats when payment succeeds (mark sold)
+  async finalizeSeats(dto: { maLichTrinh: string; seats: string[]; sessionId?: string }) {
+    if (!dto?.maLichTrinh || !Array.isArray(dto.seats) || dto.seats.length === 0) {
+      throw new BadRequestException('Invalid parameters');
+    }
+
+    const now = new Date();
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Ensure seats are currently held or available; if already sold, fail
+      const rows = await tx.gHE_CHUYEN_XE.findMany({ where: { MaGheChuyen: { in: dto.seats } } });
+      const alreadySold = rows.filter(r => r.TrangThaiGhe === TrangThaiGhe.DaBan).map(r => r.MaGheChuyen);
+      if (alreadySold.length > 0) {
+        return { success: false, message: 'Some seats already sold', sold: alreadySold };
+      }
+
+      // Update seats to DaBan
+      await tx.gHE_CHUYEN_XE.updateMany({
+        where: { MaGheChuyen: { in: dto.seats }, MaLichTrinh: dto.maLichTrinh },
+        data: { TrangThaiGhe: TrangThaiGhe.DaBan, ThoiGianCapNhatTrangThai: now },
+      });
+
+      // Remove any existing hold records
+      await tx.gHE_GIU_CHO.deleteMany({ where: { MaGheChuyen: { in: dto.seats }, MaLichTrinh: dto.maLichTrinh } });
+
+      return { success: true };
+    });
+
+    return result;
   }
 
   private toDateKeyFromDbDate(date: Date): string {

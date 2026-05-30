@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, UseFilters } from '@nestjs/common';
+import { Controller, Get, Query, Param, UseFilters, Post, Body } from '@nestjs/common';
 import { TimKiemChuyenXeService } from './tim-kiem-chuyen-xe.service';
 import { CustomerExceptionFilter } from '../customer-exception.filter';
 
@@ -31,5 +31,26 @@ export class TimKiemChuyenXeController {
       message: 'Lấy chi tiết chuyến xe thành công!',
       data,
     };
+  }
+
+  // POST /customer/tim-kiem-chuyen-xe/reserve → Reserve (hold) seats for a short time
+  @Post('reserve')
+  async reserveSeats(@Body() body: { maLichTrinh: string; seats: string[]; sessionId?: string }) {
+    const data = await this.searchService.reserveSeats(body);
+    return data;
+  }
+
+  // POST /customer/tim-kiem-chuyen-xe/release → Release previously held seats
+  @Post('release')
+  async releaseSeats(@Body() body: { maLichTrinh: string; seats: string[]; sessionId?: string }) {
+    const data = await this.searchService.releaseSeats(body);
+    return data;
+  }
+
+  // POST /customer/tim-kiem-chuyen-xe/finalize → Finalize seats when payment succeeds
+  @Post('finalize')
+  async finalizeSeats(@Body() body: { maLichTrinh: string; seats: string[]; sessionId?: string }) {
+    const data = await this.searchService.finalizeSeats(body);
+    return data;
   }
 }
