@@ -1,5 +1,4 @@
 {
-  "ignoreDeprecations": "5.0",
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",

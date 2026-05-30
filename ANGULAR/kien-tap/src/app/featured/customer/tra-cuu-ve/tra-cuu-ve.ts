@@ -2,8 +2,6 @@ import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { HeaderComponent } from '../layout/header/header.component';
-import { FooterComponent } from '../layout/footer/footer.component';
 import { PrintService } from '../../../core/services/print.service';
 import { TraCuuVeApiService } from '../../../core/services/tra-cuu-ve-api.service';
 import { TimKiemApiService } from '../../../core/services/tim-kiem-api.service';
@@ -76,7 +74,7 @@ const LOCATION_OPTIONS: LocationOption[] = [
 @Component({
   selector: 'app-tim-kiem-chuyen-xe',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './tra-cuu-ve.html',
   styleUrl: './tra-cuu-ve.css'
 })
@@ -248,6 +246,27 @@ export class TraCuuVeComponent implements OnInit {
     });
   }
 
+  private mapStatus(rawStatus: any): 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy' | 'Đã đánh giá' {
+    if (!rawStatus) return 'Chờ thanh toán';
+    const s = rawStatus.toString().toLowerCase();
+    if (s.includes('chothanhtoan') || s.includes('cho_thanh_toan') || s.includes('cho thanh toan') || s === 'chờ thanh toán') {
+      return 'Chờ thanh toán';
+    }
+    if (s.includes('chokhoihanh') || s.includes('cho_khoi_hanh') || s.includes('cho khoi hanh') || s === 'chờ khởi hành') {
+      return 'Chờ khởi hành';
+    }
+    if (s.includes('dahoanthanh') || s.includes('da_hoan_thanh') || s.includes('da hoan thanh') || s === 'đã hoàn thành') {
+      return 'Đã hoàn thành';
+    }
+    if (s.includes('dahuy') || s.includes('da_huy') || s.includes('da huy') || s === 'đã hủy') {
+      return 'Đã hủy';
+    }
+    if (s.includes('dadanhgia') || s.includes('da_danh_gia') || s.includes('da danh gia') || s === 'đã đánh giá') {
+      return 'Đã đánh giá';
+    }
+    return 'Chờ thanh toán';
+  }
+
   private mapLookupResponse(response: any): Order | null {
     const data = response?.data || response;
     if (!data) {
@@ -275,7 +294,7 @@ export class TraCuuVeComponent implements OnInit {
       gioCanCoMat: orderSource.GioCanCoMat || orderSource.gioCanCoMat || '',
       tongGiaVe: orderSource.TongGiaVe || orderSource.tongGiaVe || orderSource.TongTien || 0,
       phuongThucThanhToan: orderSource.PhuongThucThanhToan || orderSource.phuongThucThanhToan || orderSource.paymentMethod || '',
-      trangThaiDonHang: orderSource.TrangThaiDonHang || orderSource.trangThaiDonHang || orderSource.status || 'Chờ thanh toán',
+      trangThaiDonHang: this.mapStatus(orderSource.TrangThaiDonHang || orderSource.trangThaiDonHang || orderSource.status),
       bienSoXe: orderSource.BienSoXe || orderSource.bienSoXe || orderSource.bienSo || '',
       maDiemDon: orderSource.MaDiemDon || orderSource.maDiemDon || '',
       maDiemTra: orderSource.MaDiemTra || orderSource.maDiemTra || '',
@@ -292,7 +311,7 @@ export class TraCuuVeComponent implements OnInit {
         diemTra: this.restoreVietnameseAccents(ticket.DiemTra || ticket.diemTra || ticket.diemTraKhach || orderSource.DiemTra || ''),
         diemTraThoiGian: ticket.DiemTraThoiGian || ticket.diemTraThoiGian || ticket.ThoiGianTra || orderSource.GioTra || '',
         giaVe: Number(ticket.GiaVe || ticket.giaVe || ticket.GiaTien || orderSource.TongGiaVe || 0),
-        trangThaiVe: ticket.TrangThaiVe || ticket.trangThaiVe || ticket.status || 'Chờ thanh toán',
+        trangThaiVe: this.mapStatus(ticket.TrangThaiVe || ticket.trangThaiVe || ticket.status),
         maQRVe: ticket.MaQRVe || ticket.maQRVe || ticket.qrCode || ''
       })) : []
     };
@@ -386,14 +405,95 @@ export class TraCuuVeComponent implements OnInit {
   canEditOrder(): boolean {
     return this.getEditRemaining() > 0;
   }
+
+  // Helper to calculate hours remaining until departure
+  getHoursUntilDeparture(): number | null {
+    if (!this.currentOrder || !this.currentOrder.departureDate || !this.currentOrder.gioKhoiHanh) {
+      return null;
+    }
+    const departureDateTime = this.buildDepartureDate(this.currentOrder.departureDate, this.currentOrder.gioKhoiHanh);
+    if (!departureDateTime) {
+      return null;
+    }
+    const now = new Date();
+    const diffMs = departureDateTime.getTime() - now.getTime();
+    return diffMs / (1000 * 60 * 60); // Convert milliseconds to hours
+  }
+
+  // New getter for "Sửa thông tin" button enabled state
+  get isEditButtonEnabled(): boolean {
+    if (!this.currentOrder) return false;
+
+    const orderStatus = this.currentOrder.trangThaiDonHang;
+    const ticketsStatusValid = this.currentOrder.tickets.every(
+      ticket => ticket.trangThaiVe === 'Chờ thanh toán' || ticket.trangThaiVe === 'Chờ khởi hành'
+    );
+
+    const canEditCount = this.getEditRemaining() > 0;
+    const hoursRemaining = this.getHoursUntilDeparture();
+    const hasEnoughTime = hoursRemaining !== null && hoursRemaining >= 2;
+
+    return (orderStatus === 'Chờ thanh toán' || orderStatus === 'Chờ khởi hành') &&
+           ticketsStatusValid &&
+           canEditCount &&
+           hasEnoughTime;
+  }
+
+  // New getter for "Sửa thông tin" button disabled state (for visual dimming)
+  get isEditButtonDisabled(): boolean {
+    if (!this.currentOrder) return true; // Always disabled if no order
+
+    const orderStatus = this.currentOrder.trangThaiDonHang;
+    const ticketsStatusValid = this.currentOrder.tickets.every(
+      ticket => ticket.trangThaiVe === 'Chờ thanh toán' || ticket.trangThaiVe === 'Chờ khởi hành'
+    );
+
+    const canEditCount = this.getEditRemaining() > 0;
+    const hoursRemaining = this.getHoursUntilDeparture();
+    const hasEnoughTime = hoursRemaining !== null && hoursRemaining >= 2;
+
+    // Disabled if status is not 'ChoThanhToan' or 'ChoKhoiHanh'
+    // OR if not enough edit count
+    // OR if not enough time remaining
+    // OR if any ticket status is not 'ChoThanhToan' or 'ChoKhoiHanh'
+    return !((orderStatus === 'Chờ thanh toán' || orderStatus === 'Chờ khởi hành') &&
+             ticketsStatusValid &&
+             canEditCount &&
+             hasEnoughTime);
+  }
+
+  // New getter for "Yêu cầu hủy vé" button enabled state
+  get isCancelButtonEnabled(): boolean {
+    if (!this.currentOrder) return false;
+    const orderStatus = this.currentOrder.trangThaiDonHang;
+    const ticketsStatusValid = this.currentOrder.tickets.every(
+      ticket => ticket.trangThaiVe === 'Chờ thanh toán' || ticket.trangThaiVe === 'Chờ khởi hành'
+    );
+    return (orderStatus === 'Chờ thanh toán' || orderStatus === 'Chờ khởi hành') && ticketsStatusValid;
+  }
+
+  // New getter for "Yêu cầu hủy vé" button disabled state (for visual dimming)
+  get isCancelButtonDisabled(): boolean {
+    return !this.isCancelButtonEnabled;
+  }
+
+  // New getter for "Đánh giá dịch vụ" button enabled state
+  get isReviewButtonEnabled(): boolean {
+    if (!this.currentOrder) return false;
+    const orderStatus = this.currentOrder.trangThaiDonHang;
+    const ticketsStatusValid = this.currentOrder.tickets.every(
+      ticket => ticket.trangThaiVe === 'Đã hoàn thành'
+    );
+    return orderStatus === 'Đã hoàn thành' && ticketsStatusValid;
+  }
+
+  // New getter for "Đánh giá dịch vụ" button disabled state (for visual dimming)
+  get isReviewButtonDisabled(): boolean {
+    return !this.isReviewButtonEnabled;
+  }
   
   canShowEditButton(): boolean {
-    if (!this.currentOrder) return false;
-    const isOrderChoKhoiHanh = this.currentOrder.trangThaiDonHang === 'Chờ khởi hành';
-    const areAllTicketsChoKhoiHanh = this.currentOrder.tickets.every(
-      ticket => ticket.trangThaiVe === 'Chờ khởi hành'
-    );
-    return isOrderChoKhoiHanh && areAllTicketsChoKhoiHanh && this.canEditOrder();
+    return this.getEditRemaining() > 0;
   }
 
   formatPrice(price: number): string {
@@ -594,7 +694,7 @@ export class TraCuuVeComponent implements OnInit {
       next: (response: any) => {
         const data = response?.data || response;
         if (data) {
-          this.currentOrder = data;
+          this.currentOrder = this.mapLookupResponse(response);
           this.syncTicketFieldsFromOrder();
           this.showToast('Cập nhật thông tin vé thành công.', 'success');
         } else {
@@ -650,7 +750,7 @@ export class TraCuuVeComponent implements OnInit {
             next: (response: any) => {
               const data = response?.data || response;
               if (data) {
-                this.currentOrder = data;
+                this.currentOrder = this.mapLookupResponse(response);
                 this.syncTicketFieldsFromOrder();
               }
               this.showCancelModal = false;
