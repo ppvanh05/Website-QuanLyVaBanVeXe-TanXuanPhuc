@@ -6,6 +6,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Cấu hình CORS cho phép localhost (dev) và Vercel production (prod)
+  const configuredOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:4200',
@@ -15,6 +20,11 @@ async function bootstrap() {
     'http://127.0.0.1:10000',
     'https://kien-tap-code-b5ep1lzcu-ppvanh05s-projects.vercel.app',
     'https://kien-tap-code.vercel.app',
+    ...configuredOrigins,
+  ];
+
+  const allowedOriginPatterns = [
+    /^https:\/\/kien-tap-code.*\.vercel\.app$/,
   ];
 
   app.enableCors({
@@ -26,7 +36,7 @@ async function bootstrap() {
       }
 
       // Kiểm tra xem origin có trong whitelist không
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin) || allowedOriginPatterns.some((pattern) => pattern.test(origin))) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
