@@ -529,9 +529,10 @@ export class QuanLyVeService {
       data: { TrangThaiVe: mappedStatus },
     });
 
+    const maLichSu = await this.prisma.generateNextId('lICH_SU_VE', 'MaLichSu', 'LSV', 6, 100001);
     await this.prisma.lICH_SU_VE.create({
       data: {
-        MaLichSu: `LSV_${Date.now()}`,
+        MaLichSu: maLichSu,
         HanhDong: 'Cập nhật trạng thái vé',
         TrangThaiCu: oldTrangThai,
         TrangThaiMoi: mappedStatus,
@@ -651,7 +652,7 @@ export class QuanLyVeService {
     }
 
     if (isCashPayment && initialStatus === 'ChoKhoiHanh') {
-      const maGiaoDich = this.formatCode('GD', 6, await this.nextGiaoDichNumber());
+      const maGiaoDich = this.formatCode('GD_TT_', 6, await this.nextGiaoDichNumber());
       await this.prisma.tHANH_TOAN.create({
         data: {
           MaGiaoDich: maGiaoDich,
@@ -698,7 +699,7 @@ export class QuanLyVeService {
       };
     }
 
-    const maGiaoDich = this.formatCode('GD', 6, await this.nextGiaoDichNumber());
+    const maGiaoDich = this.formatCode('GD_TT_', 6, await this.nextGiaoDichNumber());
     await this.prisma.tHANH_TOAN.create({
       data: {
         MaGiaoDich: maGiaoDich,
@@ -840,7 +841,7 @@ export class QuanLyVeService {
       item => item.LoaiGiaoDich === 'ThanhToan' && item.TrangThaiGiaoDich === 'ThanhCong',
     );
     const tienHoanLai = paidPayment ? quote.tienHoanLai : 0;
-    const maGiaoDichHoan = this.formatCode('GD', 6, await this.nextGiaoDichNumber());
+    const maGiaoDichHoan = this.formatCode('GD_HT_', 6, await this.nextGiaoDichNumber());
 
     const updatedVe = await this.prisma.vE_DIEN_TU.update({
       where: { MaVe: id },
@@ -870,7 +871,7 @@ export class QuanLyVeService {
 
     await this.prisma.lICH_SU_HUY_VE.create({
       data: {
-        MaLichSuHuy: `LSHV_${Date.now()}`,
+        MaLichSuHuy: await this.prisma.generateNextId('lICH_SU_HUY_VE', 'MaLichSuHuy', 'LSH', 6, 100001),
         MaVe: id,
         MaChinhSach: quote.chinhSach.maChinhSach,
         NguonHuy: 'QuanTriVien',
@@ -886,7 +887,7 @@ export class QuanLyVeService {
 
     await this.prisma.lICH_SU_VE.create({
       data: {
-        MaLichSu: `LSV_${Date.now()}`,
+        MaLichSu: await this.prisma.generateNextId('lICH_SU_VE', 'MaLichSu', 'LSV', 6, 100001),
         HanhDong: 'Huỷ vé',
         TrangThaiCu: ve.TrangThaiVe,
         TrangThaiMoi: 'DaHuy',

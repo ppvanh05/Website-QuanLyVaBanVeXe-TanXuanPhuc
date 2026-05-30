@@ -1,21 +1,85 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TrangThaiGhe, TrangThaiLichTrinh } from '@prisma/client';
+import { TrangThaiGhe, TrangThaiLichTrinh, Prisma } from '@prisma/client';
 
 @Injectable()
 export class TimKiemChuyenXeService {
   constructor(private prisma: PrismaService) {}
 
-  // Helper to parse date string formatted as dd/mm/yyyy or yyyy-mm-dd
-  private parseSearchDate(dateStr?: string): Date | null {
-    if (!dateStr) return null;
-    if (dateStr.includes('/')) {
-      const parts = dateStr.split('/');
-      const parsed = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-      return Number.isNaN(parsed.getTime()) ? null : parsed;
+  private buildSearchDayRange(dateStr?: string): {
+    startDate: Date;
+    endDate: Date;
+    queryStartDate: Date;
+    queryEndDate: Date;
+    dateKey: string;
+  } | null {
+    if (!dateStr?.trim()) {
+      return null;
     }
+
+    if (dateStr.includes('/')) {
+      const [dayRaw, monthRaw, yearRaw] = dateStr.split('/');
+      const day = Number(dayRaw);
+      const month = Number(monthRaw);
+      const year = Number(yearRaw);
+      if (!day || !month || !year) {
+        return null;
+      }
+
+      const startDate = new Date(Date.UTC(year, month - 1, day));
+      const endDate = new Date(Date.UTC(year, month - 1, day + 1));
+      const queryStartDate = new Date(Date.UTC(year, month - 1, day - 1));
+      const queryEndDate = new Date(Date.UTC(year, month - 1, day + 2));
+
+      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        return null;
+      }
+
+      return {
+        startDate,
+        endDate,
+        queryStartDate,
+        queryEndDate,
+        dateKey: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
+      };
+    }
+
     const parsed = new Date(dateStr);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    const year = parsed.getUTCFullYear();
+    const month = parsed.getUTCMonth() + 1;
+    const day = parsed.getUTCDate();
+    const startDate = new Date(Date.UTC(year, month - 1, day));
+    const endDate = new Date(Date.UTC(year, month - 1, day + 1));
+    const queryStartDate = new Date(Date.UTC(year, month - 1, day - 1));
+    const queryEndDate = new Date(Date.UTC(year, month - 1, day + 2));
+
+    return {
+      startDate,
+      endDate,
+      queryStartDate,
+      queryEndDate,
+      dateKey: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
+    };
+  }
+
+  private toDateKeyFromDbDate(date: Date): string {
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  private matchesSearchDate(
+    ngayKhoiHanh: Date,
+    dayRange: { startDate: Date; endDate: Date; dateKey: string },
+  ): boolean {
+    const dateKey = this.toDateKeyFromDbDate(ngayKhoiHanh);
+    const inUtcRange = ngayKhoiHanh >= dayRange.startDate && ngayKhoiHanh < dayRange.endDate;
+    return dateKey === dayRange.dateKey || inUtcRange;
   }
 
   private normalizeSearchText(value?: string | null): string {
@@ -28,9 +92,19 @@ export class TimKiemChuyenXeService {
       .trim();
   }
 
-  private matchLocation(value?: string | null, keyword?: string): boolean {
-    if (!keyword?.trim()) return true;
-    return this.normalizeSearchText(value).includes(this.normalizeSearchText(keyword));
+  private matchRoutePoint(stored?: string | null, keyword?: string): boolean {
+    if (!keyword?.trim()) {
+      return true;
+    }
+
+    const normalizedStored = this.normalizeSearchText(stored);
+    const normalizedKeyword = this.normalizeSearchText(keyword);
+
+    return (
+      normalizedStored === normalizedKeyword ||
+      normalizedStored.includes(normalizedKeyword) ||
+      normalizedKeyword.includes(normalizedStored)
+    );
   }
 
   // Helper to ensure GHE_CHUYEN_XE records exist for a schedule. If not, auto-create them from vehicle GHE template.
@@ -56,7 +130,7 @@ export class TimKiemChuyenXeService {
 
       // Helper to batch create GHE templates first
       for (const name of lowerNames) {
-        const gheId = `${vehicleId}_GHE_${name}`;
+        const gheId = name;
         await this.prisma.gHE.upsert({
           where: { MaGhe: gheId },
           update: {},
@@ -72,7 +146,7 @@ export class TimKiemChuyenXeService {
       }
 
       for (const name of upperNames) {
-        const gheId = `${vehicleId}_GHE_${name}`;
+        const gheId = name;
         await this.prisma.gHE.upsert({
           where: { MaGhe: gheId },
           update: {},
@@ -110,7 +184,7 @@ export class TimKiemChuyenXeService {
     // Auto-create from existing vehicle GHE templates
     const created = [];
     for (const seat of seats) {
-      const gheChuyenId = `${scheduleId}_${seat.MaGhe}`;
+      const gheChuyenId = `${scheduleId}_${seat.SoGhe}`;
       const record = await this.prisma.gHE_CHUYEN_XE.create({
         data: {
           MaGheChuyen: gheChuyenId,
@@ -127,37 +201,31 @@ export class TimKiemChuyenXeService {
     return created;
   }
 
-  private removeAccents(str: string): string {
-    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
-  }
-
   // ===== SEARCH TRIPS =====
   async searchTrips(dto: { departure?: string; destination?: string; date?: string }) {
-    const searchDate = this.parseSearchDate(dto.date);
-    const departure = dto.departure?.trim();
-    const destination = dto.destination?.trim();
+    const dayRange = this.buildSearchDayRange(dto.date);
 
-    const startOfDay = searchDate ? new Date(searchDate) : null;
-    if (startOfDay) startOfDay.setHours(0, 0, 0, 0);
+    console.log('[searchTrips] raw params:', {
+      departure: dto.departure,
+      destination: dto.destination,
+      date: dto.date,
+    });
+    console.log('[searchTrips] startDate:', dayRange?.startDate?.toISOString());
+    console.log('[searchTrips] endDate:', dayRange?.endDate?.toISOString());
+    console.log('[searchTrips] dateKey:', dayRange?.dateKey);
 
-    const endOfDay = searchDate ? new Date(searchDate) : null;
-    if (endOfDay) endOfDay.setHours(23, 59, 59, 999);
-
-    // Find schedules matching date and route (insensitive search)
-    const schedules = await this.prisma.lICH_TRINH.findMany({
+    const schedulesByDate = await this.prisma.lICH_TRINH.findMany({
       where: {
-        ...(searchDate ? {
-          NgayKhoiHanh: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        } : {}),
+        ...(dayRange
+          ? {
+              NgayKhoiHanh: {
+                gte: dayRange.queryStartDate,
+                lt: dayRange.queryEndDate,
+              },
+            }
+          : {}),
         TrangThaiLichTrinh: {
           notIn: [TrangThaiLichTrinh.DaKhoa],
-        },
-        TUYEN_XE: {
-          DiemKhoiHanh: { contains: dto.departure, mode: 'insensitive' },
-          DiemDen: { contains: dto.destination, mode: 'insensitive' },
         },
       },
       include: {
@@ -166,18 +234,40 @@ export class TimKiemChuyenXeService {
       },
     });
 
-    const cleanDeparture = this.removeAccents(dto.departure || '').toLowerCase().trim();
-    const cleanDestination = this.removeAccents(dto.destination || '').toLowerCase().trim();
+    const schedulesMatchingDate = dayRange
+      ? schedulesByDate.filter((schedule) => this.matchesSearchDate(schedule.NgayKhoiHanh, dayRange))
+      : schedulesByDate;
 
-    const matchedSchedules = schedules.filter(schedule => {
-      const dbDep = this.removeAccents(schedule.TUYEN_XE?.DiemKhoiHanh || '').toLowerCase().trim();
-      const dbDest = this.removeAccents(schedule.TUYEN_XE?.DiemDen || '').toLowerCase().trim();
-      return dbDep.includes(cleanDeparture) && dbDest.includes(cleanDestination);
+    console.log('[searchTrips] schedules by date (prisma):', schedulesByDate.length);
+    console.log('[searchTrips] schedules by date (matched):', schedulesMatchingDate.length);
+    schedulesMatchingDate.forEach((schedule) => {
+      console.log('[searchTrips] schedule route:', {
+        MaLichTrinh: schedule.MaLichTrinh,
+        NgayKhoiHanh: schedule.NgayKhoiHanh.toISOString(),
+        NgayKhoiHanhKey: this.toDateKeyFromDbDate(schedule.NgayKhoiHanh),
+        DiemKhoiHanh: schedule.TUYEN_XE?.DiemKhoiHanh,
+        DiemDen: schedule.TUYEN_XE?.DiemDen,
+      });
     });
+
+    const schedules = schedulesMatchingDate.filter((schedule) => {
+      const departureMatch = this.matchRoutePoint(schedule.TUYEN_XE?.DiemKhoiHanh, dto.departure);
+      const destinationMatch = this.matchRoutePoint(schedule.TUYEN_XE?.DiemDen, dto.destination);
+      return departureMatch && destinationMatch;
+    });
+
+    console.log('[searchTrips] schedules after route filter:', schedules.length);
+
+    type ScheduleWithRelations = Prisma.LICH_TRINHGetPayload<{
+      include: {
+        TUYEN_XE: true;
+        PHUONG_TIEN: true;
+      };
+    }>;
 
     const results = [];
 
-    for (const schedule of matchedSchedules) {
+    for (const schedule of schedules as ScheduleWithRelations[]) {
       // Auto initialize seats if empty
       await this.checkAndInitializeSeats(
         schedule.MaLichTrinh,
@@ -211,56 +301,48 @@ export class TimKiemChuyenXeService {
       // Count available seats
       const availableSeats = seats.filter(s => s.TrangThaiGhe === TrangThaiGhe.Trong).length;
 
-      // Fetch stops
-      const stops = await this.prisma.lICH_TRINH_DIEM_DUNG.findMany({
-        where: { MaLichTrinh: schedule.MaLichTrinh },
-        include: {
-          DIEM_DON_TRA_DUNG: true,
-        },
-        orderBy: {
-          GioDenDuKien: 'asc',
-        },
+      console.log('[searchTrips] seat summary:', {
+        MaLichTrinh: schedule.MaLichTrinh,
+        totalSeats: seats.length,
+        availableSeats,
       });
 
       // Only return trips that still have available seats
       if (availableSeats > 0) {
         results.push({
-          MaLichTrinh: schedule.MaLichTrinh,
-          NgayKhoiHanh: schedule.NgayKhoiHanh,
-          GioKhoiHanh: schedule.GioKhoiHanh,
-          GioGoiYCoMat: schedule.GioGoiYCoMat,
-          GioDenDuKien: schedule.GioDenDuKien,
-          GiaVeCoBan: schedule.GiaVeCoBan,
-          TrangThai: schedule.TrangThaiLichTrinh,
-          availableSeats,
-          tuyenXe: schedule.TUYEN_XE,
-          phuongTien: schedule.PHUONG_TIEN,
-          gheChuyenXe: seats.map(s => ({
-            MaGheChuyen: s.MaGheChuyen,
-            NhomGhe: s.NhomGhe,
-            GiaVe: s.GiaVe,
-            TrangThaiGhe: s.TrangThaiGhe,
-            ThoiGianCapNhatTrangThai: s.ThoiGianCapNhatTrangThai,
-            SoGhe: s.GHE?.SoGhe,
-            TangGhe: s.GHE?.TangGhe,
-            DayGhe: s.GHE?.DayGhe,
-          })),
-          diemDungLichTrinh: stops.map((stop, idx) => ({
-            MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
-            ThuTuDung: idx + 1,
-            GioDenDuKien: stop.GioDenDuKien,
-            GhiChu: stop.Ngay ? stop.Ngay.toLocaleDateString() : '',
-            MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
-            TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
-            DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
-            ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
-            Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
-            LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
-            ThoiGianCoMatTruoc: stop.DIEM_DON_TRA_DUNG?.ThoiGianCoMatTruoc,
-            GioCanCoMat: stop.DIEM_DON_TRA_DUNG?.GioCanCoMat,
+          maLichTrinh: schedule.MaLichTrinh,
+          gioKhoiHanh: schedule.GioKhoiHanh,
+          gioDenDuKien: schedule.GioDenDuKien,
+          giaVeCoBan: schedule.GiaVeCoBan.toNumber(),
+          trangThaiLichTrinh: schedule.TrangThaiLichTrinh,
+          diemKhoiHanh: schedule.TUYEN_XE.DiemKhoiHanh,
+          diemDen: schedule.TUYEN_XE.DiemDen,
+          tenTuyen: schedule.TUYEN_XE.TenTuyenXe,
+          bienSoXe: schedule.PHUONG_TIEN.BienSoXe,
+          loaiXe: schedule.PHUONG_TIEN.LoaiXe,
+          soGhe: schedule.PHUONG_TIEN.SoGhe,
+          soGheTrong: availableSeats,
+          seats: seats.map(s => ({
+            maGheChuyen: s.MaGheChuyen,
+            soGhe: s.GHE?.SoGhe,
+            tangGhe: s.GHE?.TangGhe,
+            trangThaiGhe: s.TrangThaiGhe,
+            giaVe: s.GiaVe.toNumber(),
           })),
         });
+      } else {
+        console.log('[searchTrips] excluded schedule (no available seats):', {
+          MaLichTrinh: schedule.MaLichTrinh,
+          soGheTrong: availableSeats,
+        });
       }
+    }
+
+    console.log('[searchTrips] final results:', results.length);
+    if (schedules.length > 0 && results.length === 0) {
+      console.log(
+        '[searchTrips] schedules after route filter > 0 but final results = 0 because soGheTrong <= 0 for all matched schedules',
+      );
     }
 
     return results;
@@ -268,13 +350,20 @@ export class TimKiemChuyenXeService {
 
   // ===== GET TRIP DETAIL =====
   async getTripDetail(id: string) {
+    type ScheduleWithRelations = Prisma.LICH_TRINHGetPayload<{
+      include: {
+        TUYEN_XE: true;
+        PHUONG_TIEN: true;
+      };
+    }>;
+
     const schedule = await this.prisma.lICH_TRINH.findUnique({
       where: { MaLichTrinh: id },
       include: {
         TUYEN_XE: true,
         PHUONG_TIEN: true,
       },
-    });
+    }) as ScheduleWithRelations;
 
     if (!schedule) {
       throw new NotFoundException(`Không tìm thấy chuyến xe với mã ${id}`);
@@ -311,65 +400,73 @@ export class TimKiemChuyenXeService {
       return numA - numB;
     });
 
-    // Fetch station timetable stops
-    const stops = await this.prisma.lICH_TRINH_DIEM_DUNG.findMany({
-      where: { MaLichTrinh: id },
-      include: {
-        DIEM_DON_TRA_DUNG: true,
-      },
-      orderBy: {
-        GioDenDuKien: 'asc',
-      },
-    });
+    const availableSeats = seats.filter((s) => s.TrangThaiGhe === TrangThaiGhe.Trong).length;
 
-    // Also fetch all route stops from DIEM_DON_TRA_DUNG
-    const routeStops = await this.prisma.dIEM_DON_TRA_DUNG.findMany({
-      where: { MaTuyenXe: schedule.MaTuyenXe },
-    });
+    const diemKhoiHanh = schedule.TUYEN_XE.DiemKhoiHanh;
+    const diemDen = schedule.TUYEN_XE.DiemDen;
 
-    const mappedStops = stops.map(stop => ({
-      MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
-      ThuTuDung: stop.ThuTuDung,
-      GioDenDuKien: stop.GioDenDuKien,
-      GhiChu: stop.GhiChu,
-      MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
-      TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
-      DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
-      ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
-      Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
-      LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
+    const diemDungLichTrinh = [
+      {
+        MaLichTrinhDiemDung: `PICKUP_${schedule.MaLichTrinh}`,
+        ThuTuDung: 1,
+        GioDenDuKien: schedule.GioKhoiHanh,
+        GhiChu: 'Diem don',
+        MaDiem: `PICKUP_${schedule.MaLichTrinh}`,
+        TenDiem: diemKhoiHanh,
+        DiaChi: diemKhoiHanh,
+        ThanhPho: null,
+        Tinh: null,
+        LoaiDiem: 'DiemDon',
+      },
+      {
+        MaLichTrinhDiemDung: `DROPOFF_${schedule.MaLichTrinh}`,
+        ThuTuDung: 2,
+        GioDenDuKien: schedule.GioDenDuKien,
+        GhiChu: 'Diem tra',
+        MaDiem: `DROPOFF_${schedule.MaLichTrinh}`,
+        TenDiem: diemDen,
+        DiaChi: diemDen,
+        ThanhPho: null,
+        Tinh: null,
+        LoaiDiem: 'DiemTra',
+      },
+    ];
+
+    const pickupPoints = [{ tenDiem: diemKhoiHanh }];
+    const dropoffPoints = [{ tenDiem: diemDen }];
+
+    const mappedSeats = seats.map((s) => ({
+      maGheChuyen: s.MaGheChuyen,
+      soGhe: s.GHE?.SoGhe,
+      tangGhe: s.GHE?.TangGhe,
+      dayGhe: s.GHE?.DayGhe,
+      trangThaiGhe: s.TrangThaiGhe,
+      giaVe: s.GiaVe.toNumber(),
     }));
-
-    // Find any routeStops that are not in mappedStops and merge them
-    const existingMaDiems = new Set(mappedStops.map(s => s.MaDiem));
-    const extraStops = routeStops
-      .filter(rs => !existingMaDiems.has(rs.MaDiem))
-      .map((rs, index) => ({
-        MaLichTrinhDiemDung: `EXTRA_${rs.MaDiem}`,
-        ThuTuDung: mappedStops.length + index + 1,
-        GioDenDuKien: schedule.GioKhoiHanh, // Fallback to departure time
-        GhiChu: rs.LoaiDiem === 'DiemDonTra' ? 'Diem don/tra' : 'Diem dung',
-        MaDiem: rs.MaDiem,
-        TenDiem: rs.TenDiem,
-        DiaChi: rs.DiaChi,
-        ThanhPho: rs.ThanhPho,
-        Tinh: rs.Tinh,
-        LoaiDiem: rs.LoaiDiem,
-      }));
-
-    const finalStops = [...mappedStops, ...extraStops];
 
     return {
       MaLichTrinh: schedule.MaLichTrinh,
+      maLichTrinh: schedule.MaLichTrinh,
       NgayKhoiHanh: schedule.NgayKhoiHanh,
       GioKhoiHanh: schedule.GioKhoiHanh,
+      gioKhoiHanh: schedule.GioKhoiHanh,
       GioGoiYCoMat: schedule.GioGoiYCoMat,
+      gioGoiYCoMat: schedule.GioGoiYCoMat,
       GioDenDuKien: schedule.GioDenDuKien,
+      gioDenDuKien: schedule.GioDenDuKien,
       GiaVeCoBan: schedule.GiaVeCoBan,
+      giaVeCoBan: schedule.GiaVeCoBan.toNumber(),
       TrangThai: schedule.TrangThaiLichTrinh,
-      tuyenXe: schedule.TUYEN_XE,
-      phuongTien: schedule.PHUONG_TIEN,
-      gheChuyenXe: seats.map(s => ({
+      tenTuyen: schedule.TUYEN_XE.TenTuyenXe,
+      diemKhoiHanh,
+      diemDen,
+      bienSoXe: schedule.PHUONG_TIEN.BienSoXe,
+      loaiXe: schedule.PHUONG_TIEN.LoaiXe,
+      soGhe: schedule.PHUONG_TIEN.SoGhe,
+      soGheTrong: availableSeats,
+      pickupPoints,
+      dropoffPoints,
+      gheChuyenXe: seats.map((s) => ({
         MaGheChuyen: s.MaGheChuyen,
         NhomGhe: s.NhomGhe,
         GiaVe: s.GiaVe,
@@ -379,20 +476,8 @@ export class TimKiemChuyenXeService {
         TangGhe: s.GHE?.TangGhe,
         DayGhe: s.GHE?.DayGhe,
       })),
-      diemDungLichTrinh: stops.map((stop, idx) => ({
-        MaLichTrinhDiemDung: stop.MaLichTrinhDiemDung,
-        ThuTuDung: idx + 1,
-        GioDenDuKien: stop.GioDenDuKien,
-        GhiChu: stop.Ngay ? stop.Ngay.toLocaleDateString() : '',
-        MaDiem: stop.DIEM_DON_TRA_DUNG?.MaDiem,
-        TenDiem: stop.DIEM_DON_TRA_DUNG?.TenDiem,
-        DiaChi: stop.DIEM_DON_TRA_DUNG?.DiaChi,
-        ThanhPho: stop.DIEM_DON_TRA_DUNG?.ThanhPho,
-        Tinh: stop.DIEM_DON_TRA_DUNG?.Tinh,
-        LoaiDiem: stop.DIEM_DON_TRA_DUNG?.LoaiDiem,
-        ThoiGianCoMatTruoc: stop.DIEM_DON_TRA_DUNG?.ThoiGianCoMatTruoc,
-        GioCanCoMat: stop.DIEM_DON_TRA_DUNG?.GioCanCoMat,
-      })),
+      seats: mappedSeats,
+      diemDungLichTrinh,
     };
   }
 }

@@ -11,10 +11,6 @@ export class ThanhToanService {
     private nhatKyService: NhatKyHeThongService,
   ) {}
 
-  // Helper to generate transaction ID
-  private generateTransactionId(): string {
-    return `GD_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
-  }
 
   // ===== CREATE TRANSACTION =====
   async createTransaction(dto: { MaDonHang: string; PhuongThucThanhToan: string; SoTien: number }) {
@@ -32,7 +28,7 @@ export class ThanhToanService {
       throw new BadRequestException(`Đơn hàng đã ở trạng thái ${order.TrangThaiDonHang}, không thể thực hiện thanh toán!`);
     }
 
-    const maGiaoDich = this.generateTransactionId();
+    const maGiaoDich = await this.prisma.generateNextId('tHANH_TOAN', 'MaGiaoDich', 'GD_TT_', 6, 100001);
 
     const transaction = await this.prisma.tHANH_TOAN.create({
       data: {
@@ -214,9 +210,10 @@ export class ThanhToanService {
     // Process Transaction in DB
     const result = await this.prisma.$transaction(async (tx) => {
       // Create payment record
+      const maGiaoDich = await this.prisma.generateNextId('tHANH_TOAN', 'MaGiaoDich', 'GD_TT_', 6, 100001);
       const payment = await tx.tHANH_TOAN.create({
         data: {
-          MaGiaoDich: `PAY_${Date.now()}`,
+          MaGiaoDich: maGiaoDich,
           MaDonHang: dto.orderId,
           LoaiGiaoDich: 'ThanhToan',
           PhuongThucThanhToan: dto.paymentMethod,
