@@ -518,6 +518,156 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.isFormValid = !this.HoTenKhachHangError && !this.EmailError && !this.NgaySinhError && !this.AnhDaiDienError;
   }
 
+  showChangePwdOtpModal: boolean = false;
+  changePwdOtpString: string = '';
+  changePwdOtpDigits: string[] = Array(6).fill('');
+  changePwdOtpCountdown: number = 180;
+  changePwdOtpTimer: any = null;
+  changePwdOtpError: string = '';
+  isSendingChangePwdOtp: boolean = false;
+  pendingPasswordChange = { current: '', new: '', confirm: '' };
+
+  closeChangePwdOtpModal() {
+    this.clearChangePwdOtpTimer();
+    this.showChangePwdOtpModal = false;
+    this.changePwdOtpString = '';
+    this.changePwdOtpDigits = Array(6).fill('');
+    this.changePwdOtpError = '';
+    this.cdr.detectChanges();
+  }
+
+  startChangePwdOtpTimer() {
+    this.clearChangePwdOtpTimer();
+    this.changePwdOtpCountdown = 180;
+    this.changePwdOtpTimer = setInterval(() => {
+      this.ngZone.run(() => {
+        if (this.changePwdOtpCountdown > 0) {
+          this.changePwdOtpCountdown -= 1;
+          this.cdr.detectChanges();
+        } else {
+          this.clearChangePwdOtpTimer();
+        }
+      });
+    }, 1000);
+  }
+
+  clearChangePwdOtpTimer() {
+    if (this.changePwdOtpTimer) {
+      clearInterval(this.changePwdOtpTimer);
+      this.changePwdOtpTimer = null;
+    }
+  }
+
+  formatChangePwdCountdown(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  onChangePwdOtpChange(val: string) {
+    const cleaned = val.replace(/[^0-9]/g, '').slice(0, 6);
+    this.changePwdOtpString = cleaned;
+    for (let i = 0; i < 6; i++) {
+      this.changePwdOtpDigits[i] = cleaned[i] || '';
+    }
+  }
+
+  resendChangePwdOtp() {
+    this.changePwdOtpError = '';
+    this.sendChangePwdOtp();
+  }
+
+  sendChangePwdOtp() {
+    if (this.isSendingChangePwdOtp) return;
+    this.isSendingChangePwdOtp = true;
+    this.changePwdOtpError = '';
+
+    const phone = this.user.SoDienThoai || '';
+    this.authApiService.sendOtp({ SoDienThoai: phone, MucDich: 'CHANGE_PASSWORD' }).subscribe({
+      next: (response: any) => {
+        this.ngZone.run(() => {
+          this.isSendingChangePwdOtp = false;
+          this.changePwdOtpString = '';
+          this.changePwdOtpDigits = Array(6).fill('');
+          this.changePwdOtpError = '';
+          this.showChangePwdOtpModal = true;
+          this.startChangePwdOtpTimer();
+          
+          if (response.otp) {
+            // Autofill OTP
+            this.onChangePwdOtpChange(response.otp);
+          }
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err: any) => {
+        this.ngZone.run(() => {
+          this.isSendingChangePwdOtp = false;
+          this.changePwdOtpError = err.error?.message || 'Không thể gửi mã OTP. Vui lòng thử lại.';
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  verifyChangePwdOtp() {
+    this.changePwdOtpError = '';
+
+    if (!this.changePwdOtpString || this.changePwdOtpString.length !== 6) {
+      this.changePwdOtpError = 'Vui lòng nhập đủ 6 chữ số mã xác thực.';
+      return;
+    }
+
+    const phone = this.user.SoDienThoai || '';
+    const code = this.changePwdOtpString;
+    const verifyPayload = {
+      SoDienThoai: phone,
+      otp: code,
+      MucDich: 'CHANGE_PASSWORD',
+      markUsed: true
+    };
+
+    this.authApiService.verifyOtp(verifyPayload).subscribe({
+      next: (response: any) => {
+        this.ngZone.run(() => {
+          this.clearChangePwdOtpTimer();
+          this.showChangePwdOtpModal = false;
+          this.executeChangePassword();
+        });
+      },
+      error: (err: any) => {
+        this.ngZone.run(() => {
+          console.error('Verify OTP in change-password error:', err);
+          this.changePwdOtpError = err.error?.message || 'Mã xác thực không đúng. Vui lòng thử lại.';
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  executeChangePassword() {
+    this.profileApiService.changePassword({
+      MatKhauCu: this.pendingPasswordChange.current,
+      MatKhauMoi: this.pendingPasswordChange.new,
+      XacNhanMatKhauMoi: this.pendingPasswordChange.confirm
+    }).subscribe({
+      next: (response: any) => {
+        this.ngZone.run(() => {
+          this.changePasswordSuccess = response.message || 'Đổi mật khẩu thành công!';
+          this.passwords = { current: '', new: '', confirm: '' }; // Clear form
+          this.pendingPasswordChange = { current: '', new: '', confirm: '' };
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err: any) => {
+        this.ngZone.run(() => {
+          this.changePasswordFailure = err.error?.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.';
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
   changePassword(): void {
     this.currentPasswordError = '';
     this.newPasswordError = '';
@@ -546,25 +696,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.profileApiService.changePassword({
-      MatKhauCu: this.passwords.current,
-      MatKhauMoi: this.passwords.new,
-      XacNhanMatKhauMoi: this.passwords.confirm
-    }).subscribe({
-      next: (response: any) => {
-        this.ngZone.run(() => {
-          this.changePasswordSuccess = response.message || 'Đổi mật khẩu thành công!';
-          this.passwords = { current: '', new: '', confirm: '' }; // Clear form
-          this.cdr.detectChanges();
-        });
-      },
-      error: (err: any) => {
-        this.ngZone.run(() => {
-          this.changePasswordFailure = err.error?.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.';
-          this.cdr.detectChanges();
-        });
-      }
-    });
+    // Save pending change
+    this.pendingPasswordChange = {
+      current: this.passwords.current,
+      new: this.passwords.new,
+      confirm: this.passwords.confirm
+    };
+
+    // Send OTP first
+    this.sendChangePwdOtp();
   }
 
   // ===== FLOW QUÊN MẬT KHẨU TỪ PROFILE (OTP) =====
