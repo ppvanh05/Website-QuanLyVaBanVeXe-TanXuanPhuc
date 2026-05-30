@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, Inject, OnInit, PLATFORM_ID, NgZone } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -35,6 +35,7 @@ interface Trip {
   stops?: any[];
   expanded?: boolean;
   selectedTab?: 'seat' | 'schedule' | 'shuttle' | 'utilities' | 'policy';
+  diemDungLichTrinh?: any[];
 }
 
 @Component({
@@ -110,6 +111,7 @@ export class TimKiemChuyenXe implements OnInit {
   allTrips: Trip[] = [];
   filteredTrips: Trip[] = [];
   isLoadingTrips = false;
+  isSearchPerformed = false;
   tripLoadError = '';
 
 
@@ -160,10 +162,12 @@ export class TimKiemChuyenXe implements OnInit {
     private router: Router,
     private supabaseService: SupabaseService,
     private http: HttpClient,
+    private ngZone: NgZone,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit() {
+    this.loadActiveRoutes();
     this.route.queryParams.subscribe(params => {
       this.departure = params['departure'] || this.departure;
       this.destination = params['destination'] || this.destination;
@@ -174,9 +178,14 @@ export class TimKiemChuyenXe implements OnInit {
       this.childCount = Number(params['children']) || 0;
       this.infantCount = Number(params['infants']) || 0;
       this.updatePassengerCount();
-      this.loadTripsFromApi();
+      // Only auto-search if navigated with query params (e.g. from home page)
+      const hasSearchParams = params['departure'] || params['destination'] || params['date'];
+      if (hasSearchParams) {
+        this.isSearchPerformed = true;
+        this.loadTripsFromApi();
+      }
     });
-    if (isPlatformBrowser(this.platformId)) {
+    if (isPlatformBrowser(this.platformId) && environment.supabaseUrl && !environment.supabaseUrl.includes('placeholder')) {
       try {
         this.setupRealtimeSubscriptions();
       } catch (error) {
@@ -635,17 +644,21 @@ export class TimKiemChuyenXe implements OnInit {
   }
 
   private mapApiTrip(data: any): Trip {
-    const seats = this.mapApiSeats(data.gheChuyenXe || [], this.toNumber(data.GiaVeCoBan));
-    const startStation = data.tuyenXe?.DiemKhoiHanh || data.TUYEN_XE?.DiemKhoiHanh || '';
-    const endStation = data.tuyenXe?.DiemDen || data.TUYEN_XE?.DiemDen || '';
-    const departureTime = this.formatApiTime(data.GioKhoiHanh);
-    const arrivalTime = this.formatApiTime(data.GioDenDuKien);
-    const price = this.toNumber(data.GiaVeCoBan);
-    const distance = this.toNumber(data.tuyenXe?.KhoangCach || data.TUYEN_XE?.KhoangCach);
+    const rawSeats = data.seats || data.gheChuyenXe || [];
+    const basePrice = this.toNumber(data.giaVeCoBan ?? data.GiaVeCoBan);
+    const seats = this.mapApiSeats(rawSeats, basePrice);
+    
+    const startStation = data.diemKhoiHanh ?? data.tuyenXe?.DiemKhoiHanh ?? data.TUYEN_XE?.DiemKhoiHanh ?? '';
+    const endStation = data.diemDen ?? data.tuyenXe?.DiemDen ?? data.TUYEN_XE?.DiemDen ?? '';
+    
+    const departureTime = this.formatApiTime(data.gioKhoiHanh ?? data.GioKhoiHanh);
+    const arrivalTime = this.formatApiTime(data.gioDenDuKien ?? data.GioDenDuKien);
+    const price = basePrice;
+    const distance = this.toNumber(data.tuyenXe?.KhoangCach || data.TUYEN_XE?.KhoangCach || data.KhoangCach);
     const stops = Array.isArray(data.diemDungLichTrinh) ? data.diemDungLichTrinh : [];
 
     return {
-      id: data.MaLichTrinh,
+      id: data.maLichTrinh ?? data.MaLichTrinh,
       departureTime,
       arrivalTime,
       duration: this.calculateDuration(departureTime, arrivalTime),
@@ -665,18 +678,18 @@ export class TimKiemChuyenXe implements OnInit {
 
   private mapApiSeats(seats: any[], fallbackPrice: number): Seat[] {
     return seats.map(seat => {
-      const name = seat.SoGhe || this.extractSeatName(seat.MaGheChuyen) || seat.MaGheChuyen;
+      const name = seat.soGhe ?? seat.SoGhe ?? this.extractSeatName(seat.maGheChuyen ?? seat.MaGheChuyen) ?? '';
       const seatNumber = parseInt(String(name).replace(/[^0-9]/g, ''), 10);
-      const deck: 'lower' | 'upper' = Number(seat.TangGhe) === 2 ? 'upper' : 'lower';
+      const deck: 'lower' | 'upper' = Number(seat.tangGhe ?? seat.TangGhe) === 2 ? 'upper' : 'lower';
       const side: 'left' | 'right' = Number.isFinite(seatNumber) && seatNumber % 2 === 0 ? 'right' : 'left';
 
       return {
         name,
-        maGheChuyen: seat.MaGheChuyen,
-        status: this.mapSeatStatus(seat.TrangThaiGhe),
+        maGheChuyen: seat.maGheChuyen ?? seat.MaGheChuyen,
+        status: this.mapSeatStatus(seat.trangThaiGhe ?? seat.TrangThaiGhe),
         deck,
         side,
-        price: this.toNumber(seat.GiaVe) || fallbackPrice,
+        price: this.toNumber(seat.giaVe ?? seat.GiaVe) || fallbackPrice,
       };
     }).sort((a, b) => {
       if (a.deck !== b.deck) return a.deck === 'lower' ? -1 : 1;
@@ -759,6 +772,7 @@ export class TimKiemChuyenXe implements OnInit {
   // Handle Search button
   searchTrip() {
     this.showPassengerPopover = false;
+    this.isSearchPerformed = true;
     this.loadTripsFromApi();
     // Add to recent searches
     const exists = this.recentSearches.some(s => s.from === this.departure && s.to === this.destination);
@@ -951,6 +965,7 @@ export class TimKiemChuyenXe implements OnInit {
       this.allTrips.forEach(t => t.expanded = false);
       trip.expanded = true;
       trip.selectedTab = 'seat';
+      this.loadTripDetails(trip);
     }
     this.activeTrip = trip;
     this.updateSelectedSeats(trip);
@@ -961,6 +976,7 @@ export class TimKiemChuyenXe implements OnInit {
     trip.expanded = true;
     trip.selectedTab = tab;
     this.activeTrip = trip;
+    this.loadTripDetails(trip);
     this.updateSelectedSeats(trip);
   }
 
@@ -1055,16 +1071,22 @@ export class TimKiemChuyenXe implements OnInit {
   }
 
   setupRealtimeSubscriptions() {
-    // Subscribe to GHE_CHUYEN_XE changes
-    this.supabaseService.subscribeTableChanges('GHE_CHUYEN_XE', (payload: any) => {
-      console.log('Realtime seat change payload:', payload);
-      this.handleSeatStatusChange(payload);
-    });
+    this.ngZone.runOutsideAngular(() => {
+      // Subscribe to GHE_CHUYEN_XE changes
+      this.supabaseService.subscribeTableChanges('GHE_CHUYEN_XE', (payload: any) => {
+        this.ngZone.run(() => {
+          console.log('Realtime seat change payload:', payload);
+          this.handleSeatStatusChange(payload);
+        });
+      });
 
-    // Subscribe to LICH_TRINH changes
-    this.supabaseService.subscribeTableChanges('LICH_TRINH', (payload: any) => {
-      console.log('Realtime schedule change payload:', payload);
-      this.handleScheduleChange(payload);
+      // Subscribe to LICH_TRINH changes
+      this.supabaseService.subscribeTableChanges('LICH_TRINH', (payload: any) => {
+        this.ngZone.run(() => {
+          console.log('Realtime schedule change payload:', payload);
+          this.handleScheduleChange(payload);
+        });
+      });
     });
   }
 
@@ -1135,5 +1157,92 @@ export class TimKiemChuyenXe implements OnInit {
       }
     }
     this.filterTrips();
+  }
+
+  loadActiveRoutes(): void {
+    this.http.get<any>(`${this.apiBaseUrl}/customer/home/routes`).subscribe({
+      next: (response: any) => {
+        if (response && response.success && Array.isArray(response.data)) {
+          const locSet = new Set<string>();
+          response.data.forEach((route: any) => {
+            if (route.DiemKhoiHanh) locSet.add(route.DiemKhoiHanh.trim());
+            if (route.DiemDen) locSet.add(route.DiemDen.trim());
+          });
+          if (locSet.size > 0) {
+            this.locations = Array.from(locSet);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load active routes', err);
+      }
+    });
+  }
+
+  loadTripDetails(trip: any) {
+    if (trip.diemDungLichTrinh && trip.diemDungLichTrinh.length > 0) {
+      return;
+    }
+    this.http.get<any>(`${this.apiBaseUrl}/customer/tim-kiem-chuyen-xe/detail/${trip.id}`).subscribe({
+      next: (response: any) => {
+        if (response && response.success && response.data) {
+          if (Array.isArray(response.data.diemDungLichTrinh)) {
+            trip.diemDungLichTrinh = response.data.diemDungLichTrinh.map((stop: any) => ({
+              ...stop,
+              TenDiem: this.restoreVietnameseAccents(stop.TenDiem),
+              DiaChi: this.restoreVietnameseAccents(stop.DiaChi || stop.GhiChu || '')
+            }));
+          } else {
+            trip.diemDungLichTrinh = [];
+          }
+          if (Array.isArray(response.data.gheChuyenXe) && response.data.gheChuyenXe.length > 0) {
+            const mapped = response.data.gheChuyenXe.map((s: any) => ({
+              name: s.SoGhe,
+              maGheChuyen: s.MaGheChuyen,
+              deck: s.TangGhe === 2 ? 'upper' : 'lower',
+              side: s.DayGhe === 'A' ? 'left' : 'right',
+              price: Number(s.GiaVe),
+              status: s.TrangThaiGhe === 'DaBan' ? 'sold' : (s.TrangThaiGhe === 'GiuCho' ? 'sold' : 'available'),
+            }));
+            mapped.sort((a: any, b: any) => {
+              if (a.deck !== b.deck) {
+                return a.deck === 'lower' ? -1 : 1;
+              }
+              const numA = parseInt(a.name.replace(/[^0-9]/g, ''), 10);
+              const numB = parseInt(b.name.replace(/[^0-9]/g, ''), 10);
+              return numA - numB;
+            });
+            trip.seats = mapped;
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load trip details', err);
+      }
+    });
+  }
+
+  formatTimeStr(d: any): string {
+    if (!d) return '00:00';
+    const dateObj = new Date(d);
+    if (isNaN(dateObj.getTime())) return String(d).slice(0, 5);
+    return `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+  }
+
+  restoreVietnameseAccents(text: string): string {
+    if (!text) return '';
+    const trimmed = text.trim();
+    const mapping: { [key: string]: string } = {
+      'ben xe thuong ly': 'Bến xe Thượng Lý',
+      'ben xe bai chay': 'Bến xe Bãi Cháy',
+      'ben xe my dinh': 'Bến xe Mỹ Đình',
+      'nha tho da sapa': 'Nhà thờ đá SaPa',
+      '52 ha ly, hong bang': '52 Hạ Lý, Hồng Bàng',
+      'duong ha long, bai chay': 'Đường Hạ Long, Bãi Cháy',
+      '20 pham hung, nam tu liem': '20 Phạm Hùng, Nam Từ Liêm',
+      'trung tam sapa': 'Trung tâm SaPa'
+    };
+    const key = trimmed.toLowerCase();
+    return mapping[key] || text;
   }
 }

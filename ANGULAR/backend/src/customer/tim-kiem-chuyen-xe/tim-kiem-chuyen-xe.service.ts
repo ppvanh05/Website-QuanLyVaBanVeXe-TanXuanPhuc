@@ -161,44 +161,46 @@ export class TimKiemChuyenXeService {
         defaultSeats.push({ MaGhe: gheId });
       }
 
-      // Now create GHE_CHUYEN_XE entries
-      const created = [];
-      for (const ghe of defaultSeats) {
-        const gheChuyenId = `${scheduleId}_${ghe.MaGhe}`;
-        const record = await this.prisma.gHE_CHUYEN_XE.create({
-          data: {
-            MaGheChuyen: gheChuyenId,
-            NhomGhe: 'Limousine',
-            GiaVe: basePrice,
-            TrangThaiGhe: TrangThaiGhe.Trong,
-            ThoiGianCapNhatTrangThai: new Date(),
-            MaLichTrinh: scheduleId,
-            MaGhe: ghe.MaGhe,
-          },
-        });
-        created.push(record);
-      }
-      return created;
+      // Now create GHE_CHUYEN_XE entries in batch
+      const seatsToCreate = defaultSeats.map(ghe => ({
+        MaGheChuyen: `${scheduleId}_${ghe.MaGhe}`,
+        NhomGhe: 'Limousine',
+        GiaVe: basePrice,
+        TrangThaiGhe: TrangThaiGhe.Trong,
+        ThoiGianCapNhatTrangThai: new Date(),
+        MaLichTrinh: scheduleId,
+        MaGhe: ghe.MaGhe,
+      }));
+
+      await this.prisma.gHE_CHUYEN_XE.createMany({
+        data: seatsToCreate,
+        skipDuplicates: true,
+      });
+
+      return this.prisma.gHE_CHUYEN_XE.findMany({
+        where: { MaLichTrinh: scheduleId },
+      });
     }
 
-    // Auto-create from existing vehicle GHE templates
-    const created = [];
-    for (const seat of seats) {
-      const gheChuyenId = `${scheduleId}_${seat.SoGhe}`;
-      const record = await this.prisma.gHE_CHUYEN_XE.create({
-        data: {
-          MaGheChuyen: gheChuyenId,
-          NhomGhe: 'Limousine',
-          GiaVe: basePrice,
-          TrangThaiGhe: TrangThaiGhe.Trong,
-          ThoiGianCapNhatTrangThai: new Date(),
-          MaLichTrinh: scheduleId,
-          MaGhe: seat.MaGhe,
-        },
-      });
-      created.push(record);
-    }
-    return created;
+    // Auto-create from existing vehicle GHE templates in batch
+    const seatsToCreate = seats.map(seat => ({
+      MaGheChuyen: `${scheduleId}_${seat.SoGhe}`,
+      NhomGhe: 'Limousine',
+      GiaVe: basePrice,
+      TrangThaiGhe: TrangThaiGhe.Trong,
+      ThoiGianCapNhatTrangThai: new Date(),
+      MaLichTrinh: scheduleId,
+      MaGhe: seat.MaGhe,
+    }));
+
+    await this.prisma.gHE_CHUYEN_XE.createMany({
+      data: seatsToCreate,
+      skipDuplicates: true,
+    });
+
+    return this.prisma.gHE_CHUYEN_XE.findMany({
+      where: { MaLichTrinh: scheduleId },
+    });
   }
 
   // ===== SEARCH TRIPS =====
@@ -227,6 +229,13 @@ export class TimKiemChuyenXeService {
         TrangThaiLichTrinh: {
           notIn: [TrangThaiLichTrinh.DaKhoa],
         },
+        // Filter at database level to fetch only matching routes
+        ...(dto.departure || dto.destination ? {
+          TUYEN_XE: {
+            DiemKhoiHanh: dto.departure ? { contains: dto.departure } : undefined,
+            DiemDen: dto.destination ? { contains: dto.destination } : undefined,
+          }
+        } : {}),
       },
       include: {
         TUYEN_XE: true,
@@ -265,26 +274,29 @@ export class TimKiemChuyenXeService {
       };
     }>;
 
-    const results = [];
-
-    for (const schedule of schedules as ScheduleWithRelations[]) {
-      // Auto initialize seats if empty
-      await this.checkAndInitializeSeats(
-        schedule.MaLichTrinh,
-        schedule.MaXe,
-        schedule.GiaVeCoBan.toNumber(),
-      );
-
-      // Fetch seats details with their layout templates from DB
-      const seats = await this.prisma.gHE_CHUYEN_XE.findMany({
+    const promises = (schedules as ScheduleWithRelations[]).map(async (schedule) => {
+      // Fetch seats details with their layout templates from DB first
+      let seats = await this.prisma.gHE_CHUYEN_XE.findMany({
         where: { MaLichTrinh: schedule.MaLichTrinh },
         include: {
           GHE: true,
         },
-        orderBy: {
-          GHE: { SoGhe: 'asc' },
-        },
       });
+
+      // Auto initialize seats if empty
+      if (seats.length === 0) {
+        await this.checkAndInitializeSeats(
+          schedule.MaLichTrinh,
+          schedule.MaXe,
+          schedule.GiaVeCoBan.toNumber(),
+        );
+        seats = await this.prisma.gHE_CHUYEN_XE.findMany({
+          where: { MaLichTrinh: schedule.MaLichTrinh },
+          include: {
+            GHE: true,
+          },
+        });
+      }
 
       // Sort seats numerically by deck and name to match odds-left/evens-right layout
       seats.sort((a, b) => {
@@ -309,7 +321,7 @@ export class TimKiemChuyenXeService {
 
       // Only return trips that still have available seats
       if (availableSeats > 0) {
-        results.push({
+        return {
           maLichTrinh: schedule.MaLichTrinh,
           gioKhoiHanh: schedule.GioKhoiHanh,
           gioDenDuKien: schedule.GioDenDuKien,
@@ -329,23 +341,27 @@ export class TimKiemChuyenXeService {
             trangThaiGhe: s.TrangThaiGhe,
             giaVe: s.GiaVe.toNumber(),
           })),
-        });
+        };
       } else {
         console.log('[searchTrips] excluded schedule (no available seats):', {
           MaLichTrinh: schedule.MaLichTrinh,
           soGheTrong: availableSeats,
         });
+        return null;
       }
-    }
+    });
 
-    console.log('[searchTrips] final results:', results.length);
-    if (schedules.length > 0 && results.length === 0) {
+    const resolved = await Promise.all(promises);
+    const finalResults = resolved.filter((res): res is NonNullable<typeof res> => res !== null);
+
+    console.log('[searchTrips] final results:', finalResults.length);
+    if (schedules.length > 0 && finalResults.length === 0) {
       console.log(
         '[searchTrips] schedules after route filter > 0 but final results = 0 because soGheTrong <= 0 for all matched schedules',
       );
     }
 
-    return results;
+    return finalResults;
   }
 
   // ===== GET TRIP DETAIL =====
@@ -369,23 +385,28 @@ export class TimKiemChuyenXeService {
       throw new NotFoundException(`Không tìm thấy chuyến xe với mã ${id}`);
     }
 
-    // Auto initialize seats if empty
-    await this.checkAndInitializeSeats(
-      schedule.MaLichTrinh,
-      schedule.MaXe,
-      schedule.GiaVeCoBan.toNumber(),
-    );
-
-    // Fetch seats details with their layout templates
-    const seats = await this.prisma.gHE_CHUYEN_XE.findMany({
+    // Fetch seats details with their layout templates first
+    let seats = await this.prisma.gHE_CHUYEN_XE.findMany({
       where: { MaLichTrinh: id },
       include: {
         GHE: true,
       },
-      orderBy: {
-        GHE: { SoGhe: 'asc' },
-      },
     });
+
+    // Auto initialize seats if empty
+    if (seats.length === 0) {
+      await this.checkAndInitializeSeats(
+        schedule.MaLichTrinh,
+        schedule.MaXe,
+        schedule.GiaVeCoBan.toNumber(),
+      );
+      seats = await this.prisma.gHE_CHUYEN_XE.findMany({
+        where: { MaLichTrinh: id },
+        include: {
+          GHE: true,
+        },
+      });
+    }
 
 
     // Sort seats numerically by deck and name to match odds-left/evens-right layout
