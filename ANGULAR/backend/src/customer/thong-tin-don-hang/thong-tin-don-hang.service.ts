@@ -465,7 +465,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           TienBaoHiem: new Prisma.Decimal(totalInsurance),
           TongGiaVe: new Prisma.Decimal(finalTotal),
           PhuongThucThanhToan: PhuongThucThanhToan as any,
-          TrangThaiDonHang: TrangThaiVe.ChoThanhToan,
+          TrangThaiDonHang: TrangThaiVe.ChoKhoiHanh,
         },
       });
 
@@ -479,7 +479,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
             data: {
             MaVe: maVe,
             GiaVe: seat.GiaVe,
-            TrangThaiVe: TrangThaiVe.ChoThanhToan,
+            TrangThaiVe: TrangThaiVe.ChoKhoiHanh,
             SoLanDaSua: 0,
             ThoiGianXuatVe: new Date(),
             MaQRVe: `QR_${maVe}_${MaLichTrinh}_${soGhe}`,
@@ -496,7 +496,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
         await tx.gHE_CHUYEN_XE.update({
           where: { MaGheChuyen: seat.MaGheChuyen },
           data: {
-            TrangThaiGhe: TrangThaiGhe.GiuCho,
+            TrangThaiGhe: TrangThaiGhe.DaBan,
             ThoiGianCapNhatTrangThai: new Date(),
           },
         });

@@ -246,6 +246,27 @@ export class TraCuuVeComponent implements OnInit {
     });
   }
 
+  private mapStatus(rawStatus: any): 'Chờ thanh toán' | 'Chờ khởi hành' | 'Đã hoàn thành' | 'Đã hủy' | 'Đã đánh giá' {
+    if (!rawStatus) return 'Chờ thanh toán';
+    const s = rawStatus.toString().toLowerCase();
+    if (s.includes('chothanhtoan') || s.includes('cho_thanh_toan') || s.includes('cho thanh toan') || s === 'chờ thanh toán') {
+      return 'Chờ thanh toán';
+    }
+    if (s.includes('chokhoihanh') || s.includes('cho_khoi_hanh') || s.includes('cho khoi hanh') || s === 'chờ khởi hành') {
+      return 'Chờ khởi hành';
+    }
+    if (s.includes('dahoanthanh') || s.includes('da_hoan_thanh') || s.includes('da hoan thanh') || s === 'đã hoàn thành') {
+      return 'Đã hoàn thành';
+    }
+    if (s.includes('dahuy') || s.includes('da_huy') || s.includes('da huy') || s === 'đã hủy') {
+      return 'Đã hủy';
+    }
+    if (s.includes('dadanhgia') || s.includes('da_danh_gia') || s.includes('da danh gia') || s === 'đã đánh giá') {
+      return 'Đã đánh giá';
+    }
+    return 'Chờ thanh toán';
+  }
+
   private mapLookupResponse(response: any): Order | null {
     const data = response?.data || response;
     if (!data) {
@@ -273,7 +294,7 @@ export class TraCuuVeComponent implements OnInit {
       gioCanCoMat: orderSource.GioCanCoMat || orderSource.gioCanCoMat || '',
       tongGiaVe: orderSource.TongGiaVe || orderSource.tongGiaVe || orderSource.TongTien || 0,
       phuongThucThanhToan: orderSource.PhuongThucThanhToan || orderSource.phuongThucThanhToan || orderSource.paymentMethod || '',
-      trangThaiDonHang: orderSource.TrangThaiDonHang || orderSource.trangThaiDonHang || orderSource.status || 'Chờ thanh toán',
+      trangThaiDonHang: this.mapStatus(orderSource.TrangThaiDonHang || orderSource.trangThaiDonHang || orderSource.status),
       bienSoXe: orderSource.BienSoXe || orderSource.bienSoXe || orderSource.bienSo || '',
       maDiemDon: orderSource.MaDiemDon || orderSource.maDiemDon || '',
       maDiemTra: orderSource.MaDiemTra || orderSource.maDiemTra || '',
@@ -290,7 +311,7 @@ export class TraCuuVeComponent implements OnInit {
         diemTra: this.restoreVietnameseAccents(ticket.DiemTra || ticket.diemTra || ticket.diemTraKhach || orderSource.DiemTra || ''),
         diemTraThoiGian: ticket.DiemTraThoiGian || ticket.diemTraThoiGian || ticket.ThoiGianTra || orderSource.GioTra || '',
         giaVe: Number(ticket.GiaVe || ticket.giaVe || ticket.GiaTien || orderSource.TongGiaVe || 0),
-        trangThaiVe: ticket.TrangThaiVe || ticket.trangThaiVe || ticket.status || 'Chờ thanh toán',
+        trangThaiVe: this.mapStatus(ticket.TrangThaiVe || ticket.trangThaiVe || ticket.status),
         maQRVe: ticket.MaQRVe || ticket.maQRVe || ticket.qrCode || ''
       })) : []
     };
@@ -673,7 +694,7 @@ export class TraCuuVeComponent implements OnInit {
       next: (response: any) => {
         const data = response?.data || response;
         if (data) {
-          this.currentOrder = data;
+          this.currentOrder = this.mapLookupResponse(response);
           this.syncTicketFieldsFromOrder();
           this.showToast('Cập nhật thông tin vé thành công.', 'success');
         } else {
@@ -729,7 +750,7 @@ export class TraCuuVeComponent implements OnInit {
             next: (response: any) => {
               const data = response?.data || response;
               if (data) {
-                this.currentOrder = data;
+                this.currentOrder = this.mapLookupResponse(response);
                 this.syncTicketFieldsFromOrder();
               }
               this.showCancelModal = false;
