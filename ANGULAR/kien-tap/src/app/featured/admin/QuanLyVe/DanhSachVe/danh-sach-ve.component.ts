@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { timer } from 'rxjs';
 import { LunarCalendarService } from '../../../../core/services/lunar-calendar.service';
 import { SupabaseService } from '../../../../core/services/supabase.service';
-import { environment } from '../../../../../../environments/environment';
+import { environment } from '../../../../../environments/environment';
 
 const API_BASE = environment.apiBase;
 

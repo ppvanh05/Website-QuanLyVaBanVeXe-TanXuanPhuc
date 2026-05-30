@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TuyenXeService } from '../tuyen-xe.service';
 import { TaiXeService } from '../tai-xe.service';
 import { PhuongTienService } from '../phuong-tien.service';
-import { environment } from '../../../../../../environments/environment';
+import { environment } from '../../../../../environments/environment';
 
 import { CustomSelectComponent } from '../custom-select.component';
 import { DiemDonTraService } from '../diem-don-tra.service';

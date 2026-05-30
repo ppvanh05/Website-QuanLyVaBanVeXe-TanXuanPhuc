@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, switchMap, timeout } from 'rxjs/operators';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
-import { environment } from '../../../../../../../../../environments/environment';
+import { environment } from '../../../../../../environments/environment';
 
 
 interface Seat {

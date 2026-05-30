@@ -1,5 +1,5 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 
 export const adminAuthInterceptor: HttpInterceptorFn = (req, next) => {
   // Check if we are running in a browser environment to safely access localStorage
