@@ -179,7 +179,7 @@ export class TrangChuComponent implements OnInit {
       { label: 'Quản lý nhân viên', icon: 'manage_accounts', route: '/admin/quan-ly-nhan-vien', color: 'blue', permission: 'employee' },
       { label: 'Nhật ký hệ thống', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', color: 'orange', permission: 'log' },
       { label: 'Tin tức', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news' },
-      { label: 'Từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'blacklist' },
+      { label: 'Từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'review' },
     ], perms);
     this.stats = [
       { title: 'Tổng nhân viên', value: '4', trend: 'Tất cả đang hoạt động', trendType: 'up', icon: 'badge', theme: 'blue' },
@@ -191,7 +191,7 @@ export class TrangChuComponent implements OnInit {
       { title: 'Tài khoản nhân viên', description: 'Tạo, khóa/mở khóa và phân quyền nhân sự nội bộ.', icon: 'manage_accounts', route: '/admin/quan-ly-nhan-vien', color: 'blue', permission: 'employee' },
       { title: 'Nhật ký hệ thống', description: 'Theo dõi thao tác đăng nhập, cập nhật dữ liệu và lỗi nghiệp vụ.', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', color: 'orange', permission: 'log' },
       { title: 'Tin tức & chính sách', description: 'Quản lý nội dung hiển thị cho khách hàng và quy định vận hành.', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news' },
-      { title: 'Từ khóa cấm', description: 'Kiểm soát nội dung vi phạm trong đánh giá và phản hồi.', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'blacklist' },
+      { title: 'Từ khóa cấm', description: 'Kiểm soát nội dung vi phạm trong đánh giá và phản hồi.', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'review' },
     ], perms);
   }
 
@@ -343,7 +343,7 @@ export class TrangChuComponent implements OnInit {
 
   get showAdminSection(): boolean {
     const role = this.normalizeRole(this.currentUser?.LoaiTaiKhoan);
-    return role === 'QuanTriVien' || this.hasAnyPermission(['employee', 'log', 'news', 'policy', 'blacklist']);
+    return role === 'QuanTriVien' || this.hasAnyPermission(['employee', 'log', 'news', 'policy', 'review']);
   }
 
   get showEmptyState(): boolean {
@@ -357,7 +357,9 @@ export class TrangChuComponent implements OnInit {
   }
 
   private hasPermission(permission: string): boolean {
-    return !!this.currentUser?.Quyen?.includes(permission);
+    if (!this.currentUser) return false;
+    const basePermission = permission.split('.')[0];
+    return !!this.currentUser.Quyen?.includes(permission) || !!this.currentUser.Quyen?.includes(basePermission);
   }
 
   private hasAnyPermission(permissions: string[]): boolean {

@@ -59,7 +59,8 @@ export class QuanLyTinTucComponent implements OnInit {
   hasPermission(permission: string): boolean {
     const user = this.adminAuthService.currentUserValue;
     if (!user) return false;
-    return !!user.Quyen?.includes(permission);
+    const basePermission = permission.split('.')[0];
+    return !!user.Quyen?.includes(permission) || !!user.Quyen?.includes(basePermission);
   }
 
   getSafeHtml(html: string): SafeHtml {
