@@ -142,7 +142,22 @@ export class TraCuuVeService {
             LICH_TRINH: {
               include: { TUYEN_XE: true },
             },
-            PHUONG_TIEN: true,
+            PHUONG_TIEN: {
+              select: {
+                MaXe: true,
+                TenXe: true,
+                BienSoXe: true,
+                LoaiXe: true,
+                SoTang: true,
+                SoDay: true,
+                TienIch: true,
+                HanDangKiem: true,
+                HanBaoHiem: true,
+                AnhXe: true,
+                TrangThaiPhuongTien: true,
+                MaNVDieuPhoi: true,
+              }
+            },
             GHE_CHUYEN_XE: {
               include: { GHE: true },
             },
@@ -157,6 +172,8 @@ export class TraCuuVeService {
     if (!order) {
       throw new NotFoundException('Không tìm thấy đơn đặt vé nào khớp với thông tin cung cấp!');
     }
+
+    console.log('[DEBUG] Order object from DB:', JSON.stringify(order, null, 2));
 
     return this.mapOrderToFrontend(order);
   }
@@ -306,9 +323,10 @@ export class TraCuuVeService {
         });
 
         // Add to E-ticket update history logs
+        const maLichSu = await this.prisma.generateNextId('lICH_SU_VE', 'MaLichSu', 'LSV', 6, 100001);
         await tx.lICH_SU_VE.create({
           data: {
-            MaLichSu: `LSV_${Date.now()}_${ticket.MaVe}`,
+            MaLichSu: maLichSu,
             HanhDong: 'Cập nhật thông tin',
             TrangThaiCu: ticket.TrangThaiVe,
             TrangThaiMoi: ticket.TrangThaiVe,
@@ -447,9 +465,10 @@ export class TraCuuVeService {
       });
 
       // D. Create LICH_SU_HUY_VE record
+      const maLichSuHuy = await this.prisma.generateNextId('lICH_SU_HUY_VE', 'MaLichSuHuy', 'LSH', 6, 100001);
       await tx.lICH_SU_HUY_VE.create({
         data: {
-          MaLichSuHuy: `LSHV_${Date.now()}`,
+          MaLichSuHuy: maLichSuHuy,
           MaVe: maVe,
           MaChinhSach: policy ? policy.MaChinhSach : 'DEFAULT',
           NguonHuy: 'KhachHang',
@@ -464,9 +483,10 @@ export class TraCuuVeService {
       });
 
       // E. Create LICH_SU_VE record
+      const maLichSu = await this.prisma.generateNextId('lICH_SU_VE', 'MaLichSu', 'LSV', 6, 100001);
       await tx.lICH_SU_VE.create({
         data: {
-          MaLichSu: `LSV_${Date.now()}`,
+          MaLichSu: maLichSu,
           HanhDong: 'Huỷ vé',
           TrangThaiCu: ticket.TrangThaiVe,
           TrangThaiMoi: TrangThaiVe.DaHuy,
