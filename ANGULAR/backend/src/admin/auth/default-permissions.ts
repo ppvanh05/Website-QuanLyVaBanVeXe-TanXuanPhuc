@@ -38,20 +38,7 @@ export const ADMIN_PERMISSIONS = [
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
   QuanTriVien: ADMIN_PERMISSIONS,
   BanQuanLy: ['finance.view', 'report.view', 'report.export'],
-  NhanVienDieuPhoi: [
-    'route.view',
-    'route.manage',
-    'vehicle.view',
-    'vehicle.manage',
-    'driver.view',
-    'driver.manage',
-    'stop.view',
-    'stop.manage',
-    'trip.view',
-    'trip.create',
-    'trip.assign',
-    'trip.update',
-  ],
+  NhanVienDieuPhoi: ['dispatch'],
   NhanVienBanVe: [
     'ticket.view',
     'ticket.sell',

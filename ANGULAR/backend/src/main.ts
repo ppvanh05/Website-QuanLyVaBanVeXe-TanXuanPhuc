@@ -25,6 +25,8 @@ async function bootstrap() {
 
   const allowedOriginPatterns = [
     /^https:\/\/kien-tap-code.*\.vercel\.app$/,
+    /^http:\/\/localhost(:\d+)?$/,
+    /^http:\/\/127\.0\.0\.1(:\d+)?$/,
   ];
 
   app.enableCors({
@@ -39,7 +41,8 @@ async function bootstrap() {
       if (allowedOrigins.includes(origin) || allowedOriginPatterns.some((pattern) => pattern.test(origin))) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
