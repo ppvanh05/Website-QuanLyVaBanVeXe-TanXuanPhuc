@@ -60,4 +60,29 @@ export class TraCuuVeController {
   ) {
     return this.lookupService.cancelTicket(maVe, lyDo);
   }
+
+  // GET /customer/tra-cuu-ve/cancel-policies → Lấy danh sách chính sách hủy vé
+  @Get('cancel-policies')
+  async getCancelPolicies() {
+    const data = await this.lookupService.getCancelPolicies();
+    return {
+      success: true,
+      message: 'Lấy chính sách hủy vé thành công!',
+      data,
+    };
+  }
+
+  // PUT /customer/tra-cuu-ve/update-status/:maDonHang → Cập nhật trạng thái đơn hàng và đồng bộ trạng thái vé
+  @Put('update-status/:maDonHang')
+  async updateOrderStatus(
+    @Param('maDonHang') maDonHang: string,
+    @Body('trangThai') trangThai: string,
+  ) {
+    const data = await this.lookupService.updateOrderStatus(maDonHang, trangThai);
+    return {
+      success: true,
+      message: 'Cập nhật trạng thái đơn hàng và đồng bộ trạng thái vé thành công!',
+      data,
+    };
+  }
 }

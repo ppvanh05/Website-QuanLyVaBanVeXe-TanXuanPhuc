@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NhatKyHeThongService } from '../../admin/nhat-ky-he-thong/nhat-ky-he-thong.service';
@@ -54,6 +54,85 @@ export class ReviewService {
 
   async create(createReviewDto: any) {
     const { MaVe, MaKhachHang, SoSao, NoiDungDanhGia, mediaUrls } = createReviewDto;
+
+    // --- Validation rules ---
+    const fieldErrors: Record<string, string> = {};
+
+    // Rating validation
+    if (SoSao === undefined || SoSao === null || typeof SoSao !== 'number' || SoSao < 1 || SoSao > 5) {
+      fieldErrors.SoSao = 'Số sao không hợp lệ. Vui lòng chọn 1-5 sao.';
+    }
+
+    // Content validation (required and length)
+    const content = (NoiDungDanhGia || '').toString().trim();
+    if (!content) {
+      fieldErrors.NoiDungDanhGia = 'Nội dung nhận xét không được bỏ trống.';
+    } else if (content.length < 10) {
+      fieldErrors.NoiDungDanhGia = 'Nội dung quá ngắn. Vui lòng nhập ít nhất 10 ký tự.';
+    } else if (content.length > 2000) {
+      fieldErrors.NoiDungDanhGia = 'Nội dung quá dài. Vui lòng giới hạn dưới 2000 ký tự.';
+    }
+
+    // Ensure ticket exists and business rules (one review per ticket, within 7 days after trip end)
+    const ticket = await this.prisma.vE_DIEN_TU.findUnique({
+      where: { MaVe: MaVe },
+      include: { LICH_TRINH: true },
+    });
+
+    if (!ticket) {
+      throw new BadRequestException('Không tìm thấy vé tương ứng để đánh giá.');
+    }
+
+    // Check existing review for this ticket
+    const existingReviewCount = await this.prisma.dANH_GIA.count({ where: { MaVe: MaVe } });
+    if (existingReviewCount > 0) {
+      fieldErrors.NoiDungDanhGia = 'Mỗi vé chỉ được phép gửi một đánh giá duy nhất.';
+    }
+
+    // Check 7-day window from end of trip
+    const schedule = ticket.LICH_TRINH;
+    if (schedule) {
+      // Determine trip end datetime: use GioDenDuKien fallback to GioKhoiHanh
+      const dateStr = schedule.NgayKhoiHanh ? schedule.NgayKhoiHanh : null;
+      const timeStr = schedule.GioDenDuKien || schedule.GioKhoiHanh || null;
+      if (dateStr && timeStr) {
+        try {
+          const [y, m, d] = dateStr.toString().split('-').map(Number);
+          const [hh, mm] = timeStr.toString().split(':').map(Number);
+          const endDate = new Date(y, m - 1, d, hh || 0, mm || 0, 0, 0);
+          const now = new Date();
+          const diffMs = now.getTime() - endDate.getTime();
+          const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+          if (diffMs < 0) {
+            fieldErrors.NoiDungDanhGia = 'Chuyến đi chưa kết thúc, chưa thể đánh giá.';
+          } else if (diffMs > sevenDaysMs) {
+            fieldErrors.NoiDungDanhGia = 'Thời hạn đánh giá đã hết (hết 07 ngày kể từ khi kết thúc chuyến đi).';
+          }
+        } catch (e) {
+          // ignore parsing errors
+        }
+      }
+    }
+
+    // Check forbidden keywords and links
+    const forbidden = await this.prisma.tU_KHOA_HAN_CHE.findMany({ where: {} });
+    const forbiddenList = (forbidden || []).map(f => (f.NoiDungTuKhoa || '').toString().toLowerCase()).filter(Boolean);
+    const contentLower = content.toLowerCase();
+    // URL detection
+    const urlRegex = /(https?:\/\/|www\.)[\w\-_]+(\.[\w\-_]+)+([\w\-.,@?^=%&:/~+#]*[\w\-@?^=%&/~+#])?/i;
+    if (urlRegex.test(contentLower)) {
+      fieldErrors.NoiDungDanhGia = 'Nội dung chứa liên kết không hợp lệ.';
+    }
+    for (const kw of forbiddenList) {
+      if (kw && contentLower.includes(kw)) {
+        fieldErrors.NoiDungDanhGia = 'Nội dung vi phạm chính sách nội dung.';
+        break;
+      }
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      throw new BadRequestException({ message: 'Dữ liệu nhập không hợp lệ', fieldErrors });
+    }
 
     let result: Awaited<ReturnType<typeof this.createReviewInTransaction>> | undefined;
 

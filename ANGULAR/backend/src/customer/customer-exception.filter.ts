@@ -24,9 +24,16 @@ export class CustomerExceptionFilter implements ExceptionFilter {
       message = exception.message;
     }
 
-    response.status(status).json({
+    // Include additional details (fieldErrors) when provided by the exception response
+    const res = exception instanceof HttpException ? exception.getResponse() : null;
+    const fieldErrors = res && typeof res === 'object' && (res as any).fieldErrors ? (res as any).fieldErrors : undefined;
+
+    const payload: any = {
       success: false,
       message: message,
-    });
+    };
+    if (fieldErrors) payload.fieldErrors = fieldErrors;
+
+    response.status(status).json(payload);
   }
 }

@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -135,6 +134,20 @@ model GHE_CHUYEN_XE {
   GHE                      GHE          @relation(fields: [MaGhe], references: [MaGhe], onDelete: NoAction, onUpdate: NoAction)
   LICH_TRINH               LICH_TRINH   @relation(fields: [MaLichTrinh], references: [MaLichTrinh], onDelete: NoAction, onUpdate: NoAction)
   VE_DIEN_TU               VE_DIEN_TU[]
+}
+
+// Temporary seat holds / reservations to avoid race conditions while users checkout.
+model GHE_GIU_CHO {
+  MaGiuCho         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  MaGheChuyen      String    @db.VarChar
+  MaLichTrinh      String    @db.VarChar
+  MaSession        String?   @db.VarChar
+  TrangThai        String    @db.VarChar // e.g. "GiuCho" | "DaBan"
+  ThoiGianHetHan   DateTime  @db.Timestamp(6)
+  ThoiGianTao      DateTime  @default(now()) @db.Timestamp(6)
+
+  @@index([MaGheChuyen])
+  @@index([MaLichTrinh])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

@@ -147,7 +147,13 @@ export class ThanhToan implements OnInit, OnDestroy {
       clearInterval(this.expirationInterval);
     }
     this.showExpirationModal = false;
-    this.router.navigate(['/tim-kiem-chuyen']);
+    this.router.navigate(['/tim-kiem-chuyen'], {
+      queryParams: {
+        diemDi: this.bookingData.searchDeparture || this.bookingData.startStation || null,
+        diemDen: this.bookingData.searchDestination || this.bookingData.endStation || null,
+        ngayDi: this.bookingData.searchDate || this.bookingData.selectedDate || null,
+      }
+    });
   }
 
   get formattedTimeLeft(): string {

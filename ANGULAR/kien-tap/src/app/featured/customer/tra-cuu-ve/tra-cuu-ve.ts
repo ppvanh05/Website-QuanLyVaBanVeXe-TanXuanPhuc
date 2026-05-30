@@ -112,9 +112,12 @@ export class TraCuuVeComponent implements OnInit {
 
   showEditModal = false;
   showCancelModal = false;
+  showCancelConfirmModal = false;
   showReviewModal = false;
   showDiemDonDropdown = false;
   showDiemTraDropdown = false;
+  showEditConfirmationSummary = false;
+  showEditConfirmationDialog = false;
 
   editFullName = '';
   editPhone = '';
@@ -123,19 +126,23 @@ export class TraCuuVeComponent implements OnInit {
   editDiemTraSearchText = '';
   editMaDiemDon = '';
   editMaDiemTra = '';
+  editFieldErrors: Record<string, string> = {};
+  editChangeSummary: Array<{field: string; oldValue: string; newValue: string}> = [];
   selectedCancelReason = 'Tôi đổi kế hoạch';
+  cancelPolicies: any[] = [];
 
   filterDiemDonOptions: LocationOption[] = [];
   filterDiemTraOptions: LocationOption[] = [];
 
   cancelReasons = [
     'Tôi đổi kế hoạch',
-    'Khách hàng không thể tham gia',
+    'Tôi không thể tham gia',
     'Tôi gặp sự cố',
     'Lý do khác'
   ];
 
   reviewComment = '';
+  reviewFieldError = '';
   reviewFiles: File[] = [];
   ratingCriteria: RatingCriteriaItem[] = [
     { label: 'An toàn', score: 0 },
@@ -462,14 +469,14 @@ export class TraCuuVeComponent implements OnInit {
              hasEnoughTime);
   }
 
-  // New getter for "Yêu cầu hủy vé" button enabled state
+  // New getter for "Hủy vé" button enabled state - only enable when already paid (ChoKhoiHanh)
   get isCancelButtonEnabled(): boolean {
     if (!this.currentOrder) return false;
     const orderStatus = this.currentOrder.trangThaiDonHang;
     const ticketsStatusValid = this.currentOrder.tickets.every(
-      ticket => ticket.trangThaiVe === 'Chờ thanh toán' || ticket.trangThaiVe === 'Chờ khởi hành'
+      ticket => ticket.trangThaiVe === 'Chờ khởi hành'
     );
-    return (orderStatus === 'Chờ thanh toán' || orderStatus === 'Chờ khởi hành') && ticketsStatusValid;
+    return orderStatus === 'Chờ khởi hành' && ticketsStatusValid;
   }
 
   // New getter for "Yêu cầu hủy vé" button disabled state (for visual dimming)
@@ -564,8 +571,13 @@ export class TraCuuVeComponent implements OnInit {
       return;
     }
 
-    if (!this.canEditOrder()) {
-      this.showToast('Bạn đã hết lượt chỉnh sửa thông tin cho vé này.', 'error');
+    if (this.isEditButtonDisabled) {
+      const hoursRemaining = this.getHoursUntilDeparture();
+      if (hoursRemaining !== null && hoursRemaining < 2) {
+        this.showToast('Bạn chỉ có thể chỉnh sửa vé khi còn ít nhất 2 tiếng trước giờ khởi hành.', 'error');
+      } else {
+        this.showToast('Bạn không thể chỉnh sửa vé ở trạng thái hiện tại.', 'error');
+      }
       return;
     }
 
@@ -631,6 +643,10 @@ export class TraCuuVeComponent implements OnInit {
 
   closeEditOrderModal(): void {
     this.showEditModal = false;
+    this.showEditConfirmationSummary = false;
+    this.showEditConfirmationDialog = false;
+    this.editFieldErrors = {};
+    this.editChangeSummary = [];
   }
 
   onEditDiemDonInput(): void {
@@ -664,6 +680,11 @@ export class TraCuuVeComponent implements OnInit {
       return true;
     }
 
+    const hoursRemaining = this.getHoursUntilDeparture();
+    if (hoursRemaining === null || hoursRemaining < 2) {
+      return true;
+    }
+
     const hasFullNameChanged = this.editFullName.trim() !== this.currentOrder.hoTenNguoiDi;
     const hasPhoneChanged = this.editPhone.trim() !== this.currentOrder.soDienThoai;
     const hasEmailChanged = this.editEmail.trim() !== this.currentOrder.email;
@@ -673,7 +694,147 @@ export class TraCuuVeComponent implements OnInit {
     return !(hasFullNameChanged || hasPhoneChanged || hasEmailChanged || hasPickupChanged || hasDropoffChanged);
   }
 
+  private validateEditForm(): boolean {
+    this.editFieldErrors = {};
+    const fullName = this.editFullName.trim();
+    const phone = this.editPhone.trim();
+    const maDiemDon = this.editMaDiemDon.trim();
+    const maDiemTra = this.editMaDiemTra.trim();
+
+    // Validate full name
+    if (!fullName) {
+      this.editFieldErrors['hoTenNguoiDi'] = 'Họ tên người đi không được bỏ trống.';
+    } else if (fullName.length < 3) {
+      this.editFieldErrors['hoTenNguoiDi'] = 'Họ tên phải có ít nhất 3 ký tự.';
+    } else if (fullName.length > 100) {
+      this.editFieldErrors['hoTenNguoiDi'] = 'Họ tên không được vượt quá 100 ký tự.';
+    }
+
+    // Validate phone (Vietnamese phone format)
+    if (!phone) {
+      this.editFieldErrors['soDienThoai'] = 'Số điện thoại không được bỏ trống.';
+    } else if (!/^0\d{9,10}$/.test(phone.replace(/\s/g, ''))) {
+      this.editFieldErrors['soDienThoai'] = 'Số điện thoại không hợp lệ. Vui lòng nhập 10-11 chữ số bắt đầu từ 0.';
+    }
+
+    // Validate pickup point
+    if (!maDiemDon) {
+      this.editFieldErrors['maDiemDon'] = 'Vui lòng chọn điểm đón.';
+    }
+
+    // Validate dropoff point
+    if (!maDiemTra) {
+      this.editFieldErrors['maDiemTra'] = 'Vui lòng chọn điểm trả.';
+    }
+
+    // If there are errors, display them and return false
+    if (Object.keys(this.editFieldErrors).length > 0) {
+      this.cdr.detectChanges();
+      return false;
+    }
+
+    return true;
+  }
+
+  private buildEditChangeSummary(): boolean {
+    if (!this.currentOrder) return false;
+    this.editChangeSummary = [];
+
+    if (this.editFullName.trim() !== this.currentOrder.hoTenNguoiDi) {
+      this.editChangeSummary.push({
+        field: 'Họ tên người đi',
+        oldValue: this.currentOrder.hoTenNguoiDi,
+        newValue: this.editFullName.trim()
+      });
+    }
+
+    if (this.editPhone.trim() !== this.currentOrder.soDienThoai) {
+      this.editChangeSummary.push({
+        field: 'Số điện thoại',
+        oldValue: this.currentOrder.soDienThoai,
+        newValue: this.editPhone.trim()
+      });
+    }
+
+    if (this.editEmail.trim() !== this.currentOrder.email) {
+      this.editChangeSummary.push({
+        field: 'Email',
+        oldValue: this.currentOrder.email,
+        newValue: this.editEmail.trim()
+      });
+    }
+
+    const oldDiemDon = this.filterDiemDonOptions.find(d => d.maDiem === this.currentOrder?.maDiemDon)?.tenDiem || this.currentOrder?.diemDon || 'N/A';
+    const newDiemDon = this.filterDiemDonOptions.find(d => d.maDiem === this.editMaDiemDon)?.tenDiem || '';
+    if (this.editMaDiemDon !== this.currentOrder.maDiemDon) {
+      this.editChangeSummary.push({
+        field: 'Điểm đón',
+        oldValue: oldDiemDon,
+        newValue: newDiemDon
+      });
+    }
+
+    const oldDiemTra = this.filterDiemTraOptions.find(d => d.maDiem === this.currentOrder?.maDiemTra)?.tenDiem || this.currentOrder?.diemTra || 'N/A';
+    const newDiemTra = this.filterDiemTraOptions.find(d => d.maDiem === this.editMaDiemTra)?.tenDiem || '';
+    if (this.editMaDiemTra !== this.currentOrder.maDiemTra) {
+      this.editChangeSummary.push({
+        field: 'Điểm trả',
+        oldValue: oldDiemTra,
+        newValue: newDiemTra
+      });
+    }
+
+    return this.editChangeSummary.length > 0;
+  }
+
+  openEditConfirmationDialog(): void {
+    this.showEditConfirmationSummary = false;
+    this.showEditConfirmationDialog = true;
+  }
+
+  closeEditConfirmationDialog(): void {
+    this.showEditConfirmationDialog = false;
+    this.showEditConfirmationSummary = false;
+    this.showEditModal = false;
+    this.editFieldErrors = {};
+    this.editChangeSummary = [];
+  }
+
+  closeEditConfirmationSummary(): void {
+    this.showEditConfirmationSummary = false;
+    this.showEditConfirmationDialog = false;
+  }
+
+  confirmAndSaveEdit(): void {
+    this.showEditConfirmationDialog = false;
+    this.showEditConfirmationSummary = false;
+    this.proceedWithSaveAfterValidation();
+  }
+
   saveEditChanges(): void {
+    if (!this.currentOrder) {
+      return;
+    }
+
+    // Step 3: Validate form
+    if (!this.validateEditForm()) {
+      return;
+    }
+
+    // Step 4: Build change summary - if there are changes, show confirmation summary
+    if (!this.buildEditChangeSummary()) {
+      this.showToast('Không có thay đổi nào để lưu.', 'error');
+      return;
+    }
+
+    // Show confirmation summary
+    this.showEditConfirmationDialog = false;
+    this.showEditConfirmationSummary = true;
+    this.cdr.detectChanges();
+    return;
+  }
+
+  proceedWithSaveAfterValidation(): void {
     if (!this.currentOrder || this.isEditSaveDisabled()) {
       if (this.currentOrder) {
         this.showToast('Không có thay đổi nào để lưu hoặc bạn đã hết lượt chỉnh sửa.', 'error');
@@ -689,12 +850,16 @@ export class TraCuuVeComponent implements OnInit {
       MaDiemTra: this.editMaDiemTra
     };
 
+    const existingOrder = this.currentOrder;
     this.isLoading = true;
-    this.traCuuVeApiService.updateInfo(this.currentOrder.maDonHang, payload).subscribe({
+    const previousEditCount = existingOrder.soLanDaSua || 0;
+    this.traCuuVeApiService.updateInfo(existingOrder.maDonHang, payload).subscribe({
       next: (response: any) => {
         const data = response?.data || response;
         if (data) {
-          this.currentOrder = this.mapLookupResponse(response);
+          const updatedOrder = this.mapLookupResponse(response) || existingOrder!;
+          updatedOrder.soLanDaSua = Math.max(updatedOrder.soLanDaSua || 0, previousEditCount + 1);
+          this.currentOrder = updatedOrder;
           this.syncTicketFieldsFromOrder();
           this.showToast('Cập nhật thông tin vé thành công.', 'success');
         } else {
@@ -714,11 +879,43 @@ export class TraCuuVeComponent implements OnInit {
   }
 
   openCancelModal(): void {
-    this.showCancelModal = true;
+    if (!this.currentOrder) return;
+    this.isLoading = true;
+    this.traCuuVeApiService.getCancelPolicies().subscribe({
+      next: (response: any) => {
+        const data = response?.data || response;
+        if (Array.isArray(data)) {
+          this.cancelPolicies = data;
+        } else if (data && typeof data === 'object') {
+          this.cancelPolicies = [data];
+        } else {
+          this.cancelPolicies = [];
+        }
+        this.showCancelModal = true;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error loading cancel policies:', err);
+        this.cancelPolicies = [];
+        this.showCancelModal = true;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   closeCancelModal(): void {
     this.showCancelModal = false;
+    this.showCancelConfirmModal = false;
+  }
+
+  openCancelConfirmModal(): void {
+    this.showCancelConfirmModal = true;
+  }
+
+  closeCancelConfirmModal(): void {
+    this.showCancelConfirmModal = false;
   }
 
   confirmCancelTicket(): void {
@@ -728,6 +925,12 @@ export class TraCuuVeComponent implements OnInit {
 
     if (!this.selectedCancelReason.trim()) {
       this.showToast('Vui lòng chọn lý do hủy vé.', 'error');
+      return;
+    }
+
+    // Không cho hủy nếu không có khoản hoàn tiền (dưới 12 giờ)
+    if (this.getRefundPercentage() === 0) {
+      this.showToast('Không thể hủy vé khi chỉ còn dưới 12 giờ trước khởi hành.', 'error');
       return;
     }
 
@@ -754,12 +957,14 @@ export class TraCuuVeComponent implements OnInit {
                 this.syncTicketFieldsFromOrder();
               }
               this.showCancelModal = false;
+              this.showCancelConfirmModal = false;
               this.isLoading = false;
-              this.showToast('Yêu cầu hủy vé thành công.', 'success');
+              this.showToast('Hủy vé thành công.', 'success');
               this.cdr.detectChanges();
             },
             error: (err: any) => {
               this.showCancelModal = false;
+              this.showCancelConfirmModal = false;
               this.isLoading = false;
               this.showToast('Hủy vé thành công nhưng không thể tải lại thông tin.', 'success');
               this.cdr.detectChanges();
@@ -784,6 +989,7 @@ export class TraCuuVeComponent implements OnInit {
     this.showReviewModal = false;
     this.reviewComment = '';
     this.reviewFiles = [];
+    this.reviewFieldError = '';
   }
 
   setRating(index: number, score: number): void {
@@ -813,6 +1019,11 @@ export class TraCuuVeComponent implements OnInit {
 
   submitReview(): void {
     if (!this.currentOrder || this.isReviewSubmitDisabled) {
+      return;
+    }
+
+    if (this.reviewFieldError) {
+      this.showToast('Vui lòng sửa lỗi ở ô nhận xét trước khi gửi.', 'error');
       return;
     }
 
@@ -859,7 +1070,13 @@ export class TraCuuVeComponent implements OnInit {
           },
           error: (err: any) => {
             console.error('Submit review error:', err);
-            this.showToast(err.error?.message || 'Gửi đánh giá thất bại.', 'error');
+            const fieldErrors = err.error?.fieldErrors || null;
+            if (fieldErrors && fieldErrors.NoiDungDanhGia) {
+              this.reviewFieldError = fieldErrors.NoiDungDanhGia;
+              this.showToast('Nội dung đánh giá không hợp lệ. Vui lòng sửa.', 'error');
+            } else {
+              this.showToast(err.error?.message || 'Gửi đánh giá thất bại.', 'error');
+            }
             this.isLoading = false;
             this.cdr.detectChanges();
           }
@@ -878,8 +1095,6 @@ export class TraCuuVeComponent implements OnInit {
 
     const departureDateLabel = this.formatDisplayDate(this.currentOrder.departureDate);
     const departureTimeLabel = `${this.currentOrder.gioKhoiHanh} ${departureDateLabel}`;
-    const pickupTimeLabel = this.getPresenceTimeLabel();
-
     const printData = {
       maDonHang: this.currentOrder.maDonHang,
       maVe: ticket.maVe,
@@ -889,7 +1104,6 @@ export class TraCuuVeComponent implements OnInit {
       thoiGianKhoiHanh: departureTimeLabel,
       soGhe: ticket.soGhe,
       diemDon: this.currentOrder.diemDon,
-      thoiGianToiDiemLenXe: pickupTimeLabel,
       diemTra: this.currentOrder.diemTra,
       bienSoXe: ticket.bienSoXe,
       giaVe: ticket.giaVe
@@ -933,6 +1147,30 @@ export class TraCuuVeComponent implements OnInit {
       giaVe: ticket.giaVe || ticketPrice,
       maQRVe: ticket.maQRVe || `QR-${ticket.maVe}`
     }));
+    // Ensure UI ticket statuses match order status; if mismatch, persist to backend to cascade updates
+    this.ensureStatusesSynced();
+  }
+
+  private ensureStatusesSynced(): void {
+    if (!this.currentOrder) return;
+    const orderStatus = this.currentOrder.trangThaiDonHang;
+    const mismatched = this.currentOrder.tickets.some(t => t.trangThaiVe !== orderStatus);
+    if (!mismatched) return;
+
+    // Call backend to update order status and cascade to tickets
+    this.traCuuVeApiService.updateOrderStatus(this.currentOrder.maDonHang, orderStatus).subscribe({
+      next: (res: any) => {
+        const data = res?.data || res;
+        if (data) {
+          this.currentOrder = data;
+          this.syncTicketFieldsFromOrder();
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error syncing statuses:', err);
+      }
+    });
   }
 
   private buildDepartureDate(dateString: string, timeString: string): Date | null {

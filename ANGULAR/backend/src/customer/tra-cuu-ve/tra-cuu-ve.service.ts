@@ -532,4 +532,95 @@ export class TraCuuVeService {
       maGiaoDichHoan,
     };
   }
+
+  // Get all active cancellation policies
+  async getCancelPolicies() {
+    const policies = await this.prisma.cHINH_SACH_HUY_VE.findMany({
+      where: {
+        TrangThai: TrangThaiChinhSachEnum.DangApDung,
+      },
+      orderBy: {
+        GioiHanGioTruocKhoiHanh: 'desc',
+      },
+    });
+
+    // Map to frontend format with mota field
+    return policies.map((policy) => ({
+      MaChinhSach: policy.MaChinhSach,
+      TenChinhSach: policy.TenChinhSach,
+      GioiHanGioTruocKhoiHanh: policy.GioiHanGioTruocKhoiHanh,
+      TyLePhiHuy: policy.TyLePhiHuy,
+      mota: policy.MoTa || this.generatePolicyDescription(policy),
+      description: policy.MoTa || this.generatePolicyDescription(policy),
+      TrangThai: policy.TrangThai,
+      NgayApDung: policy.NgayApDung,
+    }));
+  }
+
+  // ===== UPDATE ORDER STATUS AND SYNC TICKET STATUSES =====
+  async updateOrderStatus(maDonHang: string, frontendStatus: string) {
+    if (!maDonHang) {
+      throw new BadRequestException('Mã đơn hàng không hợp lệ');
+    }
+
+    // Map frontend status string to DB enum TrangThaiVe
+    const statusStr = (frontendStatus || '').toString().toLowerCase();
+    let targetEnum: TrangThaiVe;
+    if (statusStr.includes('chờ thanh toán') || statusStr.includes('chothanhtoan')) {
+      targetEnum = TrangThaiVe.ChoThanhToan;
+    } else if (statusStr.includes('chờ khởi hành') || statusStr.includes('chokhoihanh')) {
+      targetEnum = TrangThaiVe.ChoKhoiHanh;
+    } else if (statusStr.includes('đã hoàn thành') || statusStr.includes('dahoanthanh')) {
+      targetEnum = TrangThaiVe.DaHoanThanh;
+    } else if (statusStr.includes('đã hủy') || statusStr.includes('dahuy')) {
+      targetEnum = TrangThaiVe.DaHuy;
+    } else if (statusStr.includes('đã đánh giá') || statusStr.includes('dadanhgia')) {
+      targetEnum = TrangThaiVe.DaDanhGia;
+    } else {
+      // Default to ChoThanhToan
+      targetEnum = TrangThaiVe.ChoThanhToan;
+    }
+
+    // Perform transactional update: update order.TrangThaiDonHang and all related tickets.TrangThaiVe
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const uOrder = await tx.dON_HANG.update({
+        where: { MaDonHang: maDonHang },
+        data: { TrangThaiDonHang: targetEnum },
+      });
+
+      await tx.vE_DIEN_TU.updateMany({
+        where: { MaDonHang: maDonHang },
+        data: { TrangThaiVe: targetEnum },
+      });
+
+      return uOrder;
+    });
+
+    // Re-fetch with includes and return mapped frontend model
+    const refreshed = await this.prisma.dON_HANG.findUnique({
+      where: { MaDonHang: maDonHang },
+      include: {
+        VE_DIEN_TU: {
+          include: {
+            LICH_TRINH: { include: { TUYEN_XE: true } },
+            PHUONG_TIEN: true,
+            GHE_CHUYEN_XE: { include: { GHE: true } },
+            DIEM_DON: true,
+            DIEM_TRA: true,
+          },
+        },
+        THANH_TOAN: true,
+      },
+    });
+
+    return this.mapOrderToFrontend(refreshed);
+  }
+
+  // Generate Vietnamese policy description based on policy data
+  private generatePolicyDescription(policy: any): string {
+    const hours = policy.GioiHanGioTruocKhoiHanh;
+    const feePercent = (policy.TyLePhiHuy * 100).toFixed(0);
+    const refundPercent = (100 - policy.TyLePhiHuy * 100).toFixed(0);
+    return `Hủy vé trước ${hours} giờ: hoàn trả ${refundPercent}% (phí hủy ${feePercent}%)`;
+  }
 }

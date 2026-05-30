@@ -13,7 +13,6 @@ export class PrintService {
     thoiGianKhoiHanh: string;
     soGhe: string;
     diemDon: string;
-    thoiGianToiDiemLenXe: string;
     diemTra: string;
     bienSoXe: string;
     giaVe: number;
@@ -62,7 +61,6 @@ export class PrintService {
                 <div class="field"><span class="label">Thời gian khởi hành:</span> <span class="value">${data.thoiGianKhoiHanh}</span></div>
                 <div class="field"><span class="label">Số ghế:</span> <span class="value">${data.soGhe}</span></div>
                 <div class="field"><span class="label">Điểm đón:</span> <span class="value">${data.diemDon}</span></div>
-                <div class="field"><span class="label">Thời gian tới điểm lên xe:</span> <span class="value">${data.thoiGianToiDiemLenXe}</span></div>
                 <div class="field"><span class="label">Điểm trả:</span> <span class="value">${data.diemTra}</span></div>
                 <div class="field"><span class="label">Biển số xe:</span> <span class="value">${data.bienSoXe}</span></div>
                 <div class="field"><span class="label">Giá vé:</span> <span class="value">${data.giaVe.toLocaleString('vi-VN')}đ</span></div>
