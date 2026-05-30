@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, switchMap, timeout } from 'rxjs/operators';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
+import { HomeApiService } from '../../../../../core/services/home-api.service';
 import { environment } from '../../../../../../environments/environment';
 
 
@@ -163,6 +164,7 @@ export class TimKiemChuyenXe implements OnInit {
     private supabaseService: SupabaseService,
     private http: HttpClient,
     private ngZone: NgZone,
+    private homeApiService: HomeApiService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
