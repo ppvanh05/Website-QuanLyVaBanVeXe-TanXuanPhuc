@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = environment.apiBase;
 
 interface ApiResponse<T> {
   success: boolean;
