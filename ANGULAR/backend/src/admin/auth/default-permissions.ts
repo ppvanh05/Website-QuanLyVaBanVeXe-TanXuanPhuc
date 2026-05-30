@@ -4,9 +4,7 @@ export const ADMIN_PERMISSIONS = [
   'employee',
   'policy',
   'review',
-  'blacklist',
   'log',
-  'role',
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {

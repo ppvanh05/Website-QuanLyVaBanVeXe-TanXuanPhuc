@@ -46,12 +46,14 @@ export class AdminPermissionsGuard implements CanActivate {
       let mappedPermission = basePermission;
       if (['route', 'vehicle', 'driver', 'stop', 'trip'].includes(basePermission)) {
         mappedPermission = 'dispatch';
-      } else if (basePermission === 'staff') {
+      } else if (['staff', 'role'].includes(basePermission)) {
         mappedPermission = 'employee';
       } else if (['finance', 'report'].includes(basePermission)) {
         mappedPermission = 'report';
       } else if (['ticket', 'customer'].includes(basePermission)) {
         mappedPermission = 'ticket';
+      } else if (basePermission === 'blacklist') {
+        mappedPermission = 'review';
       }
 
       return payload.quyen?.includes(permission) || 
