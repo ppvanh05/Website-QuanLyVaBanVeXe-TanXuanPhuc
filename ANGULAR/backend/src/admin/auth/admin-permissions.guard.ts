@@ -50,7 +50,7 @@ export class AdminPermissionsGuard implements CanActivate {
         mappedPermission = 'employee';
       } else if (['finance', 'report'].includes(basePermission)) {
         mappedPermission = 'report';
-      } else if (['ticket', 'customer'].includes(basePermission)) {
+      } else if (['ticket'].includes(basePermission)) {
         mappedPermission = 'ticket';
       } else if (basePermission === 'blacklist') {
         mappedPermission = 'review';

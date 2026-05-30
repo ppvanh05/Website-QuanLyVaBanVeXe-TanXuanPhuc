@@ -179,6 +179,7 @@ export class TrangChuComponent implements OnInit {
       { label: 'Quản lý nhân viên', icon: 'manage_accounts', route: '/admin/quan-ly-nhan-vien', color: 'blue', permission: 'employee' },
       { label: 'Nhật ký hệ thống', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', color: 'orange', permission: 'log' },
       { label: 'Tin tức', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news' },
+      { label: 'Chính sách', icon: 'policy', route: '/admin/quan-ly-chinh-sach', color: 'blue', permission: 'policy' },
       { label: 'Từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'review' },
     ], perms);
     this.stats = [
@@ -190,7 +191,8 @@ export class TrangChuComponent implements OnInit {
     this.adminTasks = this.filterAdminTasks([
       { title: 'Tài khoản nhân viên', description: 'Tạo, khóa/mở khóa và phân quyền nhân sự nội bộ.', icon: 'manage_accounts', route: '/admin/quan-ly-nhan-vien', color: 'blue', permission: 'employee' },
       { title: 'Nhật ký hệ thống', description: 'Theo dõi thao tác đăng nhập, cập nhật dữ liệu và lỗi nghiệp vụ.', icon: 'history_edu', route: '/admin/quan-ly-nhat-ky', color: 'orange', permission: 'log' },
-      { title: 'Tin tức & chính sách', description: 'Quản lý nội dung hiển thị cho khách hàng và quy định vận hành.', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news' },
+      { title: 'Tin tức', description: 'Quản lý nội dung hiển thị bài viết tin tức, thông báo cho khách hàng.', icon: 'article', route: '/admin/quan-ly-tin-tuc', color: 'purple', permission: 'news' },
+      { title: 'Chính sách', description: 'Quản lý quy định vận hành, quy định hủy vé và các điều khoản dịch vụ.', icon: 'policy', route: '/admin/quan-ly-chinh-sach', color: 'blue', permission: 'policy' },
       { title: 'Từ khóa cấm', description: 'Kiểm soát nội dung vi phạm trong đánh giá và phản hồi.', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', color: 'teal', permission: 'review' },
     ], perms);
   }

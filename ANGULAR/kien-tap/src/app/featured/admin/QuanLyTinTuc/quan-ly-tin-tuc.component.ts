@@ -262,6 +262,7 @@ export class QuanLyTinTucComponent implements OnInit {
   }
 
   mapNewsToBackend(n: TinTuc): any {
+    const currentAdminId = this.adminAuthService.currentUserValue?.MaNhanVien || 'QTV001';
     return {
       MaTinTuc: n.maTinTuc,
       TieuDe: n.tieuDe,
@@ -271,7 +272,7 @@ export class QuanLyTinTucComponent implements OnInit {
       NoiDungChiTiet: n.noiDungChiTiet || null,
       NgayDang: n.trangThai === 'DaDang' ? new Date() : (n.ngayDang ? new Date(n.ngayDang) : null),
       TrangThai: n.trangThai,
-      MaQuanTriVien: 'NVDP001',
+      MaQuanTriVien: currentAdminId,
       NgayGioHenGio: n.trangThai === 'HenGio' && n.ngayGioHenGio ? new Date(n.ngayGioHenGio.replace(' ', 'T') + ':00') : null,
       NoiBat: n.noiBat
     };

@@ -314,6 +314,7 @@
   height: 26px;
   box-sizing: border-box;
   vertical-align: middle;
+  white-space: nowrap !important;
 }
 
 .status-badge.locked {
