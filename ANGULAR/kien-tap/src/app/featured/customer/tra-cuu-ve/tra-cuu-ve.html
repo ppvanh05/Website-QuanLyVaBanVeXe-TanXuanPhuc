@@ -26,7 +26,7 @@
                 type="tel"
                 [(ngModel)]="phoneNumber"
                 name="phoneNumber"
-                placeholder="Vui lòng nhập số điện thoại"
+                placeholder="Nhập số điện thoại đặt vé"
                 class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border border-outline-variant rounded-xl text-body-lg text-on-surface focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all placeholder-outline-variant/60"
                 required
               />
@@ -38,7 +38,7 @@
                 type="text"
                 [(ngModel)]="bookingCode"
                 name="bookingCode"
-                placeholder="Vui lòng nhập mã đơn hàng"
+                placeholder="Nhập mã đơn hàng"
                 class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border border-outline-variant rounded-xl text-body-lg text-on-surface focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all placeholder-outline-variant/60"
                 required
               />
@@ -80,7 +80,7 @@
                 (click)="openEditOrderModal()"
                 class="flex items-center gap-1.5 bg-secondary text-white hover:bg-secondary-hover font-bold px-6 py-2.5 rounded-full text-body-sm transition-all active:scale-[0.98] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 <span class="material-symbols-outlined text-lg">edit</span>
-                Sửa thông tin
+                Chỉnh sửa thông tin vé
               </button>
             </div>
           </div>
@@ -175,7 +175,6 @@
                       <div>
                         <div class="font-bold text-base text-black leading-none mb-0.5">ĐIỂM ĐÓN</div>
                         <div class="font-extrabold text-xl text-navy">{{ ticket.diemDon }}</div>
-                        <div class="text-body-sm text-on-surface-variant">{{ ticket.diemDonThoiGian }}</div>
                       </div>
                     </div>
                     <!-- Điểm trả -->
@@ -186,7 +185,6 @@
                       <div>
                         <div class="font-bold text-base text-black leading-none mb-0.5">ĐIỂM TRẢ</div>
                         <div class="font-extrabold text-xl text-navy">{{ ticket.diemTra }}</div>
-                        <div class="text-body-sm text-on-surface-variant">{{ ticket.diemTraThoiGian }}</div>
                       </div>
                     </div>
                   </div>
@@ -244,7 +242,7 @@
               (click)="openCancelModal()"
               class="flex items-center gap-2 bg-white hover:bg-danger-light text-danger hover:text-danger-text border border-danger/20 rounded-xl px-6 py-3 font-bold text-body-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
               <span class="material-symbols-outlined text-lg">cancel</span>
-              Yêu cầu hủy vé
+              Hủy vé
             </button>
 
             <button
@@ -287,8 +285,10 @@
               [(ngModel)]="editFullName"
               placeholder="Nhập họ tên đầy đủ"
               class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-md focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+              [class.border-danger]="editFieldErrors['hoTenNguoiDi']"
               required
             />
+            <div *ngIf="editFieldErrors['hoTenNguoiDi']" class="text-danger text-body-xs font-medium">{{ editFieldErrors['hoTenNguoiDi'] }}</div>
           </div>
         </div>
 
@@ -300,8 +300,10 @@
               [(ngModel)]="editPhone"
               placeholder="Nhập số điện thoại của bạn"
               class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-md focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+              [class.border-danger]="editFieldErrors['soDienThoai']"
               required
             />
+            <div *ngIf="editFieldErrors['soDienThoai']" class="text-danger text-body-xs font-medium">{{ editFieldErrors['soDienThoai'] }}</div>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -328,6 +330,7 @@
                 (input)="onEditDiemDonInput()"
                 placeholder="Tìm kiếm điểm đón"
                 class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-md focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                [class.border-danger]="editFieldErrors['maDiemDon']"
               />
               <div *ngIf="showDiemDonDropdown && filterDiemDonOptions.length > 0"
                    class="absolute top-full left-0 right-0 bg-white border border-outline-variant/30 rounded-xl shadow-lg max-h-60 overflow-y-auto z-10 mt-1">
@@ -352,6 +355,7 @@
                 (input)="onEditDiemTraInput()"
                 placeholder="Tìm kiếm điểm trả"
                 class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-md focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                [class.border-danger]="editFieldErrors['maDiemTra']"
               />
               <div *ngIf="showDiemTraDropdown && filterDiemTraOptions.length > 0"
                    class="absolute top-full left-0 right-0 bg-white border border-outline-variant/30 rounded-xl shadow-lg max-h-60 overflow-y-auto z-10 mt-1">
@@ -363,6 +367,7 @@
                 </div>
               </div>
             </div>
+            <div *ngIf="editFieldErrors['maDiemTra']" class="text-danger text-body-xs font-medium">{{ editFieldErrors['maDiemTra'] }}</div>
           </div>
         </div>
 
@@ -387,13 +392,79 @@
           [disabled]="isEditSaveDisabled()"
           class="bg-secondary text-white hover:bg-secondary-hover px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           (click)="saveEditChanges()">
-          Lưu thông tin
+          Lưu thay đổi
         </button>
       </div>
     </div>
   </div>
 
+  <div class="fixed inset-0 z-50 bg-navy/60 backdrop-blur-xs flex items-center justify-center p-4" *ngIf="showEditConfirmationSummary && currentOrder">
+    <div class="bg-white rounded-2xl max-w-[640px] w-full overflow-hidden shadow-modal border border-outline-variant/10 animate-scale-up">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
+        <h3 class="font-bold text-primary text-title-lg uppercase tracking-wider">XÁC NHẬN THAY ĐỔI</h3>
+        <span class="material-symbols-outlined text-outline-variant hover:text-navy cursor-pointer select-none" (click)="closeEditConfirmationSummary()">close</span>
+      </div>
+
+      <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        <p class="text-on-surface-variant text-body-md">Vui lòng kiểm tra lại các mục bên dưới trước khi xác nhận lưu.</p>
+
+        <div class="space-y-3">
+          <div *ngFor="let change of editChangeSummary" class="rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4">
+            <div class="font-semibold text-navy text-body-md">{{ change.field }}</div>
+            <div class="grid gap-4 sm:grid-cols-2 mt-3">
+              <div class="space-y-1">
+                <div class="text-label-sm text-outline uppercase tracking-wide">Thông tin cũ</div>
+                <div class="font-medium text-on-surface">{{ change.oldValue || 'Không có' }}</div>
+              </div>
+              <div class="space-y-1">
+                <div class="text-label-sm text-outline uppercase tracking-wide">Thông tin mới</div>
+                <div class="font-medium text-navy">{{ change.newValue || 'Không có' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant/10 flex justify-end gap-3">
+        <button class="bg-white hover:bg-surface-container-low border border-outline-variant px-5 py-2.5 rounded-xl font-bold text-body-sm text-navy transition-all" (click)="closeEditConfirmationSummary()">
+          Quay lại sửa
+        </button>
+        <button class="bg-secondary text-white hover:bg-secondary-hover px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm" (click)="openEditConfirmationDialog()">
+          Xác nhận
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed inset-0 z-60 bg-navy/60 backdrop-blur-xs flex items-center justify-center p-4" *ngIf="showEditConfirmationDialog && currentOrder">
+    <div class="bg-white rounded-2xl max-w-[520px] w-full overflow-hidden shadow-modal border border-outline-variant/10 animate-scale-up">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
+        <h3 class="font-bold text-danger text-title-lg uppercase tracking-wider">XÁC NHẬN LƯU</h3>
+        <span class="material-symbols-outlined text-outline-variant hover:text-navy cursor-pointer select-none" (click)="closeEditConfirmationDialog()">close</span>
+      </div>
+
+      <div class="p-6 space-y-4 text-center">
+        <div class="flex items-center justify-center">
+          <span class="material-symbols-outlined text-danger text-5xl">help</span>
+        </div>
+        <p class="text-body-md font-semibold text-on-surface">Bạn có chắc muốn lưu thay đổi này không?</p>
+        <p class="text-body-sm text-on-surface-variant">Nếu bạn chọn Xác nhận, thông tin sẽ được lưu vào hệ thống và cập nhật lại vé.</p>
+      </div>
+
+      <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant/10 flex justify-end gap-3">
+        <button class="bg-white hover:bg-surface-container-low border border-outline-variant px-5 py-2.5 rounded-xl font-bold text-body-sm text-navy transition-all" (click)="closeEditConfirmationDialog()">
+          Hủy
+        </button>
+        <button class="bg-secondary text-white hover:bg-secondary-hover px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm" (click)="confirmAndSaveEdit()">
+          Xác nhận lưu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal xác nhận hủy vé -->
   <div class="fixed inset-0 z-50 bg-navy/60 backdrop-blur-xs flex items-center justify-center p-4" *ngIf="showCancelModal && currentOrder">
+    <!-- Modal chính: Chọn lý do + xem chính sách -->
     <div class="bg-white rounded-2xl max-w-[640px] w-full overflow-hidden shadow-modal border border-outline-variant/10 animate-scale-up">
       <div class="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
         <h3 class="font-bold text-danger text-title-lg uppercase tracking-wider">XÁC NHẬN HỦY VÉ</h3>
@@ -404,17 +475,20 @@
         <div class="flex items-start gap-3 bg-warning-light border border-warning/20 p-4 rounded-xl">
           <span class="material-symbols-outlined text-warning text-[22px]">warning</span>
           <p class="text-warning-text text-body-sm font-semibold leading-relaxed">
-            Bạn đang yêu cầu hủy vé cho đơn hàng <span class="font-bold">{{ currentOrder.maDonHang }}</span>. Vui lòng đọc kỹ chính sách hoàn tiền trước khi xác nhận.
+            Bạn sắp hủy vé cho đơn hàng <span class="font-bold">{{ currentOrder.maDonHang }}</span>. Vui lòng đọc kỹ chính sách hoàn tiền trước khi xác nhận.
           </p>
         </div>
 
         <div class="space-y-3">
-          <h4 class="font-bold text-navy text-body-md uppercase tracking-wider">Chính sách hoàn tiền</h4>
+          <h4 class="font-bold text-navy text-body-md uppercase tracking-wider">Chính sách hủy vé và hoàn tiền</h4>
           <ul class="list-disc list-inside text-body-sm text-on-surface-variant space-y-1">
-            <li>Hủy vé trước 24 giờ: hệ thống hoàn trả 100%.</li>
-            <li>Hủy vé từ 12 đến 24 giờ: hệ thống hoàn trả 50%.</li>
-            <li>Hủy vé dưới 12 giờ: nhà xe không hỗ trợ hủy vé và không hoàn tiền.</li>
+            <li *ngFor="let policy of cancelPolicies">
+              {{ policy.TenChinhSach || policy.title || policy.MaChinhSach }}: {{ policy.MoTa || policy.mota || policy.description || 'Không có mô tả' }}
+            </li>
           </ul>
+          <div *ngIf="cancelPolicies.length === 0" class="text-body-sm text-on-surface-variant italic">
+            Đang tải chính sách hủy vé...
+          </div>
 
           <div class="flex flex-col gap-1.5">
             <label class="text-label-sm font-bold text-navy uppercase tracking-wide">Lý do hủy vé</label>
@@ -451,14 +525,47 @@
           Đóng
         </button>
         <button
-          [disabled]="getRefundPercentage() === 0"
-          class="bg-danger text-white hover:bg-danger/90 px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-          (click)="confirmCancelTicket()">
+          class="bg-danger text-white hover:bg-danger/90 px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm"
+          (click)="openCancelConfirmModal()">
           Xác nhận hủy
         </button>
       </div>
     </div>
+
+    <!-- Modal xác nhận lần 2 (hiện trong modal 1) -->
+    <div class="absolute inset-0 bg-navy/40 backdrop-blur-xs flex items-center justify-center p-4 rounded-2xl" *ngIf="showCancelConfirmModal">
+      <div class="bg-white rounded-2xl max-w-[480px] w-full overflow-hidden shadow-modal border border-outline-variant/10 animate-scale-up">
+        <div class="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center">
+          <h3 class="font-bold text-danger text-title-lg uppercase tracking-wider">Xác nhận hủy vé</h3>
+          <span class="material-symbols-outlined text-outline-variant hover:text-navy cursor-pointer select-none" (click)="closeCancelConfirmModal()">close</span>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <div class="flex items-center justify-center">
+            <span class="material-symbols-outlined text-danger text-5xl">help</span>
+          </div>
+          <p class="text-center text-on-surface text-body-md font-semibold">
+            Bạn có chắc chắn muốn hủy vé này không?
+          </p>
+          <p class="text-center text-on-surface-variant text-body-sm">
+            Hành động này không thể được hoàn tác. Vé sẽ được chuyển thành trạng thái "Đã hủy".
+          </p>
+        </div>
+
+        <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant/10 flex justify-end gap-3">
+          <button class="bg-white hover:bg-surface-container-low border border-outline-variant px-5 py-2.5 rounded-xl font-bold text-body-sm text-navy transition-all" (click)="closeCancelModal()">
+            Đóng
+          </button>
+          <button
+            class="bg-danger text-white hover:bg-danger/90 px-5 py-2.5 rounded-xl font-bold text-body-sm transition-all shadow-sm"
+            (click)="confirmCancelTicket()">
+            Xác nhận hủy
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
+
 
   <div class="fixed inset-0 z-50 bg-navy/60 backdrop-blur-xs flex items-center justify-center p-4" *ngIf="showReviewModal && currentOrder">
     <div class="relative bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
@@ -491,10 +598,14 @@
           <textarea
             id="reviewComment"
             [(ngModel)]="reviewComment"
+            (input)="reviewFieldError = ''"
             rows="3"
             placeholder="Chia sẻ thêm trải nghiệm của bạn..."
             class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-md focus:outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
           ></textarea>
+          <div *ngIf="reviewFieldError" class="text-danger text-body-sm font-medium mt-2">
+            {{ reviewFieldError }}
+          </div>
         </div>
 
 
@@ -517,7 +628,7 @@
           </button>
           <button
             (click)="submitReview()"
-            [disabled]="isReviewSubmitDisabled"
+            [disabled]="isReviewSubmitDisabled || reviewFieldError"
             class="flex-1 py-3 bg-secondary text-white rounded-2xl font-bold shadow-lg shadow-secondary/20 hover:bg-secondary-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             Gửi đánh giá
           </button>

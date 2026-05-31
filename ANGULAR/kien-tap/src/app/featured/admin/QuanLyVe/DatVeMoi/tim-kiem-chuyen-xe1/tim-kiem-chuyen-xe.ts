@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, Inject, OnInit, PLATFORM_ID, NgZone } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, switchMap, timeout } from 'rxjs/operators';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
+import { HomeApiService } from '../../../../../core/services/home-api.service';
 import { environment } from '../../../../../../environments/environment';
 
 
@@ -35,6 +36,7 @@ interface Trip {
   stops?: any[];
   expanded?: boolean;
   selectedTab?: 'seat' | 'schedule' | 'shuttle' | 'utilities' | 'policy';
+  diemDungLichTrinh?: any[];
 }
 
 @Component({
@@ -110,6 +112,7 @@ export class TimKiemChuyenXe implements OnInit {
   allTrips: Trip[] = [];
   filteredTrips: Trip[] = [];
   isLoadingTrips = false;
+  isSearchPerformed = false;
   tripLoadError = '';
 
 
@@ -160,10 +163,13 @@ export class TimKiemChuyenXe implements OnInit {
     private router: Router,
     private supabaseService: SupabaseService,
     private http: HttpClient,
+    private ngZone: NgZone,
+    private homeApiService: HomeApiService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit() {
+    this.loadActiveRoutes();
     this.route.queryParams.subscribe(params => {
       this.departure = params['departure'] || this.departure;
       this.destination = params['destination'] || this.destination;
@@ -174,9 +180,14 @@ export class TimKiemChuyenXe implements OnInit {
       this.childCount = Number(params['children']) || 0;
       this.infantCount = Number(params['infants']) || 0;
       this.updatePassengerCount();
-      this.loadTripsFromApi();
+      // Only auto-search if navigated with query params (e.g. from home page)
+      const hasSearchParams = params['departure'] || params['destination'] || params['date'];
+      if (hasSearchParams) {
+        this.isSearchPerformed = true;
+        this.loadTripsFromApi();
+      }
     });
-    if (isPlatformBrowser(this.platformId)) {
+    if (isPlatformBrowser(this.platformId) && environment.supabaseUrl && !environment.supabaseUrl.includes('placeholder')) {
       try {
         this.setupRealtimeSubscriptions();
       } catch (error) {
@@ -253,326 +264,24 @@ export class TimKiemChuyenXe implements OnInit {
     return rooms;
   }
 
-  // Initialize trips data (Evening departures starting from 18:00)
-  initMockTrips() {
-    this.allTrips = [
-      // TP. Hồ Chí Minh → Bình Định
-      {
-        id: 1,
-        departureTime: '18:00',
-        arrivalTime: '05:00',
-        duration: '11:00 h',
-        distance: '550Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 12,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Bình Định',
-        price: 400000,
-        seats: this.generateLimousineRooms(400000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 2,
-        departureTime: '18:30',
-        arrivalTime: '06:30',
-        duration: '12:00 h',
-        distance: '580Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 15,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Bình Định',
-        price: 400000,
-        seats: this.generateLimousineRooms(400000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 3,
-        departureTime: '19:00',
-        arrivalTime: '06:00',
-        duration: '11:00 h',
-        distance: '550Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 9,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Bình Định',
-        price: 520000,
-        seats: this.generateLimousineRooms(520000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      // TP. Hồ Chí Minh → Phú Yên
-      {
-        id: 4,
-        departureTime: '06:00',
-        arrivalTime: '17:00',
-        duration: '11:00 h',
-        distance: '450Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 8,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Phú Yên',
-        price: 350000,
-        seats: this.generateLimousineRooms(350000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 5,
-        departureTime: '19:30',
-        arrivalTime: '07:30',
-        duration: '12:00 h',
-        distance: '570Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 10,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Phú Yên',
-        price: 400000,
-        seats: this.generateLimousineRooms(400000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 6,
-        departureTime: '20:00',
-        arrivalTime: '07:30',
-        duration: '11:30 h',
-        distance: '540Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 11,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Phú Yên',
-        price: 520000,
-        seats: this.generateLimousineRooms(520000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      // TP. Hồ Chí Minh → Khánh Hòa
-      {
-        id: 7,
-        departureTime: '07:00',
-        arrivalTime: '15:00',
-        duration: '8:00 h',
-        distance: '400Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 5,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Khánh Hòa',
-        price: 300000,
-        seats: this.generateLimousineRooms(300000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 8,
-        departureTime: '13:00',
-        arrivalTime: '21:00',
-        duration: '8:00 h',
-        distance: '400Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 18,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Khánh Hòa',
-        price: 320000,
-        seats: this.generateLimousineRooms(320000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 9,
-        departureTime: '21:00',
-        arrivalTime: '05:00',
-        duration: '8:00 h',
-        distance: '400Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 20,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Khánh Hòa',
-        price: 350000,
-        seats: this.generateLimousineRooms(350000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      // TP. Hồ Chí Minh → Đà Lạt
-      {
-        id: 10,
-        departureTime: '05:00',
-        arrivalTime: '12:00',
-        duration: '7:00 h',
-        distance: '300Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 3,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Đà Lạt',
-        price: 280000,
-        seats: this.generateLimousineRooms(280000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 11,
-        departureTime: '08:00',
-        arrivalTime: '15:00',
-        duration: '7:00 h',
-        distance: '300Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 12,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Đà Lạt',
-        price: 300000,
-        seats: this.generateLimousineRooms(300000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 12,
-        departureTime: '14:00',
-        arrivalTime: '21:00',
-        duration: '7:00 h',
-        distance: '300Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 16,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Đà Lạt',
-        price: 320000,
-        seats: this.generateLimousineRooms(320000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      // TP. Hồ Chí Minh → Hà Nội
-      {
-        id: 13,
-        departureTime: '17:00',
-        arrivalTime: '12:00',
-        duration: '19:00 h',
-        distance: '1700Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 10,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Hà Nội',
-        price: 800000,
-        seats: this.generateLimousineRooms(800000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 14,
-        departureTime: '18:00',
-        arrivalTime: '13:00',
-        duration: '19:00 h',
-        distance: '1700Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 8,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Hà Nội',
-        price: 850000,
-        seats: this.generateLimousineRooms(850000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      // TP. Hồ Chí Minh → Đà Nẵng
-      {
-        id: 15,
-        departureTime: '09:00',
-        arrivalTime: '20:00',
-        duration: '11:00 h',
-        distance: '800Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 6,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Đà Nẵng',
-        price: 550000,
-        seats: this.generateLimousineRooms(550000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      {
-        id: 16,
-        departureTime: '19:00',
-        arrivalTime: '06:00',
-        duration: '11:00 h',
-        distance: '800Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 14,
-        startStation: 'TP. Hồ Chí Minh',
-        endStation: 'Đà Nẵng',
-        price: 600000,
-        seats: this.generateLimousineRooms(600000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      // Đảo chiều: Bình Định → TP. Hồ Chí Minh
-      {
-        id: 17,
-        departureTime: '18:00',
-        arrivalTime: '05:00',
-        duration: '11:00 h',
-        distance: '550Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 10,
-        startStation: 'Bình Định',
-        endStation: 'TP. Hồ Chí Minh',
-        price: 400000,
-        seats: this.generateLimousineRooms(400000),
-        expanded: false,
-        selectedTab: 'seat'
-      },
-      // Đảo chiều: Phú Yên → TP. Hồ Chí Minh
-      {
-        id: 18,
-        departureTime: '19:00',
-        arrivalTime: '06:30',
-        duration: '11:30 h',
-        distance: '540Km',
-        timezone: 'Asian/Ho Chi Minh',
-        type: 'Limousine',
-        availableSeats: 15,
-        startStation: 'Phú Yên',
-        endStation: 'TP. Hồ Chí Minh',
-        price: 400000,
-        seats: this.generateLimousineRooms(400000),
-        expanded: false,
-        selectedTab: 'seat'
+  // Computed presence time helper
+  private computePresenceTime(trip: Trip) {
+    const parts = trip.departureTime.split(':');
+    if (parts.length === 2) {
+      let hrs = parseInt(parts[0], 10);
+      let mins = parseInt(parts[1], 10);
+      mins -= 30;
+      if (mins < 0) {
+        mins += 60;
+        hrs -= 1;
       }
-    ];
-
-    // Compute suggested presence time dynamically (30 minutes before departure)
-    this.allTrips.forEach(trip => {
-      const parts = trip.departureTime.split(':');
-      if (parts.length === 2) {
-        let hrs = parseInt(parts[0], 10);
-        let mins = parseInt(parts[1], 10);
-        mins -= 30;
-        if (mins < 0) {
-          mins += 60;
-          hrs -= 1;
-        }
-        if (hrs < 0) {
-          hrs += 24;
-        }
-        trip.suggestedPresenceTime = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-      } else {
-        trip.suggestedPresenceTime = trip.departureTime;
+      if (hrs < 0) {
+        hrs += 24;
       }
-    });
+      trip.suggestedPresenceTime = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    } else {
+      trip.suggestedPresenceTime = trip.departureTime;
+    }
   }
 
   private buildSearchParams(): Record<string, string> {
@@ -635,17 +344,21 @@ export class TimKiemChuyenXe implements OnInit {
   }
 
   private mapApiTrip(data: any): Trip {
-    const seats = this.mapApiSeats(data.gheChuyenXe || [], this.toNumber(data.GiaVeCoBan));
-    const startStation = data.tuyenXe?.DiemKhoiHanh || data.TUYEN_XE?.DiemKhoiHanh || '';
-    const endStation = data.tuyenXe?.DiemDen || data.TUYEN_XE?.DiemDen || '';
-    const departureTime = this.formatApiTime(data.GioKhoiHanh);
-    const arrivalTime = this.formatApiTime(data.GioDenDuKien);
-    const price = this.toNumber(data.GiaVeCoBan);
-    const distance = this.toNumber(data.tuyenXe?.KhoangCach || data.TUYEN_XE?.KhoangCach);
+    const rawSeats = data.seats || data.gheChuyenXe || [];
+    const basePrice = this.toNumber(data.giaVeCoBan ?? data.GiaVeCoBan);
+    const seats = this.mapApiSeats(rawSeats, basePrice);
+    
+    const startStation = data.diemKhoiHanh ?? data.tuyenXe?.DiemKhoiHanh ?? data.TUYEN_XE?.DiemKhoiHanh ?? '';
+    const endStation = data.diemDen ?? data.tuyenXe?.DiemDen ?? data.TUYEN_XE?.DiemDen ?? '';
+    
+    const departureTime = this.formatApiTime(data.gioKhoiHanh ?? data.GioKhoiHanh);
+    const arrivalTime = this.formatApiTime(data.gioDenDuKien ?? data.GioDenDuKien);
+    const price = basePrice;
+    const distance = this.toNumber(data.tuyenXe?.KhoangCach || data.TUYEN_XE?.KhoangCach || data.KhoangCach);
     const stops = Array.isArray(data.diemDungLichTrinh) ? data.diemDungLichTrinh : [];
 
     return {
-      id: data.MaLichTrinh,
+      id: data.maLichTrinh ?? data.MaLichTrinh,
       departureTime,
       arrivalTime,
       duration: this.calculateDuration(departureTime, arrivalTime),
@@ -665,18 +378,18 @@ export class TimKiemChuyenXe implements OnInit {
 
   private mapApiSeats(seats: any[], fallbackPrice: number): Seat[] {
     return seats.map(seat => {
-      const name = seat.SoGhe || this.extractSeatName(seat.MaGheChuyen) || seat.MaGheChuyen;
+      const name = seat.soGhe ?? seat.SoGhe ?? this.extractSeatName(seat.maGheChuyen ?? seat.MaGheChuyen) ?? '';
       const seatNumber = parseInt(String(name).replace(/[^0-9]/g, ''), 10);
-      const deck: 'lower' | 'upper' = Number(seat.TangGhe) === 2 ? 'upper' : 'lower';
+      const deck: 'lower' | 'upper' = Number(seat.tangGhe ?? seat.TangGhe) === 2 ? 'upper' : 'lower';
       const side: 'left' | 'right' = Number.isFinite(seatNumber) && seatNumber % 2 === 0 ? 'right' : 'left';
 
       return {
         name,
-        maGheChuyen: seat.MaGheChuyen,
-        status: this.mapSeatStatus(seat.TrangThaiGhe),
+        maGheChuyen: seat.maGheChuyen ?? seat.MaGheChuyen,
+        status: this.mapSeatStatus(seat.trangThaiGhe ?? seat.TrangThaiGhe),
         deck,
         side,
-        price: this.toNumber(seat.GiaVe) || fallbackPrice,
+        price: this.toNumber(seat.giaVe ?? seat.GiaVe) || fallbackPrice,
       };
     }).sort((a, b) => {
       if (a.deck !== b.deck) return a.deck === 'lower' ? -1 : 1;
@@ -759,6 +472,7 @@ export class TimKiemChuyenXe implements OnInit {
   // Handle Search button
   searchTrip() {
     this.showPassengerPopover = false;
+    this.isSearchPerformed = true;
     this.loadTripsFromApi();
     // Add to recent searches
     const exists = this.recentSearches.some(s => s.from === this.departure && s.to === this.destination);
@@ -951,6 +665,7 @@ export class TimKiemChuyenXe implements OnInit {
       this.allTrips.forEach(t => t.expanded = false);
       trip.expanded = true;
       trip.selectedTab = 'seat';
+      this.loadTripDetails(trip);
     }
     this.activeTrip = trip;
     this.updateSelectedSeats(trip);
@@ -961,6 +676,7 @@ export class TimKiemChuyenXe implements OnInit {
     trip.expanded = true;
     trip.selectedTab = tab;
     this.activeTrip = trip;
+    this.loadTripDetails(trip);
     this.updateSelectedSeats(trip);
   }
 
@@ -1055,16 +771,22 @@ export class TimKiemChuyenXe implements OnInit {
   }
 
   setupRealtimeSubscriptions() {
-    // Subscribe to GHE_CHUYEN_XE changes
-    this.supabaseService.subscribeTableChanges('GHE_CHUYEN_XE', (payload: any) => {
-      console.log('Realtime seat change payload:', payload);
-      this.handleSeatStatusChange(payload);
-    });
+    this.ngZone.runOutsideAngular(() => {
+      // Subscribe to GHE_CHUYEN_XE changes
+      this.supabaseService.subscribeTableChanges('GHE_CHUYEN_XE', (payload: any) => {
+        this.ngZone.run(() => {
+          console.log('Realtime seat change payload:', payload);
+          this.handleSeatStatusChange(payload);
+        });
+      });
 
-    // Subscribe to LICH_TRINH changes
-    this.supabaseService.subscribeTableChanges('LICH_TRINH', (payload: any) => {
-      console.log('Realtime schedule change payload:', payload);
-      this.handleScheduleChange(payload);
+      // Subscribe to LICH_TRINH changes
+      this.supabaseService.subscribeTableChanges('LICH_TRINH', (payload: any) => {
+        this.ngZone.run(() => {
+          console.log('Realtime schedule change payload:', payload);
+          this.handleScheduleChange(payload);
+        });
+      });
     });
   }
 
@@ -1135,5 +857,92 @@ export class TimKiemChuyenXe implements OnInit {
       }
     }
     this.filterTrips();
+  }
+
+  loadActiveRoutes(): void {
+    this.http.get<any>(`${this.apiBaseUrl}/customer/home/routes`).subscribe({
+      next: (response: any) => {
+        if (response && response.success && Array.isArray(response.data)) {
+          const locSet = new Set<string>();
+          response.data.forEach((route: any) => {
+            if (route.DiemKhoiHanh) locSet.add(route.DiemKhoiHanh.trim());
+            if (route.DiemDen) locSet.add(route.DiemDen.trim());
+          });
+          if (locSet.size > 0) {
+            this.locations = Array.from(locSet);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load active routes', err);
+      }
+    });
+  }
+
+  loadTripDetails(trip: any) {
+    if (trip.diemDungLichTrinh && trip.diemDungLichTrinh.length > 0) {
+      return;
+    }
+    this.http.get<any>(`${this.apiBaseUrl}/customer/tim-kiem-chuyen-xe/detail/${trip.id}`).subscribe({
+      next: (response: any) => {
+        if (response && response.success && response.data) {
+          if (Array.isArray(response.data.diemDungLichTrinh)) {
+            trip.diemDungLichTrinh = response.data.diemDungLichTrinh.map((stop: any) => ({
+              ...stop,
+              TenDiem: this.restoreVietnameseAccents(stop.TenDiem),
+              DiaChi: this.restoreVietnameseAccents(stop.DiaChi || stop.GhiChu || '')
+            }));
+          } else {
+            trip.diemDungLichTrinh = [];
+          }
+          if (Array.isArray(response.data.gheChuyenXe) && response.data.gheChuyenXe.length > 0) {
+            const mapped = response.data.gheChuyenXe.map((s: any) => ({
+              name: s.SoGhe,
+              maGheChuyen: s.MaGheChuyen,
+              deck: s.TangGhe === 2 ? 'upper' : 'lower',
+              side: s.DayGhe === 'A' ? 'left' : 'right',
+              price: Number(s.GiaVe),
+              status: s.TrangThaiGhe === 'DaBan' ? 'sold' : (s.TrangThaiGhe === 'GiuCho' ? 'sold' : 'available'),
+            }));
+            mapped.sort((a: any, b: any) => {
+              if (a.deck !== b.deck) {
+                return a.deck === 'lower' ? -1 : 1;
+              }
+              const numA = parseInt(a.name.replace(/[^0-9]/g, ''), 10);
+              const numB = parseInt(b.name.replace(/[^0-9]/g, ''), 10);
+              return numA - numB;
+            });
+            trip.seats = mapped;
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load trip details', err);
+      }
+    });
+  }
+
+  formatTimeStr(d: any): string {
+    if (!d) return '00:00';
+    const dateObj = new Date(d);
+    if (isNaN(dateObj.getTime())) return String(d).slice(0, 5);
+    return `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+  }
+
+  restoreVietnameseAccents(text: string): string {
+    if (!text) return '';
+    const trimmed = text.trim();
+    const mapping: { [key: string]: string } = {
+      'ben xe thuong ly': 'Bến xe Thượng Lý',
+      'ben xe bai chay': 'Bến xe Bãi Cháy',
+      'ben xe my dinh': 'Bến xe Mỹ Đình',
+      'nha tho da sapa': 'Nhà thờ đá SaPa',
+      '52 ha ly, hong bang': '52 Hạ Lý, Hồng Bàng',
+      'duong ha long, bai chay': 'Đường Hạ Long, Bãi Cháy',
+      '20 pham hung, nam tu liem': '20 Phạm Hùng, Nam Từ Liêm',
+      'trung tam sapa': 'Trung tâm SaPa'
+    };
+    const key = trimmed.toLowerCase();
+    return mapping[key] || text;
   }
 }

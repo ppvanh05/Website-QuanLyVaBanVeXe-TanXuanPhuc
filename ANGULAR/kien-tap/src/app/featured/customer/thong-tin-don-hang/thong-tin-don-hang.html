@@ -162,13 +162,17 @@
               <div>
                 <label class="block text-body-sm font-bold text-navy mb-1.5">Họ tên người đi <span class="text-danger">*</span></label>
                 <input type="text" [(ngModel)]="customerName" placeholder="Nhập họ và tên"
-                  class="w-full bg-white border border-outline-variant rounded-lg px-3 py-2 text-body-md font-medium focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                  class="w-full bg-white border rounded-lg px-3 py-2 text-body-md font-medium focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  [class.border-danger]="customerNameError">
+                <div *ngIf="customerNameError" class="text-danger text-body-xs font-medium mt-1">{{ customerNameError }}</div>
               </div>
 
               <div>
                 <label class="block text-body-sm font-bold text-navy mb-1.5">Số điện thoại <span class="text-danger">*</span></label>
                 <input type="text" [(ngModel)]="customerPhone" placeholder="Nhập số điện thoại"
-                  class="w-full bg-white border border-outline-variant rounded-lg px-3 py-2 text-body-md font-medium focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                  class="w-full bg-white border rounded-lg px-3 py-2 text-body-md font-medium focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  [class.border-danger]="customerPhoneError">
+                <div *ngIf="customerPhoneError" class="text-danger text-body-xs font-medium mt-1">{{ customerPhoneError }}</div>
               </div>
 
               <div>
@@ -352,7 +356,7 @@
             
             <div class="flex justify-between">
               <span class="text-on-surface-variant">Giờ cần có mặt</span>
-              <span class="text-primary text-right font-bold">{{ bookingData.suggestedPresenceTime }} {{ getSelectedDate() }}</span>
+              <span class="text-primary text-right font-bold">{{ suggestedPresenceTime }} {{ getSelectedDate() }}</span>
             </div>
 
             <div class="flex justify-between">

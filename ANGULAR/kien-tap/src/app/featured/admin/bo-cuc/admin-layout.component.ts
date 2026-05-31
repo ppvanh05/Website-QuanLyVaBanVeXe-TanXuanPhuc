@@ -163,7 +163,7 @@ export class AdminLayoutComponent implements OnInit {
     { label: 'Quản lý khách hàng', icon: 'groups', route: '/admin/quan-ly-khach-hang', permission: 'customer' },
     { label: 'Quản lý nhân viên', icon: 'engineering', route: '/admin/quan-ly-nhan-vien', permission: 'employee' },
     { label: 'Quản lý chính sách', icon: 'policy', route: '/admin/quan-ly-chinh-sach', permission: 'policy' },
-    { label: 'Quản lý từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', permission: 'blacklist' },
+    { label: 'Quản lý từ khóa cấm', icon: 'block', route: '/admin/quan-ly-tu-khoa-cam', permission: 'review' },
     {
       label: 'Báo cáo',
       icon: 'bar_chart',

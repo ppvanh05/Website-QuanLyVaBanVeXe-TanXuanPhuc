@@ -50,6 +50,8 @@ export class ThongTinDonHang implements OnInit {
   customerPhone: string = '';
   customerEmail: string = '';
   agreeTerms: boolean = false;
+  customerNameError: string = '';
+  customerPhoneError: string = '';
 
   // Pickup/Dropoff dropdown states
   pickupSearch: string = '';
@@ -449,18 +451,28 @@ export class ThongTinDonHang implements OnInit {
   }
 
   payBooking() {
+    this.customerNameError = '';
+    this.customerPhoneError = '';
+
     if (this.bookingData.selectedSeats.length === 0) {
       this.toastService.show('Vui lòng chọn ít nhất 1 ghế.', 'warning');
       return;
     }
+
+    const phoneRegex = /^(0|\+84)\d{9}$/;
     if (!this.customerName.trim()) {
-      this.toastService.show('Vui lòng nhập Họ và tên.', 'warning');
-      return;
+      this.customerNameError = 'Họ tên người đi không được bỏ trống.';
     }
     if (!this.customerPhone.trim()) {
-      this.toastService.show('Vui lòng nhập Số điện thoại.', 'warning');
+      this.customerPhoneError = 'Số điện thoại không được bỏ trống.';
+    } else if (!phoneRegex.test(this.customerPhone.trim())) {
+      this.customerPhoneError = 'Số điện thoại không hợp lệ. Vui lòng nhập 10 chữ số bắt đầu bằng 0 hoặc +84.';
+    }
+
+    if (this.customerNameError || this.customerPhoneError) {
       return;
     }
+
     if (!this.agreeTerms) {
       this.toastService.show('Quý khách vui lòng đồng ý với điều khoản đặt vé.', 'warning');
       return;

@@ -435,6 +435,7 @@
   border-radius: 20px;
   font-size: 0.78rem;
   font-weight: 600;
+  white-space: nowrap !important;
 }
 
 .status-pill.DaDang {

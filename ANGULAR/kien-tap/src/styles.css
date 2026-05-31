@@ -12,6 +12,10 @@ body {
   @apply bg-background text-on-surface;
 }
 
+input, select, textarea, button {
+  font-family: inherit;
+}
+
 /* Fix Material Icons & Symbols */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined' !important;

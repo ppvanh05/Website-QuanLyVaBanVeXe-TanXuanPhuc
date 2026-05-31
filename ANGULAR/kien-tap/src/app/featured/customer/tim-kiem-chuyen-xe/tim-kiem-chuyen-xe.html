@@ -101,11 +101,11 @@
               class="absolute z-50 top-full left-0 mt-2 bg-white rounded-2xl shadow-[0px_8px_30px_rgba(0,0,0,0.15)] border border-outline-variant/30 p-4 w-72 select-none"
               (click)="$event.stopPropagation()">
               <div class="flex justify-between items-center mb-3">
-                <button class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                <button type="button" (click)="$event.stopPropagation(); previousDepartureMonth()" class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                   <span class="material-symbols-outlined text-title-md">chevron_left</span>
                 </button>
-                <span class="font-bold text-navy text-body-md">{{ calendarTitle }}</span>
-                <button class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                <span class="font-bold text-navy text-body-md">{{ departureCalendarTitle }}</span>
+                <button type="button" (click)="$event.stopPropagation(); nextDepartureMonth()" class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                   <span class="material-symbols-outlined text-title-md">chevron_right</span>
                 </button>
               </div>
@@ -113,8 +113,8 @@
                 <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
               </div>
               <div class="grid grid-cols-7 gap-y-2 gap-x-1 justify-items-center">
-                <div *ngFor="let empty of calendarEmptySpaces" class="w-8 h-8"></div>
-                <div *ngFor="let d of calendarDays" (click)="selectDepartureDate(d.dateStr)"
+                <div *ngFor="let empty of departureCalendarEmptySpaces" class="w-8 h-8"></div>
+                <div *ngFor="let d of departureCalendarDays" (click)="selectDepartureDate(d.dateStr)"
                   [class]="d.dateStr === departureDate
                     ? 'w-8 h-8 flex flex-col items-center justify-center rounded-lg bg-orange-50 border border-orange-500 text-orange-600 font-bold cursor-pointer relative shadow-sm'
                     : isPastDate(d.dateStr)
@@ -145,11 +145,11 @@
               class="absolute z-50 top-full left-0 mt-2 bg-white rounded-2xl shadow-[0px_8px_30px_rgba(0,0,0,0.15)] border border-outline-variant/30 p-4 w-72 select-none"
               (click)="$event.stopPropagation()">
               <div class="flex justify-between items-center mb-3">
-                <button class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                <button type="button" (click)="$event.stopPropagation(); previousReturnMonth()" class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                   <span class="material-symbols-outlined text-title-md">chevron_left</span>
                 </button>
-                <span class="font-bold text-navy text-body-md">{{ calendarTitle }}</span>
-                <button class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                <span class="font-bold text-navy text-body-md">{{ returnCalendarTitle }}</span>
+                <button type="button" (click)="$event.stopPropagation(); nextReturnMonth()" class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                   <span class="material-symbols-outlined text-title-md">chevron_right</span>
                 </button>
               </div>
@@ -157,8 +157,8 @@
                 <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
               </div>
               <div class="grid grid-cols-7 gap-y-2 gap-x-1 justify-items-center">
-                <div *ngFor="let empty of calendarEmptySpaces" class="w-8 h-8"></div>
-                <div *ngFor="let d of calendarDays" (click)="selectReturnDate(d.dateStr)"
+                <div *ngFor="let empty of returnCalendarEmptySpaces" class="w-8 h-8"></div>
+                <div *ngFor="let d of returnCalendarDays" (click)="selectReturnDate(d.dateStr)"
                   [class]="d.dateStr === returnDate
                     ? 'w-8 h-8 flex flex-col items-center justify-center rounded-lg bg-orange-50 border border-orange-500 text-orange-600 font-bold cursor-pointer relative shadow-sm'
                     : isPastDate(d.dateStr)
@@ -410,10 +410,10 @@
               </div>
 
               <!-- Trip Card (Layout updated to match Figure 2) -->
-              <div
+              <div (click)="toggleTripDetails(trip)"
                 class="bg-surface rounded-xl border border-outline-variant/15 hover:border-primary/30 shadow-[0px_4px_16px_rgba(11,42,74,0.03)] hover:shadow-[0px_8px_24px_rgba(11,42,74,0.06)] overflow-hidden transition-all duration-300">
-                <!-- Trip Summary Header (Click triggers expansion) -->
-                <div (click)="toggleTripDetails(trip)" class="p-6 cursor-pointer select-none space-y-1">
+                <!-- Trip Summary Header -->
+                <div class="p-6 cursor-pointer select-none space-y-1">
                   <!-- Row 1: Departure Time, Timeline, Arrival Time, Specs (all on 1 line) -->
                   <div class="grid grid-cols-12 gap-x-4 items-center">
                     <!-- Departure (col-span-2) -->
@@ -590,8 +590,8 @@
                               <ng-container *ngFor="let seat of trip.seats">
                                 <button *ngIf="seat.deck === 'lower'"
                                   (click)="toggleSeat(trip, seat); $event.stopPropagation()"
-                                  [disabled]="seat.status === 'sold'"
-                                  [class]="seat.status === 'sold'
+                                  [disabled]="seat.status === 'sold' || seat.status === 'held'"
+                                  [class]="seat.status === 'sold' || seat.status === 'held'
                                     ? 'w-16 h-11 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface-disabled cursor-not-allowed flex items-center justify-center shadow-sm text-lg font-bold'
                                     : seat.status === 'selected'
                                     ? 'w-16 h-11 rounded-lg bg-secondary border-secondary border-2 text-white flex items-center justify-center shadow-md scale-105 transition-all text-lg font-bold'
@@ -626,8 +626,8 @@
                               <ng-container *ngFor="let seat of trip.seats">
                                 <button *ngIf="seat.deck === 'upper'"
                                   (click)="toggleSeat(trip, seat); $event.stopPropagation()"
-                                  [disabled]="seat.status === 'sold'"
-                                  [class]="seat.status === 'sold'
+                                  [disabled]="seat.status === 'sold' || seat.status === 'held'"
+                                  [class]="seat.status === 'sold' || seat.status === 'held'
                                     ? 'w-16 h-11 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface-disabled cursor-not-allowed flex items-center justify-center shadow-sm text-lg font-bold'
                                     : seat.status === 'selected'
                                     ? 'w-16 h-11 rounded-lg bg-secondary border-secondary border-2 text-white flex items-center justify-center shadow-md scale-105 transition-all text-lg font-bold'
@@ -643,7 +643,7 @@
                     </div>
 
                     <!-- Dynamic room guest settings & checkout container -->
-                    <div *ngIf="selectedSeatsList.length > 0"
+                    <div *ngIf="trip.seats.some(s => s.status === 'selected')"
                       class="pt-6 border-t border-outline-variant/20 max-w-2xl mx-auto space-y-4">
                       <p class="font-bold text-navy text-body-md">Chọn loại ghế:</p>
 
@@ -652,7 +652,7 @@
                         <div *ngFor="let seatName of selectedSeatsList"
                           class="flex items-center justify-between p-3 bg-surface-container rounded-lg border border-outline-variant/25">
                           <span class="font-bold text-navy font-semibold text-body-md">Ghế {{ seatName }}</span>
-                          <select [(ngModel)]="selectedRoomGuests[seatName]" (change)="recalculatePrice()"
+                          <select [(ngModel)]="selectedRoomGuests[seatName]" (change)="recalculatePrice()" (click)="$event.stopPropagation()"
                             class="bg-white border border-outline-variant rounded-md text-body-sm font-bold py-1 px-2 focus:ring-primary focus:border-primary cursor-pointer">
                             <option [value]="1">Phòng đơn ({{ formatPrice(trip.price) }})</option>
                             <option [value]="2">Phòng đôi ({{ formatPrice(trip.price + 200000) }})</option>
@@ -672,7 +672,7 @@
                           </p>
                         </div>
 
-                        <button (click)="confirmSelection(trip)"
+                        <button (click)="$event.stopPropagation(); confirmSelection(trip)"
                           class="px-8 py-2.5 bg-secondary text-white font-bold rounded-lg hover:bg-secondary-hover shadow-[0px_4px_12px_rgba(243,112,33,0.2)] transition-all">
                           Chọn ghế
                         </button>
@@ -816,16 +816,12 @@
                     <div class="space-y-3">
                       <h4 class="font-bold text-title-md text-navy border-b border-outline-variant/30 pb-2">1. CHÍNH
                         SÁCH HỦY VÉ VÀ HOÀN TIỀN</h4>
-                      <ul class="list-disc list-inside space-y-2 text-body-md text-on-surface-variant leading-relaxed">
-                        <li>Hủy vé <span class="font-bold text-navy">trước 24 giờ</span> (so với giờ xe chạy): Hệ thống
-                          hoàn trả <span class="font-bold text-navy">100%</span> giá trị vé cho khách hàng.</li>
-                        <li>Hủy vé <span class="font-bold text-navy">từ 12 giờ đến 24 giờ</span> (so với giờ xe chạy):
-                          Hệ thống hoàn trả <span class="font-bold text-navy">50%</span> giá trị vé cho khách hàng.
-                        </li>
-                        <li>Hủy vé <span class="font-bold text-navy">dưới 12 giờ</span> (sát giờ xe chạy): Nhà xe <span
-                            class="font-bold text-navy">không hỗ trợ</span> hoàn tiền dưới mọi hình
-                          thức.</li>
+                      <ul *ngIf="huyVePolicies.length > 0" class="list-disc list-inside space-y-2 text-body-md text-on-surface-variant leading-relaxed">
+                        <li *ngFor="let policy of huyVePolicies">{{ policy.mota || policy.description || policy.TenChinhSach }}</li>
                       </ul>
+                      <div *ngIf="huyVePolicies.length === 0" class="text-body-md text-on-surface-variant italic">
+                        Đang tải chính sách hủy vé...
+                      </div>
                     </div>
 
                     <!-- 2. Children & Pregnant Women -->

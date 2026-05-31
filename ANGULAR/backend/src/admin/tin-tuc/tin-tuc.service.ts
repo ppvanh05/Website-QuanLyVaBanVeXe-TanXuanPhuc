@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, TrangThaiTinTucEnum, LoaiTinTucEnum } from '@prisma/client';
 import { NhatKyHeThongService } from '../nhat-ky-he-thong/nhat-ky-he-thong.service';
@@ -72,7 +72,7 @@ export class TinTucService {
         NgayDang: dto.NgayDang ? new Date(dto.NgayDang as any) : null,
         TrangThai: dto.TrangThai as TrangThaiTinTucEnum,
         NoiBat: dto.NoiBat ?? false,
-        MaQuanTriVien: dto.MaQuanTriVien ?? null,
+        MaQuanTriVien: (dto.MaQuanTriVien && dto.MaQuanTriVien.trim() !== '') ? dto.MaQuanTriVien : null,
       },
     });
 
@@ -103,6 +103,10 @@ export class TinTucService {
     }
     if (dto.NgayGioHenGio) {
       data.NgayGioHenGio = new Date(dto.NgayGioHenGio as any);
+    }
+    // Avoid foreign key violations on blank MaQuanTriVien strings
+    if (data.MaQuanTriVien === '' || data.MaQuanTriVien === undefined) {
+      delete data.MaQuanTriVien;
     }
     const res = await this.prisma.tIN_TUC.update({
       where: { MaTinTuc: id },

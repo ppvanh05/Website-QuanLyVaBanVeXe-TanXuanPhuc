@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, Inject, OnInit, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { CustomerTinTucService } from '../../../../core/services/customer-tin-tuc.service';
@@ -14,11 +14,13 @@ export class TintucDetailComponent implements OnInit {
   newsDetail: any = null;
   otherNews: any[] = [];
   relatedNews: any[] = [];
+  isLoading: boolean = true;
   private isBrowser: boolean;
 
   constructor(
     private route: ActivatedRoute,
     private newsService: CustomerTinTucService,
+    private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -67,9 +69,13 @@ export class TintucDetailComponent implements OnInit {
             image: item.AnhBia || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800'
           }));
         }
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('Error fetching news detail:', err);
+        this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

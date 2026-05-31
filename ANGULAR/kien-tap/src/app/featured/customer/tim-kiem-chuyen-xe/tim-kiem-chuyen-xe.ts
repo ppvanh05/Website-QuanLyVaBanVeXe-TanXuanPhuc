@@ -8,11 +8,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { TimKiemApiService } from '../../../core/services/tim-kiem-api.service';
 import { HomeApiService } from '../../../core/services/home-api.service';
+import { ChinhSachService } from '../../../core/services/chinh-sach.service';
 import { LunarCalendarService } from '../../../core/services/lunar-calendar.service';
 
 interface Seat {
   name: string;
-  status: 'sold' | 'available' | 'selected';
+  status: 'sold' | 'available' | 'selected' | 'held';
   deck: 'lower' | 'upper';
   side: 'left' | 'right';
   price: number;
@@ -78,10 +79,17 @@ export class TimKiemChuyenXe implements OnInit {
   sharedSeats5: Seat[] = [];
   sharedSeats6: Seat[] = [];
 
+  // Local holds persisted temporarily while user proceeds to checkout
+  // Shape: { tripId: any, seats: string[], expiresAt: number }
+  private localSeatHoldsKey = 'local_seat_holds_v1';
+  private serverSeatHoldsKey = 'server_seat_holds_v1';
+  private sessionIdKey = 'seat_hold_session_id_v1';
+
   locations = ['TP. Hồ Chí Minh', 'Bình Định', 'Phú Yên'];
 
   // Recent searches list
   recentSearches: any[] = [];
+  huyVePolicies: any[] = [];
 
   // Sorting state
   sortBy: 'price' | 'time' | 'seats' = 'time';
@@ -122,9 +130,26 @@ export class TimKiemChuyenXe implements OnInit {
   // Tracks guest count choice (1 or 2 guests) per selected room
   selectedRoomGuests: { [roomName: string]: number } = {};
 
-  calendarTitle: string = '';
-  calendarEmptySpaces: number[] = [];
-  calendarDays: any[] = [];
+  // Temporary snapshots used to rollback seat selections when user closes the trip card without confirming
+  private tripSelectionSnapshots = new Map<any, {
+    seats: Seat[];
+    availableSeats: number;
+    selectedRoomGuests: { [roomName: string]: number };
+  }>();
+
+  // Departure calendar variables
+  departureCalendarTitle: string = '';
+  departureCalendarEmptySpaces: number[] = [];
+  departureCalendarDays: any[] = [];
+  departureCurrentMonth: number = new Date().getMonth();
+  departureCurrentYear: number = new Date().getFullYear();
+
+  // Return calendar variables
+  returnCalendarTitle: string = '';
+  returnCalendarEmptySpaces: number[] = [];
+  returnCalendarDays: any[] = [];
+  returnCurrentMonth: number = new Date().getMonth();
+  returnCurrentYear: number = new Date().getFullYear();
 
   constructor(
     private route: ActivatedRoute, 
@@ -134,12 +159,32 @@ export class TimKiemChuyenXe implements OnInit {
     private toastService: ToastService,
     private timKiemApiService: TimKiemApiService,
     private homeApiService: HomeApiService,
+    private chinhSachService: ChinhSachService,
     private lunarCalendarService: LunarCalendarService,
     private cdr: ChangeDetectorRef
   ) {
     this.authService.isLoggedIn$.subscribe(status => {
       this.isLoggedIn = status;
       this.cdr.markForCheck();
+    });
+
+    // Load public cancel policies to display in the policy tab
+    this.chinhSachService.getPublicChinhSachHuyVe().subscribe({
+      next: (data: any) => {
+        // Service maps to an array already; accept either array or object with .data
+        if (Array.isArray(data)) {
+          this.huyVePolicies = data;
+        } else if (data && Array.isArray(data.data)) {
+          this.huyVePolicies = data.data;
+        } else {
+          this.huyVePolicies = [];
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.warn('[ChinhSach] Không tải được CHINH_SACH_HUY_VE:', err);
+        this.huyVePolicies = [];
+      }
     });
   }
 
@@ -217,7 +262,8 @@ export class TimKiemChuyenXe implements OnInit {
   }
 
   ngOnInit() {
-    this.generateCalendarDays();
+    this.generateDepartureCalendarDays();
+    this.generateReturnCalendarDays();
     this.loadActiveRoutes();
     this.loadRecentSearches();
     
@@ -240,6 +286,27 @@ export class TimKiemChuyenXe implements OnInit {
       
       this.departureSearch = this.departure;
       this.destinationSearch = this.destination;
+
+      // Update calendar month and year based on parsed query params
+      const depDate = this.parseDate(this.departureDate);
+      if (depDate) {
+        this.departureCurrentMonth = depDate.getMonth();
+        this.departureCurrentYear = depDate.getFullYear();
+      } else {
+        this.departureCurrentMonth = today.getMonth();
+        this.departureCurrentYear = today.getFullYear();
+      }
+      this.generateDepartureCalendarDays();
+
+      const retDate = this.parseDate(this.returnDate) || depDate;
+      if (retDate) {
+        this.returnCurrentMonth = retDate.getMonth();
+        this.returnCurrentYear = retDate.getFullYear();
+      } else {
+        this.returnCurrentMonth = today.getMonth();
+        this.returnCurrentYear = today.getFullYear();
+      }
+      this.generateReturnCalendarDays();
       
       // If the route contains any search-related query params, consider this a performed search
       if (params && Object.keys(params).length > 0 && (params['diemDi'] || params['diemDen'] || params['ngayDi'])) {
@@ -255,16 +322,16 @@ export class TimKiemChuyenXe implements OnInit {
     });
   }
 
-  generateCalendarDays() {
+  generateDepartureCalendarDays() {
     const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
+    const year = this.departureCurrentYear;
+    const month = this.departureCurrentMonth;
 
-    this.calendarTitle = `THÁNG ${month + 1}/${year}`;
+    this.departureCalendarTitle = `THÁNG ${month + 1}/${year}`;
 
     const firstDayIndex = new Date(year, month, 1).getDay();
     const emptySpacesCount = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
-    this.calendarEmptySpaces = Array(emptySpacesCount).fill(0);
+    this.departureCalendarEmptySpaces = Array(emptySpacesCount).fill(0);
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const days = [];
@@ -287,7 +354,90 @@ export class TimKiemChuyenXe implements OnInit {
       });
     }
 
-    this.calendarDays = days;
+    this.departureCalendarDays = days;
+  }
+
+  generateReturnCalendarDays() {
+    const today = new Date();
+    const year = this.returnCurrentYear;
+    const month = this.returnCurrentMonth;
+
+    this.returnCalendarTitle = `THÁNG ${month + 1}/${year}`;
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const emptySpacesCount = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+    this.returnCalendarEmptySpaces = Array(emptySpacesCount).fill(0);
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days = [];
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = String(i).padStart(2, '0');
+      const m = String(month + 1).padStart(2, '0');
+      const dateStr = `${d}/${m}/${year}`;
+
+      const lunar = this.lunarCalendarService.getLunarDate(i, month + 1, year);
+      const label = lunar.day === 1 ? `1/${lunar.month}` : `${lunar.day}`;
+
+      const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+
+      days.push({
+        day: i,
+        label: label,
+        dateStr: dateStr,
+        highlighted: isToday
+      });
+    }
+
+    this.returnCalendarDays = days;
+  }
+
+  previousDepartureMonth() {
+    console.log('[Departure Calendar] Previous month clicked');
+    this.departureCurrentMonth--;
+    if (this.departureCurrentMonth < 0) {
+      this.departureCurrentMonth = 11;
+      this.departureCurrentYear--;
+    }
+    console.log('[Departure Calendar] Current:', this.departureCurrentMonth + 1, '/', this.departureCurrentYear);
+    this.generateDepartureCalendarDays();
+    this.cdr.detectChanges();
+  }
+
+  nextDepartureMonth() {
+    console.log('[Departure Calendar] Next month clicked');
+    this.departureCurrentMonth++;
+    if (this.departureCurrentMonth > 11) {
+      this.departureCurrentMonth = 0;
+      this.departureCurrentYear++;
+    }
+    console.log('[Departure Calendar] Current:', this.departureCurrentMonth + 1, '/', this.departureCurrentYear);
+    this.generateDepartureCalendarDays();
+    this.cdr.detectChanges();
+  }
+
+  previousReturnMonth() {
+    console.log('[Return Calendar] Previous month clicked');
+    this.returnCurrentMonth--;
+    if (this.returnCurrentMonth < 0) {
+      this.returnCurrentMonth = 11;
+      this.returnCurrentYear--;
+    }
+    console.log('[Return Calendar] Current:', this.returnCurrentMonth + 1, '/', this.returnCurrentYear);
+    this.generateReturnCalendarDays();
+    this.cdr.detectChanges();
+  }
+
+  nextReturnMonth() {
+    console.log('[Return Calendar] Next month clicked');
+    this.returnCurrentMonth++;
+    if (this.returnCurrentMonth > 11) {
+      this.returnCurrentMonth = 0;
+      this.returnCurrentYear++;
+    }
+    console.log('[Return Calendar] Current:', this.returnCurrentMonth + 1, '/', this.returnCurrentYear);
+    this.generateReturnCalendarDays();
+    this.cdr.detectChanges();
   }
 
   loadActiveRoutes(): void {
@@ -467,9 +617,7 @@ export class TimKiemChuyenXe implements OnInit {
       duration: durationStr,
       distance: item.tuyenXe?.KhoangCach
         ? `${item.tuyenXe.KhoangCach}Km`
-        : item.KhoangCach
-          ? `${item.KhoangCach}Km`
-          : 'Không rõ',
+        : item.KhoangCach,
       timezone: item.tuyenXe?.MienGio || 'Asia/Ho_Chi_Minh',
       type: 'Limousine',
       availableSeats,
@@ -482,6 +630,10 @@ export class TimKiemChuyenXe implements OnInit {
     };
   }
 
+  private cloneSeats(seats: Seat[]): Seat[] {
+    return seats.map(s => ({ ...s }));
+  }
+
   fetchTripsFromBackend(): void {
     this.timKiemApiService.searchTrips(this.departure, this.destination, this.departureDate).subscribe({
       next: (response: any) => {
@@ -491,6 +643,9 @@ export class TimKiemChuyenXe implements OnInit {
 
         if (response?.success && tripData.length > 0) {
           this.allTrips = tripData.map((item: any) => this.mapBackendTrip(item));
+          // clean old local holds and apply holds to trips
+          this.cleanExpiredHolds();
+          this.applyHoldsToAllTrips();
           this.filterTrips();
           console.log('[searchTrips] allTrips.length:', this.allTrips.length);
           console.log('[searchTrips] filteredTrips.length (render):', this.filteredTrips.length);
@@ -508,6 +663,95 @@ export class TimKiemChuyenXe implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // Local seat holds storage helpers
+  private getLocalHolds(): Array<{ tripId: any; seats: string[]; expiresAt: number }> {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(this.localSeatHoldsKey);
+      if (!raw) return [];
+      return JSON.parse(raw) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  private getServerHolds(): Array<{ tripId: any; seats: string[]; expiresAt: number }> {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(this.serverSeatHoldsKey);
+      if (!raw) return [];
+      return JSON.parse(raw) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  private saveServerHolds(holds: Array<{ tripId: any; seats: string[]; expiresAt: number }>) {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(this.serverSeatHoldsKey, JSON.stringify(holds));
+    } catch (e) {}
+  }
+
+  private getSessionId(): string {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return '';
+    try {
+      let id = localStorage.getItem(this.sessionIdKey);
+      if (!id) {
+        id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem(this.sessionIdKey, id);
+      }
+      return id;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  private saveLocalHolds(holds: Array<{ tripId: any; seats: string[]; expiresAt: number }>) {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(this.localSeatHoldsKey, JSON.stringify(holds));
+    } catch (e) {}
+  }
+
+  private cleanExpiredHolds() {
+    const now = Date.now();
+    const holds = this.getLocalHolds().filter(h => h.expiresAt > now);
+    this.saveLocalHolds(holds);
+  }
+
+  private applyHoldsToAllTrips() {
+    // apply both local and server-held holds to trips
+    this.allTrips.forEach(trip => {
+      this.applyHoldsToTrip(trip);
+      this.applyServerHoldsToTrip(trip);
+    });
+  }
+
+  private applyHoldsToTrip(trip: Trip) {
+    const holds = this.getLocalHolds();
+    const matched = holds.find(h => h.tripId === trip.id && h.expiresAt > Date.now());
+    if (!matched) return;
+    trip.seats.forEach(s => {
+      if (matched.seats.includes(s.name) && s.status === 'available') {
+        s.status = 'held';
+      }
+    });
+    trip.availableSeats = trip.seats.filter(s => s.status === 'available').length;
+  }
+
+  private applyServerHoldsToTrip(trip: Trip) {
+    const holds = this.getServerHolds();
+    const matched = holds.find(h => h.tripId === trip.id && h.expiresAt > Date.now());
+    if (!matched) return;
+    trip.seats.forEach(s => {
+      if (matched.seats.includes(s.name) && s.status === 'available') {
+        s.status = 'held';
+      }
+    });
+    trip.availableSeats = trip.seats.filter(s => s.status === 'available').length;
   }
 
   
@@ -648,14 +892,13 @@ export class TimKiemChuyenXe implements OnInit {
 
   // Initialize trips data (Evening departures starting from 18:00)
   initMockTrips() {
-    if (this.sharedSeats1.length === 0) {
-      this.sharedSeats1 = this.generateLimousineRooms(400000);
-      this.sharedSeats2 = this.generateLimousineRooms(400000);
-      this.sharedSeats3 = this.generateLimousineRooms(400000);
-      this.sharedSeats4 = this.generateLimousineRooms(400000);
-      this.sharedSeats5 = this.generateLimousineRooms(400000);
-      this.sharedSeats6 = this.generateLimousineRooms(400000);
-    }
+    // create unique seat arrays per trip (avoid shared references causing cross-trip selection)
+    const seatsA = this.generateLimousineRooms(400000);
+    const seatsB = this.generateLimousineRooms(400000);
+    const seatsC = this.generateLimousineRooms(400000);
+    const seatsD = this.generateLimousineRooms(400000);
+    const seatsE = this.generateLimousineRooms(400000);
+    const seatsF = this.generateLimousineRooms(400000);
 
     this.allTrips = [
       // === TPHCM -> BÌNH ĐỊNH ===
@@ -671,7 +914,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Miền Đông',
         endStation: 'Bến xe Quy Nhơn (Bình Định)',
         price: 400000,
-        seats: this.sharedSeats1,
+        seats: this.cloneSeats(seatsA),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -687,7 +930,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Miền Tây',
         endStation: 'Bến xe Quy Nhơn (Bình Định)',
         price: 400000,
-        seats: this.sharedSeats2,
+        seats: this.cloneSeats(seatsB),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -703,7 +946,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Bến Cát',
         endStation: 'Bến xe Quy Nhơn (Bình Định)',
         price: 400000,
-        seats: this.sharedSeats3,
+        seats: this.cloneSeats(seatsC),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -721,7 +964,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Quy Nhơn (Bình Định)',
         endStation: 'Bến xe Miền Đông',
         price: 400000,
-        seats: this.sharedSeats4,
+        seats: this.cloneSeats(seatsD),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -737,7 +980,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Quy Nhơn (Bình Định)',
         endStation: 'Bến xe Miền Tây',
         price: 400000,
-        seats: this.sharedSeats5,
+        seats: this.cloneSeats(seatsE),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -753,7 +996,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Quy Nhơn (Bình Định)',
         endStation: 'Bến xe Bến Cát',
         price: 400000,
-        seats: this.sharedSeats6,
+        seats: this.cloneSeats(seatsF),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -771,7 +1014,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Miền Đông',
         endStation: 'Tuy Hòa (Phú Yên)',
         price: 350000,
-        seats: this.sharedSeats1,
+        seats: this.cloneSeats(seatsA),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -787,7 +1030,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Miền Tây',
         endStation: 'Tuy Hòa (Phú Yên)',
         price: 350000,
-        seats: this.sharedSeats2,
+        seats: this.cloneSeats(seatsB),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -803,7 +1046,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Bến xe Bến Cát',
         endStation: 'Tuy Hòa (Phú Yên)',
         price: 350000,
-        seats: this.sharedSeats3,
+        seats: this.cloneSeats(seatsC),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -821,7 +1064,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Tuy Hòa (Phú Yên)',
         endStation: 'Bến xe Miền Đông',
         price: 350000,
-        seats: this.sharedSeats4,
+        seats: this.cloneSeats(seatsD),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -837,7 +1080,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Tuy Hòa (Phú Yên)',
         endStation: 'Bến xe Miền Tây',
         price: 350000,
-        seats: this.sharedSeats5,
+        seats: this.cloneSeats(seatsE),
         expanded: false,
         selectedTab: 'seat'
       },
@@ -853,7 +1096,7 @@ export class TimKiemChuyenXe implements OnInit {
         startStation: 'Tuy Hòa (Phú Yên)',
         endStation: 'Bến xe Bến Cát',
         price: 350000,
-        seats: this.sharedSeats6,
+        seats: this.cloneSeats(seatsF),
         expanded: false,
         selectedTab: 'seat'
       }
@@ -863,6 +1106,9 @@ export class TimKiemChuyenXe implements OnInit {
     this.allTrips.forEach(t => {
       t.availableSeats = t.seats.filter(s => s.status === 'available').length;
     });
+    // apply any existing local holds
+    this.cleanExpiredHolds();
+    this.applyHoldsToAllTrips();
   }
 
   // Handle Search button
@@ -1081,26 +1327,92 @@ export class TimKiemChuyenXe implements OnInit {
     this.passengerCount = this.adultCount + this.childCount + this.infantCount;
   }
 
+  private snapshotTripSelection(trip: Trip) {
+    this.tripSelectionSnapshots.set(trip.id, {
+      seats: this.cloneSeats(trip.seats),
+      availableSeats: trip.availableSeats,
+      selectedRoomGuests: { ...this.selectedRoomGuests }
+    });
+  }
+
+  private revertTripSelection(trip: Trip) {
+    const snapshot = this.tripSelectionSnapshots.get(trip.id);
+    if (!snapshot) return;
+
+    trip.seats.forEach(seat => {
+      const original = snapshot.seats.find(s => s.name === seat.name);
+      if (original) {
+        seat.status = original.status;
+      }
+    });
+    trip.availableSeats = snapshot.availableSeats;
+    this.selectedRoomGuests = { ...snapshot.selectedRoomGuests };
+    this.selectedSeatsList = trip.seats.filter(s => s.status === 'selected').map(s => s.name);
+    this.tripSelectionSnapshots.delete(trip.id);
+  }
+
+  private rollbackActiveTripSelection(excludeTripId?: any) {
+    if (!this.activeTrip || this.activeTrip.id === excludeTripId) return;
+    this.revertTripSelection(this.activeTrip);
+    this.activeTrip = null;
+    this.selectedSeatsList = [];
+    this.totalPrice = 0;
+    this.selectedRoomGuests = {};
+  }
+
   // Toggle card details
   toggleTripDetails(trip: Trip) {
     if (trip.expanded) {
       trip.expanded = false;
+      // restoring non-confirmed seat selection when collapsing
+      if (this.activeTrip && this.activeTrip.id === trip.id) {
+        this.revertTripSelection(trip);
+
+        const serverHolds = this.getServerHolds().find(h => h.tripId === trip.id);
+        if (serverHolds && serverHolds.seats && serverHolds.seats.length > 0) {
+          const sessionId = this.getSessionId();
+          this.timKiemApiService.releaseSeats(String(trip.id), serverHolds.seats, sessionId).subscribe({
+            next: () => {
+              const remaining = this.getServerHolds().filter(h => h.tripId !== trip.id);
+              this.saveServerHolds(remaining);
+            },
+            error: (err) => {
+              console.warn('Failed to release server holds', err);
+            }
+          });
+        }
+
+        this.activeTrip = null;
+        this.selectedSeatsList = [];
+        this.totalPrice = 0;
+        this.selectedRoomGuests = {};
+      }
     } else {
+      this.rollbackActiveTripSelection(trip.id);
       this.allTrips.forEach(t => t.expanded = false);
       trip.expanded = true;
       trip.selectedTab = 'seat';
       this.loadTripDetails(trip);
+      this.snapshotTripSelection(trip);
+      this.activeTrip = trip;
+      this.updateSelectedSeats(trip);
     }
-    this.activeTrip = trip;
-    this.updateSelectedSeats(trip);
   }
 
   // Switch tab in card details directly
   switchTab(trip: Trip, tab: 'seat' | 'schedule' | 'shuttle' | 'utilities' | 'policy') {
+    // rollback any unconfirmed selection on the previously active trip
+    this.rollbackActiveTripSelection(trip.id);
+
+    // collapse other trips and open this one
+    this.allTrips.forEach(t => t.expanded = false);
     trip.expanded = true;
     trip.selectedTab = tab;
     if (tab === 'schedule') {
       this.loadTripDetails(trip);
+    }
+    if (!this.tripSelectionSnapshots.has(trip.id)) {
+      this.snapshotTripSelection(trip);
     }
     this.activeTrip = trip;
     this.updateSelectedSeats(trip);
@@ -1108,27 +1420,36 @@ export class TimKiemChuyenXe implements OnInit {
 
   // Select/Deselect seat
   toggleSeat(trip: Trip, seat: Seat) {
-    if (seat.status === 'sold') return;
+    if (seat.status === 'sold' || seat.status === 'held') return;
+
+    const currentlySelectedCount = trip.seats.filter(s => s.status === 'selected').length;
 
     if (seat.status === 'selected') {
       seat.status = 'available';
       delete this.selectedRoomGuests[seat.name];
     } else if (seat.status === 'available') {
+      // enforce max 5 seats per booking
+      if (currentlySelectedCount >= 5) {
+        this.toastService.show('Bạn chỉ được chọn tối đa 5 ghế.', 'warning');
+        return;
+      }
       seat.status = 'selected';
       this.selectedRoomGuests[seat.name] = 1;
     }
 
+    // Update selected seats only for this trip
     this.updateSelectedSeats(trip);
 
-    // Sync available seats for all trips
-    this.allTrips.forEach(t => {
-      t.availableSeats = t.seats.filter(s => s.status === 'available').length;
-    });
+    // NOTE: do NOT change trip.availableSeats here — keep displayed available seats unchanged
+    // until user proceeds to checkout (holds are applied when confirming selection).
   }
 
   updateSelectedSeats(trip: Trip) {
     const selected = trip.seats.filter(s => s.status === 'selected');
-    this.selectedSeatsList = selected.map(s => s.name);
+    // only update global selectedSeatsList when the trip is active
+    if (this.activeTrip && this.activeTrip.id === trip.id) {
+      this.selectedSeatsList = selected.map(s => s.name);
+    }
     this.recalculatePrice();
   }
 
@@ -1152,7 +1473,7 @@ export class TimKiemChuyenXe implements OnInit {
       this.toastService.show('Vui lòng chọn ít nhất 1 ghế.', 'warning');
       return;
     }
-    this.selectTripAndNavigate(trip, true);
+    this.selectTripAndNavigate(trip, false);
   }
 
   selectTripAndNavigate(trip: Trip, withSeats: boolean) {
@@ -1169,9 +1490,9 @@ export class TimKiemChuyenXe implements OnInit {
       startStation: trip.startStation,
       endStation: trip.endStation,
       price: trip.price,
-      selectedSeats: withSeats ? this.selectedSeatsList : [],
-      selectedRoomGuests: withSeats ? this.selectedRoomGuests : {},
-      totalPrice: withSeats ? this.totalPrice : 0,
+      selectedSeats: this.selectedSeatsList,
+      selectedRoomGuests: this.selectedRoomGuests,
+      totalPrice: this.totalPrice,
       searchDeparture: this.departure,
       searchDestination: this.destination,
       searchDate: this.departureDate,
@@ -1182,10 +1503,57 @@ export class TimKiemChuyenXe implements OnInit {
       ngayVe: this.returnDate,
       passengers: this.passengerCount
     };
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      localStorage.setItem('current_booking', JSON.stringify(bookingData));
+    if (withSeats) {
+      // attempt server reservation first
+      const sessionId = this.getSessionId();
+      this.timKiemApiService.reserveSeats(String(trip.id), this.selectedSeatsList.slice(), sessionId).subscribe({
+        next: (res: any) => {
+          if (res && res.success) {
+            const expiresAt = res.expiresAt ? new Date(res.expiresAt).getTime() : Date.now() + 10 * 60 * 1000;
+            // persist server hold locally
+            const serverHolds = this.getServerHolds().filter(h => h.tripId !== trip.id);
+            serverHolds.push({ tripId: trip.id, seats: this.selectedSeatsList.slice(), expiresAt });
+            this.saveServerHolds(serverHolds);
+
+            // mark seats as held in UI
+            trip.seats.forEach(s => {
+              if (this.selectedSeatsList.includes(s.name)) {
+                s.status = 'held';
+              }
+            });
+            trip.availableSeats = trip.seats.filter(s => s.status === 'available').length;
+
+            // persist current booking and navigate
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+              localStorage.setItem('current_booking', JSON.stringify(bookingData));
+            }
+            this.router.navigate(['/thong-tin-don-hang']);
+          } else {
+            const unavailable = res?.unavailable || [];
+            this.toastService.show('Một số ghế không còn khả dụng: ' + unavailable.join(', '), 'error');
+            // refresh trip details to reflect actual statuses
+            this.loadTripDetails(trip);
+          }
+        },
+        error: (err) => {
+          console.error('reserveSeats failed', err);
+          this.toastService.show('Không thể giữ ghế trên server. Thử lại sau.', 'error');
+        }
+      });
+
+      // fallback local hold retained for offline cases: save local hold as well
+      const expiresAtLocal = Date.now() + 10 * 60 * 1000;
+      const holds = this.getLocalHolds();
+      const filtered = holds.filter(h => h.tripId !== trip.id);
+      filtered.push({ tripId: trip.id, seats: this.selectedSeatsList.slice(), expiresAt: expiresAtLocal });
+      this.saveLocalHolds(filtered);
     }
-    this.router.navigate(['/thong-tin-don-hang']);
+    else {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('current_booking', JSON.stringify(bookingData));
+      }
+      this.router.navigate(['/thong-tin-don-hang']);
+    }
   }
 
 

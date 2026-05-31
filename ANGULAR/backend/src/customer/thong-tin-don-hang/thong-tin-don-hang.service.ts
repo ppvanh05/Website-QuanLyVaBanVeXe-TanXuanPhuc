@@ -464,7 +464,7 @@ export class ThongTinDonHangService implements OnModuleInit, OnModuleDestroy {
           SoLuongVeDaDat: DanhSachMaGheChuyen.length,
           TienBaoHiem: new Prisma.Decimal(totalInsurance),
           TongGiaVe: new Prisma.Decimal(finalTotal),
-          PhuongThucThanhToan: PhuongThucThanhToan as any,
+          PhuongThucThanhToan: this.mapPhuongThucThanhToan(PhuongThucThanhToan),
           TrangThaiDonHang: TrangThaiVe.ChoKhoiHanh,
         },
       });

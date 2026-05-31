@@ -153,12 +153,12 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       ]
     },
     {
-      moduleKey: 'blacklist',
+      moduleKey: 'review',
       moduleName: 'Quản lý từ khóa cấm',
       moduleIcon: 'block',
       isOpen: false,
       permissions: [
-        { key: 'blacklist', name: 'Quản lý từ khóa cấm', description: 'Quản trị bộ lọc từ khóa cấm, kiểm duyệt ý kiến phản hồi và bình luận nhạy cảm.' }
+        { key: 'review', name: 'Quản lý từ khóa cấm', description: 'Quản trị bộ lọc từ khóa cấm, kiểm duyệt ý kiến phản hồi và bình luận nhạy cảm.' }
       ]
     },
     {
@@ -189,7 +189,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       name: 'Quản trị viên',
       icon: 'admin_panel_settings',
       description: 'Quản trị tài khoản nhân sự nội bộ, phân quyền, xem nhật ký hệ thống, quản lý tin tức, từ khóa cấm.',
-      permissions: ['news', 'customer', 'employee', 'policy', 'blacklist', 'log']
+      permissions: ['news', 'customer', 'employee', 'policy', 'review', 'log']
     },
     {
       key: 'management',
@@ -271,7 +271,7 @@ export class QuanLyTaiKhoanNhanVienComponent implements OnInit {
       ghiChu: 'Quản trị viên hệ thống cấp cao, phụ trách hạ tầng kỹ thuật.',
       trangThai: 'HoatDong',
       vaiTro: 'Quản trị viên',
-      permissions: ['news', 'customer', 'employee', 'policy', 'blacklist', 'log']
+      permissions: ['news', 'customer', 'employee', 'policy', 'review', 'log']
     }
   ];
 
