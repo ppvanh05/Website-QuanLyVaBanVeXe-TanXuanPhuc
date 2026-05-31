@@ -137,9 +137,19 @@ export class TimKiemChuyenXe implements OnInit {
     selectedRoomGuests: { [roomName: string]: number };
   }>();
 
-  calendarTitle: string = '';
-  calendarEmptySpaces: number[] = [];
-  calendarDays: any[] = [];
+  // Departure calendar variables
+  departureCalendarTitle: string = '';
+  departureCalendarEmptySpaces: number[] = [];
+  departureCalendarDays: any[] = [];
+  departureCurrentMonth: number = new Date().getMonth();
+  departureCurrentYear: number = new Date().getFullYear();
+
+  // Return calendar variables
+  returnCalendarTitle: string = '';
+  returnCalendarEmptySpaces: number[] = [];
+  returnCalendarDays: any[] = [];
+  returnCurrentMonth: number = new Date().getMonth();
+  returnCurrentYear: number = new Date().getFullYear();
 
   constructor(
     private route: ActivatedRoute, 
@@ -252,7 +262,8 @@ export class TimKiemChuyenXe implements OnInit {
   }
 
   ngOnInit() {
-    this.generateCalendarDays();
+    this.generateDepartureCalendarDays();
+    this.generateReturnCalendarDays();
     this.loadActiveRoutes();
     this.loadRecentSearches();
     
@@ -275,6 +286,27 @@ export class TimKiemChuyenXe implements OnInit {
       
       this.departureSearch = this.departure;
       this.destinationSearch = this.destination;
+
+      // Update calendar month and year based on parsed query params
+      const depDate = this.parseDate(this.departureDate);
+      if (depDate) {
+        this.departureCurrentMonth = depDate.getMonth();
+        this.departureCurrentYear = depDate.getFullYear();
+      } else {
+        this.departureCurrentMonth = today.getMonth();
+        this.departureCurrentYear = today.getFullYear();
+      }
+      this.generateDepartureCalendarDays();
+
+      const retDate = this.parseDate(this.returnDate) || depDate;
+      if (retDate) {
+        this.returnCurrentMonth = retDate.getMonth();
+        this.returnCurrentYear = retDate.getFullYear();
+      } else {
+        this.returnCurrentMonth = today.getMonth();
+        this.returnCurrentYear = today.getFullYear();
+      }
+      this.generateReturnCalendarDays();
       
       // If the route contains any search-related query params, consider this a performed search
       if (params && Object.keys(params).length > 0 && (params['diemDi'] || params['diemDen'] || params['ngayDi'])) {
@@ -290,16 +322,16 @@ export class TimKiemChuyenXe implements OnInit {
     });
   }
 
-  generateCalendarDays() {
+  generateDepartureCalendarDays() {
     const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
+    const year = this.departureCurrentYear;
+    const month = this.departureCurrentMonth;
 
-    this.calendarTitle = `THÁNG ${month + 1}/${year}`;
+    this.departureCalendarTitle = `THÁNG ${month + 1}/${year}`;
 
     const firstDayIndex = new Date(year, month, 1).getDay();
     const emptySpacesCount = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
-    this.calendarEmptySpaces = Array(emptySpacesCount).fill(0);
+    this.departureCalendarEmptySpaces = Array(emptySpacesCount).fill(0);
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const days = [];
@@ -322,7 +354,90 @@ export class TimKiemChuyenXe implements OnInit {
       });
     }
 
-    this.calendarDays = days;
+    this.departureCalendarDays = days;
+  }
+
+  generateReturnCalendarDays() {
+    const today = new Date();
+    const year = this.returnCurrentYear;
+    const month = this.returnCurrentMonth;
+
+    this.returnCalendarTitle = `THÁNG ${month + 1}/${year}`;
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const emptySpacesCount = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+    this.returnCalendarEmptySpaces = Array(emptySpacesCount).fill(0);
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days = [];
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = String(i).padStart(2, '0');
+      const m = String(month + 1).padStart(2, '0');
+      const dateStr = `${d}/${m}/${year}`;
+
+      const lunar = this.lunarCalendarService.getLunarDate(i, month + 1, year);
+      const label = lunar.day === 1 ? `1/${lunar.month}` : `${lunar.day}`;
+
+      const isToday = i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+
+      days.push({
+        day: i,
+        label: label,
+        dateStr: dateStr,
+        highlighted: isToday
+      });
+    }
+
+    this.returnCalendarDays = days;
+  }
+
+  previousDepartureMonth() {
+    console.log('[Departure Calendar] Previous month clicked');
+    this.departureCurrentMonth--;
+    if (this.departureCurrentMonth < 0) {
+      this.departureCurrentMonth = 11;
+      this.departureCurrentYear--;
+    }
+    console.log('[Departure Calendar] Current:', this.departureCurrentMonth + 1, '/', this.departureCurrentYear);
+    this.generateDepartureCalendarDays();
+    this.cdr.detectChanges();
+  }
+
+  nextDepartureMonth() {
+    console.log('[Departure Calendar] Next month clicked');
+    this.departureCurrentMonth++;
+    if (this.departureCurrentMonth > 11) {
+      this.departureCurrentMonth = 0;
+      this.departureCurrentYear++;
+    }
+    console.log('[Departure Calendar] Current:', this.departureCurrentMonth + 1, '/', this.departureCurrentYear);
+    this.generateDepartureCalendarDays();
+    this.cdr.detectChanges();
+  }
+
+  previousReturnMonth() {
+    console.log('[Return Calendar] Previous month clicked');
+    this.returnCurrentMonth--;
+    if (this.returnCurrentMonth < 0) {
+      this.returnCurrentMonth = 11;
+      this.returnCurrentYear--;
+    }
+    console.log('[Return Calendar] Current:', this.returnCurrentMonth + 1, '/', this.returnCurrentYear);
+    this.generateReturnCalendarDays();
+    this.cdr.detectChanges();
+  }
+
+  nextReturnMonth() {
+    console.log('[Return Calendar] Next month clicked');
+    this.returnCurrentMonth++;
+    if (this.returnCurrentMonth > 11) {
+      this.returnCurrentMonth = 0;
+      this.returnCurrentYear++;
+    }
+    console.log('[Return Calendar] Current:', this.returnCurrentMonth + 1, '/', this.returnCurrentYear);
+    this.generateReturnCalendarDays();
+    this.cdr.detectChanges();
   }
 
   loadActiveRoutes(): void {

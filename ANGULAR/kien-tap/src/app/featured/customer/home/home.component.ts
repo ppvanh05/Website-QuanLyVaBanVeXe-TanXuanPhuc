@@ -60,6 +60,8 @@ export class HomeComponent implements OnInit {
   calendarTitle: string = '';
   calendarEmptySpaces: number[] = [];
   calendarDays: any[] = [];
+  currentMonth: number = new Date().getMonth();
+  currentYear: number = new Date().getFullYear();
 
   constructor(
     private router: Router, 
@@ -125,8 +127,8 @@ export class HomeComponent implements OnInit {
 
   generateCalendarDays() {
     const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
+    const year = this.currentYear;
+    const month = this.currentMonth;
 
     this.calendarTitle = `THÁNG ${month + 1}/${year}`;
 
@@ -156,6 +158,26 @@ export class HomeComponent implements OnInit {
     }
 
     this.calendarDays = days;
+  }
+
+  previousMonth() {
+    this.currentMonth--;
+    if (this.currentMonth < 0) {
+      this.currentMonth = 11;
+      this.currentYear--;
+    }
+    this.generateCalendarDays();
+    this.cdr.detectChanges();
+  }
+
+  nextMonth() {
+    this.currentMonth++;
+    if (this.currentMonth > 11) {
+      this.currentMonth = 0;
+      this.currentYear++;
+    }
+    this.generateCalendarDays();
+    this.cdr.detectChanges();
   }
 
   loadActiveRoutes(): void {
@@ -355,12 +377,34 @@ export class HomeComponent implements OnInit {
     this.showDepartureCalendar = !this.showDepartureCalendar;
     this.showReturnCalendar = false;
     this.showPassengerPopover = false;
+    if (this.showDepartureCalendar) {
+      const depDate = this.parseDate(this.departureDate);
+      if (depDate) {
+        this.currentMonth = depDate.getMonth();
+        this.currentYear = depDate.getFullYear();
+      } else {
+        this.currentMonth = new Date().getMonth();
+        this.currentYear = new Date().getFullYear();
+      }
+      this.generateCalendarDays();
+    }
   }
 
   toggleReturnCalendar() {
     this.showReturnCalendar = !this.showReturnCalendar;
     this.showDepartureCalendar = false;
     this.showPassengerPopover = false;
+    if (this.showReturnCalendar) {
+      const retDate = this.parseDate(this.returnDate) || this.parseDate(this.departureDate);
+      if (retDate) {
+        this.currentMonth = retDate.getMonth();
+        this.currentYear = retDate.getFullYear();
+      } else {
+        this.currentMonth = new Date().getMonth();
+        this.currentYear = new Date().getFullYear();
+      }
+      this.generateCalendarDays();
+    }
   }
 
   togglePassengerPopover() {
@@ -457,6 +501,16 @@ export class HomeComponent implements OnInit {
   selectPopularRoute(route: any) {
     this.departure = route.from;
     this.destination = route.to;
-    this.searchTrip();
+    this.departureSearch = route.from;
+    this.destinationSearch = route.to;
+    
+    if (this.departureDate) {
+      this.searchTrip();
+    } else {
+      const element = document.getElementById('search-section');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
   }
 }

@@ -101,11 +101,11 @@
               class="absolute z-50 top-full left-0 mt-2 bg-white rounded-2xl shadow-[0px_8px_30px_rgba(0,0,0,0.15)] border border-outline-variant/30 p-4 w-72 select-none"
               (click)="$event.stopPropagation()">
               <div class="flex justify-between items-center mb-3">
-                <button class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                <button type="button" (click)="$event.stopPropagation(); previousDepartureMonth()" class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                   <span class="material-symbols-outlined text-title-md">chevron_left</span>
                 </button>
-                <span class="font-bold text-navy text-body-md">{{ calendarTitle }}</span>
-                <button class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                <span class="font-bold text-navy text-body-md">{{ departureCalendarTitle }}</span>
+                <button type="button" (click)="$event.stopPropagation(); nextDepartureMonth()" class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                   <span class="material-symbols-outlined text-title-md">chevron_right</span>
                 </button>
               </div>
@@ -113,8 +113,8 @@
                 <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
               </div>
               <div class="grid grid-cols-7 gap-y-2 gap-x-1 justify-items-center">
-                <div *ngFor="let empty of calendarEmptySpaces" class="w-8 h-8"></div>
-                <div *ngFor="let d of calendarDays" (click)="selectDepartureDate(d.dateStr)"
+                <div *ngFor="let empty of departureCalendarEmptySpaces" class="w-8 h-8"></div>
+                <div *ngFor="let d of departureCalendarDays" (click)="selectDepartureDate(d.dateStr)"
                   [class]="d.dateStr === departureDate
                     ? 'w-8 h-8 flex flex-col items-center justify-center rounded-lg bg-orange-50 border border-orange-500 text-orange-600 font-bold cursor-pointer relative shadow-sm'
                     : isPastDate(d.dateStr)
@@ -145,11 +145,11 @@
               class="absolute z-50 top-full left-0 mt-2 bg-white rounded-2xl shadow-[0px_8px_30px_rgba(0,0,0,0.15)] border border-outline-variant/30 p-4 w-72 select-none"
               (click)="$event.stopPropagation()">
               <div class="flex justify-between items-center mb-3">
-                <button class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                <button type="button" (click)="$event.stopPropagation(); previousReturnMonth()" class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                   <span class="material-symbols-outlined text-title-md">chevron_left</span>
                 </button>
-                <span class="font-bold text-navy text-body-md">{{ calendarTitle }}</span>
-                <button class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                <span class="font-bold text-navy text-body-md">{{ returnCalendarTitle }}</span>
+                <button type="button" (click)="$event.stopPropagation(); nextReturnMonth()" class="text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                   <span class="material-symbols-outlined text-title-md">chevron_right</span>
                 </button>
               </div>
@@ -157,8 +157,8 @@
                 <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
               </div>
               <div class="grid grid-cols-7 gap-y-2 gap-x-1 justify-items-center">
-                <div *ngFor="let empty of calendarEmptySpaces" class="w-8 h-8"></div>
-                <div *ngFor="let d of calendarDays" (click)="selectReturnDate(d.dateStr)"
+                <div *ngFor="let empty of returnCalendarEmptySpaces" class="w-8 h-8"></div>
+                <div *ngFor="let d of returnCalendarDays" (click)="selectReturnDate(d.dateStr)"
                   [class]="d.dateStr === returnDate
                     ? 'w-8 h-8 flex flex-col items-center justify-center rounded-lg bg-orange-50 border border-orange-500 text-orange-600 font-bold cursor-pointer relative shadow-sm'
                     : isPastDate(d.dateStr)
