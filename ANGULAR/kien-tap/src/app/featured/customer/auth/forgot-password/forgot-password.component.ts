@@ -135,7 +135,7 @@ export class ForgotPasswordComponent implements OnDestroy {
         this.step = 'otp';
         this.startOtpTimer();
         console.log('OTP đã gửi:', this.generatedOtp);
-        if (!environment.production && response.otp) {
+        if (response.otp) {
           this.onOtpChange(response.otp);
         }
         this.cdr.detectChanges();

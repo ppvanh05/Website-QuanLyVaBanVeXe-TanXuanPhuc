@@ -183,15 +183,15 @@ export class QuanLyTaiKhoanKhachHangComponent implements OnInit {
     if (this.searchQuery && this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase().trim();
       result = result.filter(c =>
-        c.maKhachHang.toLowerCase().includes(query) ||
-        c.hoTenKhachHang.toLowerCase().includes(query) ||
-        c.soDienThoai.toLowerCase().includes(query) ||
-        c.email.toLowerCase().includes(query)
+        (c.maKhachHang ?? '').toString().toLowerCase().includes(query) ||
+        (c.hoTenKhachHang ?? '').toString().toLowerCase().includes(query) ||
+        (c.soDienThoai ?? '').toString().toLowerCase().includes(query) ||
+        (c.email ?? '').toString().toLowerCase().includes(query)
       );
     }
 
     // Sort by Registration Date newest first
-    result.sort((a, b) => b.ngayDangKy.localeCompare(a.ngayDangKy));
+    result.sort((a, b) => (b.ngayDangKy ?? '').localeCompare(a.ngayDangKy ?? ''));
 
     this.filteredCustomers = result;
     this.calculatePagination();
