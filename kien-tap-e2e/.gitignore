@@ -1,0 +1,32 @@
+# Node dependencies
+node_modules/
+dist/
+
+# Test reports & screenshots
+playwright-report/
+html-report/
+allure-results/
+allure-report/
+test-results/
+screenshots/
+videos/
+trace/
+
+# Local Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# System Files
+.DS_Store
+Thumbs.db
