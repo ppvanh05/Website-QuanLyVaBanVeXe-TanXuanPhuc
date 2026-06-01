@@ -108,9 +108,43 @@ https://kien-tap-code.vercel.app/
 ### Website admin
 https://kien-tap-code.vercel.app/admin-login
 
+Để thuận tiện cho việc đánh giá và kiểm thử hệ thống, nhóm cung cấp tài khoản quản trị mẫu như sau:
+#### Quản trị viên
+Email: admin@txpbus.vn
+Mật khẩu: Admin@123
+#### Nhân viên bán vé
+Email: banve1@txpbus.vn
+Mật khẩu: Banve@123
+#### Ban quản lý
+Email: quanly1@txpbus.vn
+Mật khẩu: Quanly@123
+#### Điều phối viên
+Email: dp1@txpbus.vn
+Mật khẩu: Dieuphoi@123
+
 ### Backend API
 
 Triển khai trên Render
+### Tài liệu kiểm thử hệ thống
+
+Nhóm đã xây dựng bộ Test Case và thực hiện kiểm thử cho cả hai phân hệ khách hàng và quản trị viên.
+
+#### Test Case - Phân hệ Khách hàng
+
+https://docs.google.com/spreadsheets/d/1LpVeGJt6VRG0DTLelY3Gw_kgWx0U3vYh/edit?usp=drive_link&ouid=103633915798122050137&rtpof=true&sd=true
+
+#### Test Case - Phân hệ Quản trị viên
+
+https://docs.google.com/spreadsheets/d/1Ago7BRBg_yu0HyazT1Liukth5GZjKDwl/edit?usp=drive_link&ouid=103633915798122050137&rtpof=true&sd=true
+
+Các tài liệu kiểm thử bao gồm:
+
+* Danh sách Test Case.
+* Điều kiện kiểm thử.
+* Dữ liệu kiểm thử.
+* Kết quả mong đợi.
+* Kết quả thực tế.
+* Trạng thái Pass/Fail của từng chức năng.
 
 ---
 
